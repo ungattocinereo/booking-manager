@@ -178,9 +178,32 @@ async function syncAll() {
   }
 }
 
+// Serverless-friendly sync (doesn't close connection)
+async function syncCalendars() {
+  console.log('🔄 Starting calendar sync...\n');
+  
+  // Initialize database
+  await db.init();
+  
+  // Create properties from config
+  for (const property of config.properties) {
+    await db.createProperty(property.id, property.name);
+  }
+  
+  // Sync all property calendars
+  let totalEvents = 0;
+  for (const property of config.properties) {
+    const events = await syncPropertyCalendars(property);
+    totalEvents += events;
+  }
+  
+  console.log(`\n✅ Total events synced: ${totalEvents}`);
+  return totalEvents;
+}
+
 // Run if called directly
 if (require.main === module) {
   syncAll();
 }
 
-module.exports = { syncAll };
+module.exports = { syncAll, syncCalendars, generateCleaningTasks };
