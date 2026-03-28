@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Менеджер Бронирований Atrani</title>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
   <style>
     :root {
       --bg: #f5f7fa;
@@ -70,6 +72,8 @@
       color: var(--muted);
       border-bottom: 2px solid transparent;
       transition: all .2s;
+      display: flex;
+      align-items: center;
     }
     .tab:hover { color: var(--text); }
     .tab.active { color: var(--blue); border-bottom-color: var(--blue); }
@@ -83,6 +87,8 @@
       font-size: 13px;
       font-weight: 500;
       transition: all .15s;
+      display: inline-flex;
+      align-items: center;
     }
     .btn-primary { background: var(--blue); color: #fff; }
     .btn-primary:hover { background: #2b6cb0; }
@@ -215,7 +221,7 @@
       position: absolute;
       top: 6px;
       bottom: 6px;
-      border-radius: 4px;
+      border-radius: 14px;
       z-index: 2;
       display: flex;
       align-items: center;
@@ -356,17 +362,23 @@
 
   <!-- HEADER -->
   <div class="header">
-    <h1>🏠 Менеджер Бронирований Atrani</h1>
+    <h1><i data-lucide="hotel" style="width:24px;height:24px;margin-right:8px;"></i>Менеджер Бронирований Atrani</h1>
     <div class="header-actions">
       <span class="last-sync" id="lastSync"></span>
-      <button class="btn btn-outline" id="syncBtn" onclick="syncCalendars()">🔄 Синхронизация</button>
+      <button class="btn btn-outline" id="syncBtn" onclick="syncCalendars()">
+        <i data-lucide="refresh-cw" style="width:14px;height:14px;margin-right:4px;"></i>Синхронизация
+      </button>
     </div>
   </div>
 
   <!-- TABS -->
   <div class="tabs">
-    <div class="tab active" data-tab="calendar" onclick="switchTab('calendar')">📅 Calendario</div>
-    <div class="tab" data-tab="cleaners" onclick="switchTab('cleaners')">🧹 Pulizie</div>
+    <div class="tab active" data-tab="calendar" onclick="switchTab('calendar')">
+      <i data-lucide="calendar" style="width:16px;height:16px;margin-right:6px;"></i>Календарь
+    </div>
+    <div class="tab" data-tab="cleaners" onclick="switchTab('cleaners')">
+      <i data-lucide="sparkles" style="width:16px;height:16px;margin-right:6px;"></i>Уборка
+    </div>
   </div>
 
   <!-- CALENDAR TAB -->
@@ -441,9 +453,29 @@ async function loadData() {
     renderCalendar();
     renderCleaners();
     document.getElementById('lastSync').textContent = `Обновлено: ${new Date().toLocaleTimeString('ru-RU')}`;
+    
+    // Initialize Lucide icons
+    if (typeof lucide !== 'undefined') {
+      lucide.createIcons();
+    }
   } catch (err) {
     toast('Ошибка загрузки: ' + err.message);
   }
+}
+
+// ===== PROPERTY ICONS =====
+function getPropertyIcon(propertyId) {
+  const icons = {
+    'awesome': 'sparkles',
+    'orange': 'citrus',
+    'vingtage': 'wine',
+    'youth': 'zap',
+    'solo': 'user',
+    'carina': 'heart',
+    'royal': 'crown',
+    'harmony': 'music'
+  };
+  return icons[propertyId] || 'home';
 }
 
 // ===== CALENDAR RENDERING =====
@@ -470,8 +502,8 @@ function renderCalendar() {
   grid.style.gridTemplateRows = `auto repeat(${properties.length}, 40px)`;
   grid.innerHTML = '';
 
-  const dayNames = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'];
-  const monthNames = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
+  const dayNames = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+  const monthNames = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
 
   // === HEADER ROW ===
   // Property column header
@@ -554,7 +586,8 @@ function renderCalendar() {
     nameEl.className = 'cal-property-name cal-property-col';
     nameEl.style.gridRow = row;
     nameEl.style.gridColumn = '1';
-    nameEl.innerHTML = `<span class="dot" style="background:${color}"></span>${prop.name}`;
+    const icon = getPropertyIcon(prop.id);
+    nameEl.innerHTML = `<i data-lucide="${icon}" style="width:16px;height:16px;color:${color};"></i>${prop.name}`;
     grid.appendChild(nameEl);
 
     // Day cells
@@ -785,6 +818,10 @@ function toast(msg) {
 }
 
 // ===== INIT =====
+// Initialize Lucide icons for static elements
+if (typeof lucide !== 'undefined') {
+  lucide.createIcons();
+}
 loadData();
 // Auto-refresh every 5 min
 setInterval(loadData, 5 * 60 * 1000);
