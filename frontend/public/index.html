@@ -3,109 +3,205 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Менеджер Бронирований Atrani</title>
-  <!-- Lucide Icons -->
+  <title>Atrani — Бронирования</title>
   <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #f5f7fa;
-      --card: #fff;
-      --border: #e2e8f0;
-      --text: #1a202c;
-      --muted: #718096;
-      --blue: #3182ce;
-      --blue-light: #ebf8ff;
-      --pink: #d53f8c;
-      --pink-light: #fff5f7;
-      --green: #38a169;
-      --green-light: #f0fff4;
-      --orange: #dd6b20;
-      --orange-light: #fffaf0;
-      --red: #e53e3e;
-      --gray-100: #f7fafc;
-      --gray-200: #edf2f7;
-      --gray-300: #e2e8f0;
-      --gray-400: #cbd5e0;
-      --gray-500: #a0aec0;
-      --shadow: 0 1px 3px rgba(0,0,0,.1);
-      --radius: 10px;
+      --bg: #f0f2f5;
+      --card: #ffffff;
+      --border: #e4e7ec;
+      --text: #111827;
+      --text-secondary: #6b7280;
+      --accent: #4f46e5;
+      --accent-light: #eef2ff;
+      --accent-hover: #4338ca;
+      --airbnb: #ff385c;
+      --airbnb-light: #fff1f2;
+      --booking: #003b95;
+      --booking-light: #eff6ff;
+      --success: #059669;
+      --success-light: #ecfdf5;
+      --warning: #d97706;
+      --warning-light: #fffbeb;
+      --danger: #dc2626;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,.05);
+      --shadow: 0 1px 3px rgba(0,0,0,.1), 0 1px 2px rgba(0,0,0,.06);
+      --shadow-md: 0 4px 6px -1px rgba(0,0,0,.1), 0 2px 4px -2px rgba(0,0,0,.1);
+      --radius: 12px;
+      --radius-sm: 8px;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       background: var(--bg);
       color: var(--text);
       line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
     }
 
     /* ===== HEADER ===== */
     .header {
       background: var(--card);
       border-bottom: 1px solid var(--border);
-      padding: 16px 24px;
+      padding: 0 28px;
+      height: 64px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       position: sticky;
       top: 0;
       z-index: 100;
+      backdrop-filter: blur(12px);
+      background: rgba(255,255,255,.92);
     }
-    .header h1 { font-size: 20px; font-weight: 700; }
-    .header-actions { display: flex; gap: 10px; align-items: center; }
-    .last-sync { font-size: 12px; color: var(--muted); }
-
-    /* ===== TABS ===== */
-    .tabs {
-      display: flex;
-      gap: 0;
-      background: var(--card);
-      border-bottom: 1px solid var(--border);
-      padding: 0 24px;
-    }
-    .tab {
-      padding: 12px 20px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 500;
-      color: var(--muted);
-      border-bottom: 2px solid transparent;
-      transition: all .2s;
+    .header-left {
       display: flex;
       align-items: center;
+      gap: 12px;
     }
-    .tab:hover { color: var(--text); }
-    .tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+    .header-logo {
+      width: 36px; height: 36px;
+      background: var(--accent);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+    }
+    .header h1 {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+    .header h1 span {
+      color: var(--text-secondary);
+      font-weight: 400;
+      margin-left: 4px;
+    }
+    .header-actions { display: flex; gap: 10px; align-items: center; }
+    .last-sync { font-size: 12px; color: var(--text-secondary); }
+
+    /* ===== NAVIGATION ===== */
+    .nav {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 0 28px;
+      display: flex;
+      gap: 4px;
+    }
+    .nav-item {
+      padding: 14px 18px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      border-bottom: 2px solid transparent;
+      transition: all .15s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      user-select: none;
+    }
+    .nav-item:hover { color: var(--text); background: var(--bg); }
+    .nav-item.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
 
     /* ===== BUTTONS ===== */
     .btn {
       border: none;
       padding: 8px 16px;
-      border-radius: 6px;
+      border-radius: var(--radius-sm);
       cursor: pointer;
       font-size: 13px;
       font-weight: 500;
       transition: all .15s;
       display: inline-flex;
       align-items: center;
+      gap: 6px;
+      font-family: inherit;
     }
-    .btn-primary { background: var(--blue); color: #fff; }
-    .btn-primary:hover { background: #2b6cb0; }
-    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
-    .btn-outline:hover { background: var(--gray-100); }
-    .btn-danger { background: transparent; border: 1px solid var(--red); color: var(--red); }
-    .btn-danger:hover { background: #fff5f5; }
-    .btn-sm { padding: 4px 10px; font-size: 12px; }
-    .btn:disabled { opacity: .5; cursor: not-allowed; }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    .btn-ghost:hover { background: var(--bg); border-color: #d1d5db; }
+    .btn-danger-ghost { background: transparent; border: 1px solid var(--border); color: var(--danger); }
+    .btn-danger-ghost:hover { background: #fef2f2; border-color: var(--danger); }
+    .btn-sm { padding: 5px 10px; font-size: 12px; border-radius: 6px; }
+    .btn:disabled { opacity: .4; cursor: not-allowed; }
 
-    /* ===== CALENDAR VIEW ===== */
-    .calendar-section { padding: 24px; }
+    /* ===== STATS BAR ===== */
+    .stats-bar {
+      padding: 16px 28px;
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+    }
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 20px;
+      min-width: 160px;
+      flex-shrink: 0;
+    }
+    .stat-card .stat-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      margin-bottom: 4px;
+    }
+    .stat-card .stat-value {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    /* ===== LEGEND ===== */
+    .legend {
+      padding: 0 28px 12px;
+      display: flex;
+      gap: 16px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .legend-dot {
+      width: 20px;
+      height: 10px;
+      border-radius: 5px;
+    }
+    .legend-dot.airbnb { background: var(--airbnb); }
+    .legend-dot.booking { background: var(--booking); }
+    .legend-dot.unavailable {
+      background: var(--airbnb);
+      background-image: repeating-linear-gradient(
+        45deg, rgba(255,255,255,.3), rgba(255,255,255,.3) 3px, transparent 3px, transparent 6px
+      );
+    }
+
+    /* ===== CALENDAR ===== */
+    .calendar-section { padding: 0 28px 28px; }
 
     .calendar-container {
       background: var(--card);
       border-radius: var(--radius);
-      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
       overflow: hidden;
     }
 
@@ -113,37 +209,34 @@
       overflow-x: auto;
       position: relative;
     }
-    .calendar-scroll-wrapper::-webkit-scrollbar { height: 8px; }
-    .calendar-scroll-wrapper::-webkit-scrollbar-track { background: var(--gray-100); }
-    .calendar-scroll-wrapper::-webkit-scrollbar-thumb { background: var(--gray-400); border-radius: 4px; }
+    .calendar-scroll-wrapper::-webkit-scrollbar { height: 6px; }
+    .calendar-scroll-wrapper::-webkit-scrollbar-track { background: transparent; }
+    .calendar-scroll-wrapper::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+    .calendar-scroll-wrapper::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
 
     .calendar-grid {
       display: grid;
       min-width: max-content;
     }
 
-    /* Property column (sticky left) */
+    /* Property column (sticky) */
     .cal-property-col {
       position: sticky;
       left: 0;
       z-index: 10;
       background: var(--card);
-      border-right: 2px solid var(--border);
-      min-width: 160px;
-    }
-
-    .cal-header-row {
-      display: contents;
+      border-right: 1px solid var(--border);
+      min-width: 180px;
     }
 
     .cal-property-header {
-      padding: 10px 14px;
-      font-size: 12px;
+      padding: 12px 16px;
+      font-size: 11px;
       font-weight: 600;
-      color: var(--muted);
+      color: var(--text-secondary);
       text-transform: uppercase;
       letter-spacing: .5px;
-      background: var(--gray-100);
+      background: #f9fafb;
       border-bottom: 1px solid var(--border);
     }
 
@@ -151,102 +244,123 @@
       padding: 6px 0;
       text-align: center;
       font-size: 11px;
-      background: var(--gray-100);
+      background: #f9fafb;
       border-bottom: 1px solid var(--border);
-      border-right: 1px solid var(--gray-200);
-      min-width: 36px;
+      border-right: 1px solid #f3f4f6;
+      min-width: 38px;
     }
-    .cal-day-header .day-num { font-weight: 600; font-size: 13px; color: var(--text); }
-    .cal-day-header .day-name { color: var(--muted); font-size: 10px; }
-    .cal-day-header.today { background: var(--blue-light); }
-    .cal-day-header.weekend { background: #fef5e7; }
-    .cal-day-header.month-start {
-      border-left: 2px solid var(--blue);
+    .cal-day-header .day-num {
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--text);
     }
+    .cal-day-header .day-name {
+      color: var(--text-secondary);
+      font-size: 10px;
+    }
+    .cal-day-header.today {
+      background: var(--accent-light);
+    }
+    .cal-day-header.today .day-num {
+      color: var(--accent);
+    }
+    .cal-day-header.weekend { background: #fefce8; }
+    .cal-day-header.weekend .day-name { color: var(--warning); }
+    .cal-day-header.month-start { border-left: 2px solid var(--accent); }
 
     .cal-month-label {
       position: absolute;
       top: 0;
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 700;
-      color: var(--blue);
+      color: var(--accent);
       text-transform: uppercase;
       letter-spacing: .5px;
-      padding: 2px 6px;
-      background: var(--blue-light);
-      border-radius: 0 0 4px 4px;
+      padding: 2px 8px;
+      background: var(--accent-light);
+      border-radius: 0 0 6px 6px;
       z-index: 5;
     }
 
     /* Property groups */
     .cal-group-header {
-      padding: 10px 14px 6px;
-      background: var(--gray-100);
+      padding: 0 16px;
+      background: #f3f4f6;
       border-bottom: 1px solid var(--border);
-      height: 32px;
+      height: 28px;
       display: flex;
       align-items: center;
+    }
+    .cal-group-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: #9ca3af;
+      text-transform: uppercase;
     }
 
     /* Property rows */
     .cal-property-name {
-      padding: 8px 14px 8px 24px;
+      padding: 0 16px;
       font-size: 13px;
-      font-weight: 600;
-      border-bottom: 1px solid var(--border);
+      font-weight: 500;
+      border-bottom: 1px solid #f3f4f6;
       display: flex;
       align-items: center;
-      gap: 6px;
-      height: 40px;
+      gap: 8px;
+      height: 42px;
     }
-    .cal-property-name .dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
+    .cal-property-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       flex-shrink: 0;
     }
 
     .cal-cell {
-      border-bottom: 1px solid var(--border);
-      border-right: 1px solid var(--gray-200);
-      height: 40px;
-      min-width: 36px;
+      border-bottom: 1px solid #f3f4f6;
+      border-right: 1px solid #fafafa;
+      height: 42px;
+      min-width: 38px;
       position: relative;
     }
-    .cal-cell.today { background: rgba(49,130,206,.05); }
-    .cal-cell.weekend { background: rgba(221,107,32,.03); }
+    .cal-cell.today { background: rgba(79,70,229,.03); }
+    .cal-cell.weekend { background: rgba(217,119,6,.02); }
+    .cal-cell.month-start { border-left: 2px solid var(--accent); }
 
     /* Booking bars */
     .booking-bar {
       position: absolute;
-      top: 6px;
-      bottom: 6px;
+      top: 7px;
+      bottom: 7px;
       border-radius: 14px;
       z-index: 2;
       display: flex;
       align-items: center;
-      padding: 0 6px;
-      font-size: 11px;
+      padding: 0 8px;
+      font-size: 10px;
       font-weight: 500;
-      color: #fff;
+      color: rgba(255,255,255,.9);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
       cursor: default;
       min-width: 8px;
+      box-shadow: 0 1px 2px rgba(0,0,0,.15);
+      transition: opacity .15s;
     }
-    .booking-bar.airbnb { background: #ff5a5f; }
-    .booking-bar.booking { background: #003580; }
-    .booking-bar.other { background: var(--gray-500); }
+    .booking-bar:hover { opacity: .85; }
+    .booking-bar.airbnb { background: var(--airbnb); }
+    .booking-bar.booking { background: var(--booking); }
+    .booking-bar.other { background: #6b7280; }
 
-    /* Diagonal stripes for "Not available" / "CLOSED" */
     .booking-bar.not-available {
+      opacity: .55;
       background-image: repeating-linear-gradient(
-        45deg,
-        rgba(255, 255, 255, 0.2),
-        rgba(255, 255, 255, 0.2) 4px,
-        transparent 4px,
-        transparent 8px
+        45deg, rgba(255,255,255,.25), rgba(255,255,255,.25) 3px, transparent 3px, transparent 6px
       );
     }
 
@@ -255,21 +369,21 @@
       text-overflow: ellipsis;
     }
 
-    /* ===== CLEANERS VIEW ===== */
-    .cleaners-section { padding: 24px; display: none; }
+    /* ===== CLEANERS ===== */
+    .cleaners-section { padding: 0 28px 28px; display: none; }
     .cleaners-section.active { display: block; }
     .calendar-section.active { display: block; }
 
     .cleaners-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-      gap: 20px;
+      gap: 16px;
     }
 
     .cleaner-card {
       background: var(--card);
       border-radius: var(--radius);
-      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
       overflow: hidden;
     }
     .cleaner-card-header {
@@ -278,83 +392,89 @@
       align-items: center;
       justify-content: space-between;
       border-bottom: 1px solid var(--border);
+      background: #f9fafb;
     }
-    .cleaner-card-header h3 { font-size: 16px; font-weight: 600; }
+    .cleaner-card-header h3 {
+      font-size: 15px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
 
-    .cleaner-properties {
-      padding: 12px 20px;
-    }
+    .cleaner-properties { padding: 8px 16px; }
     .cleaner-property-item {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 8px 0;
-      border-bottom: 1px solid var(--gray-100);
+      padding: 10px 4px;
+      border-bottom: 1px solid #f9fafb;
     }
     .cleaner-property-item:last-child { border: none; }
     .cleaner-property-item label {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
       font-size: 14px;
       cursor: pointer;
     }
     .cleaner-property-item input[type="checkbox"] {
-      width: 16px;
-      height: 16px;
+      width: 16px; height: 16px;
       cursor: pointer;
-      accent-color: var(--blue);
+      accent-color: var(--accent);
     }
 
-    /* Unassigned section */
     .unassigned-card {
-      background: var(--orange-light);
-      border: 1px solid #fbd38d;
+      background: var(--warning-light);
+      border-color: #fcd34d;
     }
     .unassigned-card .cleaner-card-header {
-      border-color: #fbd38d;
+      border-color: #fcd34d;
+      background: #fef9c3;
     }
 
-    /* Add cleaner form */
     .add-cleaner-form {
       background: var(--card);
       border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 20px;
+      border: 1px solid var(--border);
+      padding: 16px 20px;
       display: flex;
       gap: 10px;
       align-items: center;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
     }
     .add-cleaner-form input {
       flex: 1;
-      padding: 8px 14px;
+      padding: 9px 14px;
       border: 1px solid var(--border);
-      border-radius: 6px;
+      border-radius: var(--radius-sm);
       font-size: 14px;
+      font-family: inherit;
       outline: none;
+      transition: border-color .15s;
     }
-    .add-cleaner-form input:focus { border-color: var(--blue); }
+    .add-cleaner-form input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,70,229,.1); }
 
     /* ===== TOAST ===== */
     .toast {
       position: fixed;
       bottom: 24px;
       right: 24px;
-      background: #1a202c;
+      background: var(--text);
       color: #fff;
       padding: 12px 20px;
-      border-radius: 8px;
-      font-size: 14px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 500;
       z-index: 200;
       opacity: 0;
-      transform: translateY(10px);
-      transition: all .3s;
+      transform: translateY(8px);
+      transition: all .25s;
       pointer-events: none;
+      box-shadow: var(--shadow-md);
     }
     .toast.show { opacity: 1; transform: translateY(0); }
 
-    /* Hidden */
     .hidden { display: none !important; }
   </style>
 </head>
@@ -362,23 +482,55 @@
 
   <!-- HEADER -->
   <div class="header">
-    <h1><i data-lucide="hotel" style="width:24px;height:24px;margin-right:8px;"></i>Менеджер Бронирований Atrani</h1>
+    <div class="header-left">
+      <div class="header-logo">
+        <i data-lucide="building-2" style="width:20px;height:20px;"></i>
+      </div>
+      <h1>Atrani <span>Бронирования</span></h1>
+    </div>
     <div class="header-actions">
       <span class="last-sync" id="lastSync"></span>
-      <button class="btn btn-outline" id="syncBtn" onclick="syncCalendars()">
-        <i data-lucide="refresh-cw" style="width:14px;height:14px;margin-right:4px;"></i>Синхронизация
+      <button class="btn btn-ghost" id="syncBtn" onclick="syncCalendars()">
+        <i data-lucide="refresh-cw" style="width:14px;height:14px;"></i>Синхронизация
       </button>
     </div>
   </div>
 
-  <!-- TABS -->
-  <div class="tabs">
-    <div class="tab active" data-tab="calendar" onclick="switchTab('calendar')">
-      <i data-lucide="calendar" style="width:16px;height:16px;margin-right:6px;"></i>Календарь
+  <!-- NAV -->
+  <div class="nav">
+    <div class="nav-item active" data-tab="calendar" onclick="switchTab('calendar')">
+      <i data-lucide="calendar-days" style="width:16px;height:16px;"></i>Календарь
     </div>
-    <div class="tab" data-tab="cleaners" onclick="switchTab('cleaners')">
-      <i data-lucide="sparkles" style="width:16px;height:16px;margin-right:6px;"></i>Уборка
+    <div class="nav-item" data-tab="cleaners" onclick="switchTab('cleaners')">
+      <i data-lucide="sparkles" style="width:16px;height:16px;"></i>Уборка
     </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-bar" id="statsBar">
+    <div class="stat-card">
+      <div class="stat-label">Апартаменты</div>
+      <div class="stat-value" id="statProperties">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Бронирования</div>
+      <div class="stat-value" id="statBookings">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Ближайший заезд</div>
+      <div class="stat-value" id="statNextCheckin" style="font-size:16px;">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Уборки в ожидании</div>
+      <div class="stat-value" id="statPendingClean">—</div>
+    </div>
+  </div>
+
+  <!-- LEGEND -->
+  <div class="legend" id="legend">
+    <div class="legend-item"><div class="legend-dot airbnb"></div>Airbnb</div>
+    <div class="legend-item"><div class="legend-dot booking"></div>Booking.com</div>
+    <div class="legend-item"><div class="legend-dot unavailable"></div>Недоступно</div>
   </div>
 
   <!-- CALENDAR TAB -->
@@ -392,43 +544,36 @@
 
   <!-- CLEANERS TAB -->
   <div class="cleaners-section" id="cleanersTab">
-    <!-- Add cleaner form -->
     <div class="add-cleaner-form">
-      <input type="text" id="newCleanerName" placeholder="Имя уборщицы..." 
+      <i data-lucide="user-plus" style="width:18px;height:18px;color:var(--text-secondary);"></i>
+      <input type="text" id="newCleanerName" placeholder="Имя уборщицы..."
              onkeydown="if(event.key==='Enter') addCleaner()">
-      <button class="btn btn-primary" onclick="addCleaner()">+ Добавить</button>
+      <button class="btn btn-primary" onclick="addCleaner()">
+        <i data-lucide="plus" style="width:14px;height:14px;"></i>Добавить
+      </button>
     </div>
-
-    <!-- Unassigned properties -->
     <div id="unassignedCard"></div>
-
-    <!-- Cleaner cards -->
     <div class="cleaners-grid" id="cleanersGrid"></div>
   </div>
 
-  <!-- Toast -->
   <div class="toast" id="toast"></div>
 
 <script>
 const API = '/api';
 
-// ===== STATE =====
 let properties = [];
 let bookings = [];
 let cleaners = [];
-let allAssignments = {}; // propertyId -> [cleanerIds]
+let allAssignments = {};
 
-// ===== TABS =====
 function switchTab(tab) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
-  document.getElementById('calendarTab').classList.toggle('active', tab === 'calendar');
-  document.getElementById('cleanersTab').classList.toggle('active', tab === 'cleaners');
-  // Show/hide
+  document.querySelectorAll('.nav-item').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
   document.getElementById('calendarTab').style.display = tab === 'calendar' ? 'block' : 'none';
   document.getElementById('cleanersTab').style.display = tab === 'cleaners' ? 'block' : 'none';
+  document.getElementById('statsBar').style.display = tab === 'calendar' ? 'flex' : 'none';
+  document.getElementById('legend').style.display = tab === 'calendar' ? 'flex' : 'none';
 }
 
-// ===== LOAD DATA =====
 async function loadData() {
   try {
     const [propsRes, bookingsRes, cleanersRes] = await Promise.all([
@@ -440,7 +585,6 @@ async function loadData() {
     bookings = await bookingsRes.json();
     cleaners = await cleanersRes.json();
 
-    // Build assignment map
     allAssignments = {};
     properties.forEach(p => allAssignments[p.id] = []);
     cleaners.forEach(c => {
@@ -450,63 +594,68 @@ async function loadData() {
       });
     });
 
+    updateStats();
     renderCalendar();
     renderCleaners();
-    document.getElementById('lastSync').textContent = `Обновлено: ${new Date().toLocaleTimeString('ru-RU')}`;
-    
-    // Initialize Lucide icons
-    if (typeof lucide !== 'undefined') {
-      lucide.createIcons();
-    }
+    document.getElementById('lastSync').textContent = new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+
+    if (typeof lucide !== 'undefined') lucide.createIcons();
   } catch (err) {
     toast('Ошибка загрузки: ' + err.message);
   }
 }
 
-// ===== PROPERTY ICONS =====
-function getPropertyIcon(propertyId) {
-  const icons = {
-    'awesome': 'sparkles',
-    'orange': 'citrus',
-    'vingtage': 'wine',
-    'youth': 'zap',
-    'solo': 'user',
-    'carina': 'heart',
-    'royal': 'crown',
-    'harmony': 'music'
-  };
-  return icons[propertyId] || 'home';
+function updateStats() {
+  document.getElementById('statProperties').textContent = properties.length;
+
+  const realBookings = bookings.filter(b => !b.raw_summary?.includes('Not available') && !b.raw_summary?.includes('CLOSED'));
+  document.getElementById('statBookings').textContent = realBookings.length;
+
+  // Next check-in
+  const today = new Date().toISOString().split('T')[0];
+  const upcoming = realBookings.filter(b => b.start_date >= today).sort((a,b) => a.start_date.localeCompare(b.start_date));
+  if (upcoming.length > 0) {
+    const next = upcoming[0];
+    const prop = properties.find(p => p.id === next.property_id);
+    const d = new Date(next.start_date + 'T00:00:00');
+    const dateStr = d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+    document.getElementById('statNextCheckin').textContent = `${dateStr} · ${prop?.name || ''}`;
+  }
+
+  // Pending cleaning
+  document.getElementById('statPendingClean').textContent = '—'; // Will be updated when cleaning API available
 }
 
-// ===== CALENDAR RENDERING =====
+const propertyConfig = {
+  'awesome':  { icon: 'sparkles', color: '#8b5cf6', bg: '#f5f3ff' },
+  'orange':   { icon: 'citrus',   color: '#ea580c', bg: '#fff7ed' },
+  'vingtage': { icon: 'wine',     color: '#be185d', bg: '#fdf2f8' },
+  'youth':    { icon: 'zap',      color: '#0891b2', bg: '#ecfeff' },
+  'solo':     { icon: 'user',     color: '#4f46e5', bg: '#eef2ff' },
+  'carina':   { icon: 'heart',    color: '#e11d48', bg: '#fff1f2' },
+  'royal':    { icon: 'crown',    color: '#ca8a04', bg: '#fefce8' },
+  'harmony':  { icon: 'music',    color: '#059669', bg: '#ecfdf5' }
+};
+
 function renderCalendar() {
   const grid = document.getElementById('calendarGrid');
   const today = new Date();
   today.setHours(0,0,0,0);
-  
-  // Generate days from today to Dec 31
+
   const endDate = new Date(today.getFullYear(), 11, 31);
   const days = [];
   const d = new Date(today);
-  while (d <= endDate) {
-    days.push(new Date(d));
-    d.setDate(d.getDate() + 1);
-  }
+  while (d <= endDate) { days.push(new Date(d)); d.setDate(d.getDate() + 1); }
   const totalDays = days.length;
-  const totalCols = 1 + totalDays; // property col + day cols
 
-  // Build grid template
-  const colTemplate = `160px repeat(${totalDays}, 36px)`;
   grid.style.display = 'grid';
-  grid.style.gridTemplateColumns = colTemplate;
-  grid.style.gridTemplateRows = `auto repeat(${properties.length}, 40px)`;
+  grid.style.gridTemplateColumns = `180px repeat(${totalDays}, 38px)`;
   grid.innerHTML = '';
 
-  const dayNames = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
-  const monthNames = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
+  const dayNames = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+  const monthNames = ['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'];
 
-  // === HEADER ROW ===
-  // Property column header
+  // Header
   const propHeader = document.createElement('div');
   propHeader.className = 'cal-property-header cal-property-col';
   propHeader.textContent = 'Апартаменты';
@@ -514,7 +663,6 @@ function renderCalendar() {
   propHeader.style.gridColumn = '1';
   grid.appendChild(propHeader);
 
-  // Day headers
   days.forEach((day, i) => {
     const col = i + 2;
     const isToday = day.getTime() === today.getTime();
@@ -526,289 +674,229 @@ function renderCalendar() {
     el.style.gridRow = '1';
     el.style.gridColumn = col;
     el.innerHTML = `<div class="day-num">${day.getDate()}</div><div class="day-name">${dayNames[day.getDay()]}</div>`;
-    
-    // Add month label for 1st of month or first visible day
+
     if (isMonthStart || i === 0) {
       el.title = monthNames[day.getMonth()] + ' ' + day.getFullYear();
       if (isMonthStart) {
         const label = document.createElement('div');
         label.className = 'cal-month-label';
         label.textContent = monthNames[day.getMonth()];
-        label.style.left = `${160 + i * 36}px`;
-        // We'll add it to the scroll wrapper later
-        setTimeout(() => {
-          document.getElementById('calendarScroll').appendChild(label);
-        }, 0);
+        label.style.left = `${180 + i * 38}px`;
+        setTimeout(() => document.getElementById('calendarScroll').appendChild(label), 0);
       }
     }
-
     grid.appendChild(el);
   });
 
-  // Property colors
-  const colors = ['#3182ce', '#d53f8c', '#38a169', '#dd6b20', '#805ad5', '#e53e3e', '#319795', '#d69e2e'];
-
-  // === GROUPED PROPERTIES ===
   const groups = [
-    {
-      name: 'DRAGONE',
-      properties: ['awesome', 'orange', 'vingtage', 'youth', 'solo']
-    },
-    {
-      name: 'SALVATORE / MARGARITA',
-      properties: ['carina', 'royal', 'harmony']
-    }
+    { name: 'Dragone', properties: ['awesome', 'orange', 'vingtage', 'youth', 'solo'] },
+    { name: 'Salvatore / Margarita', properties: ['carina', 'royal', 'harmony'] }
   ];
 
   let currentRow = 2;
 
   groups.forEach(group => {
     // Group header
-    const groupHeader = document.createElement('div');
-    groupHeader.className = 'cal-group-header';
-    groupHeader.style.gridRow = currentRow;
-    groupHeader.style.gridColumn = '1';
-    groupHeader.innerHTML = `<span style="font-size:10px; font-weight:700; letter-spacing:0.5px; color:var(--muted); text-transform:uppercase;">${group.name}</span>`;
-    grid.appendChild(groupHeader);
+    const gh = document.createElement('div');
+    gh.className = 'cal-group-header cal-property-col';
+    gh.style.gridRow = currentRow;
+    gh.style.gridColumn = '1';
+    gh.innerHTML = `<span class="cal-group-label">${group.name}</span>`;
+    grid.appendChild(gh);
+
+    // Group header spacer cells
+    days.forEach((_, i) => {
+      const spacer = document.createElement('div');
+      spacer.className = 'cal-group-header';
+      spacer.style.gridRow = currentRow;
+      spacer.style.gridColumn = i + 2;
+      grid.appendChild(spacer);
+    });
     currentRow++;
 
-    // Group properties
     group.properties.forEach(propId => {
       const prop = properties.find(p => p.id === propId);
       if (!prop) return;
-
       const row = currentRow;
-      const colorIdx = properties.findIndex(p => p.id === propId);
-      const color = colors[colorIdx % colors.length];
+      const cfg = propertyConfig[propId] || { icon: 'home', color: '#6b7280', bg: '#f9fafb' };
 
-    // Property name (sticky)
-    const nameEl = document.createElement('div');
-    nameEl.className = 'cal-property-name cal-property-col';
-    nameEl.style.gridRow = row;
-    nameEl.style.gridColumn = '1';
-    const icon = getPropertyIcon(prop.id);
-    nameEl.innerHTML = `<i data-lucide="${icon}" style="width:16px;height:16px;color:${color};"></i>${prop.name}`;
-    grid.appendChild(nameEl);
+      // Property name
+      const nameEl = document.createElement('div');
+      nameEl.className = 'cal-property-name cal-property-col';
+      nameEl.style.gridRow = row;
+      nameEl.style.gridColumn = '1';
+      nameEl.innerHTML = `
+        <div class="cal-property-icon" style="background:${cfg.bg}; color:${cfg.color};">
+          <i data-lucide="${cfg.icon}" style="width:14px;height:14px;"></i>
+        </div>
+        <span>${prop.name}</span>
+      `;
+      grid.appendChild(nameEl);
 
-    // Day cells
-    days.forEach((day, dayIdx) => {
-      const col = dayIdx + 2;
-      const isToday = day.getTime() === today.getTime();
-      const isWeekend = day.getDay() === 0 || day.getDay() === 6;
-      const isMonthStart = day.getDate() === 1;
+      // Day cells
+      days.forEach((day, dayIdx) => {
+        const cell = document.createElement('div');
+        const isToday = day.getTime() === today.getTime();
+        const isWeekend = day.getDay() === 0 || day.getDay() === 6;
+        const isMonthStart = day.getDate() === 1;
+        cell.className = 'cal-cell' + (isToday ? ' today' : '') + (isWeekend ? ' weekend' : '') + (isMonthStart ? ' month-start' : '');
+        cell.style.gridRow = row;
+        cell.style.gridColumn = dayIdx + 2;
+        grid.appendChild(cell);
+      });
 
-      const cell = document.createElement('div');
-      cell.className = 'cal-cell' + (isToday ? ' today' : '') + (isWeekend ? ' weekend' : '') + (isMonthStart ? ' month-start' : '');
-      cell.style.gridRow = row;
-      cell.style.gridColumn = col;
-      grid.appendChild(cell);
-    });
+      // Booking bars
+      const seen = new Set();
+      bookings.filter(b => b.property_id === prop.id).filter(b => {
+        const key = `${b.start_date}_${b.end_date}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      }).forEach(booking => {
+        const start = new Date(booking.start_date + 'T00:00:00');
+        const end = new Date(booking.end_date + 'T00:00:00');
+        const startIdx = Math.max(0, Math.round((start - today) / 86400000));
+        const endIdx = Math.min(totalDays, Math.round((end - today) / 86400000));
+        if (endIdx <= 0 || startIdx >= totalDays) return;
+        const width = (endIdx - startIdx) * 38 - 2;
+        if (width <= 0) return;
 
-    // Render booking bars for this property
-    const propBookings = bookings.filter(b => b.property_id === prop.id);
-    
-    // Deduplicate overlapping bookings (take unique date ranges)
-    const seen = new Set();
-    const uniqueBookings = propBookings.filter(b => {
-      const key = `${b.start_date}_${b.end_date}`;
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
+        const bar = document.createElement('div');
+        const label = booking.raw_summary || booking.platform;
+        const isNotAvailable = booking.platform === 'airbnb' && label.includes('Not available');
 
-    uniqueBookings.forEach(booking => {
-      const start = new Date(booking.start_date + 'T00:00:00');
-      const end = new Date(booking.end_date + 'T00:00:00');
+        bar.className = `booking-bar ${booking.platform}${isNotAvailable ? ' not-available' : ''}`;
+        bar.style.gridRow = row;
+        bar.style.gridColumn = `${startIdx + 2} / ${endIdx + 3}`;
+        bar.style.position = 'relative';
+        bar.style.top = '7px';
+        bar.style.height = '28px';
+        bar.style.marginBottom = '-28px';
+        bar.style.marginLeft = '19px';
+        bar.style.marginRight = '19px';
 
-      // Calculate position relative to visible days
-      const startIdx = Math.max(0, Math.round((start - today) / 86400000));
-      const endIdx = Math.min(totalDays, Math.round((end - today) / 86400000));
+        const shortLabel = width > 80 ? label : '';
+        bar.innerHTML = `<span class="bar-label">${shortLabel}</span>`;
+        bar.title = `${booking.platform}: ${booking.start_date} → ${booking.end_date}\n${label}`;
+        grid.appendChild(bar);
+      });
 
-      if (endIdx <= 0 || startIdx >= totalDays) return; // Not visible
-
-      const left = startIdx * 36;
-      const width = (endIdx - startIdx) * 36 - 2;
-
-      if (width <= 0) return;
-
-      const bar = document.createElement('div');
-      const label = booking.raw_summary || booking.platform;
-      
-      // Only stripe Airbnb "Not available" (Booking.com always shows CLOSED, so don't stripe it)
-      const isNotAvailable = booking.platform === 'airbnb' && label.includes('Not available');
-      const notAvailableClass = isNotAvailable ? ' not-available' : '';
-      
-      bar.className = `booking-bar ${booking.platform}${notAvailableClass}`;
-      bar.style.gridRow = row;
-      // Bar должен охватывать обе ячейки: день check-in И день check-out
-      bar.style.gridColumn = `${startIdx + 2} / ${endIdx + 3}`;
-      bar.style.position = 'relative';
-      bar.style.top = '6px';
-      bar.style.height = '28px';
-      bar.style.marginBottom = '-28px';
-      
-      // Check-in starts at noon (50% offset from left)
-      // Check-out ends at noon (50% offset from right)
-      bar.style.marginLeft = '18px'; // Half of 36px cell width (check-in time)
-      bar.style.marginRight = '18px'; // Half of 36px cell width (check-out time)
-
-      const shortLabel = width > 70 ? label : '';
-      bar.innerHTML = `<span class="bar-label">${shortLabel}</span>`;
-      bar.title = `${booking.platform}: ${booking.start_date} → ${booking.end_date}\n${label}`;
-
-      grid.appendChild(bar);
-    });
-    
-    currentRow++;
+      currentRow++;
     });
   });
 }
 
-// ===== CLEANERS RENDERING =====
 function renderCleaners() {
   const grid = document.getElementById('cleanersGrid');
   const unassignedEl = document.getElementById('unassignedCard');
 
-  // Find unassigned properties
-  const unassigned = properties.filter(p => {
-    return !cleaners.some(c => (c.properties || []).some(cp => cp.id === p.id));
-  });
+  const unassigned = properties.filter(p => !cleaners.some(c => (c.properties || []).some(cp => cp.id === p.id)));
 
-  // Render unassigned card
   if (unassigned.length > 0) {
     unassignedEl.innerHTML = `
-      <div class="cleaner-card unassigned-card" style="margin-bottom:20px">
+      <div class="cleaner-card unassigned-card" style="margin-bottom:16px">
         <div class="cleaner-card-header">
-          <h3>⚠️ Без уборщицы (${unassigned.length})</h3>
+          <h3><i data-lucide="alert-triangle" style="width:18px;height:18px;color:var(--warning);"></i>Без уборщицы (${unassigned.length})</h3>
         </div>
         <div class="cleaner-properties">
-          ${unassigned.map(p => `
-            <div class="cleaner-property-item">
-              <label>${p.name}</label>
-              <span style="font-size:12px; color:var(--orange)">Не назначено</span>
-            </div>
-          `).join('')}
+          ${unassigned.map(p => {
+            const cfg = propertyConfig[p.id] || {};
+            return `<div class="cleaner-property-item">
+              <label><i data-lucide="${cfg.icon || 'home'}" style="width:14px;height:14px;color:${cfg.color || '#999'};"></i>${p.name}</label>
+              <span style="font-size:12px;color:var(--warning);font-weight:500;">Не назначено</span>
+            </div>`;
+          }).join('')}
         </div>
       </div>
     `;
   } else {
     unassignedEl.innerHTML = `
-      <div style="background:var(--green-light); border:1px solid #c6f6d5; border-radius:var(--radius); padding:14px 20px; margin-bottom:20px; font-size:14px; color:var(--green);">
-        ✅ Всем апартаментам назначена уборщица
+      <div style="background:var(--success-light); border:1px solid #a7f3d0; border-radius:var(--radius); padding:14px 20px; margin-bottom:16px; font-size:13px; color:var(--success); display:flex; align-items:center; gap:8px;">
+        <i data-lucide="check-circle" style="width:16px;height:16px;"></i>Всем апартаментам назначена уборщица
       </div>
     `;
   }
 
-  // Render cleaner cards
-  grid.innerHTML = cleaners.map(cleaner => {
-    const assignedIds = (cleaner.properties || []).map(p => p.id);
-    return `
-      <div class="cleaner-card">
-        <div class="cleaner-card-header">
-          <h3>${cleaner.name}</h3>
-          <div style="display:flex;gap:6px">
-            <button class="btn btn-danger btn-sm" onclick="deleteCleaner('${cleaner.id}', '${cleaner.name}')">Удалить</button>
-          </div>
-        </div>
-        <div class="cleaner-properties">
-          ${properties.map(p => `
-            <div class="cleaner-property-item">
-              <label>
-                <input type="checkbox" 
-                  ${assignedIds.includes(p.id) ? 'checked' : ''}
-                  onchange="toggleAssignment('${cleaner.id}', '${p.id}', this.checked)">
-                ${p.name}
-              </label>
-            </div>
-          `).join('')}
-        </div>
+  grid.innerHTML = cleaners.map(cleaner => `
+    <div class="cleaner-card">
+      <div class="cleaner-card-header">
+        <h3><i data-lucide="user" style="width:16px;height:16px;"></i>${cleaner.name}</h3>
+        <button class="btn btn-danger-ghost btn-sm" onclick="deleteCleaner('${cleaner.id}', '${cleaner.name}')">
+          <i data-lucide="trash-2" style="width:12px;height:12px;"></i>Удалить
+        </button>
       </div>
-    `;
-  }).join('');
+      <div class="cleaner-properties">
+        ${properties.map(p => {
+          const assigned = (cleaner.properties || []).map(cp => cp.id).includes(p.id);
+          const cfg = propertyConfig[p.id] || {};
+          return `<div class="cleaner-property-item">
+            <label>
+              <input type="checkbox" ${assigned ? 'checked' : ''} onchange="toggleAssignment('${cleaner.id}', '${p.id}', this.checked)">
+              <i data-lucide="${cfg.icon || 'home'}" style="width:14px;height:14px;color:${cfg.color || '#999'};"></i>
+              ${p.name}
+            </label>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+  `).join('');
 }
 
-// ===== ACTIONS =====
 async function addCleaner() {
   const input = document.getElementById('newCleanerName');
   const name = input.value.trim();
   if (!name) return;
-
   try {
-    const res = await fetch(`${API}/cleaners`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name })
-    });
+    const res = await fetch(`${API}/cleaners`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) });
     if (!res.ok) throw new Error('Failed');
     input.value = '';
     toast(`✅ ${name} добавлена`);
     await loadData();
-  } catch (err) {
-    toast('❌ Ошибка: ' + err.message);
-  }
+  } catch (err) { toast('❌ Ошибка: ' + err.message); }
 }
 
 async function deleteCleaner(id, name) {
   if (!confirm(`Удалить ${name}?`)) return;
-
   try {
     const res = await fetch(`${API}/cleaners/${id}`, { method: 'DELETE' });
     if (!res.ok) throw new Error('Failed');
-    toast(`🗑️ ${name} rimossa`);
+    toast(`🗑️ ${name} удалена`);
     await loadData();
-  } catch (err) {
-    toast('❌ Ошибка: ' + err.message);
-  }
+  } catch (err) { toast('❌ Ошибка: ' + err.message); }
 }
 
 async function toggleAssignment(cleanerId, propertyId, checked) {
-  // Get current cleaner data
   const cleaner = cleaners.find(c => c.id === cleanerId);
   const currentIds = (cleaner.properties || []).map(p => p.id);
-
-  let newIds;
-  if (checked) {
-    newIds = [...currentIds, propertyId];
-  } else {
-    newIds = currentIds.filter(id => id !== propertyId);
-  }
-
+  const newIds = checked ? [...currentIds, propertyId] : currentIds.filter(id => id !== propertyId);
   try {
-    const res = await fetch(`${API}/cleaners/${cleanerId}/properties`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ property_ids: newIds })
-    });
+    const res = await fetch(`${API}/cleaners/${cleanerId}/properties`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ property_ids: newIds }) });
     if (!res.ok) throw new Error('Failed');
     await loadData();
-  } catch (err) {
-    toast('❌ Ошибка: ' + err.message);
-  }
+  } catch (err) { toast('❌ Ошибка: ' + err.message); }
 }
 
 async function syncCalendars() {
   const btn = document.getElementById('syncBtn');
   btn.disabled = true;
-  btn.textContent = '⏳ Синхронизация...';
-
+  btn.innerHTML = '<i data-lucide="loader-2" style="width:14px;height:14px;animation:spin 1s linear infinite;"></i>Синхронизация...';
+  if (typeof lucide !== 'undefined') lucide.createIcons();
   try {
     await fetch(`${API}/sync`, { method: 'POST' });
-    toast('🔄 Синхронизация запущена');
-    // Reload after a few seconds
     setTimeout(async () => {
       await loadData();
       btn.disabled = false;
-      btn.textContent = '🔄 Sync';
+      btn.innerHTML = '<i data-lucide="refresh-cw" style="width:14px;height:14px;"></i>Синхронизация';
+      if (typeof lucide !== 'undefined') lucide.createIcons();
       toast('✅ Синхронизация завершена');
     }, 3000);
   } catch (err) {
     toast('❌ Ошибка синхронизации: ' + err.message);
     btn.disabled = false;
-    btn.textContent = '🔄 Sync';
+    btn.innerHTML = '<i data-lucide="refresh-cw" style="width:14px;height:14px;"></i>Синхронизация';
   }
 }
 
-// ===== TOAST =====
 function toast(msg) {
   const el = document.getElementById('toast');
   el.textContent = msg;
@@ -817,13 +905,13 @@ function toast(msg) {
   el._timeout = setTimeout(() => el.classList.remove('show'), 3000);
 }
 
-// ===== INIT =====
-// Initialize Lucide icons for static elements
-if (typeof lucide !== 'undefined') {
-  lucide.createIcons();
-}
+// Add spin animation
+const style = document.createElement('style');
+style.textContent = '@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }';
+document.head.appendChild(style);
+
+if (typeof lucide !== 'undefined') lucide.createIcons();
 loadData();
-// Auto-refresh every 5 min
 setInterval(loadData, 5 * 60 * 1000);
 </script>
 </body>
