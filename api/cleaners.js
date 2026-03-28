@@ -1,0 +1,30 @@
+// Vercel Serverless Function
+const USE_POSTGRES = process.env.POSTGRES_URL || process.env.DATABASE_URL;
+const db = USE_POSTGRES 
+  ? require('../backend/src/database-postgres')
+  : require('../backend/src/database');
+
+module.exports = async (req, res) => {
+  try {
+    // Initialize database connection
+    if (!db.pool && !db.db) {
+      await db.init();
+    }
+
+    if (req.method === 'GET') {
+      const cleaners = await db.getCleaners();
+      return res.status(200).json(cleaners);
+    }
+
+    if (req.method === 'POST') {
+      const { id, name } = req.body;
+      await db.createCleaner(id, name);
+      return res.status(201).json({ success: true });
+    }
+
+    res.status(405).json({ error: 'Method not allowed' });
+  } catch (error) {
+    console.error('Error with cleaners:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
