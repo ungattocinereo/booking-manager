@@ -223,6 +223,17 @@
     .booking-bar.booking { background: #003580; }
     .booking-bar.other { background: var(--gray-500); }
 
+    /* Diagonal stripes for "Not available" / "CLOSED" */
+    .booking-bar.not-available {
+      background-image: repeating-linear-gradient(
+        45deg,
+        rgba(255, 255, 255, 0.2),
+        rgba(255, 255, 255, 0.2) 4px,
+        transparent 4px,
+        transparent 8px
+      );
+    }
+
     .booking-bar .bar-label {
       overflow: hidden;
       text-overflow: ellipsis;
@@ -550,7 +561,13 @@ function renderCalendar() {
       if (width <= 0) return;
 
       const bar = document.createElement('div');
-      bar.className = `booking-bar ${booking.platform}`;
+      const label = booking.raw_summary || booking.platform;
+      
+      // Check if it's "Not available" or "CLOSED"
+      const isNotAvailable = label.includes('Not available') || label.includes('CLOSED');
+      const notAvailableClass = isNotAvailable ? ' not-available' : '';
+      
+      bar.className = `booking-bar ${booking.platform}${notAvailableClass}`;
       bar.style.gridRow = row;
       bar.style.gridColumn = `${startIdx + 2} / ${endIdx + 2}`;
       bar.style.position = 'relative';
@@ -558,7 +575,6 @@ function renderCalendar() {
       bar.style.height = '28px';
       bar.style.marginBottom = '-28px';
 
-      const label = booking.raw_summary || booking.platform;
       const shortLabel = width > 70 ? label : '';
       bar.innerHTML = `<span class="bar-label">${shortLabel}</span>`;
       bar.title = `${booking.platform}: ${booking.start_date} → ${booking.end_date}\n${label}`;
