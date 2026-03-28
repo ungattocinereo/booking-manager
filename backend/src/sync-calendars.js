@@ -115,23 +115,36 @@ async function syncPropertyCalendars(property) {
 async function generateCleaningTasks() {
   console.log('\n🧹 Generating cleaning tasks...');
   
+  // Ensure database is initialized
+  if (!db.pool && !db.db) {
+    await db.init();
+  }
+  
   // Get all upcoming bookings
   const today = new Date().toISOString().split('T')[0];
   const bookings = await db.getBookings(null, today);
   
+  console.log(`  Found ${bookings.length} bookings to process`);
+  
   let tasksCreated = 0;
+  let tasksSkipped = 0;
   
   for (const booking of bookings) {
-    // Create cleaning task for checkout day (createCleaningTask checks for duplicates internally)
+    // Create cleaning task for checkout day
     try {
-      await db.createCleaningTask(booking.property_id, booking.end_date, 'checkout_cleaning');
-      tasksCreated++;
+      const result = await db.createCleaningTask(booking.property_id, booking.end_date, 'checkout_cleaning');
+      if (result && result.rowCount > 0) {
+        tasksCreated++;
+      } else {
+        tasksSkipped++;
+      }
     } catch (err) {
-      // Task might already exist, skip silently
+      // Task might already exist
+      tasksSkipped++;
     }
   }
   
-  console.log(`  ✅ Created ${tasksCreated} new cleaning tasks`);
+  console.log(`  ✅ Created ${tasksCreated} new tasks, skipped ${tasksSkipped} existing`);
   return tasksCreated;
 }
 
