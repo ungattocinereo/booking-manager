@@ -172,9 +172,19 @@
       z-index: 5;
     }
 
+    /* Property groups */
+    .cal-group-header {
+      padding: 10px 14px 6px;
+      background: var(--gray-100);
+      border-bottom: 1px solid var(--border);
+      height: 32px;
+      display: flex;
+      align-items: center;
+    }
+
     /* Property rows */
     .cal-property-name {
-      padding: 8px 14px;
+      padding: 8px 14px 8px 24px;
       font-size: 13px;
       font-weight: 600;
       border-bottom: 1px solid var(--border);
@@ -506,10 +516,38 @@ function renderCalendar() {
   // Property colors
   const colors = ['#3182ce', '#d53f8c', '#38a169', '#dd6b20', '#805ad5', '#e53e3e', '#319795', '#d69e2e'];
 
-  // === PROPERTY ROWS ===
-  properties.forEach((prop, rowIdx) => {
-    const row = rowIdx + 2;
-    const color = colors[rowIdx % colors.length];
+  // === GROUPED PROPERTIES ===
+  const groups = [
+    {
+      name: 'DRAGONE',
+      properties: ['awesome', 'orange', 'vingtage', 'youth', 'solo']
+    },
+    {
+      name: 'SALVATORE / MARGARITA',
+      properties: ['carina', 'royal', 'harmony']
+    }
+  ];
+
+  let currentRow = 2;
+
+  groups.forEach(group => {
+    // Group header
+    const groupHeader = document.createElement('div');
+    groupHeader.className = 'cal-group-header';
+    groupHeader.style.gridRow = currentRow;
+    groupHeader.style.gridColumn = '1';
+    groupHeader.innerHTML = `<span style="font-size:10px; font-weight:700; letter-spacing:0.5px; color:var(--muted); text-transform:uppercase;">${group.name}</span>`;
+    grid.appendChild(groupHeader);
+    currentRow++;
+
+    // Group properties
+    group.properties.forEach(propId => {
+      const prop = properties.find(p => p.id === propId);
+      if (!prop) return;
+
+      const row = currentRow;
+      const colorIdx = properties.findIndex(p => p.id === propId);
+      const color = colors[colorIdx % colors.length];
 
     // Property name (sticky)
     const nameEl = document.createElement('div');
@@ -574,12 +612,20 @@ function renderCalendar() {
       bar.style.top = '6px';
       bar.style.height = '28px';
       bar.style.marginBottom = '-28px';
+      
+      // Check-in starts at noon (50% offset from left)
+      // Check-out ends at noon (50% less width on right)
+      bar.style.marginLeft = '18px'; // Half of 36px cell width
+      bar.style.width = `calc(100% - 36px)`; // Remove one full day width (half from start, half from end)
 
       const shortLabel = width > 70 ? label : '';
       bar.innerHTML = `<span class="bar-label">${shortLabel}</span>`;
       bar.title = `${booking.platform}: ${booking.start_date} → ${booking.end_date}\n${label}`;
 
       grid.appendChild(bar);
+    });
+    
+    currentRow++;
     });
   });
 }
