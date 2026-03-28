@@ -607,16 +607,17 @@ function renderCalendar() {
       
       bar.className = `booking-bar ${booking.platform}${notAvailableClass}`;
       bar.style.gridRow = row;
-      bar.style.gridColumn = `${startIdx + 2} / ${endIdx + 2}`;
+      // Bar должен охватывать обе ячейки: день check-in И день check-out
+      bar.style.gridColumn = `${startIdx + 2} / ${endIdx + 3}`;
       bar.style.position = 'relative';
       bar.style.top = '6px';
       bar.style.height = '28px';
       bar.style.marginBottom = '-28px';
       
       // Check-in starts at noon (50% offset from left)
-      // Check-out ends at noon (50% less width on right)
-      bar.style.marginLeft = '18px'; // Half of 36px cell width
-      bar.style.width = `calc(100% - 36px)`; // Remove one full day width (half from start, half from end)
+      // Check-out ends at noon (50% offset from right)
+      bar.style.marginLeft = '18px'; // Half of 36px cell width (check-in time)
+      bar.style.marginRight = '18px'; // Half of 36px cell width (check-out time)
 
       const shortLabel = width > 70 ? label : '';
       bar.innerHTML = `<span class="bar-label">${shortLabel}</span>`;
