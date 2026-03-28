@@ -14,11 +14,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/USERNAME/atrani-booking-manager.git"
+    "url": "git+https://github.com/ungattocinereo/booking-manager.git"
   },
   "dependencies": {
     "express": "^4.18.2",
     "sqlite3": "^5.1.6",
+    "pg": "^8.11.3",
     "ical.js": "^1.5.0",
     "node-fetch": "^2.6.7",
     "cors": "^2.8.5",

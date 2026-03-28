@@ -1,7 +1,12 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const db = require('./database');
+
+// Use Postgres on Vercel, SQLite locally
+const USE_POSTGRES = process.env.POSTGRES_URL || process.env.DATABASE_URL;
+const db = USE_POSTGRES 
+  ? require('./database-postgres')
+  : require('./database');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
