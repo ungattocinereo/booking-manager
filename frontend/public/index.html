@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Atrani Booking Manager</title>
+  <title>Менеджер Бронирований Atrani</title>
   <style>
     :root {
       --bg: #f5f7fa;
@@ -356,10 +356,10 @@
 
   <!-- HEADER -->
   <div class="header">
-    <h1>🏠 Atrani Booking Manager</h1>
+    <h1>🏠 Менеджер Бронирований Atrani</h1>
     <div class="header-actions">
       <span class="last-sync" id="lastSync"></span>
-      <button class="btn btn-outline" id="syncBtn" onclick="syncCalendars()">🔄 Sync</button>
+      <button class="btn btn-outline" id="syncBtn" onclick="syncCalendars()">🔄 Синхронизация</button>
     </div>
   </div>
 
@@ -382,9 +382,9 @@
   <div class="cleaners-section" id="cleanersTab">
     <!-- Add cleaner form -->
     <div class="add-cleaner-form">
-      <input type="text" id="newCleanerName" placeholder="Nome della collaboratrice..." 
+      <input type="text" id="newCleanerName" placeholder="Имя уборщицы..." 
              onkeydown="if(event.key==='Enter') addCleaner()">
-      <button class="btn btn-primary" onclick="addCleaner()">+ Aggiungi</button>
+      <button class="btn btn-primary" onclick="addCleaner()">+ Добавить</button>
     </div>
 
     <!-- Unassigned properties -->
@@ -440,9 +440,9 @@ async function loadData() {
 
     renderCalendar();
     renderCleaners();
-    document.getElementById('lastSync').textContent = `Ultimo aggiornamento: ${new Date().toLocaleTimeString('it-IT')}`;
+    document.getElementById('lastSync').textContent = `Обновлено: ${new Date().toLocaleTimeString('ru-RU')}`;
   } catch (err) {
-    toast('Errore nel caricamento: ' + err.message);
+    toast('Ошибка загрузки: ' + err.message);
   }
 }
 
@@ -477,7 +477,7 @@ function renderCalendar() {
   // Property column header
   const propHeader = document.createElement('div');
   propHeader.className = 'cal-property-header cal-property-col';
-  propHeader.textContent = 'Appartamento';
+  propHeader.textContent = 'Апартаменты';
   propHeader.style.gridRow = '1';
   propHeader.style.gridColumn = '1';
   grid.appendChild(propHeader);
@@ -646,13 +646,13 @@ function renderCleaners() {
     unassignedEl.innerHTML = `
       <div class="cleaner-card unassigned-card" style="margin-bottom:20px">
         <div class="cleaner-card-header">
-          <h3>⚠️ Senza collaboratrice (${unassigned.length})</h3>
+          <h3>⚠️ Без уборщицы (${unassigned.length})</h3>
         </div>
         <div class="cleaner-properties">
           ${unassigned.map(p => `
             <div class="cleaner-property-item">
               <label>${p.name}</label>
-              <span style="font-size:12px; color:var(--orange)">Non assegnato</span>
+              <span style="font-size:12px; color:var(--orange)">Не назначено</span>
             </div>
           `).join('')}
         </div>
@@ -661,7 +661,7 @@ function renderCleaners() {
   } else {
     unassignedEl.innerHTML = `
       <div style="background:var(--green-light); border:1px solid #c6f6d5; border-radius:var(--radius); padding:14px 20px; margin-bottom:20px; font-size:14px; color:var(--green);">
-        ✅ Tutti gli appartamenti hanno una collaboratrice assegnata
+        ✅ Всем апартаментам назначена уборщица
       </div>
     `;
   }
@@ -674,7 +674,7 @@ function renderCleaners() {
         <div class="cleaner-card-header">
           <h3>${cleaner.name}</h3>
           <div style="display:flex;gap:6px">
-            <button class="btn btn-danger btn-sm" onclick="deleteCleaner('${cleaner.id}', '${cleaner.name}')">Elimina</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteCleaner('${cleaner.id}', '${cleaner.name}')">Удалить</button>
           </div>
         </div>
         <div class="cleaner-properties">
@@ -708,15 +708,15 @@ async function addCleaner() {
     });
     if (!res.ok) throw new Error('Failed');
     input.value = '';
-    toast(`✅ ${name} aggiunta`);
+    toast(`✅ ${name} добавлена`);
     await loadData();
   } catch (err) {
-    toast('❌ Errore: ' + err.message);
+    toast('❌ Ошибка: ' + err.message);
   }
 }
 
 async function deleteCleaner(id, name) {
-  if (!confirm(`Eliminare ${name}?`)) return;
+  if (!confirm(`Удалить ${name}?`)) return;
 
   try {
     const res = await fetch(`${API}/cleaners/${id}`, { method: 'DELETE' });
@@ -724,7 +724,7 @@ async function deleteCleaner(id, name) {
     toast(`🗑️ ${name} rimossa`);
     await loadData();
   } catch (err) {
-    toast('❌ Errore: ' + err.message);
+    toast('❌ Ошибка: ' + err.message);
   }
 }
 
@@ -749,27 +749,27 @@ async function toggleAssignment(cleanerId, propertyId, checked) {
     if (!res.ok) throw new Error('Failed');
     await loadData();
   } catch (err) {
-    toast('❌ Errore: ' + err.message);
+    toast('❌ Ошибка: ' + err.message);
   }
 }
 
 async function syncCalendars() {
   const btn = document.getElementById('syncBtn');
   btn.disabled = true;
-  btn.textContent = '⏳ Sync...';
+  btn.textContent = '⏳ Синхронизация...';
 
   try {
     await fetch(`${API}/sync`, { method: 'POST' });
-    toast('🔄 Sincronizzazione avviata');
+    toast('🔄 Синхронизация запущена');
     // Reload after a few seconds
     setTimeout(async () => {
       await loadData();
       btn.disabled = false;
       btn.textContent = '🔄 Sync';
-      toast('✅ Sincronizzazione completata');
+      toast('✅ Синхронизация завершена');
     }, 3000);
   } catch (err) {
-    toast('❌ Errore sync: ' + err.message);
+    toast('❌ Ошибка синхронизации: ' + err.message);
     btn.disabled = false;
     btn.textContent = '🔄 Sync';
   }
