@@ -1,0 +1,12 @@
+node_modules
+npm-debug.log
+.git
+.gitignore
+README.md
+PROJECT_SUMMARY.md
+docs/
+*.md
+.DS_Store
+logs/
+backend/database/*.db-journal
+backend/database/*.db-wal

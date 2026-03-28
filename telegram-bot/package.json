@@ -1,0 +1,13 @@
+{
+  "name": "atrani-booking-telegram-bot",
+  "version": "1.0.0",
+  "description": "Telegram bot for family chat with booking queries via OpenClaw",
+  "main": "bot.js",
+  "scripts": {
+    "start": "node bot.js"
+  },
+  "dependencies": {
+    "node-telegram-bot-api": "^0.66.0",
+    "axios": "^1.7.9"
+  }
+}

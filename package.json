@@ -1,0 +1,30 @@
+{
+  "name": "atrani-booking-manager",
+  "version": "1.0.0",
+  "description": "Booking and cleaning calendar management system for Atrani properties",
+  "main": "backend/src/server.js",
+  "scripts": {
+    "start": "node backend/src/server.js",
+    "dev": "nodemon backend/src/server.js",
+    "sync": "node backend/src/sync-calendars.js",
+    "test": "npm run sync && curl http://localhost:3001/health"
+  },
+  "keywords": ["booking", "calendar", "ical", "airbnb", "booking.com", "cleaning"],
+  "author": "Greg",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/USERNAME/atrani-booking-manager.git"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "sqlite3": "^5.1.6",
+    "ical.js": "^1.5.0",
+    "node-fetch": "^2.6.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.20"
+  }
+}

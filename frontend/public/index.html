@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Atrani Booking Manager</title>
+  <style>
+    :root {
+      --bg: #f5f7fa;
+      --card: #fff;
+      --border: #e2e8f0;
+      --text: #1a202c;
+      --muted: #718096;
+      --blue: #3182ce;
+      --blue-light: #ebf8ff;
+      --pink: #d53f8c;
+      --pink-light: #fff5f7;
+      --green: #38a169;
+      --green-light: #f0fff4;
+      --orange: #dd6b20;
+      --orange-light: #fffaf0;
+      --red: #e53e3e;
+      --gray-100: #f7fafc;
+      --gray-200: #edf2f7;
+      --gray-300: #e2e8f0;
+      --gray-400: #cbd5e0;
+      --gray-500: #a0aec0;
+      --shadow: 0 1px 3px rgba(0,0,0,.1);
+      --radius: 10px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    /* ===== HEADER ===== */
+    .header {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header h1 { font-size: 20px; font-weight: 700; }
+    .header-actions { display: flex; gap: 10px; align-items: center; }
+    .last-sync { font-size: 12px; color: var(--muted); }
+
+    /* ===== TABS ===== */
+    .tabs {
+      display: flex;
+      gap: 0;
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+    }
+    .tab {
+      padding: 12px 20px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--muted);
+      border-bottom: 2px solid transparent;
+      transition: all .2s;
+    }
+    .tab:hover { color: var(--text); }
+    .tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+
+    /* ===== BUTTONS ===== */
+    .btn {
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all .15s;
+    }
+    .btn-primary { background: var(--blue); color: #fff; }
+    .btn-primary:hover { background: #2b6cb0; }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+    .btn-outline:hover { background: var(--gray-100); }
+    .btn-danger { background: transparent; border: 1px solid var(--red); color: var(--red); }
+    .btn-danger:hover { background: #fff5f5; }
+    .btn-sm { padding: 4px 10px; font-size: 12px; }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+
+    /* ===== CALENDAR VIEW ===== */
+    .calendar-section { padding: 24px; }
+
+    .calendar-container {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .calendar-scroll-wrapper {
+      overflow-x: auto;
+      position: relative;
+    }
+    .calendar-scroll-wrapper::-webkit-scrollbar { height: 8px; }
+    .calendar-scroll-wrapper::-webkit-scrollbar-track { background: var(--gray-100); }
+    .calendar-scroll-wrapper::-webkit-scrollbar-thumb { background: var(--gray-400); border-radius: 4px; }
+
+    .calendar-grid {
+      display: grid;
+      min-width: max-content;
+    }
+
+    /* Property column (sticky left) */
+    .cal-property-col {
+      position: sticky;
+      left: 0;
+      z-index: 10;
+      background: var(--card);
+      border-right: 2px solid var(--border);
+      min-width: 160px;
+    }
+
+    .cal-header-row {
+      display: contents;
+    }
+
+    .cal-property-header {
+      padding: 10px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      background: var(--gray-100);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .cal-day-header {
+      padding: 6px 0;
+      text-align: center;
+      font-size: 11px;
+      background: var(--gray-100);
+      border-bottom: 1px solid var(--border);
+      border-right: 1px solid var(--gray-200);
+      min-width: 36px;
+    }
+    .cal-day-header .day-num { font-weight: 600; font-size: 13px; color: var(--text); }
+    .cal-day-header .day-name { color: var(--muted); font-size: 10px; }
+    .cal-day-header.today { background: var(--blue-light); }
+    .cal-day-header.weekend { background: #fef5e7; }
+    .cal-day-header.month-start {
+      border-left: 2px solid var(--blue);
+    }
+
+    .cal-month-label {
+      position: absolute;
+      top: 0;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--blue);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      padding: 2px 6px;
+      background: var(--blue-light);
+      border-radius: 0 0 4px 4px;
+      z-index: 5;
+    }
+
+    /* Property rows */
+    .cal-property-name {
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      height: 40px;
+    }
+    .cal-property-name .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .cal-cell {
+      border-bottom: 1px solid var(--border);
+      border-right: 1px solid var(--gray-200);
+      height: 40px;
+      min-width: 36px;
+      position: relative;
+    }
+    .cal-cell.today { background: rgba(49,130,206,.05); }
+    .cal-cell.weekend { background: rgba(221,107,32,.03); }
+
+    /* Booking bars */
+    .booking-bar {
+      position: absolute;
+      top: 6px;
+      bottom: 6px;
+      border-radius: 4px;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      padding: 0 6px;
+      font-size: 11px;
+      font-weight: 500;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      cursor: default;
+      min-width: 8px;
+    }
+    .booking-bar.airbnb { background: #ff5a5f; }
+    .booking-bar.booking { background: #003580; }
+    .booking-bar.other { background: var(--gray-500); }
+
+    .booking-bar .bar-label {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* ===== CLEANERS VIEW ===== */
+    .cleaners-section { padding: 24px; display: none; }
+    .cleaners-section.active { display: block; }
+    .calendar-section.active { display: block; }
+
+    .cleaners-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 20px;
+    }
+
+    .cleaner-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .cleaner-card-header {
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+    }
+    .cleaner-card-header h3 { font-size: 16px; font-weight: 600; }
+
+    .cleaner-properties {
+      padding: 12px 20px;
+    }
+    .cleaner-property-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--gray-100);
+    }
+    .cleaner-property-item:last-child { border: none; }
+    .cleaner-property-item label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .cleaner-property-item input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+      accent-color: var(--blue);
+    }
+
+    /* Unassigned section */
+    .unassigned-card {
+      background: var(--orange-light);
+      border: 1px solid #fbd38d;
+    }
+    .unassigned-card .cleaner-card-header {
+      border-color: #fbd38d;
+    }
+
+    /* Add cleaner form */
+    .add-cleaner-form {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 20px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .add-cleaner-form input {
+      flex: 1;
+      padding: 8px 14px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 14px;
+      outline: none;
+    }
+    .add-cleaner-form input:focus { border-color: var(--blue); }
+
+    /* ===== TOAST ===== */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #1a202c;
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      z-index: 200;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all .3s;
+      pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+
+    /* Hidden */
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <div class="header">
+    <h1>🏠 Atrani Booking Manager</h1>
+    <div class="header-actions">
+      <span class="last-sync" id="lastSync"></span>
+      <button class="btn btn-outline" id="syncBtn" onclick="syncCalendars()">🔄 Sync</button>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <div class="tab active" data-tab="calendar" onclick="switchTab('calendar')">📅 Calendario</div>
+    <div class="tab" data-tab="cleaners" onclick="switchTab('cleaners')">🧹 Pulizie</div>
+  </div>
+
+  <!-- CALENDAR TAB -->
+  <div class="calendar-section active" id="calendarTab">
+    <div class="calendar-container">
+      <div class="calendar-scroll-wrapper" id="calendarScroll">
+        <div id="calendarGrid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CLEANERS TAB -->
+  <div class="cleaners-section" id="cleanersTab">
+    <!-- Add cleaner form -->
+    <div class="add-cleaner-form">
+      <input type="text" id="newCleanerName" placeholder="Nome della collaboratrice..." 
+             onkeydown="if(event.key==='Enter') addCleaner()">
+      <button class="btn btn-primary" onclick="addCleaner()">+ Aggiungi</button>
+    </div>
+
+    <!-- Unassigned properties -->
+    <div id="unassignedCard"></div>
+
+    <!-- Cleaner cards -->
+    <div class="cleaners-grid" id="cleanersGrid"></div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+<script>
+const API = '/api';
+
+// ===== STATE =====
+let properties = [];
+let bookings = [];
+let cleaners = [];
+let allAssignments = {}; // propertyId -> [cleanerIds]
+
+// ===== TABS =====
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  document.getElementById('calendarTab').classList.toggle('active', tab === 'calendar');
+  document.getElementById('cleanersTab').classList.toggle('active', tab === 'cleaners');
+  // Show/hide
+  document.getElementById('calendarTab').style.display = tab === 'calendar' ? 'block' : 'none';
+  document.getElementById('cleanersTab').style.display = tab === 'cleaners' ? 'block' : 'none';
+}
+
+// ===== LOAD DATA =====
+async function loadData() {
+  try {
+    const [propsRes, bookingsRes, cleanersRes] = await Promise.all([
+      fetch(`${API}/properties`),
+      fetch(`${API}/bookings`),
+      fetch(`${API}/cleaners`)
+    ]);
+    properties = await propsRes.json();
+    bookings = await bookingsRes.json();
+    cleaners = await cleanersRes.json();
+
+    // Build assignment map
+    allAssignments = {};
+    properties.forEach(p => allAssignments[p.id] = []);
+    cleaners.forEach(c => {
+      (c.properties || []).forEach(p => {
+        if (!allAssignments[p.id]) allAssignments[p.id] = [];
+        allAssignments[p.id].push(c.id);
+      });
+    });
+
+    renderCalendar();
+    renderCleaners();
+    document.getElementById('lastSync').textContent = `Ultimo aggiornamento: ${new Date().toLocaleTimeString('it-IT')}`;
+  } catch (err) {
+    toast('Errore nel caricamento: ' + err.message);
+  }
+}
+
+// ===== CALENDAR RENDERING =====
+function renderCalendar() {
+  const grid = document.getElementById('calendarGrid');
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  
+  // Generate days from today to Dec 31
+  const endDate = new Date(today.getFullYear(), 11, 31);
+  const days = [];
+  const d = new Date(today);
+  while (d <= endDate) {
+    days.push(new Date(d));
+    d.setDate(d.getDate() + 1);
+  }
+  const totalDays = days.length;
+  const totalCols = 1 + totalDays; // property col + day cols
+
+  // Build grid template
+  const colTemplate = `160px repeat(${totalDays}, 36px)`;
+  grid.style.display = 'grid';
+  grid.style.gridTemplateColumns = colTemplate;
+  grid.style.gridTemplateRows = `auto repeat(${properties.length}, 40px)`;
+  grid.innerHTML = '';
+
+  const dayNames = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'];
+  const monthNames = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
+
+  // === HEADER ROW ===
+  // Property column header
+  const propHeader = document.createElement('div');
+  propHeader.className = 'cal-property-header cal-property-col';
+  propHeader.textContent = 'Appartamento';
+  propHeader.style.gridRow = '1';
+  propHeader.style.gridColumn = '1';
+  grid.appendChild(propHeader);
+
+  // Day headers
+  days.forEach((day, i) => {
+    const col = i + 2;
+    const isToday = day.getTime() === today.getTime();
+    const isWeekend = day.getDay() === 0 || day.getDay() === 6;
+    const isMonthStart = day.getDate() === 1;
+
+    const el = document.createElement('div');
+    el.className = 'cal-day-header' + (isToday ? ' today' : '') + (isWeekend ? ' weekend' : '') + (isMonthStart ? ' month-start' : '');
+    el.style.gridRow = '1';
+    el.style.gridColumn = col;
+    el.innerHTML = `<div class="day-num">${day.getDate()}</div><div class="day-name">${dayNames[day.getDay()]}</div>`;
+    
+    // Add month label for 1st of month or first visible day
+    if (isMonthStart || i === 0) {
+      el.title = monthNames[day.getMonth()] + ' ' + day.getFullYear();
+      if (isMonthStart) {
+        const label = document.createElement('div');
+        label.className = 'cal-month-label';
+        label.textContent = monthNames[day.getMonth()];
+        label.style.left = `${160 + i * 36}px`;
+        // We'll add it to the scroll wrapper later
+        setTimeout(() => {
+          document.getElementById('calendarScroll').appendChild(label);
+        }, 0);
+      }
+    }
+
+    grid.appendChild(el);
+  });
+
+  // Property colors
+  const colors = ['#3182ce', '#d53f8c', '#38a169', '#dd6b20', '#805ad5', '#e53e3e', '#319795', '#d69e2e'];
+
+  // === PROPERTY ROWS ===
+  properties.forEach((prop, rowIdx) => {
+    const row = rowIdx + 2;
+    const color = colors[rowIdx % colors.length];
+
+    // Property name (sticky)
+    const nameEl = document.createElement('div');
+    nameEl.className = 'cal-property-name cal-property-col';
+    nameEl.style.gridRow = row;
+    nameEl.style.gridColumn = '1';
+    nameEl.innerHTML = `<span class="dot" style="background:${color}"></span>${prop.name}`;
+    grid.appendChild(nameEl);
+
+    // Day cells
+    days.forEach((day, dayIdx) => {
+      const col = dayIdx + 2;
+      const isToday = day.getTime() === today.getTime();
+      const isWeekend = day.getDay() === 0 || day.getDay() === 6;
+      const isMonthStart = day.getDate() === 1;
+
+      const cell = document.createElement('div');
+      cell.className = 'cal-cell' + (isToday ? ' today' : '') + (isWeekend ? ' weekend' : '') + (isMonthStart ? ' month-start' : '');
+      cell.style.gridRow = row;
+      cell.style.gridColumn = col;
+      grid.appendChild(cell);
+    });
+
+    // Render booking bars for this property
+    const propBookings = bookings.filter(b => b.property_id === prop.id);
+    
+    // Deduplicate overlapping bookings (take unique date ranges)
+    const seen = new Set();
+    const uniqueBookings = propBookings.filter(b => {
+      const key = `${b.start_date}_${b.end_date}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+    uniqueBookings.forEach(booking => {
+      const start = new Date(booking.start_date + 'T00:00:00');
+      const end = new Date(booking.end_date + 'T00:00:00');
+
+      // Calculate position relative to visible days
+      const startIdx = Math.max(0, Math.round((start - today) / 86400000));
+      const endIdx = Math.min(totalDays, Math.round((end - today) / 86400000));
+
+      if (endIdx <= 0 || startIdx >= totalDays) return; // Not visible
+
+      const left = startIdx * 36;
+      const width = (endIdx - startIdx) * 36 - 2;
+
+      if (width <= 0) return;
+
+      const bar = document.createElement('div');
+      bar.className = `booking-bar ${booking.platform}`;
+      bar.style.gridRow = row;
+      bar.style.gridColumn = `${startIdx + 2} / ${endIdx + 2}`;
+      bar.style.position = 'relative';
+      bar.style.top = '6px';
+      bar.style.height = '28px';
+      bar.style.marginBottom = '-28px';
+
+      const label = booking.raw_summary || booking.platform;
+      const shortLabel = width > 70 ? label : '';
+      bar.innerHTML = `<span class="bar-label">${shortLabel}</span>`;
+      bar.title = `${booking.platform}: ${booking.start_date} → ${booking.end_date}\n${label}`;
+
+      grid.appendChild(bar);
+    });
+  });
+}
+
+// ===== CLEANERS RENDERING =====
+function renderCleaners() {
+  const grid = document.getElementById('cleanersGrid');
+  const unassignedEl = document.getElementById('unassignedCard');
+
+  // Find unassigned properties
+  const unassigned = properties.filter(p => {
+    return !cleaners.some(c => (c.properties || []).some(cp => cp.id === p.id));
+  });
+
+  // Render unassigned card
+  if (unassigned.length > 0) {
+    unassignedEl.innerHTML = `
+      <div class="cleaner-card unassigned-card" style="margin-bottom:20px">
+        <div class="cleaner-card-header">
+          <h3>⚠️ Senza collaboratrice (${unassigned.length})</h3>
+        </div>
+        <div class="cleaner-properties">
+          ${unassigned.map(p => `
+            <div class="cleaner-property-item">
+              <label>${p.name}</label>
+              <span style="font-size:12px; color:var(--orange)">Non assegnato</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  } else {
+    unassignedEl.innerHTML = `
+      <div style="background:var(--green-light); border:1px solid #c6f6d5; border-radius:var(--radius); padding:14px 20px; margin-bottom:20px; font-size:14px; color:var(--green);">
+        ✅ Tutti gli appartamenti hanno una collaboratrice assegnata
+      </div>
+    `;
+  }
+
+  // Render cleaner cards
+  grid.innerHTML = cleaners.map(cleaner => {
+    const assignedIds = (cleaner.properties || []).map(p => p.id);
+    return `
+      <div class="cleaner-card">
+        <div class="cleaner-card-header">
+          <h3>${cleaner.name}</h3>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-danger btn-sm" onclick="deleteCleaner('${cleaner.id}', '${cleaner.name}')">Elimina</button>
+          </div>
+        </div>
+        <div class="cleaner-properties">
+          ${properties.map(p => `
+            <div class="cleaner-property-item">
+              <label>
+                <input type="checkbox" 
+                  ${assignedIds.includes(p.id) ? 'checked' : ''}
+                  onchange="toggleAssignment('${cleaner.id}', '${p.id}', this.checked)">
+                ${p.name}
+              </label>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ===== ACTIONS =====
+async function addCleaner() {
+  const input = document.getElementById('newCleanerName');
+  const name = input.value.trim();
+  if (!name) return;
+
+  try {
+    const res = await fetch(`${API}/cleaners`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name })
+    });
+    if (!res.ok) throw new Error('Failed');
+    input.value = '';
+    toast(`✅ ${name} aggiunta`);
+    await loadData();
+  } catch (err) {
+    toast('❌ Errore: ' + err.message);
+  }
+}
+
+async function deleteCleaner(id, name) {
+  if (!confirm(`Eliminare ${name}?`)) return;
+
+  try {
+    const res = await fetch(`${API}/cleaners/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Failed');
+    toast(`🗑️ ${name} rimossa`);
+    await loadData();
+  } catch (err) {
+    toast('❌ Errore: ' + err.message);
+  }
+}
+
+async function toggleAssignment(cleanerId, propertyId, checked) {
+  // Get current cleaner data
+  const cleaner = cleaners.find(c => c.id === cleanerId);
+  const currentIds = (cleaner.properties || []).map(p => p.id);
+
+  let newIds;
+  if (checked) {
+    newIds = [...currentIds, propertyId];
+  } else {
+    newIds = currentIds.filter(id => id !== propertyId);
+  }
+
+  try {
+    const res = await fetch(`${API}/cleaners/${cleanerId}/properties`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ property_ids: newIds })
+    });
+    if (!res.ok) throw new Error('Failed');
+    await loadData();
+  } catch (err) {
+    toast('❌ Errore: ' + err.message);
+  }
+}
+
+async function syncCalendars() {
+  const btn = document.getElementById('syncBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Sync...';
+
+  try {
+    await fetch(`${API}/sync`, { method: 'POST' });
+    toast('🔄 Sincronizzazione avviata');
+    // Reload after a few seconds
+    setTimeout(async () => {
+      await loadData();
+      btn.disabled = false;
+      btn.textContent = '🔄 Sync';
+      toast('✅ Sincronizzazione completata');
+    }, 3000);
+  } catch (err) {
+    toast('❌ Errore sync: ' + err.message);
+    btn.disabled = false;
+    btn.textContent = '🔄 Sync';
+  }
+}
+
+// ===== TOAST =====
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(el._timeout);
+  el._timeout = setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+// ===== INIT =====
+loadData();
+// Auto-refresh every 5 min
+setInterval(loadData, 5 * 60 * 1000);
+</script>
+</body>
+</html>
