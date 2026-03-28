@@ -763,9 +763,9 @@ function renderCalendar() {
 
         const bar = document.createElement('div');
         const label = booking.raw_summary || booking.platform;
-        const isNotAvailable = booking.platform === 'airbnb' && label.includes('Not available');
+        const isBlocked = label.includes('Not available') || label.includes('CLOSED') || booking.booking_type === 'blocked';
 
-        bar.className = `booking-bar ${booking.platform}${isNotAvailable ? ' not-available' : ''}`;
+        bar.className = `booking-bar ${booking.platform}${isBlocked ? ' not-available' : ''}`;
         bar.style.gridRow = row;
         bar.style.gridColumn = `${startIdx + 2} / ${endIdx + 3}`;
         bar.style.position = 'relative';

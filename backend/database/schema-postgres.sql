@@ -13,6 +13,10 @@ CREATE TABLE IF NOT EXISTS bookings (
   start_date DATE NOT NULL,
   end_date DATE NOT NULL,
   raw_summary TEXT,
+  guest_name VARCHAR(255),
+  reservation_url TEXT,
+  phone_last4 VARCHAR(10),
+  booking_type VARCHAR(50) DEFAULT 'reservation' CHECK (booking_type IN ('reservation', 'blocked', 'unavailable')),
   synced_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   UNIQUE (property_id, platform, start_date, end_date)

@@ -11,12 +11,15 @@ module.exports = async (req, res) => {
       await db.init();
     }
 
-    // Add UNIQUE constraint if it doesn't exist
     const migrationSQL = `
-      -- Drop existing constraint if any
-      ALTER TABLE cleaning_tasks DROP CONSTRAINT IF EXISTS cleaning_tasks_property_id_scheduled_date_task_type_key;
+      -- Add new columns to bookings table
+      ALTER TABLE bookings ADD COLUMN IF NOT EXISTS guest_name VARCHAR(255);
+      ALTER TABLE bookings ADD COLUMN IF NOT EXISTS reservation_url TEXT;
+      ALTER TABLE bookings ADD COLUMN IF NOT EXISTS phone_last4 VARCHAR(10);
+      ALTER TABLE bookings ADD COLUMN IF NOT EXISTS booking_type VARCHAR(50) DEFAULT 'reservation';
       
-      -- Add UNIQUE constraint
+      -- Ensure cleaning_tasks constraint
+      ALTER TABLE cleaning_tasks DROP CONSTRAINT IF EXISTS cleaning_tasks_property_id_scheduled_date_task_type_key;
       ALTER TABLE cleaning_tasks 
       ADD CONSTRAINT cleaning_tasks_property_id_scheduled_date_task_type_key 
       UNIQUE (property_id, scheduled_date, task_type);

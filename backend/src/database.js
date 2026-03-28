@@ -69,7 +69,8 @@ class Database {
   }
 
   // Booking operations
-  async upsertBooking(propertyId, platform, startDate, endDate, rawSummary) {
+  async upsertBooking(propertyId, platform, startDate, endDate, rawSummary, extra = {}) {
+    const { guestName, reservationUrl, phoneLast4, bookingType } = extra;
     // Check if booking exists
     const existing = await this.get(
       `SELECT id FROM bookings 

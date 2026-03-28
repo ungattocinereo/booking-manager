@@ -70,11 +70,24 @@ function parseICalData(icalData) {
       return `${year}-${month}-${day}`;
     };
 
+    // Parse Airbnb description for reservation URL and phone
+    const desc = event.description || '';
+    let reservationUrl = '';
+    let phoneLast4 = '';
+    
+    const urlMatch = desc.match(/Reservation URL:\s*(https:\/\/\S+)/);
+    if (urlMatch) reservationUrl = urlMatch[1];
+    
+    const phoneMatch = desc.match(/Phone Number.*?:\s*(\d+)/);
+    if (phoneMatch) phoneLast4 = phoneMatch[1];
+
     events.push({
       summary: event.summary || 'Booking',
       startDate: formatDate(startDate),
       endDate: formatDate(endDate),
-      description: event.description || ''
+      description: desc,
+      reservationUrl,
+      phoneLast4
     });
   }
 
@@ -94,12 +107,24 @@ async function syncPropertyCalendars(property) {
       console.log(`  ${calendar.platform}: ${events.length} events`);
       
       for (const event of events) {
+        // Determine booking type
+        let bookingType = 'reservation';
+        const summary = (event.summary || '').toLowerCase();
+        if (summary.includes('not available') || summary.includes('closed')) {
+          bookingType = 'blocked';
+        }
+
         await db.upsertBooking(
           property.id,
           calendar.platform,
           event.startDate,
           event.endDate,
-          event.summary
+          event.summary,
+          {
+            reservationUrl: event.reservationUrl,
+            phoneLast4: event.phoneLast4,
+            bookingType
+          }
         );
       }
       

@@ -14,3 +14,5 @@ backup/
 .LSOverride
 .vercel
 .env*.local
+.booking-session.json
+debug-screenshot.png
