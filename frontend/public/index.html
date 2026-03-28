@@ -601,8 +601,8 @@ function renderCalendar() {
       const bar = document.createElement('div');
       const label = booking.raw_summary || booking.platform;
       
-      // Check if it's "Not available" or "CLOSED"
-      const isNotAvailable = label.includes('Not available') || label.includes('CLOSED');
+      // Only stripe Airbnb "Not available" (Booking.com always shows CLOSED, so don't stripe it)
+      const isNotAvailable = booking.platform === 'airbnb' && label.includes('Not available');
       const notAvailableClass = isNotAvailable ? ' not-available' : '';
       
       bar.className = `booking-bar ${booking.platform}${notAvailableClass}`;
