@@ -1,7 +1,43 @@
 const fetch = require('node-fetch');
 const ICAL = require('ical.js');
-const db = require('./database');
-const config = require('../config/calendars.json');
+const fs = require('fs');
+const path = require('path');
+
+// Use Postgres on Vercel, SQLite locally
+const USE_POSTGRES = process.env.POSTGRES_URL || process.env.DATABASE_URL;
+const db = USE_POSTGRES 
+  ? require('./database-postgres')
+  : require('./database');
+
+// Load config from env var (Vercel) or local file
+function loadConfig() {
+  if (process.env.ICAL_URLS) {
+    // Vercel: env var format
+    const icalUrls = JSON.parse(process.env.ICAL_URLS);
+    
+    return {
+      properties: icalUrls.map(item => ({
+        id: item.id,
+        name: item.name,
+        calendars: [
+          item.booking_url && { platform: 'booking', url: item.booking_url },
+          item.airbnb_url && { platform: 'airbnb', url: item.airbnb_url }
+        ].filter(Boolean)
+      })),
+      cleaners: [] // Cleaners config not needed for sync, only for task assignment
+    };
+  } else {
+    // Local: calendars.json
+    const configPath = path.join(__dirname, '../config/calendars.json');
+    if (fs.existsSync(configPath)) {
+      return require(configPath);
+    } else {
+      throw new Error('No ICAL_URLS env var or calendars.json found');
+    }
+  }
+}
+
+const config = loadConfig();
 
 async function fetchCalendar(url) {
   console.log(`📥 Fetching: ${url.substring(0, 50)}...`);
@@ -86,15 +122,12 @@ async function generateCleaningTasks() {
   let tasksCreated = 0;
   
   for (const booking of bookings) {
-    // Create cleaning task for checkout day
-    const existingTask = await db.get(
-      'SELECT id FROM cleaning_tasks WHERE property_id = ? AND scheduled_date = ?',
-      [booking.property_id, booking.end_date]
-    );
-    
-    if (!existingTask) {
+    // Create cleaning task for checkout day (createCleaningTask checks for duplicates internally)
+    try {
       await db.createCleaningTask(booking.property_id, booking.end_date, 'checkout_cleaning');
       tasksCreated++;
+    } catch (err) {
+      // Task might already exist, skip silently
     }
   }
   

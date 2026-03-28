@@ -147,7 +147,9 @@ class Database {
 
     return this.execute(
       `INSERT INTO cleaning_tasks (property_id, cleaner_id, scheduled_date, task_type)
-       VALUES ($1, $2, $3, $4) RETURNING id`,
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (property_id, scheduled_date, task_type) DO NOTHING
+       RETURNING id`,
       [propertyId, cleaner?.cleaner_id || null, scheduledDate, taskType]
     );
   }

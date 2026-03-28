@@ -43,7 +43,8 @@ CREATE TABLE IF NOT EXISTS cleaning_tasks (
   status VARCHAR(50) DEFAULT 'pending' CHECK (status IN ('pending', 'in_progress', 'completed', 'cancelled')),
   notes TEXT,
   completed_at TIMESTAMP,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (property_id, scheduled_date, task_type)
 );
 
 -- Indexes for performance
