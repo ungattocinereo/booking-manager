@@ -4,6 +4,8 @@ const db = USE_POSTGRES
   ? require('../backend/src/database-postgres')
   : require('../backend/src/database');
 
+const { formatBooking } = require('./_helpers');
+
 module.exports = async (req, res) => {
   try {
     // Initialize database connection
@@ -14,7 +16,10 @@ module.exports = async (req, res) => {
     const { property_id, from_date } = req.query;
     const bookings = await db.getBookings(property_id, from_date);
     
-    res.status(200).json(bookings);
+    // Format dates to YYYY-MM-DD
+    const formattedBookings = bookings.map(formatBooking);
+    
+    res.status(200).json(formattedBookings);
   } catch (error) {
     console.error('Error fetching bookings:', error);
     res.status(500).json({ error: error.message });
