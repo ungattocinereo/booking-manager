@@ -138,6 +138,20 @@ app.post('/api/cleaning-tasks', async (req, res) => {
   }
 });
 
+// Update cleaner (name, slug)
+app.put('/api/cleaners/:id', async (req, res) => {
+  try {
+    const { name, slug } = req.body;
+    const fields = {};
+    if (name !== undefined) fields.name = name;
+    if (slug !== undefined) fields.slug = slug.toLowerCase().replace(/[^a-z0-9-]/g, '').replace(/-+/g, '-') || null;
+    await db.updateCleaner(req.params.id, fields);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Create cleaner
 app.post('/api/cleaners', async (req, res) => {
   try {
@@ -177,6 +191,43 @@ app.put('/api/cleaners/:id/properties', async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
+});
+
+// ===== MAID CALENDAR =====
+
+app.get('/api/maid/:slug', async (req, res) => {
+  try {
+    const cleaner = await db.getCleanerBySlug(req.params.slug);
+    if (!cleaner) return res.status(404).json({ error: 'Not found' });
+
+    const assignedProperties = await db.getCleanerProperties(cleaner.id);
+    const propertyIds = assignedProperties.map(p => p.id);
+
+    const today = new Date().toISOString().split('T')[0];
+    const allBookings = await db.getBookings(null, today);
+
+    // Filter to assigned properties only, exclude blocked/unavailable without guest
+    const maidBookings = allBookings.filter(b => {
+      if (!propertyIds.includes(b.property_id)) return false;
+      const summary = b.raw_summary || '';
+      const isUnavailable = summary.includes('Not available') || summary.includes('CLOSED') || b.booking_type === 'blocked';
+      if (isUnavailable && !b.guest_name) return false;
+      return true;
+    });
+
+    res.json({
+      cleaner: { id: cleaner.id, name: cleaner.name, slug: cleaner.slug },
+      properties: assignedProperties,
+      bookings: maidBookings
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Serve maid calendar HTML
+app.get('/maid/:slug', (req, res) => {
+  res.sendFile(path.join(__dirname, '../../frontend/public/maid.html'));
 });
 
 // ===== SYNC =====

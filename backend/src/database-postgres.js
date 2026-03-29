@@ -128,6 +128,21 @@ class Database {
     return this.query('SELECT * FROM cleaners ORDER BY name');
   }
 
+  async getCleanerBySlug(slug) {
+    return this.queryOne('SELECT * FROM cleaners WHERE slug = $1', [slug]);
+  }
+
+  async updateCleaner(id, fields) {
+    const sets = [];
+    const params = [];
+    let n = 1;
+    if (fields.name !== undefined) { sets.push(`name = $${n++}`); params.push(fields.name); }
+    if (fields.slug !== undefined) { sets.push(`slug = $${n++}`); params.push(fields.slug); }
+    if (sets.length === 0) return;
+    params.push(id);
+    return this.execute(`UPDATE cleaners SET ${sets.join(', ')} WHERE id = $${n}`, params);
+  }
+
   async getCleanerProperties(cleanerId) {
     return this.query(
       `SELECT p.* FROM properties p

@@ -4,6 +4,36 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Atrani — Бронирования</title>
+
+  <!-- Favicon & App Icons -->
+  <link rel="icon" href="/frontend/public/favicon.ico" sizes="48x48">
+  <link rel="icon" href="/frontend/public/favicon-32.png" type="image/png" sizes="32x32">
+  <link rel="icon" href="/frontend/public/favicon-16.png" type="image/png" sizes="16x16">
+  <link rel="apple-touch-icon" href="/frontend/public/apple-touch-icon.png">
+  <link rel="manifest" href="/frontend/public/manifest.json">
+  <meta name="theme-color" content="#4f46e5">
+
+  <!-- Apple Web App -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Atrani">
+
+  <!-- SEO -->
+  <meta name="description" content="Booking and cleaning calendar manager for vacation rental properties in Atrani, Italy">
+  <meta name="robots" content="noindex, nofollow">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Atrani Booking Manager">
+  <meta property="og:description" content="Booking and cleaning calendar for vacation rentals in Atrani, Italy">
+  <meta property="og:image" content="/frontend/public/icon-512.png">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Atrani Booking Manager">
+  <meta name="twitter:description" content="Booking and cleaning calendar for vacation rentals in Atrani, Italy">
+  <meta name="twitter:image" content="/frontend/public/icon-512.png">
+
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1037,13 +1067,27 @@ function renderCleaners() {
     `;
   }
 
-  grid.innerHTML = cleaners.map(cleaner => `
+  grid.innerHTML = cleaners.map(cleaner => {
+    const maidUrl = cleaner.slug ? `${window.location.origin}/maid/${cleaner.slug}` : '';
+    return `
     <div class="cleaner-card">
       <div class="cleaner-card-header">
         <h3><i data-lucide="user" style="width:16px;height:16px;"></i>${cleaner.name}</h3>
         <button class="btn btn-danger-ghost btn-sm" onclick="deleteCleaner('${cleaner.id}', '${cleaner.name}')">
           <i data-lucide="trash-2" style="width:12px;height:12px;"></i>Удалить
         </button>
+      </div>
+      <div class="cleaner-slug-row" style="padding:10px 20px 6px; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+        <label style="font-size:12px; color:var(--text-secondary); white-space:nowrap;">
+          <i data-lucide="link" style="width:12px;height:12px;vertical-align:-2px;"></i> Ссылка:
+        </label>
+        <input type="text" class="slug-input" value="${cleaner.slug || ''}" placeholder="короткое-имя"
+          style="flex:1; min-width:100px; max-width:160px; padding:5px 10px; border:1px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit;"
+          onchange="updateSlug('${cleaner.id}', this.value)"
+          onkeydown="if(event.key==='Enter') this.blur()">
+        ${maidUrl ? `<a href="/maid/${cleaner.slug}" target="_blank" style="font-size:12px; color:var(--accent); text-decoration:none; display:inline-flex; align-items:center; gap:3px;">
+          <i data-lucide="external-link" style="width:11px;height:11px;"></i>/maid/${cleaner.slug}
+        </a>` : '<span style="font-size:11px;color:var(--text-secondary);">Введите имя для ссылки</span>'}
       </div>
       <div class="cleaner-properties">
         ${properties.map(p => {
@@ -1059,7 +1103,7 @@ function renderCleaners() {
         }).join('')}
       </div>
     </div>
-  `).join('');
+  `}).join('');
 }
 
 async function addCleaner() {
@@ -1073,6 +1117,20 @@ async function addCleaner() {
     toast(`✅ ${name} добавлена`);
     await loadData();
   } catch (err) { toast('❌ Ошибка: ' + err.message); }
+}
+
+async function updateSlug(id, slug) {
+  const cleaned = slug.toLowerCase().replace(/[^a-z0-9-]/g, '').replace(/-+/g, '-');
+  try {
+    const res = await fetch(`${API}/cleaners/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ slug: cleaned })
+    });
+    if (!res.ok) throw new Error('Failed');
+    toast(cleaned ? `Ссылка: /maid/${cleaned}` : 'Ссылка удалена');
+    await loadData();
+  } catch (err) { toast('Ошибка: ' + err.message); }
 }
 
 async function deleteCleaner(id, name) {

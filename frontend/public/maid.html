@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Calendario Pulizie — Atrani</title>
+
+  <!-- Favicon & App Icons -->
+  <link rel="icon" href="/frontend/public/favicon.ico" sizes="48x48">
+  <link rel="icon" href="/frontend/public/favicon-32.png" type="image/png" sizes="32x32">
+  <link rel="apple-touch-icon" href="/frontend/public/apple-touch-icon.png">
+  <link rel="manifest" href="/frontend/public/manifest.json">
+  <meta name="theme-color" content="#4f46e5">
+
+  <!-- Apple Web App -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Atrani Pulizie">
+
+  <!-- SEO -->
+  <meta name="description" content="Calendario arrivi e partenze per le pulizie degli appartamenti ad Atrani">
+  <meta name="robots" content="noindex, nofollow">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Calendario Pulizie — Atrani">
+  <meta property="og:description" content="Calendario arrivi e partenze per le pulizie degli appartamenti">
+  <meta property="og:image" content="/frontend/public/icon-512.png">
+
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f8f9fb;
+      --card: #ffffff;
+      --border: #e8eaef;
+      --text: #1a1d26;
+      --text-secondary: #6b7280;
+      --text-tertiary: #9ca3af;
+      --accent: #4f46e5;
+      --accent-light: #eef2ff;
+      --checkin: #059669;
+      --checkin-light: #ecfdf5;
+      --checkin-border: #a7f3d0;
+      --checkout: #ea580c;
+      --checkout-light: #fff7ed;
+      --checkout-border: #fed7aa;
+      --today-bg: #4f46e5;
+      --today-text: #ffffff;
+      --radius: 16px;
+      --radius-sm: 12px;
+      --shadow: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+      --shadow-md: 0 4px 12px rgba(0,0,0,.08);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100dvh;
+      padding-bottom: env(safe-area-inset-bottom, 20px);
+    }
+
+    /* Header */
+    .header {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 20px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(12px);
+      background: rgba(255,255,255,.92);
+    }
+    .header-top {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .header-icon {
+      width: 40px; height: 40px;
+      background: var(--accent);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      flex-shrink: 0;
+    }
+    .header h1 {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+    .header .subtitle {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 1px;
+    }
+
+    /* Month navigation */
+    .month-nav {
+      display: flex;
+      gap: 6px;
+      padding: 12px 20px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+    }
+    .month-nav::-webkit-scrollbar { display: none; }
+    .month-pill {
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+      white-space: nowrap;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text-secondary);
+      transition: all .15s ease;
+    }
+    .month-pill.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+    .month-pill.has-today {
+      font-weight: 600;
+    }
+
+    /* Content */
+    .content {
+      padding: 16px 16px 32px;
+    }
+
+    /* Day group */
+    .day-group {
+      margin-bottom: 20px;
+    }
+    .day-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+      padding: 0 4px;
+    }
+    .day-date-circle {
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: var(--card);
+      border: 2px solid var(--border);
+      flex-shrink: 0;
+    }
+    .day-date-circle.today {
+      background: var(--today-bg);
+      border-color: var(--today-bg);
+      color: var(--today-text);
+    }
+    .day-date-num {
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .day-date-dow {
+      font-size: 9px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      line-height: 1;
+      margin-top: 2px;
+    }
+    .day-date-circle.today .day-date-dow {
+      opacity: .85;
+    }
+    .day-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .day-label-sub {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    /* Event cards */
+    .event-card {
+      background: var(--card);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      padding: 14px 16px;
+      margin-bottom: 8px;
+      box-shadow: var(--shadow);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .event-type-badge {
+      width: 42px; height: 42px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .event-type-badge.checkin {
+      background: var(--checkin-light);
+      color: var(--checkin);
+      border: 1px solid var(--checkin-border);
+    }
+    .event-type-badge.checkout {
+      background: var(--checkout-light);
+      color: var(--checkout);
+      border: 1px solid var(--checkout-border);
+    }
+    .event-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .event-property {
+      font-size: 15px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .event-property-icon {
+      width: 20px; height: 20px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .event-detail {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 3px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .event-type-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .event-type-label.checkin { color: var(--checkin); }
+    .event-type-label.checkout { color: var(--checkout); }
+
+    /* Empty state */
+    .empty-month {
+      text-align: center;
+      padding: 48px 20px;
+      color: var(--text-tertiary);
+    }
+    .empty-month-icon {
+      width: 56px; height: 56px;
+      background: var(--bg);
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 12px;
+      color: var(--text-tertiary);
+    }
+    .empty-month h3 {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: var(--text-secondary);
+    }
+    .empty-month p {
+      font-size: 13px;
+    }
+
+    /* Loading */
+    .loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 60dvh;
+      color: var(--text-secondary);
+      gap: 12px;
+    }
+    .loading-spinner {
+      width: 32px; height: 32px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Error state */
+    .error-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-secondary);
+    }
+    .error-state h2 {
+      font-size: 18px;
+      margin-top: 16px;
+      color: var(--text);
+    }
+    .error-state p {
+      font-size: 14px;
+      margin-top: 8px;
+    }
+
+    /* Properties legend */
+    .properties-bar {
+      display: flex;
+      gap: 6px;
+      padding: 10px 20px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+    }
+    .properties-bar::-webkit-scrollbar { display: none; }
+    .prop-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 12px;
+      border-radius: 16px;
+      font-size: 12px;
+      font-weight: 500;
+      white-space: nowrap;
+      border: 1px solid var(--border);
+      background: var(--card);
+    }
+    .prop-chip-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+    }
+  </style>
+</head>
+<body>
+
+<div id="app">
+  <div class="loading" id="loadingState">
+    <div class="loading-spinner"></div>
+    <span>Caricamento...</span>
+  </div>
+</div>
+
+<script>
+const MONTHS_IT = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+const MONTHS_SHORT_IT = ['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];
+const DAYS_IT = ['Dom','Lun','Mar','Mer','Gio','Ven','Sab'];
+const DAYS_FULL_IT = ['Domenica','Lunedi','Martedi','Mercoledi','Giovedi','Venerdi','Sabato'];
+
+const propertyConfig = {
+  'awesome':  { icon: 'sparkles', color: '#8b5cf6', bg: '#f5f3ff', name: 'Awesome Apartments' },
+  'orange':   { icon: 'citrus',   color: '#ea580c', bg: '#fff7ed', name: 'Orange Room' },
+  'vingtage': { icon: 'wine',     color: '#be185d', bg: '#fdf2f8', name: 'Vingtage Room' },
+  'youth':    { icon: 'zap',      color: '#0891b2', bg: '#ecfeff', name: 'Youth Room' },
+  'solo':     { icon: 'user',     color: '#4f46e5', bg: '#eef2ff', name: 'Solo Room' },
+  'carina':   { icon: 'heart',    color: '#e11d48', bg: '#fff1f2', name: 'Carina' },
+  'royal':    { icon: 'crown',    color: '#ca8a04', bg: '#fefce8', name: 'Royal' },
+  'harmony':  { icon: 'music',    color: '#059669', bg: '#ecfdf5', name: 'Harmony' }
+};
+
+function countryToFlag(code) {
+  if (!code) return '';
+  const c = code.toUpperCase();
+  return String.fromCodePoint(...[...c].map(ch => 0x1F1E6 + ch.charCodeAt(0) - 65));
+}
+
+// Get slug from URL path
+const pathParts = window.location.pathname.split('/');
+const slug = pathParts[pathParts.length - 1];
+
+let data = null;
+let currentMonth = null; // { year, month }
+
+async function loadData() {
+  try {
+    const res = await fetch(`/api/maid/${slug}`);
+    if (res.status === 404) {
+      showError();
+      return;
+    }
+    data = await res.json();
+    const now = new Date();
+    currentMonth = { year: now.getFullYear(), month: now.getMonth() };
+    render();
+  } catch (err) {
+    showError();
+  }
+}
+
+function showError() {
+  document.getElementById('app').innerHTML = `
+    <div class="error-state">
+      <div style="font-size:48px;">🔒</div>
+      <h2>Calendario non trovato</h2>
+      <p>Questo link non e valido o e stato disattivato.</p>
+    </div>
+  `;
+}
+
+function getEvents() {
+  if (!data) return [];
+  const events = [];
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  const endOfYear = new Date(today.getFullYear(), 11, 31);
+
+  for (const b of data.bookings) {
+    const startDate = new Date(b.start_date + 'T00:00:00');
+    const endDate = new Date(b.end_date + 'T00:00:00');
+    const prop = data.properties.find(p => p.id === b.property_id);
+    const cfg = propertyConfig[b.property_id] || { icon: 'home', color: '#6b7280', bg: '#f9fafb' };
+    const propName = prop?.name || cfg.name || b.property_id;
+
+    // Check-in event
+    if (startDate >= today && startDate <= endOfYear) {
+      events.push({
+        date: b.start_date,
+        dateObj: startDate,
+        type: 'checkin',
+        property: propName,
+        propertyId: b.property_id,
+        guestName: b.guest_name || null,
+        guestCountry: b.guest_country || null,
+        guestCount: b.guest_count || null,
+        cfg
+      });
+    }
+
+    // Check-out event
+    if (endDate >= today && endDate <= endOfYear) {
+      events.push({
+        date: b.end_date,
+        dateObj: endDate,
+        type: 'checkout',
+        property: propName,
+        propertyId: b.property_id,
+        guestName: b.guest_name || null,
+        guestCountry: b.guest_country || null,
+        guestCount: b.guest_count || null,
+        cfg
+      });
+    }
+  }
+
+  // Sort by date, then checkout before checkin (cleaning first)
+  events.sort((a, b) => {
+    const cmp = a.date.localeCompare(b.date);
+    if (cmp !== 0) return cmp;
+    if (a.type === 'checkout' && b.type === 'checkin') return -1;
+    if (a.type === 'checkin' && b.type === 'checkout') return 1;
+    return 0;
+  });
+
+  return events;
+}
+
+function getMonthEvents(events, year, month) {
+  return events.filter(e => e.dateObj.getFullYear() === year && e.dateObj.getMonth() === month);
+}
+
+function getAvailableMonths(events) {
+  const months = new Set();
+  const now = new Date();
+  // Always include current month
+  months.add(`${now.getFullYear()}-${now.getMonth()}`);
+  for (const e of events) {
+    months.add(`${e.dateObj.getFullYear()}-${e.dateObj.getMonth()}`);
+  }
+  return Array.from(months).map(s => {
+    const [y, m] = s.split('-').map(Number);
+    return { year: y, month: m };
+  }).sort((a, b) => a.year - b.year || a.month - b.month);
+}
+
+function formatDayLabel(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  if (d.getTime() === today.getTime()) return 'Oggi';
+  if (d.getTime() === tomorrow.getTime()) return 'Domani';
+  return `${DAYS_FULL_IT[d.getDay()]}`;
+}
+
+function render() {
+  if (!data) return;
+
+  const events = getEvents();
+  const months = getAvailableMonths(events);
+  const monthEvents = getMonthEvents(events, currentMonth.year, currentMonth.month);
+
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  const todayStr = today.toISOString().split('T')[0];
+
+  // Group events by date
+  const byDate = {};
+  for (const e of monthEvents) {
+    if (!byDate[e.date]) byDate[e.date] = [];
+    byDate[e.date].push(e);
+  }
+  const sortedDates = Object.keys(byDate).sort();
+
+  let html = '';
+
+  // Header
+  html += `
+    <div class="header">
+      <div class="header-top">
+        <div class="header-icon">
+          <i data-lucide="calendar-check" style="width:22px;height:22px;"></i>
+        </div>
+        <div>
+          <h1>${data.cleaner.name}</h1>
+          <div class="subtitle">Calendario arrivi e partenze</div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Properties bar
+  html += '<div class="properties-bar">';
+  for (const p of data.properties) {
+    const cfg = propertyConfig[p.id] || { color: '#6b7280' };
+    html += `<div class="prop-chip">
+      <div class="prop-chip-dot" style="background:${cfg.color};"></div>
+      ${p.name}
+    </div>`;
+  }
+  html += '</div>';
+
+  // Month navigation
+  html += '<div class="month-nav">';
+  for (const m of months) {
+    const isActive = m.year === currentMonth.year && m.month === currentMonth.month;
+    const isCurrentMonth = m.year === today.getFullYear() && m.month === today.getMonth();
+    html += `<div class="month-pill${isActive ? ' active' : ''}${isCurrentMonth ? ' has-today' : ''}"
+      onclick="switchMonth(${m.year}, ${m.month})">
+      ${MONTHS_SHORT_IT[m.month]}${m.year !== today.getFullYear() ? ' ' + m.year : ''}
+    </div>`;
+  }
+  html += '</div>';
+
+  // Content
+  html += '<div class="content">';
+
+  if (sortedDates.length === 0) {
+    html += `
+      <div class="empty-month">
+        <div class="empty-month-icon">
+          <i data-lucide="calendar-x" style="width:28px;height:28px;"></i>
+        </div>
+        <h3>Nessun evento</h3>
+        <p>Non ci sono arrivi o partenze a ${MONTHS_IT[currentMonth.month]}.</p>
+      </div>
+    `;
+  } else {
+    for (const dateStr of sortedDates) {
+      const dayEvents = byDate[dateStr];
+      const d = new Date(dateStr + 'T00:00:00');
+      const isToday = dateStr === todayStr;
+      const dayLabel = formatDayLabel(dateStr);
+      const dateFormatted = `${d.getDate()} ${MONTHS_IT[d.getMonth()]}`;
+
+      html += `<div class="day-group">`;
+      html += `<div class="day-header">
+        <div class="day-date-circle${isToday ? ' today' : ''}">
+          <div class="day-date-num">${d.getDate()}</div>
+          <div class="day-date-dow">${DAYS_IT[d.getDay()]}</div>
+        </div>
+        <div>
+          <div class="day-label">${dayLabel}</div>
+          <div class="day-label-sub">${dateFormatted}</div>
+        </div>
+      </div>`;
+
+      for (const ev of dayEvents) {
+        const typeIcon = ev.type === 'checkin' ? 'log-in' : 'log-out';
+        const typeLabel = ev.type === 'checkin' ? 'Arrivo' : 'Partenza';
+        const flag = ev.guestCountry ? countryToFlag(ev.guestCountry) : '';
+        const guestInfo = [];
+        if (ev.guestName) guestInfo.push(ev.guestName);
+        if (ev.guestCount) guestInfo.push(`${ev.guestCount} ospiti`);
+        if (flag) guestInfo.push(flag);
+        const detailText = guestInfo.length > 0 ? guestInfo.join(' · ') : (ev.type === 'checkin' ? 'Check-in' : 'Check-out');
+
+        html += `<div class="event-card">
+          <div class="event-type-badge ${ev.type}">
+            <i data-lucide="${typeIcon}" style="width:20px;height:20px;"></i>
+          </div>
+          <div class="event-info">
+            <div class="event-property">
+              <div class="event-property-icon" style="background:${ev.cfg.bg};color:${ev.cfg.color};">
+                <i data-lucide="${ev.cfg.icon}" style="width:12px;height:12px;"></i>
+              </div>
+              ${ev.property}
+            </div>
+            <div class="event-detail">
+              <span class="event-type-label ${ev.type}">${typeLabel}</span>
+              <span>${detailText}</span>
+            </div>
+          </div>
+        </div>`;
+      }
+
+      html += '</div>';
+    }
+  }
+
+  html += '</div>';
+
+  document.getElementById('app').innerHTML = html;
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+function switchMonth(year, month) {
+  currentMonth = { year, month };
+  render();
+  // Scroll to top of content
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+loadData();
+// Auto-refresh every 10 minutes
+setInterval(loadData, 10 * 60 * 1000);
+</script>
+</body>
+</html>

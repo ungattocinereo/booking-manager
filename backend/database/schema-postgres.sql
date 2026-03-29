@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS bookings (
 CREATE TABLE IF NOT EXISTS cleaners (
   id VARCHAR(50) PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
+  slug VARCHAR(100) UNIQUE,
   phone VARCHAR(50),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -61,3 +62,6 @@ CREATE INDEX IF NOT EXISTS idx_cleaning_tasks_date ON cleaning_tasks(scheduled_d
 -- Add guest_country column (migration)
 ALTER TABLE bookings ADD COLUMN IF NOT EXISTS guest_country VARCHAR(5);
 ALTER TABLE bookings ADD COLUMN IF NOT EXISTS guest_count INTEGER;
+
+-- Add slug column to cleaners (migration)
+ALTER TABLE cleaners ADD COLUMN IF NOT EXISTS slug VARCHAR(100) UNIQUE;

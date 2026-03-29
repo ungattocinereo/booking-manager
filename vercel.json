@@ -1,5 +1,6 @@
 {
   "rewrites": [
+    { "source": "/maid/:slug", "destination": "/frontend/public/maid.html" },
     { "source": "/", "destination": "/frontend/public/index.html" }
   ]
 }

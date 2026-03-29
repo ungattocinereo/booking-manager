@@ -25,8 +25,11 @@ class Database {
             reject(err);
             return;
           }
-          console.log('✅ Database initialized');
-          resolve();
+          // Migration: add slug column if missing
+          this.db.run('ALTER TABLE cleaners ADD COLUMN slug TEXT UNIQUE', () => {
+            console.log('✅ Database initialized');
+            resolve();
+          });
         });
       });
     });
@@ -137,6 +140,20 @@ class Database {
 
   async getCleaners() {
     return this.all('SELECT * FROM cleaners ORDER BY name');
+  }
+
+  async getCleanerBySlug(slug) {
+    return this.get('SELECT * FROM cleaners WHERE slug = ?', [slug]);
+  }
+
+  async updateCleaner(id, fields) {
+    const sets = [];
+    const params = [];
+    if (fields.name !== undefined) { sets.push('name = ?'); params.push(fields.name); }
+    if (fields.slug !== undefined) { sets.push('slug = ?'); params.push(fields.slug); }
+    if (sets.length === 0) return;
+    params.push(id);
+    return this.run(`UPDATE cleaners SET ${sets.join(', ')} WHERE id = ?`, params);
   }
 
   async getCleanerProperties(cleanerId) {
