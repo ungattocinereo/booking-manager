@@ -965,10 +965,12 @@ function updateStats() {
       const platformBadge = b.platform === 'airbnb'
         ? '<span style="color:var(--airbnb);font-weight:600;font-size:11px;">Airbnb</span>'
         : '<span style="color:var(--booking);font-weight:600;font-size:11px;">Booking</span>';
+      const guest = b.guest_name ? `<span style="font-size:11px;color:var(--text-secondary);">${b.guest_name}</span>` : '';
       return `<div class="stat-checkin-item">
         <div class="prop-icon" style="background:${cfg.bg};color:${cfg.color};"><i data-lucide="${cfg.icon}" style="width:12px;height:12px;"></i></div>
         <span class="prop-name">${prop?.name || b.property_id}</span>
         <span class="guest-info">${platformBadge} ${fmtShort(b.start_date)}–${fmtShort(b.end_date)}</span>
+        ${guest}
       </div>`;
     }).join('') + (recent.length > 5 ? `<div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">...и ещё ${recent.length - 5}</div>` : '');
   } else {
