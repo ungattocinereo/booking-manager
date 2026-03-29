@@ -180,6 +180,10 @@ async function enrichFromExports(db, isPostgres) {
       }
 
       const country = extractCountry(contact);
+      const adults = parseInt(row['# of adults']) || 0;
+      const children = parseInt(row['# of children']) || 0;
+      const infants = parseInt(row['# of infants']) || 0;
+      const guestCount = adults + children + infants;
 
       if (!guestName) {
         skipped++;
@@ -190,20 +194,37 @@ async function enrichFromExports(db, isPostgres) {
         let changes = 0;
         if (isPostgres) {
           const result = await db.execute(
-            `UPDATE bookings SET guest_name = $1, guest_country = $2
-             WHERE property_id = $3 AND platform = 'airbnb' AND start_date = $4 AND end_date = $5
+            `UPDATE bookings SET guest_name = $1, guest_country = $2, guest_count = $3
+             WHERE property_id = $4 AND platform = 'airbnb' AND start_date = $5 AND end_date = $6
              AND (guest_name IS NULL OR guest_name = '')`,
-            [guestName, country, propertyId, startDate, endDate]
+            [guestName, country, guestCount || null, propertyId, startDate, endDate]
           );
           changes = result.rowCount || 0;
+          // Also update guest_count for already-enriched bookings that don't have it
+          if (changes === 0 && guestCount > 0) {
+            await db.execute(
+              `UPDATE bookings SET guest_count = $1
+               WHERE property_id = $2 AND platform = 'airbnb' AND start_date = $3 AND end_date = $4
+               AND guest_count IS NULL`,
+              [guestCount, propertyId, startDate, endDate]
+            );
+          }
         } else {
           const result = await db.run(
-            `UPDATE bookings SET guest_name = ?, guest_country = ?
+            `UPDATE bookings SET guest_name = ?, guest_country = ?, guest_count = ?
              WHERE property_id = ? AND platform = 'airbnb' AND start_date = ? AND end_date = ?
              AND (guest_name IS NULL OR guest_name = '')`,
-            [guestName, country, propertyId, startDate, endDate]
+            [guestName, country, guestCount || null, propertyId, startDate, endDate]
           );
           changes = result.changes || 0;
+          if (changes === 0 && guestCount > 0) {
+            await db.run(
+              `UPDATE bookings SET guest_count = ?
+               WHERE property_id = ? AND platform = 'airbnb' AND start_date = ? AND end_date = ?
+               AND guest_count IS NULL`,
+              [guestCount, propertyId, startDate, endDate]
+            );
+          }
         }
 
         if (changes > 0) {

@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS bookings (
   end_date DATE NOT NULL,
   guest_name TEXT,
   guest_country TEXT,
+  guest_count INTEGER,
   status TEXT DEFAULT 'confirmed',
   raw_summary TEXT,
   synced_at DATETIME DEFAULT CURRENT_TIMESTAMP,

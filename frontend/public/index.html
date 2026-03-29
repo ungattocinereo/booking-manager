@@ -188,6 +188,36 @@
       color: var(--text-secondary);
       margin-top: 1px;
     }
+    .stat-checkin-list {
+      margin-top: 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .stat-checkin-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--text);
+    }
+    .stat-checkin-item .prop-icon {
+      width: 18px;
+      height: 18px;
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .stat-checkin-item .prop-name {
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .stat-checkin-item .guest-info {
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
 
     /* ===== BOOKING TOOLTIP ===== */
     .booking-tooltip {
@@ -582,15 +612,20 @@
         <span class="airbnb-count" id="statAirbnbCount">—</span>
       </div>
     </div>
-    <div class="stat-card" style="min-width:220px;">
-      <div class="stat-label">Ближайший заезд</div>
-      <div class="stat-value" id="statNextCheckin" style="font-size:16px;">—</div>
-      <div class="stat-checkin-props" id="statNextCheckinProps"></div>
+    <div class="stat-card" id="statTodayCard">
+      <div class="stat-label">Сегодня</div>
+      <div class="stat-value" id="statTodayCount" style="font-size:20px;">—</div>
+      <div class="stat-checkin-list" id="statTodayList"></div>
     </div>
-    <div class="stat-card" style="min-width:220px;">
-      <div class="stat-label">Следующий заезд</div>
-      <div class="stat-value" id="statNextCheckin2" style="font-size:16px;">—</div>
-      <div class="stat-checkin-props" id="statNextCheckin2Props"></div>
+    <div class="stat-card" style="min-width:260px;">
+      <div class="stat-label" id="statNextLabel">Ближайшие заезды</div>
+      <div class="stat-value" id="statNextDate" style="font-size:16px;">—</div>
+      <div class="stat-checkin-list" id="statNextList"></div>
+    </div>
+    <div class="stat-card" style="min-width:260px;">
+      <div class="stat-label" id="statNext2Label">Следующий день</div>
+      <div class="stat-value" id="statNext2Date" style="font-size:16px;">—</div>
+      <div class="stat-checkin-list" id="statNext2List"></div>
     </div>
     <div class="stat-card" id="statConflictCard" style="display:none; border-color:var(--danger); background:#fef2f2;">
       <div class="stat-label" style="color:var(--danger);">Конфликты</div>
@@ -682,7 +717,6 @@ function updateStats() {
   const realBookings = bookings.filter(b => {
     const summary = b.raw_summary || '';
     const isUnavailable = summary.includes('Not available') || summary.includes('CLOSED') || b.booking_type === 'blocked';
-    // CLOSED + guest name = real booking (Booking.com marks all as CLOSED)
     if (isUnavailable && b.guest_name) return true;
     return !isUnavailable;
   });
@@ -705,25 +739,40 @@ function updateStats() {
   }
   const sortedDates = Object.keys(checkinDates).sort();
 
-  function formatCheckinCard(dateStr, bookingsForDate, valueEl, propsEl) {
-    const d = new Date(dateStr + 'T00:00:00');
-    const dayName = dayNamesRu[d.getDay()];
-    const dateFormatted = d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
-    valueEl.textContent = `${dayName}, ${dateFormatted}`;
-    const propNames = bookingsForDate.map(b => {
-      const p = properties.find(pp => pp.id === b.property_id);
-      return p?.name || b.property_id;
-    });
-    propsEl.textContent = propNames.join(', ') + ` (${bookingsForDate.length})`;
+  function renderCheckinItem(b) {
+    const p = properties.find(pp => pp.id === b.property_id);
+    const cfg = propertyConfig[b.property_id] || { icon: 'home', color: '#6b7280', bg: '#f9fafb' };
+    const flag = b.guest_country ? countryToFlag(b.guest_country) : '';
+    const guests = b.guest_count ? `${b.guest_count} чел.` : '';
+    return `<div class="stat-checkin-item">
+      <div class="prop-icon" style="background:${cfg.bg};color:${cfg.color};"><i data-lucide="${cfg.icon}" style="width:12px;height:12px;"></i></div>
+      <span class="prop-name">${p?.name || b.property_id}</span>
+      <span class="guest-info">${guests}${flag ? ' ' + flag : ''}</span>
+    </div>`;
   }
 
-  if (sortedDates.length > 0) {
-    formatCheckinCard(sortedDates[0], checkinDates[sortedDates[0]],
-      document.getElementById('statNextCheckin'), document.getElementById('statNextCheckinProps'));
+  function formatDateTitle(dateStr) {
+    const d = new Date(dateStr + 'T00:00:00');
+    return `${dayNamesRu[d.getDay()]}, ${d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}`;
   }
-  if (sortedDates.length > 1) {
-    formatCheckinCard(sortedDates[1], checkinDates[sortedDates[1]],
-      document.getElementById('statNextCheckin2'), document.getElementById('statNextCheckin2Props'));
+
+  // Today card
+  const todayCheckins = checkinDates[today] || [];
+  document.getElementById('statTodayCount').textContent = todayCheckins.length > 0
+    ? `${todayCheckins.length} заезд${todayCheckins.length > 1 ? (todayCheckins.length < 5 ? 'а' : 'ов') : ''}`
+    : 'Нет заездов';
+  document.getElementById('statTodayList').innerHTML = todayCheckins.map(renderCheckinItem).join('');
+
+  // Next check-in day (skip today)
+  const futureDates = sortedDates.filter(d => d > today);
+  if (futureDates.length > 0) {
+    document.getElementById('statNextDate').textContent = formatDateTitle(futureDates[0]);
+    document.getElementById('statNextList').innerHTML = checkinDates[futureDates[0]].map(renderCheckinItem).join('');
+  }
+  // Following check-in day
+  if (futureDates.length > 1) {
+    document.getElementById('statNext2Date').textContent = formatDateTitle(futureDates[1]);
+    document.getElementById('statNext2List').innerHTML = checkinDates[futureDates[1]].map(renderCheckinItem).join('');
   }
 
   // Detect conflicts: overlapping bookings for the same property
@@ -937,6 +986,7 @@ function renderCalendar() {
         const fmtD = (dt) => dt.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
         const countryFlag = booking.guest_country ? countryToFlag(booking.guest_country) : '';
         const countryName = booking.guest_country ? (COUNTRY_NAMES[booking.guest_country.toLowerCase()] || booking.guest_country.toUpperCase()) : '';
+        const guestCountHtml = booking.guest_count ? `<div class="tooltip-country">👥 ${booking.guest_count} чел.</div>` : '';
         const countryHtml = countryFlag ? `<div class="tooltip-country">${countryFlag} ${countryName}</div>` : '';
 
         // Show guest name on bar — always prefer name over "Reserved"/"CLOSED"
@@ -946,7 +996,7 @@ function renderCalendar() {
           <div class="booking-tooltip">
             <div class="tooltip-name">${nameText}</div>
             <div class="tooltip-dates">Заезд ${fmtD(dStart)} → Выезд ${fmtD(dEnd)}</div>
-            ${countryHtml}
+            ${guestCountHtml}${countryHtml}
           </div>`;
         grid.appendChild(bar);
       });

@@ -60,3 +60,4 @@ CREATE INDEX IF NOT EXISTS idx_cleaning_tasks_date ON cleaning_tasks(scheduled_d
 
 -- Add guest_country column (migration)
 ALTER TABLE bookings ADD COLUMN IF NOT EXISTS guest_country VARCHAR(5);
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS guest_count INTEGER;
