@@ -754,10 +754,9 @@ function updateStats() {
   if (conflicts.length > 0) {
     document.getElementById('statConflictCard').style.display = '';
     conflictEl.textContent = conflicts.length;
+    const fmtShort = (d) => new Date(d + 'T00:00:00').toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
     conflictDetail.innerHTML = conflicts.slice(0, 3).map(c => {
-      const nameA = c.a.guest_name || c.a.platform;
-      const nameB = c.b.guest_name || c.b.platform;
-      return `<b>${c.property}</b>: ${nameA} / ${nameB}`;
+      return `<b>${c.property}</b> ${fmtShort(c.a.start_date)}–${fmtShort(c.b.end_date)}`;
     }).join('<br>') + (conflicts.length > 3 ? `<br>...и ещё ${conflicts.length - 3}` : '');
   } else {
     document.getElementById('statConflictCard').style.display = 'none';

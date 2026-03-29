@@ -23,6 +23,7 @@ const LISTING_MAP = {
   '2 Story Suite "Carina" Excellent Central Location': 'carina',
   '2 Story Suite Carina Excellent Central Location': 'carina',
   'The Adventure bunkbed room': 'youth',
+  'Room for solo travelers': 'solo',
 };
 
 // Phone prefix -> country code
@@ -36,6 +37,7 @@ const PHONE_PREFIX_MAP = {
   '+43': 'AT', '+90': 'TR', '+380': 'UA', '+52': 'MX', '+54': 'AR',
   '+57': 'CO', '+65': 'SG', '+66': 'TH', '+84': 'VN', '+62': 'ID',
   '+60': 'MY', '+63': 'PH', '+64': 'NZ',
+  '+51': 'PE', '+389': 'MK',
 };
 
 function parseCSV(content) {
