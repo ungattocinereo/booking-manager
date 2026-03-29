@@ -80,13 +80,13 @@ class Database {
 
   // Booking operations
   async upsertBooking(propertyId, platform, startDate, endDate, rawSummary, extra = {}) {
-    const { guestName, reservationUrl, phoneLast4, bookingType } = extra;
+    const { guestName, guestCountry, reservationUrl, phoneLast4, bookingType } = extra;
     return this.execute(
-      `INSERT INTO bookings (property_id, platform, start_date, end_date, raw_summary, guest_name, reservation_url, phone_last4, booking_type, synced_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
+      `INSERT INTO bookings (property_id, platform, start_date, end_date, raw_summary, guest_name, guest_country, reservation_url, phone_last4, booking_type, synced_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())
        ON CONFLICT (property_id, platform, start_date, end_date)
-       DO UPDATE SET raw_summary = $5, guest_name = COALESCE($6, bookings.guest_name), reservation_url = COALESCE($7, bookings.reservation_url), phone_last4 = COALESCE($8, bookings.phone_last4), booking_type = COALESCE($9, bookings.booking_type), synced_at = NOW()`,
-      [propertyId, platform, startDate, endDate, rawSummary, guestName || null, reservationUrl || null, phoneLast4 || null, bookingType || 'reservation']
+       DO UPDATE SET raw_summary = $5, guest_name = COALESCE($6, bookings.guest_name), guest_country = COALESCE($7, bookings.guest_country), reservation_url = COALESCE($8, bookings.reservation_url), phone_last4 = COALESCE($9, bookings.phone_last4), booking_type = COALESCE($10, bookings.booking_type), synced_at = NOW()`,
+      [propertyId, platform, startDate, endDate, rawSummary, guestName || null, guestCountry || null, reservationUrl || null, phoneLast4 || null, bookingType || 'reservation']
     );
   }
 

@@ -7,6 +7,7 @@
     "start": "node backend/src/server.js",
     "dev": "nodemon backend/src/server.js",
     "sync": "node backend/src/sync-calendars.js",
+    "enrich": "node scripts/enrich-bookings.js",
     "test": "npm run sync && curl http://localhost:3001/health"
   },
   "keywords": [

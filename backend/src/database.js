@@ -70,27 +70,37 @@ class Database {
 
   // Booking operations
   async upsertBooking(propertyId, platform, startDate, endDate, rawSummary, extra = {}) {
-    const { guestName, reservationUrl, phoneLast4, bookingType } = extra;
+    const { guestName, guestCountry, reservationUrl, phoneLast4, bookingType } = extra;
     // Check if booking exists
     const existing = await this.get(
-      `SELECT id FROM bookings 
+      `SELECT id FROM bookings
        WHERE property_id = ? AND platform = ? AND start_date = ? AND end_date = ?`,
       [propertyId, platform, startDate, endDate]
     );
 
     if (existing) {
       // Update
+      let updateFields = 'raw_summary = ?, synced_at = CURRENT_TIMESTAMP';
+      const updateParams = [rawSummary];
+      if (guestName) {
+        updateFields += ', guest_name = ?';
+        updateParams.push(guestName);
+      }
+      if (guestCountry) {
+        updateFields += ', guest_country = ?';
+        updateParams.push(guestCountry);
+      }
+      updateParams.push(existing.id);
       return this.run(
-        `UPDATE bookings SET raw_summary = ?, synced_at = CURRENT_TIMESTAMP 
-         WHERE id = ?`,
-        [rawSummary, existing.id]
+        `UPDATE bookings SET ${updateFields} WHERE id = ?`,
+        updateParams
       );
     } else {
       // Insert
       return this.run(
-        `INSERT INTO bookings (property_id, platform, start_date, end_date, raw_summary)
-         VALUES (?, ?, ?, ?, ?)`,
-        [propertyId, platform, startDate, endDate, rawSummary]
+        `INSERT INTO bookings (property_id, platform, start_date, end_date, raw_summary, guest_name, guest_country)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [propertyId, platform, startDate, endDate, rawSummary, guestName || null, guestCountry || null]
       );
     }
   }

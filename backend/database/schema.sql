@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS bookings (
   start_date DATE NOT NULL,
   end_date DATE NOT NULL,
   guest_name TEXT,
+  guest_country TEXT,
   status TEXT DEFAULT 'confirmed',
   raw_summary TEXT,
   synced_at DATETIME DEFAULT CURRENT_TIMESTAMP,

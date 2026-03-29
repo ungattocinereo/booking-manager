@@ -17,7 +17,7 @@
       --accent: #4f46e5;
       --accent-light: #eef2ff;
       --accent-hover: #4338ca;
-      --airbnb: #ff385c;
+      --airbnb: #D8304E;
       --airbnb-light: #fff1f2;
       --booking: #003b95;
       --booking-light: #eff6ff;
@@ -166,6 +166,69 @@
       font-size: 24px;
       font-weight: 700;
       letter-spacing: -0.5px;
+    }
+    .stat-breakdown {
+      display: flex;
+      gap: 14px;
+      margin-top: 6px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .stat-breakdown .booking-count { color: var(--booking); }
+    .stat-breakdown .airbnb-count { color: var(--airbnb); }
+    .stat-checkin-detail {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-top: 2px;
+      line-height: 1.4;
+    }
+    .stat-checkin-props {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 1px;
+    }
+
+    /* ===== BOOKING TOOLTIP ===== */
+    .booking-tooltip {
+      display: none;
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1f2937;
+      color: #fff;
+      border-radius: 10px;
+      padding: 10px 14px;
+      z-index: 50;
+      white-space: nowrap;
+      box-shadow: 0 4px 12px rgba(0,0,0,.25);
+      pointer-events: none;
+      font-family: 'Inter', sans-serif;
+    }
+    .booking-tooltip::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 6px solid transparent;
+      border-top-color: #1f2937;
+    }
+    .booking-bar:hover .booking-tooltip { display: block; }
+    .tooltip-name {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 3px;
+    }
+    .tooltip-dates {
+      font-size: 12px;
+      color: #d1d5db;
+    }
+    .tooltip-country {
+      font-size: 12px;
+      color: #9ca3af;
+      margin-top: 3px;
     }
 
     /* ===== LEGEND ===== */
@@ -345,14 +408,13 @@
       font-weight: 500;
       color: rgba(255,255,255,.9);
       white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      overflow: visible;
       cursor: default;
       min-width: 8px;
       box-shadow: 0 1px 2px rgba(0,0,0,.15);
       transition: opacity .15s;
     }
-    .booking-bar:hover { opacity: .85; }
+    .booking-bar:hover { opacity: .85; z-index: 30; }
     .booking-bar.airbnb { background: var(--airbnb); }
     .booking-bar.booking { background: var(--booking); }
     .booking-bar.other { background: #6b7280; }
@@ -509,20 +571,22 @@
   <!-- STATS -->
   <div class="stats-bar" id="statsBar">
     <div class="stat-card">
-      <div class="stat-label">Апартаменты</div>
-      <div class="stat-value" id="statProperties">—</div>
-    </div>
-    <div class="stat-card">
       <div class="stat-label">Бронирования</div>
       <div class="stat-value" id="statBookings">—</div>
+      <div class="stat-breakdown">
+        <span class="booking-count" id="statBookingCount">—</span>
+        <span class="airbnb-count" id="statAirbnbCount">—</span>
+      </div>
     </div>
-    <div class="stat-card">
+    <div class="stat-card" style="min-width:220px;">
       <div class="stat-label">Ближайший заезд</div>
       <div class="stat-value" id="statNextCheckin" style="font-size:16px;">—</div>
+      <div class="stat-checkin-props" id="statNextCheckinProps"></div>
     </div>
-    <div class="stat-card">
-      <div class="stat-label">Уборки в ожидании</div>
-      <div class="stat-value" id="statPendingClean">—</div>
+    <div class="stat-card" style="min-width:220px;">
+      <div class="stat-label">Следующий заезд</div>
+      <div class="stat-value" id="statNextCheckin2" style="font-size:16px;">—</div>
+      <div class="stat-checkin-props" id="statNextCheckin2Props"></div>
     </div>
   </div>
 
@@ -606,24 +670,52 @@ async function loadData() {
 }
 
 function updateStats() {
-  document.getElementById('statProperties').textContent = properties.length;
+  const realBookings = bookings.filter(b => {
+    const summary = b.raw_summary || '';
+    const isUnavailable = summary.includes('Not available') || summary.includes('CLOSED') || b.booking_type === 'blocked';
+    // CLOSED + guest name = real booking (Booking.com marks all as CLOSED)
+    if (isUnavailable && b.guest_name) return true;
+    return !isUnavailable;
+  });
+  const bookingComCount = realBookings.filter(b => b.platform === 'booking').length;
+  const airbnbCount = realBookings.filter(b => b.platform === 'airbnb').length;
 
-  const realBookings = bookings.filter(b => !b.raw_summary?.includes('Not available') && !b.raw_summary?.includes('CLOSED'));
   document.getElementById('statBookings').textContent = realBookings.length;
+  document.getElementById('statBookingCount').innerHTML = `<span style="display:inline-flex;align-items:center;gap:3px;"><span style="width:8px;height:8px;border-radius:50%;background:var(--booking);display:inline-block;"></span>${bookingComCount} Booking</span>`;
+  document.getElementById('statAirbnbCount').innerHTML = `<span style="display:inline-flex;align-items:center;gap:3px;"><span style="width:8px;height:8px;border-radius:50%;background:var(--airbnb);display:inline-block;"></span>${airbnbCount} Airbnb</span>`;
 
-  // Next check-in
   const today = new Date().toISOString().split('T')[0];
   const upcoming = realBookings.filter(b => b.start_date >= today).sort((a,b) => a.start_date.localeCompare(b.start_date));
-  if (upcoming.length > 0) {
-    const next = upcoming[0];
-    const prop = properties.find(p => p.id === next.property_id);
-    const d = new Date(next.start_date + 'T00:00:00');
-    const dateStr = d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
-    document.getElementById('statNextCheckin').textContent = `${dateStr} · ${prop?.name || ''}`;
+  const dayNamesRu = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+
+  // Group upcoming by check-in date
+  const checkinDates = {};
+  for (const b of upcoming) {
+    if (!checkinDates[b.start_date]) checkinDates[b.start_date] = [];
+    checkinDates[b.start_date].push(b);
+  }
+  const sortedDates = Object.keys(checkinDates).sort();
+
+  function formatCheckinCard(dateStr, bookingsForDate, valueEl, propsEl) {
+    const d = new Date(dateStr + 'T00:00:00');
+    const dayName = dayNamesRu[d.getDay()];
+    const dateFormatted = d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+    valueEl.textContent = `${dayName}, ${dateFormatted}`;
+    const propNames = bookingsForDate.map(b => {
+      const p = properties.find(pp => pp.id === b.property_id);
+      return p?.name || b.property_id;
+    });
+    propsEl.textContent = propNames.join(', ') + ` (${bookingsForDate.length})`;
   }
 
-  // Pending cleaning
-  document.getElementById('statPendingClean').textContent = '—'; // Will be updated when cleaning API available
+  if (sortedDates.length > 0) {
+    formatCheckinCard(sortedDates[0], checkinDates[sortedDates[0]],
+      document.getElementById('statNextCheckin'), document.getElementById('statNextCheckinProps'));
+  }
+  if (sortedDates.length > 1) {
+    formatCheckinCard(sortedDates[1], checkinDates[sortedDates[1]],
+      document.getElementById('statNextCheckin2'), document.getElementById('statNextCheckin2Props'));
+  }
 }
 
 const propertyConfig = {
@@ -635,6 +727,22 @@ const propertyConfig = {
   'carina':   { icon: 'heart',    color: '#e11d48', bg: '#fff1f2' },
   'royal':    { icon: 'crown',    color: '#ca8a04', bg: '#fefce8' },
   'harmony':  { icon: 'music',    color: '#059669', bg: '#ecfdf5' }
+};
+
+function countryToFlag(code) {
+  if (!code) return '';
+  const c = code.toUpperCase();
+  return String.fromCodePoint(...[...c].map(ch => 0x1F1E6 + ch.charCodeAt(0) - 65));
+}
+const COUNTRY_NAMES = {
+  us:'США',ca:'Канада',gb:'Великобритания',fr:'Франция',de:'Германия',it:'Италия',es:'Испания',
+  pt:'Португалия',nl:'Нидерланды',be:'Бельгия',ch:'Швейцария',at:'Австрия',dk:'Дания',se:'Швеция',
+  no:'Норвегия',fi:'Финляндия',pl:'Польша',cz:'Чехия',hu:'Венгрия',ro:'Румыния',bg:'Болгария',
+  gr:'Греция',tr:'Турция',ru:'Россия',ua:'Украина',il:'Израиль',eg:'Египет',au:'Австралия',
+  nz:'Новая Зеландия',jp:'Япония',kr:'Южная Корея',cn:'Китай',in:'Индия',br:'Бразилия',
+  ar:'Аргентина',cl:'Чили',co:'Колумбия',mx:'Мексика',sg:'Сингапур',th:'Таиланд',
+  ie:'Ирландия',is:'Исландия',lu:'Люксембург',vn:'Вьетнам',id:'Индонезия',my:'Малайзия',
+  ph:'Филиппины',za:'ЮАР'
 };
 
 function renderCalendar() {
@@ -777,22 +885,23 @@ function renderCalendar() {
         bar.style.marginLeft = '19px';
         bar.style.marginRight = '19px';
 
-        // Build tooltip: name (big), dates, country (small)
-        let tooltip = '';
-        if (booking.guest_name) {
-          tooltip = `👤 ${booking.guest_name}`;
-        } else {
-          tooltip = `${booking.platform.toUpperCase()}`;
-        }
-        tooltip += `\n📅 ${booking.start_date} → ${booking.end_date}`;
-        if (booking.guest_country) {
-          tooltip += `\n🌍 ${booking.guest_country.toUpperCase()}`;
-        }
-        
+        // Build styled tooltip
+        const nameText = booking.guest_name || booking.platform.toUpperCase();
+        const dStart = new Date(booking.start_date + 'T00:00:00');
+        const dEnd = new Date(booking.end_date + 'T00:00:00');
+        const fmtD = (dt) => dt.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+        const countryFlag = booking.guest_country ? countryToFlag(booking.guest_country) : '';
+        const countryName = booking.guest_country ? (COUNTRY_NAMES[booking.guest_country.toLowerCase()] || booking.guest_country.toUpperCase()) : '';
+        const countryHtml = countryFlag ? `<div class="tooltip-country">${countryFlag} ${countryName}</div>` : '';
+
         // Show guest name on bar if exists, otherwise show label
         const shortLabel = width > 80 ? (booking.guest_name || label) : '';
-        bar.innerHTML = `<span class="bar-label">${shortLabel}</span>`;
-        bar.title = tooltip;
+        bar.innerHTML = `<span class="bar-label">${shortLabel}</span>
+          <div class="booking-tooltip">
+            <div class="tooltip-name">${nameText}</div>
+            <div class="tooltip-dates">${fmtD(dStart)} → ${fmtD(dEnd)}</div>
+            ${countryHtml}
+          </div>`;
         grid.appendChild(bar);
       });
 
