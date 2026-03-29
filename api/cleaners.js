@@ -17,9 +17,11 @@ module.exports = async (req, res) => {
     }
 
     if (req.method === 'POST') {
-      const { id, name } = req.body;
+      const { name } = req.body;
+      if (!name) return res.status(400).json({ error: 'Name required' });
+      const id = name.toLowerCase().replace(/[^a-z0-9а-яё]/gi, '_').replace(/_+/g, '_');
       await db.createCleaner(id, name);
-      return res.status(201).json({ success: true });
+      return res.status(201).json({ success: true, id, name });
     }
 
     if (req.method === 'PUT') {
