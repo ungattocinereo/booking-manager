@@ -5,6 +5,7 @@ const db = USE_POSTGRES
   : require('../backend/src/database');
 
 const { syncCalendars, generateCleaningTasks } = require('../backend/src/sync-calendars');
+const { enrichFromExports } = require('../backend/src/enrich-from-exports');
 
 module.exports = async (req, res) => {
   // Only allow POST
@@ -20,12 +21,16 @@ module.exports = async (req, res) => {
     
     // Generate cleaning tasks
     const tasksCount = await generateCleaningTasks();
-    
+
+    // Enrich bookings from Airbnb CSV exports
+    const enrichResult = await enrichFromExports(db, !!USE_POSTGRES);
+
     res.status(200).json({
       success: true,
       message: 'Calendars synced successfully',
       events_synced: eventsCount,
       tasks_created: tasksCount,
+      enriched: enrichResult,
       timestamp: new Date().toISOString()
     });
   } catch (error) {

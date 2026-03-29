@@ -217,18 +217,22 @@
     }
     .booking-bar:hover .booking-tooltip { display: block; }
     .tooltip-name {
-      font-size: 14px;
+      font-size: 15px;
       font-weight: 700;
-      margin-bottom: 3px;
+      margin-bottom: 4px;
+      letter-spacing: -0.2px;
     }
     .tooltip-dates {
       font-size: 12px;
       color: #d1d5db;
+      display: flex;
+      gap: 6px;
+      align-items: center;
     }
     .tooltip-country {
-      font-size: 12px;
+      font-size: 11px;
       color: #9ca3af;
-      margin-top: 3px;
+      margin-top: 4px;
     }
 
     /* ===== LEGEND ===== */
@@ -588,6 +592,11 @@
       <div class="stat-value" id="statNextCheckin2" style="font-size:16px;">—</div>
       <div class="stat-checkin-props" id="statNextCheckin2Props"></div>
     </div>
+    <div class="stat-card" id="statConflictCard" style="display:none; border-color:var(--danger); background:#fef2f2;">
+      <div class="stat-label" style="color:var(--danger);">Конфликты</div>
+      <div class="stat-value" id="statConflicts" style="color:var(--danger);">0</div>
+      <div class="stat-checkin-props" id="statConflictsDetail" style="color:var(--danger); font-size:11px;"></div>
+    </div>
   </div>
 
   <!-- LEGEND -->
@@ -715,6 +724,43 @@ function updateStats() {
   if (sortedDates.length > 1) {
     formatCheckinCard(sortedDates[1], checkinDates[sortedDates[1]],
       document.getElementById('statNextCheckin2'), document.getElementById('statNextCheckin2Props'));
+  }
+
+  // Detect conflicts: overlapping bookings for the same property
+  const conflicts = [];
+  const byProp = {};
+  for (const b of realBookings) {
+    if (!byProp[b.property_id]) byProp[b.property_id] = [];
+    byProp[b.property_id].push(b);
+  }
+  for (const [propId, pBookings] of Object.entries(byProp)) {
+    const sorted = pBookings.sort((a, b) => a.start_date.localeCompare(b.start_date));
+    for (let i = 0; i < sorted.length - 1; i++) {
+      for (let j = i + 1; j < sorted.length; j++) {
+        // Overlap: booking j starts before booking i ends
+        if (sorted[j].start_date < sorted[i].end_date) {
+          const prop = properties.find(p => p.id === propId);
+          conflicts.push({
+            property: prop?.name || propId,
+            a: sorted[i],
+            b: sorted[j]
+          });
+        } else break;
+      }
+    }
+  }
+  const conflictEl = document.getElementById('statConflicts');
+  const conflictDetail = document.getElementById('statConflictsDetail');
+  if (conflicts.length > 0) {
+    document.getElementById('statConflictCard').style.display = '';
+    conflictEl.textContent = conflicts.length;
+    conflictDetail.innerHTML = conflicts.slice(0, 3).map(c => {
+      const nameA = c.a.guest_name || c.a.platform;
+      const nameB = c.b.guest_name || c.b.platform;
+      return `<b>${c.property}</b>: ${nameA} / ${nameB}`;
+    }).join('<br>') + (conflicts.length > 3 ? `<br>...и ещё ${conflicts.length - 3}` : '');
+  } else {
+    document.getElementById('statConflictCard').style.display = 'none';
   }
 }
 
@@ -894,12 +940,13 @@ function renderCalendar() {
         const countryName = booking.guest_country ? (COUNTRY_NAMES[booking.guest_country.toLowerCase()] || booking.guest_country.toUpperCase()) : '';
         const countryHtml = countryFlag ? `<div class="tooltip-country">${countryFlag} ${countryName}</div>` : '';
 
-        // Show guest name on bar if exists, otherwise show label
-        const shortLabel = width > 80 ? (booking.guest_name || label) : '';
+        // Show guest name on bar — always prefer name over "Reserved"/"CLOSED"
+        const barText = booking.guest_name || (isBlocked ? '' : booking.platform);
+        const shortLabel = width > 80 ? barText : (width > 40 ? (booking.guest_name ? booking.guest_name.split(' ')[0] : '') : '');
         bar.innerHTML = `<span class="bar-label">${shortLabel}</span>
           <div class="booking-tooltip">
             <div class="tooltip-name">${nameText}</div>
-            <div class="tooltip-dates">${fmtD(dStart)} → ${fmtD(dEnd)}</div>
+            <div class="tooltip-dates">Заезд ${fmtD(dStart)} → Выезд ${fmtD(dEnd)}</div>
             ${countryHtml}
           </div>`;
         grid.appendChild(bar);

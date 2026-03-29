@@ -205,7 +205,12 @@ async function syncAll() {
     
     // Generate cleaning tasks
     await generateCleaningTasks();
-    
+
+    // Enrich bookings from Airbnb CSV exports
+    const { enrichFromExports } = require('./enrich-from-exports');
+    const USE_POSTGRES = process.env.POSTGRES_URL || process.env.DATABASE_URL;
+    await enrichFromExports(db, !!USE_POSTGRES);
+
     console.log('\n🎉 Sync completed successfully!');
     
   } catch (error) {
