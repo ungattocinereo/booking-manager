@@ -951,9 +951,9 @@ function updateStats() {
     document.getElementById('statConflictCard').style.display = 'none';
   }
 
-  // Recent bookings (last 24h by synced_at)
+  // New bookings (created in last 24h — created_at is set once on first insert, not updated on re-sync)
   const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-  const recent = realBookings.filter(b => b.synced_at && b.synced_at > oneDayAgo);
+  const recent = realBookings.filter(b => b.created_at && b.created_at > oneDayAgo);
   const recentCard = document.getElementById('statRecentCard');
   if (recent.length > 0) {
     recentCard.style.display = '';
