@@ -40,6 +40,12 @@ function platformIcon(platform) {
   return '⬜';
 }
 
+function countryToFlag(code) {
+  if (!code) return '';
+  const c = code.toUpperCase();
+  return String.fromCodePoint(...[...c].map(ch => 0x1F1E6 + ch.charCodeAt(0) - 65));
+}
+
 async function fetchBookings(params = {}) {
   try {
     const url = new URL('/api/bookings', BOOKING_API_URL);
@@ -50,8 +56,9 @@ async function fetchBookings(params = {}) {
     // - Booking.com: ALL entries are real bookings (Booking iCal marks everything as "CLOSED - Not available", no way to distinguish)
     return Array.isArray(res.data)
       ? res.data.filter(b => {
-          if (b.platform === 'airbnb') return b.raw_summary === 'Reserved';
-          if (b.platform === 'booking') return true; // Booking.com iCal = all real bookings
+          const summary = b.raw_summary || '';
+          const isUnavailable = summary.includes('Not available') || summary.includes('CLOSED') || b.booking_type === 'blocked';
+          if (isUnavailable && !b.guest_name) return false;
           return true;
         })
       : [];
@@ -109,7 +116,9 @@ function formatBookings(bookings, title) {
       const nights = nightsBetween(b.start_date, b.end_date);
       const name = PROPERTY_NAMES[b.property_id] || b.property_id;
       const icon = platformIcon(b.platform);
-      lines.push(`${icon} ${name} (${nights} ${nights === 1 ? 'ночь' : nights < 5 ? 'ночи' : 'ночей'}, → ${fmtDate(b.end_date)})`);
+      const flag = countryToFlag(b.guest_country);
+      const guest = b.guest_name ? ` — ${b.guest_name}${flag ? ' ' + flag : ''}` : '';
+      lines.push(`${icon} ${name} (${nights} ${nights === 1 ? 'ночь' : nights < 5 ? 'ночи' : 'ночей'}, → ${fmtDate(b.end_date)})${guest}`);
     }
     lines.push('');
   }
