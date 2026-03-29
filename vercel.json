@@ -1,6 +1,8 @@
 {
   "rewrites": [
     { "source": "/maid/:slug", "destination": "/frontend/public/maid.html" },
+    { "source": "/stats", "destination": "/frontend/public/index.html" },
+    { "source": "/maid", "destination": "/frontend/public/index.html" },
     { "source": "/", "destination": "/frontend/public/index.html" }
   ]
 }

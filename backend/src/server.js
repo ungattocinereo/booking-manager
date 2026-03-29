@@ -241,6 +241,14 @@ app.get('/maid/:slug', (req, res) => {
   res.sendFile(path.join(__dirname, '../../frontend/public/maid.html'));
 });
 
+// Tab routes — serve main app, frontend JS handles tab switching
+app.get('/stats', (req, res) => {
+  res.sendFile(path.join(__dirname, '../../frontend/public/index.html'));
+});
+app.get('/maid', (req, res) => {
+  res.sendFile(path.join(__dirname, '../../frontend/public/index.html'));
+});
+
 // ===== SYNC =====
 
 app.post('/api/sync', async (req, res) => {

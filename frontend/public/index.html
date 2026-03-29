@@ -757,8 +757,8 @@
         <canvas id="chartCountries"></canvas>
       </div>
       <div class="stats-chart-card">
-        <h3>Airbnb vs Booking.com</h3>
-        <canvas id="chartPlatform"></canvas>
+        <h3>Дни заезда (день недели)</h3>
+        <canvas id="chartCheckinDays"></canvas>
       </div>
       <div class="stats-chart-card">
         <h3>Средний срок проживания (ночей)</h3>
@@ -795,7 +795,10 @@ let bookings = [];
 let cleaners = [];
 let allAssignments = {};
 
-function switchTab(tab) {
+const TAB_ROUTES = { '/stats': 'stats', '/maid': 'cleaners' };
+const ROUTE_TABS = { stats: '/stats', cleaners: '/maid' };
+
+function switchTab(tab, pushState = true) {
   document.querySelectorAll('.nav-item').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
   document.getElementById('calendarTab').style.display = tab === 'calendar' ? 'block' : 'none';
   document.getElementById('cleanersTab').style.display = tab === 'cleaners' ? 'block' : 'none';
@@ -803,7 +806,16 @@ function switchTab(tab) {
   document.getElementById('statsBar').style.display = tab === 'calendar' ? 'flex' : 'none';
   document.getElementById('legend').style.display = tab === 'calendar' ? 'flex' : 'none';
   if (tab === 'stats') renderStats();
+  if (pushState) {
+    const url = ROUTE_TABS[tab] || '/';
+    history.pushState({ tab }, '', url);
+  }
 }
+
+window.addEventListener('popstate', (e) => {
+  const tab = e.state?.tab || TAB_ROUTES[location.pathname] || 'calendar';
+  switchTab(tab, false);
+});
 
 async function loadData() {
   try {
@@ -1449,21 +1461,30 @@ function renderStats() {
     }
   });
 
-  // ===== 4. PLATFORM SPLIT (doughnut) =====
-  const airbnbCount = seasonBookings.filter(b => b.platform === 'airbnb').length;
-  const bookingCount = seasonBookings.filter(b => b.platform === 'booking').length;
+  // ===== 4. CHECK-IN DAY OF WEEK (bar) =====
+  const dayNamesRu = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+  const checkinByDay = new Array(7).fill(0);
+  for (const b of seasonBookings) {
+    const dow = new Date(b.start_date + 'T00:00:00').getDay();
+    checkinByDay[dow]++;
+  }
+  // Reorder: Mon-Sun
+  const reordered = [...checkinByDay.slice(1), checkinByDay[0]];
+  const reorderedLabels = [...dayNamesRu.slice(1), dayNamesRu[0]];
+  const dayColors = reordered.map((_, i) => i >= 5 ? '#e0e7ff' : '#4f46e5'); // weekend lighter
 
-  statsCharts.platform = new Chart(document.getElementById('chartPlatform'), {
-    type: 'doughnut',
+  statsCharts.checkinDays = new Chart(document.getElementById('chartCheckinDays'), {
+    type: 'bar',
     data: {
-      labels: ['Airbnb', 'Booking.com'],
-      datasets: [{ data: [airbnbCount, bookingCount], backgroundColor: ['#D8304E', '#003b95'], borderWidth: 2, borderColor: '#fff' }]
+      labels: reorderedLabels,
+      datasets: [{ data: reordered, backgroundColor: dayColors, borderRadius: 6 }]
     },
     options: {
       ...defaultOpts,
-      plugins: {
-        ...defaultOpts.plugins,
-        legend: { position: 'bottom', labels: { font: { ...chartFont, size: 13 }, padding: 16, boxWidth: 14 } }
+      plugins: { ...defaultOpts.plugins, legend: { display: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { ...chartFont, size: 13 } } },
+        y: { beginAtZero: true, ticks: { font: chartFont, stepSize: 1 } }
       }
     }
   });
@@ -1570,6 +1591,11 @@ style.textContent = '@keyframes spin { from { transform: rotate(0deg); } to { tr
 document.head.appendChild(style);
 
 if (typeof lucide !== 'undefined') lucide.createIcons();
+
+// Route-based tab on page load
+const initTab = TAB_ROUTES[location.pathname] || 'calendar';
+if (initTab !== 'calendar') switchTab(initTab, false);
+
 loadData();
 setInterval(loadData, 5 * 60 * 1000);
 </script>
