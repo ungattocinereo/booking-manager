@@ -1,4 +1,7 @@
 {
+  "crons": [
+    { "path": "/api/sync", "schedule": "0 * * * *" }
+  ],
   "rewrites": [
     { "source": "/maid/:slug", "destination": "/frontend/public/maid.html" },
     { "source": "/stats", "destination": "/frontend/public/index.html" },

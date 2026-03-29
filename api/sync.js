@@ -8,8 +8,13 @@ const { syncCalendars, generateCleaningTasks } = require('../backend/src/sync-ca
 const { enrichFromExports } = require('../backend/src/enrich-from-exports');
 
 module.exports = async (req, res) => {
-  // Only allow POST
-  if (req.method !== 'POST') {
+  // Allow POST (manual) and GET (Vercel Cron)
+  if (req.method === 'GET') {
+    // Verify cron secret if set
+    if (process.env.CRON_SECRET && req.headers['authorization'] !== `Bearer ${process.env.CRON_SECRET}`) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+  } else if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
