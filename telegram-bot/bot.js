@@ -4,7 +4,7 @@ const axios = require('axios');
 // Configuration
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || 'REDACTED_BOT_TOKEN';
 const FAMILY_CHAT_ID = process.env.FAMILY_CHAT_ID || 'REDACTED_CHAT_ID';
-const BOOKING_API_URL = process.env.BOOKING_API_URL || 'http://booking-manager:3001/api';
+const BOOKING_API_URL = process.env.BOOKING_API_URL || 'https://b.amalfi.day';
 
 // Initialize bot
 const bot = new TelegramBot(BOT_TOKEN, { polling: true });
