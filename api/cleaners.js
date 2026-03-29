@@ -13,6 +13,9 @@ module.exports = async (req, res) => {
 
     if (req.method === 'GET') {
       const cleaners = await db.getCleaners();
+      for (const cleaner of cleaners) {
+        cleaner.properties = await db.getCleanerProperties(cleaner.id);
+      }
       return res.status(200).json(cleaners);
     }
 
