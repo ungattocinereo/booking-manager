@@ -9,7 +9,14 @@
     "sync": "node backend/src/sync-calendars.js",
     "test": "npm run sync && curl http://localhost:3001/health"
   },
-  "keywords": ["booking", "calendar", "ical", "airbnb", "booking.com", "cleaning"],
+  "keywords": [
+    "booking",
+    "calendar",
+    "ical",
+    "airbnb",
+    "booking.com",
+    "cleaning"
+  ],
   "author": "Greg",
   "license": "MIT",
   "repository": {
@@ -17,13 +24,14 @@
     "url": "git+https://github.com/ungattocinereo/booking-manager.git"
   },
   "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
     "express": "^4.18.2",
-    "sqlite3": "^5.1.6",
-    "pg": "^8.11.3",
     "ical.js": "^1.5.0",
     "node-fetch": "^2.6.7",
-    "cors": "^2.8.5",
-    "dotenv": "^16.0.3"
+    "pg": "^8.20.0",
+    "playwright": "^1.58.2",
+    "sqlite3": "^5.1.6"
   },
   "devDependencies": {
     "nodemon": "^2.0.20"

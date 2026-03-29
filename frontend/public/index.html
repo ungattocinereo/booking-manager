@@ -775,9 +775,19 @@ function renderCalendar() {
         bar.style.marginLeft = '19px';
         bar.style.marginRight = '19px';
 
-        const shortLabel = width > 80 ? label : '';
+        // Build tooltip
+        let tooltip = `${booking.platform.toUpperCase()}: ${booking.start_date} → ${booking.end_date}`;
+        if (booking.guest_name) {
+          tooltip += `\n👤 ${booking.guest_name}`;
+          if (booking.guest_country) {
+            tooltip += ` (${booking.guest_country.toUpperCase()})`;
+          }
+        }
+        tooltip += `\n${label}`;
+        
+        const shortLabel = width > 80 ? (booking.guest_name || label) : '';
         bar.innerHTML = `<span class="bar-label">${shortLabel}</span>`;
-        bar.title = `${booking.platform}: ${booking.start_date} → ${booking.end_date}\n${label}`;
+        bar.title = tooltip;
         grid.appendChild(bar);
       });
 
