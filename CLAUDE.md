@@ -43,8 +43,9 @@ Both paths share the database layer — `server.js` and each `api/*.js` file che
 - `backend/src/` — Express server, database modules (SQLite + Postgres), iCal sync engine
 - `backend/config/calendars.json` — property definitions with iCal URLs (local dev config)
 - `backend/database/` — SQL schemas (`schema.sql` for SQLite, `schema-postgres.sql` for Postgres)
-- `api/` — Vercel serverless functions that wrap the same `backend/src/database-postgres.js` module. `_helpers.js` has shared date formatters.
-- `frontend/public/index.html` — entire frontend is a single HTML file (vanilla JS, no build step, Lucide icons, Inter font)
+- `api/` — Vercel serverless functions. `api/cleaners/[id].js` for CRUD, `api/maid/[slug].js` for maid calendar. `_helpers.js` has shared date formatters.
+- `frontend/public/index.html` — dashboard (vanilla JS, Chart.js, Lucide icons, Inter font). Tabs: Calendar, Cleaners (/maid), Statistics (/stats)
+- `frontend/public/maid.html` — mobile-first maid calendar in Italian, served at `/maid/:slug`
 - `telegram-bot/` — standalone Telegram bot (separate `package.json`, `node-telegram-bot-api`, communicates with the API over HTTP)
 - `scraper/` — one-off import scripts for Booking.com/Airbnb data (not part of the running app)
 
@@ -68,10 +69,23 @@ Both paths share the database layer — `server.js` and each `api/*.js` file che
 
 8 properties configured: Vingtage Room, Orange Room, Solo Room, Youth Room, Awesome Apartments, Carina, Harmony, Royal. First four have both Airbnb + Booking.com feeds; the rest are Airbnb-only.
 
+### Cleaners have a `slug` field
+
+Each cleaner can have a unique `slug` for a public maid calendar at `/maid/:slug`. The slug is editable in the admin UI. The maid page is Italian, the admin is Russian.
+
+### Cron
+
+Vercel cron runs `GET /api/sync` every hour. Secured by `CRON_SECRET` env var (Bearer token in Authorization header).
+
+### Frontend routing
+
+`/stats` and `/maid` are rewrites to `index.html`. Frontend JS reads `location.pathname` and switches tabs via `switchTab()`. `history.pushState` keeps URL in sync.
+
 ## Environment Variables
 
 Key vars (see `.env.example`):
 - `POSTGRES_URL` / `DATABASE_URL` — Postgres connection (presence triggers Postgres mode)
 - `ICAL_URLS` — JSON array of property calendar URLs (Vercel deployment)
+- `CRON_SECRET` — secret for hourly sync cron authentication
 - `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` — for the Telegram bot
 - `PORT` — Express port (default 3001)
