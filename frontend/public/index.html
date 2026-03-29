@@ -763,7 +763,9 @@ function renderCalendar() {
 
         const bar = document.createElement('div');
         const label = booking.raw_summary || booking.platform;
-        const isBlocked = label.includes('Not available') || label.includes('CLOSED') || booking.booking_type === 'blocked';
+        const isUnavailable = label.includes('Not available') || label.includes('CLOSED') || booking.booking_type === 'blocked';
+        // If guest_name exists, it's a real booking (not blocked)
+        const isBlocked = isUnavailable && !booking.guest_name;
 
         bar.className = `booking-bar ${booking.platform}${isBlocked ? ' not-available' : ''}`;
         bar.style.gridRow = row;
@@ -775,16 +777,19 @@ function renderCalendar() {
         bar.style.marginLeft = '19px';
         bar.style.marginRight = '19px';
 
-        // Build tooltip
-        let tooltip = `${booking.platform.toUpperCase()}: ${booking.start_date} → ${booking.end_date}`;
+        // Build tooltip: name (big), dates, country (small)
+        let tooltip = '';
         if (booking.guest_name) {
-          tooltip += `\n👤 ${booking.guest_name}`;
-          if (booking.guest_country) {
-            tooltip += ` (${booking.guest_country.toUpperCase()})`;
-          }
+          tooltip = `👤 ${booking.guest_name}`;
+        } else {
+          tooltip = `${booking.platform.toUpperCase()}`;
         }
-        tooltip += `\n${label}`;
+        tooltip += `\n📅 ${booking.start_date} → ${booking.end_date}`;
+        if (booking.guest_country) {
+          tooltip += `\n🌍 ${booking.guest_country.toUpperCase()}`;
+        }
         
+        // Show guest name on bar if exists, otherwise show label
         const shortLabel = width > 80 ? (booking.guest_name || label) : '';
         bar.innerHTML = `<span class="bar-label">${shortLabel}</span>`;
         bar.title = tooltip;
