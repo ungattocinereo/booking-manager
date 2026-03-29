@@ -35,6 +35,7 @@
   <meta name="twitter:image" content="/frontend/public/icon-512.png">
 
   <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
@@ -602,6 +603,62 @@
     .toast.show { opacity: 1; transform: translateY(0); }
 
     .hidden { display: none !important; }
+
+    /* ===== STATS TAB ===== */
+    .stats-section { padding: 20px 28px; }
+    .stats-summary-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .stats-summary-row::-webkit-scrollbar { display: none; }
+    .stats-summary-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 16px 20px;
+      min-width: 160px;
+      flex-shrink: 0;
+    }
+    .stats-summary-card .label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+    .stats-summary-card .value {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+    .stats-summary-card .sub {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+    .stats-chart-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow-sm);
+    }
+    .stats-chart-card h3 {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: var(--text);
+    }
+    @media (max-width: 768px) {
+      .stats-section { padding: 16px; }
+      .stats-grid { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
@@ -610,7 +667,7 @@
   <div class="header">
     <div class="header-left">
       <div class="header-logo">
-        <i data-lucide="building-2" style="width:20px;height:20px;"></i>
+        <img src="/frontend/public/favicon-32.png" alt="Atrani" style="width:20px;height:20px;">
       </div>
       <h1>Atrani <span>Бронирования</span></h1>
     </div>
@@ -629,6 +686,9 @@
     </div>
     <div class="nav-item" data-tab="cleaners" onclick="switchTab('cleaners')">
       <i data-lucide="sparkles" style="width:16px;height:16px;"></i>Уборка
+    </div>
+    <div class="nav-item" data-tab="stats" onclick="switchTab('stats')">
+      <i data-lucide="bar-chart-3" style="width:16px;height:16px;"></i>Статистика
     </div>
   </div>
 
@@ -680,6 +740,37 @@
     </div>
   </div>
 
+  <!-- STATS TAB -->
+  <div class="stats-section" id="statsTab" style="display:none">
+    <div class="stats-summary-row" id="statsSummary"></div>
+    <div class="stats-grid" id="statsGrid">
+      <div class="stats-chart-card">
+        <h3>Бронирования по месяцам</h3>
+        <canvas id="chartMonthly"></canvas>
+      </div>
+      <div class="stats-chart-card">
+        <h3>Заполняемость апартаментов</h3>
+        <canvas id="chartOccupancy"></canvas>
+      </div>
+      <div class="stats-chart-card">
+        <h3>Откуда гости</h3>
+        <canvas id="chartCountries"></canvas>
+      </div>
+      <div class="stats-chart-card">
+        <h3>Airbnb vs Booking.com</h3>
+        <canvas id="chartPlatform"></canvas>
+      </div>
+      <div class="stats-chart-card">
+        <h3>Средний срок проживания (ночей)</h3>
+        <canvas id="chartDuration"></canvas>
+      </div>
+      <div class="stats-chart-card">
+        <h3>Гости по месяцам</h3>
+        <canvas id="chartGuests"></canvas>
+      </div>
+    </div>
+  </div>
+
   <!-- CLEANERS TAB -->
   <div class="cleaners-section" id="cleanersTab">
     <div class="add-cleaner-form">
@@ -708,8 +799,10 @@ function switchTab(tab) {
   document.querySelectorAll('.nav-item').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
   document.getElementById('calendarTab').style.display = tab === 'calendar' ? 'block' : 'none';
   document.getElementById('cleanersTab').style.display = tab === 'cleaners' ? 'block' : 'none';
+  document.getElementById('statsTab').style.display = tab === 'stats' ? 'block' : 'none';
   document.getElementById('statsBar').style.display = tab === 'calendar' ? 'flex' : 'none';
   document.getElementById('legend').style.display = tab === 'calendar' ? 'flex' : 'none';
+  if (tab === 'stats') renderStats();
 }
 
 async function loadData() {
@@ -1175,6 +1268,271 @@ async function toggleAssignment(cleanerId, propertyId, checked) {
     if (!res.ok) throw new Error('Failed');
     await loadData();
   } catch (err) { toast('❌ Ошибка: ' + err.message); }
+}
+
+// ===== STATISTICS =====
+let statsCharts = {};
+
+function renderStats() {
+  const SEASON_START = 4; // April (0-indexed: 3)
+  const SEASON_END = 11; // November (0-indexed: 10)
+  const year = new Date().getFullYear();
+  const monthLabels = ['Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя'];
+  const monthIndices = [3,4,5,6,7,8,9,10]; // 0-indexed
+
+  // Filter real bookings in season
+  const seasonBookings = bookings.filter(b => {
+    const summary = b.raw_summary || '';
+    const isUnavailable = summary.includes('Not available') || summary.includes('CLOSED') || b.booking_type === 'blocked';
+    if (isUnavailable && !b.guest_name) return false;
+    const start = new Date(b.start_date + 'T00:00:00');
+    const end = new Date(b.end_date + 'T00:00:00');
+    // Overlaps with April–November
+    const seasonStart = new Date(year, 3, 1);
+    const seasonEnd = new Date(year, 11, 1);
+    return start < seasonEnd && end > seasonStart;
+  });
+
+  // Destroy old charts
+  Object.values(statsCharts).forEach(c => c.destroy());
+  statsCharts = {};
+
+  // ===== SUMMARY CARDS =====
+  const totalNightsSeason = monthIndices.reduce((sum, m) => {
+    const daysInMonth = new Date(year, m + 1, 0).getDate();
+    return sum + daysInMonth;
+  }, 0); // per property
+
+  let totalOccupiedNights = 0;
+  const propNights = {};
+  for (const b of seasonBookings) {
+    const s = new Date(Math.max(new Date(b.start_date + 'T00:00:00'), new Date(year, 3, 1)));
+    const e = new Date(Math.min(new Date(b.end_date + 'T00:00:00'), new Date(year, 11, 1)));
+    const nights = Math.max(0, (e - s) / 86400000);
+    totalOccupiedNights += nights;
+    propNights[b.property_id] = (propNights[b.property_id] || 0) + nights;
+  }
+  const avgOccupancy = properties.length > 0
+    ? Math.round((totalOccupiedNights / (totalNightsSeason * properties.length)) * 100)
+    : 0;
+
+  // Top country
+  const countryCounts = {};
+  for (const b of seasonBookings) {
+    if (b.guest_country) {
+      const c = b.guest_country.toLowerCase();
+      countryCounts[c] = (countryCounts[c] || 0) + 1;
+    }
+  }
+  const topCountry = Object.entries(countryCounts).sort((a,b) => b[1] - a[1])[0];
+  const topCountryText = topCountry
+    ? `${countryToFlag(topCountry[0])} ${COUNTRY_NAMES[topCountry[0]] || topCountry[0].toUpperCase()}`
+    : '—';
+
+  // Average guests
+  const withGuests = seasonBookings.filter(b => b.guest_count > 0);
+  const avgGuests = withGuests.length > 0
+    ? (withGuests.reduce((s, b) => s + b.guest_count, 0) / withGuests.length).toFixed(1)
+    : '—';
+
+  document.getElementById('statsSummary').innerHTML = `
+    <div class="stats-summary-card">
+      <div class="label">Бронирования (сезон)</div>
+      <div class="value">${seasonBookings.length}</div>
+      <div class="sub">Апрель — Ноябрь ${year}</div>
+    </div>
+    <div class="stats-summary-card">
+      <div class="label">Средняя заполняемость</div>
+      <div class="value">${avgOccupancy}%</div>
+      <div class="sub">${properties.length} апартаментов</div>
+    </div>
+    <div class="stats-summary-card">
+      <div class="label">Топ страна</div>
+      <div class="value" style="font-size:20px;">${topCountryText}</div>
+      <div class="sub">${topCountry ? topCountry[1] + ' бронирований' : ''}</div>
+    </div>
+    <div class="stats-summary-card">
+      <div class="label">Среднее гостей</div>
+      <div class="value">${avgGuests}</div>
+      <div class="sub">человек на бронирование</div>
+    </div>
+  `;
+
+  const chartFont = { family: "'Inter', sans-serif" };
+  const defaultOpts = {
+    responsive: true,
+    maintainAspectRatio: true,
+    plugins: { legend: { labels: { font: { ...chartFont, size: 12 } } } },
+    scales: {}
+  };
+
+  // ===== 1. MONTHLY BOOKINGS (stacked bar) =====
+  const monthlyAirbnb = new Array(8).fill(0);
+  const monthlyBooking = new Array(8).fill(0);
+  for (const b of seasonBookings) {
+    const m = new Date(b.start_date + 'T00:00:00').getMonth();
+    const idx = m - 3;
+    if (idx >= 0 && idx < 8) {
+      if (b.platform === 'airbnb') monthlyAirbnb[idx]++;
+      else monthlyBooking[idx]++;
+    }
+  }
+  statsCharts.monthly = new Chart(document.getElementById('chartMonthly'), {
+    type: 'bar',
+    data: {
+      labels: monthLabels,
+      datasets: [
+        { label: 'Airbnb', data: monthlyAirbnb, backgroundColor: '#D8304E', borderRadius: 4 },
+        { label: 'Booking.com', data: monthlyBooking, backgroundColor: '#003b95', borderRadius: 4 }
+      ]
+    },
+    options: {
+      ...defaultOpts,
+      plugins: { ...defaultOpts.plugins, legend: { ...defaultOpts.plugins.legend, position: 'top' } },
+      scales: {
+        x: { stacked: true, grid: { display: false }, ticks: { font: chartFont } },
+        y: { stacked: true, beginAtZero: true, ticks: { font: chartFont, stepSize: 1 } }
+      }
+    }
+  });
+
+  // ===== 2. OCCUPANCY BY PROPERTY (horizontal bar) =====
+  const propLabels = properties.map(p => p.name);
+  const propOccupancy = properties.map(p => {
+    const nights = propNights[p.id] || 0;
+    return Math.round((nights / totalNightsSeason) * 100);
+  });
+  const propColors = properties.map(p => (propertyConfig[p.id] || {}).color || '#6b7280');
+
+  statsCharts.occupancy = new Chart(document.getElementById('chartOccupancy'), {
+    type: 'bar',
+    data: {
+      labels: propLabels,
+      datasets: [{
+        data: propOccupancy,
+        backgroundColor: propColors,
+        borderRadius: 4
+      }]
+    },
+    options: {
+      ...defaultOpts,
+      indexAxis: 'y',
+      plugins: { ...defaultOpts.plugins, legend: { display: false } },
+      scales: {
+        x: { beginAtZero: true, max: 100, ticks: { font: chartFont, callback: v => v + '%' }, grid: { color: '#f0f0f0' } },
+        y: { ticks: { font: { ...chartFont, size: 12 } }, grid: { display: false } }
+      }
+    }
+  });
+
+  // ===== 3. GUEST COUNTRIES (doughnut) =====
+  const sortedCountries = Object.entries(countryCounts).sort((a,b) => b[1] - a[1]);
+  const top8 = sortedCountries.slice(0, 8);
+  const othersCount = sortedCountries.slice(8).reduce((s, [, c]) => s + c, 0);
+  const countryLabels = top8.map(([c]) => `${countryToFlag(c)} ${COUNTRY_NAMES[c] || c.toUpperCase()}`);
+  const countryData = top8.map(([, c]) => c);
+  if (othersCount > 0) { countryLabels.push('Другие'); countryData.push(othersCount); }
+  const countryColors = ['#4f46e5','#ea580c','#059669','#D8304E','#ca8a04','#0891b2','#be185d','#8b5cf6','#9ca3af'];
+
+  statsCharts.countries = new Chart(document.getElementById('chartCountries'), {
+    type: 'doughnut',
+    data: {
+      labels: countryLabels,
+      datasets: [{ data: countryData, backgroundColor: countryColors.slice(0, countryData.length), borderWidth: 2, borderColor: '#fff' }]
+    },
+    options: {
+      ...defaultOpts,
+      plugins: {
+        ...defaultOpts.plugins,
+        legend: { position: 'right', labels: { font: { ...chartFont, size: 11 }, padding: 8, boxWidth: 12 } }
+      }
+    }
+  });
+
+  // ===== 4. PLATFORM SPLIT (doughnut) =====
+  const airbnbCount = seasonBookings.filter(b => b.platform === 'airbnb').length;
+  const bookingCount = seasonBookings.filter(b => b.platform === 'booking').length;
+
+  statsCharts.platform = new Chart(document.getElementById('chartPlatform'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Airbnb', 'Booking.com'],
+      datasets: [{ data: [airbnbCount, bookingCount], backgroundColor: ['#D8304E', '#003b95'], borderWidth: 2, borderColor: '#fff' }]
+    },
+    options: {
+      ...defaultOpts,
+      plugins: {
+        ...defaultOpts.plugins,
+        legend: { position: 'bottom', labels: { font: { ...chartFont, size: 13 }, padding: 16, boxWidth: 14 } }
+      }
+    }
+  });
+
+  // ===== 5. AVERAGE STAY DURATION (bar by property) =====
+  const propDuration = {};
+  const propBookingCount = {};
+  for (const b of seasonBookings) {
+    const nights = (new Date(b.end_date + 'T00:00:00') - new Date(b.start_date + 'T00:00:00')) / 86400000;
+    propDuration[b.property_id] = (propDuration[b.property_id] || 0) + nights;
+    propBookingCount[b.property_id] = (propBookingCount[b.property_id] || 0) + 1;
+  }
+  const avgDuration = properties.map(p => {
+    const total = propDuration[p.id] || 0;
+    const count = propBookingCount[p.id] || 0;
+    return count > 0 ? +(total / count).toFixed(1) : 0;
+  });
+
+  statsCharts.duration = new Chart(document.getElementById('chartDuration'), {
+    type: 'bar',
+    data: {
+      labels: propLabels,
+      datasets: [{ data: avgDuration, backgroundColor: propColors, borderRadius: 4 }]
+    },
+    options: {
+      ...defaultOpts,
+      plugins: { ...defaultOpts.plugins, legend: { display: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { ...chartFont, size: 11 } } },
+        y: { beginAtZero: true, ticks: { font: chartFont } }
+      }
+    }
+  });
+
+  // ===== 6. GUESTS BY MONTH (line) =====
+  const monthlyGuests = new Array(8).fill(0);
+  for (const b of seasonBookings) {
+    if (b.guest_count > 0) {
+      const m = new Date(b.start_date + 'T00:00:00').getMonth();
+      const idx = m - 3;
+      if (idx >= 0 && idx < 8) monthlyGuests[idx] += b.guest_count;
+    }
+  }
+
+  statsCharts.guests = new Chart(document.getElementById('chartGuests'), {
+    type: 'line',
+    data: {
+      labels: monthLabels,
+      datasets: [{
+        label: 'Гости',
+        data: monthlyGuests,
+        borderColor: '#4f46e5',
+        backgroundColor: 'rgba(79,70,229,.1)',
+        fill: true,
+        tension: 0.35,
+        pointBackgroundColor: '#4f46e5',
+        pointRadius: 5,
+        pointHoverRadius: 7
+      }]
+    },
+    options: {
+      ...defaultOpts,
+      plugins: { ...defaultOpts.plugins, legend: { display: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: chartFont } },
+        y: { beginAtZero: true, ticks: { font: chartFont, stepSize: 5 } }
+      }
+    }
+  });
 }
 
 async function syncCalendars() {
