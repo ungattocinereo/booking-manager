@@ -138,10 +138,21 @@ app.post('/api/cleaning-tasks', async (req, res) => {
   }
 });
 
-// Update cleaner (name, slug)
+// Update cleaner (name, slug, property assignments)
 app.put('/api/cleaners/:id', async (req, res) => {
   try {
-    const { name, slug } = req.body;
+    const { name, slug, property_ids } = req.body;
+
+    // Update property assignments
+    if (property_ids !== undefined) {
+      await db.run('DELETE FROM cleaner_properties WHERE cleaner_id = ?', [req.params.id]);
+      for (const pid of property_ids) {
+        await db.assignCleanerToProperty(req.params.id, pid);
+      }
+      return res.json({ success: true });
+    }
+
+    // Update name/slug
     const fields = {};
     if (name !== undefined) fields.name = name;
     if (slug !== undefined) fields.slug = slug.toLowerCase().replace(/[^a-z0-9-]/g, '').replace(/-+/g, '-') || null;

@@ -1072,8 +1072,15 @@ function renderCleaners() {
     return `
     <div class="cleaner-card">
       <div class="cleaner-card-header">
-        <h3><i data-lucide="user" style="width:16px;height:16px;"></i>${cleaner.name}</h3>
-        <button class="btn btn-danger-ghost btn-sm" onclick="deleteCleaner('${cleaner.id}', '${cleaner.name}')">
+        <h3 style="display:flex;align-items:center;gap:6px;flex:1;min-width:0;">
+          <i data-lucide="user" style="width:16px;height:16px;flex-shrink:0;"></i>
+          <input type="text" value="${cleaner.name}" class="cleaner-name-input"
+            style="border:none;background:transparent;font:inherit;font-size:inherit;font-weight:inherit;color:inherit;padding:2px 4px;border-radius:4px;width:100%;min-width:0;outline:none;transition:background .15s;"
+            onfocus="this.style.background='var(--bg)'"
+            onblur="this.style.background='transparent'; renameCleaner('${cleaner.id}', this.value)"
+            onkeydown="if(event.key==='Enter') this.blur()">
+        </h3>
+        <button class="btn btn-danger-ghost btn-sm" onclick="deleteCleaner('${cleaner.id}', '${cleaner.name}')" style="flex-shrink:0;">
           <i data-lucide="trash-2" style="width:12px;height:12px;"></i>Удалить
         </button>
       </div>
@@ -1119,6 +1126,22 @@ async function addCleaner() {
   } catch (err) { toast('❌ Ошибка: ' + err.message); }
 }
 
+async function renameCleaner(id, newName) {
+  const name = newName.trim();
+  const cleaner = cleaners.find(c => c.id === id);
+  if (!name || name === cleaner?.name) return;
+  try {
+    const res = await fetch(`${API}/cleaners/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name })
+    });
+    if (!res.ok) throw new Error('Failed');
+    toast(`Переименовано: ${name}`);
+    await loadData();
+  } catch (err) { toast('Ошибка: ' + err.message); }
+}
+
 async function updateSlug(id, slug) {
   const cleaned = slug.toLowerCase().replace(/[^a-z0-9-]/g, '').replace(/-+/g, '-');
   try {
@@ -1148,7 +1171,7 @@ async function toggleAssignment(cleanerId, propertyId, checked) {
   const currentIds = (cleaner.properties || []).map(p => p.id);
   const newIds = checked ? [...currentIds, propertyId] : currentIds.filter(id => id !== propertyId);
   try {
-    const res = await fetch(`${API}/cleaners/${cleanerId}/properties`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ property_ids: newIds }) });
+    const res = await fetch(`${API}/cleaners/${cleanerId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ property_ids: newIds }) });
     if (!res.ok) throw new Error('Failed');
     await loadData();
   } catch (err) { toast('❌ Ошибка: ' + err.message); }
