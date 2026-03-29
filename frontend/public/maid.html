@@ -398,8 +398,9 @@ async function loadData() {
       return;
     }
     data = await res.json();
-    const now = new Date();
-    currentMonth = { year: now.getFullYear(), month: now.getMonth() };
+    const events = getEvents();
+    const months = getAvailableMonths(events);
+    currentMonth = months.length > 0 ? months[0] : { year: new Date().getFullYear(), month: new Date().getMonth() };
     render();
   } catch (err) {
     showError();
@@ -479,9 +480,6 @@ function getMonthEvents(events, year, month) {
 
 function getAvailableMonths(events) {
   const months = new Set();
-  const now = new Date();
-  // Always include current month
-  months.add(`${now.getFullYear()}-${now.getMonth()}`);
   for (const e of events) {
     months.add(`${e.dateObj.getFullYear()}-${e.dateObj.getMonth()}`);
   }
