@@ -6,13 +6,31 @@ node_modules/
 .DS_Store
 npm-debug.log*
 
-# Docker
+# Docker (local-only)
 backup/
+docker-compose.yml
+Dockerfile
+.dockerignore
 
 # macOS
 .AppleDouble
 .LSOverride
+
+# Vercel
 .vercel
 .env*.local
-.booking-session.json
+
+# Sensitive config
+backend/config/calendars.json
+scraper/.booking-credentials.json
+scraper/.booking-session.json
+
+# Guest data exports (contain PII)
+exports/*.csv
+exports/*.xls
+exports/*.xlsx
+exports/*.json
+!exports/README.md
+
+# Debug
 debug-screenshot.png

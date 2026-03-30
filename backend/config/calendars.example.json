@@ -1,0 +1,21 @@
+{
+  "properties": [
+    {
+      "id": "example-room",
+      "name": "Example Room",
+      "calendars": [
+        {
+          "platform": "booking",
+          "url": "https://ical.booking.com/v1/export/t/YOUR-UUID.ics"
+        },
+        {
+          "platform": "airbnb",
+          "url": "https://www.airbnb.com/calendar/ical/YOUR-LISTING-ID.ics?t=YOUR-TOKEN"
+        }
+      ]
+    }
+  ],
+  "cleaners": [
+    { "id": "cleaner1", "name": "Cleaner Name" }
+  ]
+}

@@ -1,10 +1,15 @@
 const TelegramBot = require('node-telegram-bot-api');
 const axios = require('axios');
 
-// Configuration
-const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || 'REDACTED_BOT_TOKEN';
-const FAMILY_CHAT_ID = process.env.FAMILY_CHAT_ID || 'REDACTED_CHAT_ID';
+// Configuration (all from environment variables)
+const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const FAMILY_CHAT_ID = process.env.FAMILY_CHAT_ID;
 const BOOKING_API_URL = process.env.BOOKING_API_URL || 'https://b.amalfi.day';
+
+if (!BOT_TOKEN || !FAMILY_CHAT_ID) {
+  console.error('Missing required env vars: TELEGRAM_BOT_TOKEN, FAMILY_CHAT_ID');
+  process.exit(1);
+}
 
 // Initialize bot
 const bot = new TelegramBot(BOT_TOKEN, { polling: true });
