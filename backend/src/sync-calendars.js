@@ -96,16 +96,19 @@ function parseICalData(icalData) {
 
 async function syncPropertyCalendars(property) {
   console.log(`\n🏠 Syncing property: ${property.name}`);
-  
+
+  const today = new Date().toISOString().split('T')[0];
   let totalEvents = 0;
-  
+
   for (const calendar of property.calendars) {
     try {
       const icalData = await fetchCalendar(calendar.url);
       const events = parseICalData(icalData);
-      
+
       console.log(`  ${calendar.platform}: ${events.length} events`);
-      
+
+      const feedKeys = [];
+
       for (const event of events) {
         // Determine booking type
         let bookingType = 'reservation';
@@ -126,14 +129,23 @@ async function syncPropertyCalendars(property) {
             bookingType
           }
         );
+
+        feedKeys.push({ startDate: event.startDate, endDate: event.endDate });
       }
-      
+
+      // Remove future bookings that are no longer in the iCal feed
+      const deleted = await db.deleteStaleBookings(property.id, calendar.platform, feedKeys, today);
+      const deletedCount = deleted.rowCount || deleted.changes || 0;
+      if (deletedCount > 0) {
+        console.log(`  🗑️  Removed ${deletedCount} stale bookings for ${calendar.platform}`);
+      }
+
       totalEvents += events.length;
     } catch (error) {
       console.error(`  ❌ Error syncing ${calendar.platform}:`, error.message);
     }
   }
-  
+
   return totalEvents;
 }
 

@@ -126,6 +126,21 @@ class Database {
     return this.all(sql, params);
   }
 
+  async deleteStaleBookings(propertyId, platform, feedKeys, today) {
+    if (feedKeys.length === 0) return { changes: 0 };
+    const placeholders = feedKeys.map(() => '(?, ?)').join(', ');
+    const params = [propertyId, platform, today];
+    for (const key of feedKeys) {
+      params.push(key.startDate, key.endDate);
+    }
+    return this.run(
+      `DELETE FROM bookings
+       WHERE property_id = ? AND platform = ? AND end_date >= ?
+       AND (start_date || '|' || end_date) NOT IN (${feedKeys.map(() => '?').join(', ')})`,
+      [propertyId, platform, today, ...feedKeys.map(k => k.startDate + '|' + k.endDate)]
+    );
+  }
+
   // Cleaner operations
   async createCleaner(id, name) {
     return this.run('INSERT OR IGNORE INTO cleaners (id, name) VALUES (?, ?)', [id, name]);
