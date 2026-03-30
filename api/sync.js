@@ -22,8 +22,8 @@ module.exports = async (req, res) => {
     console.log('🔄 Starting calendar sync...');
     
     // Sync calendars (doesn't close connection)
-    const eventsCount = await syncCalendars();
-    
+    const syncResult = await syncCalendars();
+
     // Generate cleaning tasks
     const tasksCount = await generateCleaningTasks();
 
@@ -33,7 +33,8 @@ module.exports = async (req, res) => {
     res.status(200).json({
       success: true,
       message: 'Calendars synced successfully',
-      events_synced: eventsCount,
+      events_synced: syncResult.totalEvents,
+      stale_removed: syncResult.totalDeleted,
       tasks_created: tasksCount,
       enriched: enrichResult,
       timestamp: new Date().toISOString()

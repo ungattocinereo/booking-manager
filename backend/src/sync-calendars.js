@@ -99,6 +99,7 @@ async function syncPropertyCalendars(property) {
 
   const today = new Date().toISOString().split('T')[0];
   let totalEvents = 0;
+  let totalDeleted = 0;
 
   for (const calendar of property.calendars) {
     try {
@@ -139,6 +140,7 @@ async function syncPropertyCalendars(property) {
         const deletedCount = deleted.rowCount || deleted.changes || 0;
         if (deletedCount > 0) {
           console.log(`  🗑️  Removed ${deletedCount} stale bookings for ${calendar.platform}`);
+          totalDeleted += deletedCount;
         }
       } catch (delErr) {
         console.error(`  ⚠️ Failed to clean stale bookings for ${calendar.platform}:`, delErr.message);
@@ -150,7 +152,7 @@ async function syncPropertyCalendars(property) {
     }
   }
 
-  return totalEvents;
+  return { events: totalEvents, deleted: totalDeleted };
 }
 
 async function generateCleaningTasks() {
@@ -212,13 +214,15 @@ async function syncAll() {
     
     // Sync all property calendars
     let totalEvents = 0;
+    let totalDeleted = 0;
     for (const property of config.properties) {
-      const events = await syncPropertyCalendars(property);
-      totalEvents += events;
+      const result = await syncPropertyCalendars(property);
+      totalEvents += result.events;
+      totalDeleted += result.deleted;
     }
-    
-    console.log(`\n✅ Total events synced: ${totalEvents}`);
-    
+
+    console.log(`\n✅ Total events synced: ${totalEvents}, stale removed: ${totalDeleted}`);
+
     // Generate cleaning tasks
     await generateCleaningTasks();
 
@@ -251,13 +255,15 @@ async function syncCalendars() {
   
   // Sync all property calendars
   let totalEvents = 0;
+  let totalDeleted = 0;
   for (const property of config.properties) {
-    const events = await syncPropertyCalendars(property);
-    totalEvents += events;
+    const result = await syncPropertyCalendars(property);
+    totalEvents += result.events;
+    totalDeleted += result.deleted;
   }
-  
-  console.log(`\n✅ Total events synced: ${totalEvents}`);
-  return totalEvents;
+
+  console.log(`\n✅ Total events synced: ${totalEvents}, stale removed: ${totalDeleted}`);
+  return { totalEvents, totalDeleted };
 }
 
 // Run if called directly

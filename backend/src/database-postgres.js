@@ -115,8 +115,8 @@ class Database {
     const placeholders = keyStrings.map((_, i) => `$${i + 4}`).join(', ');
     return this.execute(
       `DELETE FROM bookings
-       WHERE property_id = $1 AND platform = $2 AND end_date >= $3
-       AND (start_date::text || '|' || end_date::text) NOT IN (${placeholders})`,
+       WHERE property_id = $1 AND platform = $2 AND end_date >= $3::date
+       AND (to_char(start_date, 'YYYY-MM-DD') || '|' || to_char(end_date, 'YYYY-MM-DD')) NOT IN (${placeholders})`,
       [propertyId, platform, today, ...keyStrings]
     );
   }
