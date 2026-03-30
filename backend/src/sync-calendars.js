@@ -134,10 +134,14 @@ async function syncPropertyCalendars(property) {
       }
 
       // Remove future bookings that are no longer in the iCal feed
-      const deleted = await db.deleteStaleBookings(property.id, calendar.platform, feedKeys, today);
-      const deletedCount = deleted.rowCount || deleted.changes || 0;
-      if (deletedCount > 0) {
-        console.log(`  🗑️  Removed ${deletedCount} stale bookings for ${calendar.platform}`);
+      try {
+        const deleted = await db.deleteStaleBookings(property.id, calendar.platform, feedKeys, today);
+        const deletedCount = deleted.rowCount || deleted.changes || 0;
+        if (deletedCount > 0) {
+          console.log(`  🗑️  Removed ${deletedCount} stale bookings for ${calendar.platform}`);
+        }
+      } catch (delErr) {
+        console.error(`  ⚠️ Failed to clean stale bookings for ${calendar.platform}:`, delErr.message);
       }
 
       totalEvents += events.length;

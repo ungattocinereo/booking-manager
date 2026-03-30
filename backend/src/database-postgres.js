@@ -111,16 +111,13 @@ class Database {
 
   async deleteStaleBookings(propertyId, platform, feedKeys, today) {
     if (feedKeys.length === 0) return { rowCount: 0 };
-    const placeholders = feedKeys.map((_, i) => `($${i * 2 + 4}, $${i * 2 + 5})`).join(', ');
-    const params = [propertyId, platform, today];
-    for (const key of feedKeys) {
-      params.push(key.startDate, key.endDate);
-    }
+    const keyStrings = feedKeys.map(k => k.startDate + '|' + k.endDate);
+    const placeholders = keyStrings.map((_, i) => `$${i + 4}`).join(', ');
     return this.execute(
       `DELETE FROM bookings
        WHERE property_id = $1 AND platform = $2 AND end_date >= $3
-       AND (start_date, end_date) NOT IN (${placeholders})`,
-      params
+       AND (start_date::text || '|' || end_date::text) NOT IN (${placeholders})`,
+      [propertyId, platform, today, ...keyStrings]
     );
   }
 
