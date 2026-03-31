@@ -32,5 +32,10 @@ exports/*.xlsx
 exports/*.json
 !exports/README.md
 
+# Scraper data & debug (contain PII / credentials)
+scraper/*.json
+scraper/*.png
+scraper/*.sql
+
 # Debug
 debug-screenshot.png
