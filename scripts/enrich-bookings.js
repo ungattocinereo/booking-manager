@@ -1,5 +1,6 @@
 const path = require('path');
 const fs = require('fs');
+const XLSX = require('xlsx');
 
 // Load environment variables
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
@@ -11,7 +12,7 @@ const db = USE_POSTGRES
   ? require('../backend/src/database-postgres')
   : require('../backend/src/database');
 
-const EXPORTS_DIR = path.join(__dirname, '..', 'exports');
+const EXPORTS_DIR = path.join(__dirname, '..', 'Exports');
 
 // Airbnb listing name -> property_id
 const LISTING_MAP = {
@@ -24,6 +25,14 @@ const LISTING_MAP = {
   '2 Story Suite Carina Excellent Central Location': 'carina',
   'The Adventure bunkbed room': 'youth',
   'Room for solo travelers': 'solo',
+};
+
+// Booking.com room name -> property_id
+const BOOKING_ROOM_MAP = {
+  'Orange Room': 'orange',
+  'Vintage Room': 'vingtage',
+  'Youth room': 'youth',
+  'Solo Traveller room': 'solo',
 };
 
 // Phone prefix -> country code
@@ -119,35 +128,48 @@ function extractCountry(contact) {
   return null;
 }
 
-async function main() {
-  console.log('Initializing database...');
-  await db.init();
+async function updateBooking(propertyId, platform, startDate, endDate, guestName, country, guestCount) {
+  let changes = 0;
+  if (USE_POSTGRES) {
+    const result = await db.execute(
+      `UPDATE bookings SET guest_name = $1, guest_country = $2, guest_count = $3
+       WHERE property_id = $4 AND platform = $5 AND start_date = $6 AND end_date = $7`,
+      [guestName, country, guestCount || null, propertyId, platform, startDate, endDate]
+    );
+    changes = result.rowCount || 0;
+  } else {
+    const result = await db.run(
+      `UPDATE bookings SET guest_name = ?, guest_country = ?, guest_count = ?
+       WHERE property_id = ? AND platform = ? AND start_date = ? AND end_date = ?`,
+      [guestName, country, guestCount || null, propertyId, platform, startDate, endDate]
+    );
+    changes = result.changes || 0;
+  }
+  return changes;
+}
 
-  // Find all CSV files in exports/
+async function processAirbnbCSVs() {
   const csvFiles = fs.readdirSync(EXPORTS_DIR).filter(f => f.endsWith('.csv'));
   if (csvFiles.length === 0) {
-    console.log('No CSV files found in exports/');
-    return;
+    console.log('No CSV files found');
+    return { parsed: 0, updated: 0, skipped: 0 };
   }
 
-  console.log(`Found ${csvFiles.length} CSV file(s): ${csvFiles.join(', ')}`);
+  console.log(`\n=== Airbnb CSVs: ${csvFiles.join(', ')} ===`);
 
-  let totalParsed = 0;
-  let totalUpdated = 0;
-  let totalSkipped = 0;
+  let parsed = 0, updated = 0, skipped = 0;
 
   for (const file of csvFiles) {
     const filePath = path.join(EXPORTS_DIR, file);
     console.log(`\nProcessing ${file}...`);
 
     let content = fs.readFileSync(filePath, 'utf8');
-    // Normalize smart/curly quotes to straight quotes
     content = content.replace(/[\u201C\u201D\u201E\u201F\u2033\u2036]/g, '"').replace(/[\u2018\u2019\u201A\u201B\u2032\u2035]/g, "'");
     const rows = parseCSV(content);
     console.log(`  Parsed ${rows.length} rows`);
 
     for (const row of rows) {
-      totalParsed++;
+      parsed++;
 
       const guestName = row['Guest name'] || row['Guest Name'];
       const contact = row['Contact'];
@@ -156,59 +178,42 @@ async function main() {
       const endDateRaw = row['End date'] || row['End Date'];
 
       if (!listing || !startDateRaw || !endDateRaw) {
-        console.log(`  Skipping row: missing listing or dates`);
-        totalSkipped++;
+        skipped++;
         continue;
       }
 
       const propertyId = LISTING_MAP[listing];
       if (!propertyId) {
         console.log(`  Skipping unknown listing: "${listing}"`);
-        totalSkipped++;
+        skipped++;
         continue;
       }
 
       const startDate = convertDate(startDateRaw);
       const endDate = convertDate(endDateRaw);
       if (!startDate || !endDate) {
-        console.log(`  Skipping row: invalid date format`);
-        totalSkipped++;
+        skipped++;
         continue;
       }
 
       const country = extractCountry(contact);
+      const adults = parseInt(row['# of adults']) || 0;
+      const children = parseInt(row['# of children']) || 0;
+      const infants = parseInt(row['# of infants']) || 0;
+      const guestCount = adults + children + infants;
 
       if (!guestName) {
-        console.log(`  Skipping row: no guest name`);
-        totalSkipped++;
+        skipped++;
         continue;
       }
 
       try {
-        let changes = 0;
-        if (USE_POSTGRES) {
-          const result = await db.execute(
-            `UPDATE bookings SET guest_name = $1, guest_country = $2
-             WHERE property_id = $3 AND platform = 'airbnb' AND start_date = $4 AND end_date = $5
-             AND (guest_name IS NULL OR guest_name = '')`,
-            [guestName, country, propertyId, startDate, endDate]
-          );
-          changes = result.rowCount || 0;
-        } else {
-          const result = await db.run(
-            `UPDATE bookings SET guest_name = ?, guest_country = ?
-             WHERE property_id = ? AND platform = 'airbnb' AND start_date = ? AND end_date = ?
-             AND (guest_name IS NULL OR guest_name = '')`,
-            [guestName, country, propertyId, startDate, endDate]
-          );
-          changes = result.changes || 0;
-        }
-
+        const changes = await updateBooking(propertyId, 'airbnb', startDate, endDate, guestName, country, guestCount);
         if (changes > 0) {
           console.log(`  Updated: ${guestName} (${country || '?'}) -> ${propertyId} [${startDate} - ${endDate}]`);
-          totalUpdated++;
+          updated++;
         } else {
-          console.log(`  No match or already enriched: ${guestName} -> ${propertyId} [${startDate} - ${endDate}]`);
+          console.log(`  No match: ${guestName} -> ${propertyId} [${startDate} - ${endDate}]`);
         }
       } catch (err) {
         console.error(`  Error updating ${guestName}: ${err.message}`);
@@ -216,10 +221,99 @@ async function main() {
     }
   }
 
+  return { parsed, updated, skipped };
+}
+
+async function processBookingXLS() {
+  const xlsFiles = fs.readdirSync(EXPORTS_DIR).filter(f => f.endsWith('.xls') || f.endsWith('.xlsx'));
+  if (xlsFiles.length === 0) {
+    console.log('No XLS files found');
+    return { parsed: 0, updated: 0, skipped: 0 };
+  }
+
+  console.log(`\n=== Booking.com XLS: ${xlsFiles.join(', ')} ===`);
+
+  let parsed = 0, updated = 0, skipped = 0;
+
+  for (const file of xlsFiles) {
+    const filePath = path.join(EXPORTS_DIR, file);
+    console.log(`\nProcessing ${file}...`);
+
+    const workbook = XLSX.readFile(filePath);
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(sheet);
+    console.log(`  Parsed ${rows.length} rows`);
+
+    for (const row of rows) {
+      parsed++;
+
+      const status = row['Status'] || '';
+      // Skip cancelled bookings
+      if (status.includes('cancelled')) {
+        skipped++;
+        continue;
+      }
+
+      const guestName = row['Guest Name(s)'] || '';
+      const roomType = row['Unit type'] || '';
+      const checkIn = row['Check-in'] || '';
+      const checkOut = row['Check-out'] || '';
+      const bookerCountry = row['Booker country'] || '';
+      const adults = parseInt(row['Adults']) || 0;
+      const children = parseInt(row['Children']) || 0;
+      const guestCount = adults + children;
+
+      if (!roomType || !checkIn || !checkOut) {
+        skipped++;
+        continue;
+      }
+
+      const propertyId = BOOKING_ROOM_MAP[roomType];
+      if (!propertyId) {
+        console.log(`  Skipping unknown room: "${roomType}"`);
+        skipped++;
+        continue;
+      }
+
+      // Dates from XLS are already YYYY-MM-DD
+      const startDate = checkIn;
+      const endDate = checkOut;
+
+      if (!guestName) {
+        skipped++;
+        continue;
+      }
+
+      const country = bookerCountry ? bookerCountry.toUpperCase() : null;
+
+      try {
+        const changes = await updateBooking(propertyId, 'booking', startDate, endDate, guestName, country, guestCount);
+        if (changes > 0) {
+          console.log(`  Updated: ${guestName} (${country || '?'}) -> ${propertyId} [${startDate} - ${endDate}]`);
+          updated++;
+        } else {
+          console.log(`  No match: ${guestName} -> ${propertyId} [${startDate} - ${endDate}]`);
+        }
+      } catch (err) {
+        console.error(`  Error updating ${guestName}: ${err.message}`);
+      }
+    }
+  }
+
+  return { parsed, updated, skipped };
+}
+
+async function main() {
+  console.log('Initializing database...');
+  await db.init();
+
+  const airbnb = await processAirbnbCSVs();
+  const booking = await processBookingXLS();
+
   console.log(`\n--- Summary ---`);
-  console.log(`Parsed: ${totalParsed} bookings`);
-  console.log(`Updated: ${totalUpdated} bookings`);
-  console.log(`Skipped: ${totalSkipped} bookings`);
+  console.log(`Airbnb:  parsed=${airbnb.parsed}, updated=${airbnb.updated}, skipped=${airbnb.skipped}`);
+  console.log(`Booking: parsed=${booking.parsed}, updated=${booking.updated}, skipped=${booking.skipped}`);
+  console.log(`Total updated: ${airbnb.updated + booking.updated}`);
 
   // Close database connection
   if (db.pool) {

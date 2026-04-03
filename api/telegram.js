@@ -268,11 +268,10 @@ module.exports = async (req, res) => {
   const text = message.text;
 
   try {
-    await sendChatAction(chatId);
-
     // Route commands
     const cmdMatch = text.match(/^\/(\w+)(?:@\w+)?(?:\s+(.+))?$/);
     if (cmdMatch) {
+      await sendChatAction(chatId);
       const cmd = cmdMatch[1];
       const arg = (cmdMatch[2] || '').trim().toLowerCase();
 

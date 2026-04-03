@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const EXPORTS_DIR = path.join(__dirname, '..', '..', 'exports');
+const EXPORTS_DIR = path.join(__dirname, '..', '..', 'Exports');
 
 // Airbnb listing name -> property_id
 const LISTING_MAP = {
@@ -14,6 +14,14 @@ const LISTING_MAP = {
   '2 Story Suite Carina Excellent Central Location': 'carina',
   'The Adventure bunkbed room': 'youth',
   'Room for solo travelers': 'solo',
+};
+
+// Booking.com room name -> property_id
+const BOOKING_ROOM_MAP = {
+  'Orange Room': 'orange',
+  'Vintage Room': 'vingtage',
+  'Youth room': 'youth',
+  'Solo Traveller room': 'solo',
 };
 
 // Phone prefix -> country code
@@ -107,8 +115,28 @@ function extractCountry(contact) {
   return null;
 }
 
+async function updateBooking(db, isPostgres, propertyId, platform, startDate, endDate, guestName, country, guestCount) {
+  let changes = 0;
+  if (isPostgres) {
+    const result = await db.execute(
+      `UPDATE bookings SET guest_name = $1, guest_country = $2, guest_count = $3
+       WHERE property_id = $4 AND platform = $5 AND start_date = $6 AND end_date = $7`,
+      [guestName, country, guestCount || null, propertyId, platform, startDate, endDate]
+    );
+    changes = result.rowCount || 0;
+  } else {
+    const result = await db.run(
+      `UPDATE bookings SET guest_name = ?, guest_country = ?, guest_count = ?
+       WHERE property_id = ? AND platform = ? AND start_date = ? AND end_date = ?`,
+      [guestName, country, guestCount || null, propertyId, platform, startDate, endDate]
+    );
+    changes = result.changes || 0;
+  }
+  return changes;
+}
+
 /**
- * Enrich bookings from Airbnb CSV exports.
+ * Enrich bookings from Airbnb CSV and Booking.com XLS exports.
  * @param {object} db - The database module (already initialized)
  * @param {boolean} isPostgres - Whether using Postgres (vs SQLite)
  * @returns {{ parsed: number, updated: number, skipped: number }}
@@ -120,120 +148,144 @@ async function enrichFromExports(db, isPostgres) {
 
   // Gracefully handle missing exports directory
   if (!fs.existsSync(EXPORTS_DIR)) {
-    console.log('Enrich: exports/ directory not found, skipping enrichment');
+    console.log('Enrich: Exports/ directory not found, skipping enrichment');
     return { parsed, updated, skipped };
   }
 
-  let csvFiles;
+  let files;
   try {
-    csvFiles = fs.readdirSync(EXPORTS_DIR).filter(f => f.endsWith('.csv'));
+    files = fs.readdirSync(EXPORTS_DIR);
   } catch (err) {
-    console.log(`Enrich: could not read exports/ directory: ${err.message}`);
+    console.log(`Enrich: could not read Exports/ directory: ${err.message}`);
     return { parsed, updated, skipped };
   }
 
-  if (csvFiles.length === 0) {
-    console.log('Enrich: no CSV files found in exports/');
-    return { parsed, updated, skipped };
+  // Process Airbnb CSVs
+  const csvFiles = files.filter(f => f.endsWith('.csv'));
+  if (csvFiles.length > 0) {
+    console.log(`Enrich: found ${csvFiles.length} CSV file(s): ${csvFiles.join(', ')}`);
+
+    for (const file of csvFiles) {
+      const filePath = path.join(EXPORTS_DIR, file);
+      let content;
+      try {
+        content = fs.readFileSync(filePath, 'utf8');
+        content = content.replace(/[\u201C\u201D\u201E\u201F\u2033\u2036]/g, '"').replace(/[\u2018\u2019\u201A\u201B\u2032\u2035]/g, "'");
+      } catch (err) {
+        console.log(`Enrich: could not read ${file}: ${err.message}`);
+        continue;
+      }
+
+      const rows = parseCSV(content);
+      console.log(`Enrich: ${file} - ${rows.length} rows`);
+
+      for (const row of rows) {
+        parsed++;
+
+        const guestName = row['Guest name'] || row['Guest Name'];
+        const contact = row['Contact'];
+        const listing = row['Listing'];
+        const startDateRaw = row['Start date'] || row['Start Date'];
+        const endDateRaw = row['End date'] || row['End Date'];
+
+        if (!listing || !startDateRaw || !endDateRaw || !guestName) {
+          skipped++;
+          continue;
+        }
+
+        const propertyId = LISTING_MAP[listing];
+        if (!propertyId) {
+          skipped++;
+          continue;
+        }
+
+        const startDate = convertDate(startDateRaw);
+        const endDate = convertDate(endDateRaw);
+        if (!startDate || !endDate) {
+          skipped++;
+          continue;
+        }
+
+        const country = extractCountry(contact);
+        const adults = parseInt(row['# of adults']) || 0;
+        const children = parseInt(row['# of children']) || 0;
+        const infants = parseInt(row['# of infants']) || 0;
+        const guestCount = adults + children + infants;
+
+        try {
+          const changes = await updateBooking(db, isPostgres, propertyId, 'airbnb', startDate, endDate, guestName, country, guestCount);
+          if (changes > 0) updated++;
+        } catch (err) {
+          console.error(`Enrich: error updating ${guestName}: ${err.message}`);
+        }
+      }
+    }
   }
 
-  console.log(`Enrich: found ${csvFiles.length} CSV file(s): ${csvFiles.join(', ')}`);
-
-  for (const file of csvFiles) {
-    const filePath = path.join(EXPORTS_DIR, file);
-    let content;
+  // Process Booking.com XLS files
+  const xlsFiles = files.filter(f => f.endsWith('.xls') || f.endsWith('.xlsx'));
+  if (xlsFiles.length > 0) {
+    let XLSX;
     try {
-      content = fs.readFileSync(filePath, 'utf8');
-      // Normalize smart/curly quotes to straight quotes
-      content = content.replace(/[\u201C\u201D\u201E\u201F\u2033\u2036]/g, '"').replace(/[\u2018\u2019\u201A\u201B\u2032\u2035]/g, "'");
+      XLSX = require('xlsx');
     } catch (err) {
-      console.log(`Enrich: could not read ${file}: ${err.message}`);
-      continue;
+      console.log('Enrich: xlsx module not installed, skipping Booking.com XLS enrichment');
+      return { parsed, updated, skipped };
     }
 
-    const rows = parseCSV(content);
-    console.log(`Enrich: ${file} - ${rows.length} rows`);
+    console.log(`Enrich: found ${xlsFiles.length} XLS file(s): ${xlsFiles.join(', ')}`);
 
-    for (const row of rows) {
-      parsed++;
-
-      const guestName = row['Guest name'] || row['Guest Name'];
-      const contact = row['Contact'];
-      const listing = row['Listing'];
-      const startDateRaw = row['Start date'] || row['Start Date'];
-      const endDateRaw = row['End date'] || row['End Date'];
-
-      if (!listing || !startDateRaw || !endDateRaw) {
-        skipped++;
-        continue;
-      }
-
-      const propertyId = LISTING_MAP[listing];
-      if (!propertyId) {
-        skipped++;
-        continue;
-      }
-
-      const startDate = convertDate(startDateRaw);
-      const endDate = convertDate(endDateRaw);
-      if (!startDate || !endDate) {
-        skipped++;
-        continue;
-      }
-
-      const country = extractCountry(contact);
-      const adults = parseInt(row['# of adults']) || 0;
-      const children = parseInt(row['# of children']) || 0;
-      const infants = parseInt(row['# of infants']) || 0;
-      const guestCount = adults + children + infants;
-
-      if (!guestName) {
-        skipped++;
-        continue;
-      }
-
+    for (const file of xlsFiles) {
+      const filePath = path.join(EXPORTS_DIR, file);
+      let rows;
       try {
-        let changes = 0;
-        if (isPostgres) {
-          const result = await db.execute(
-            `UPDATE bookings SET guest_name = $1, guest_country = $2, guest_count = $3
-             WHERE property_id = $4 AND platform = 'airbnb' AND start_date = $5 AND end_date = $6
-             AND (guest_name IS NULL OR guest_name = '')`,
-            [guestName, country, guestCount || null, propertyId, startDate, endDate]
-          );
-          changes = result.rowCount || 0;
-          // Also update guest_count for already-enriched bookings that don't have it
-          if (changes === 0 && guestCount > 0) {
-            await db.execute(
-              `UPDATE bookings SET guest_count = $1
-               WHERE property_id = $2 AND platform = 'airbnb' AND start_date = $3 AND end_date = $4
-               AND guest_count IS NULL`,
-              [guestCount, propertyId, startDate, endDate]
-            );
-          }
-        } else {
-          const result = await db.run(
-            `UPDATE bookings SET guest_name = ?, guest_country = ?, guest_count = ?
-             WHERE property_id = ? AND platform = 'airbnb' AND start_date = ? AND end_date = ?
-             AND (guest_name IS NULL OR guest_name = '')`,
-            [guestName, country, guestCount || null, propertyId, startDate, endDate]
-          );
-          changes = result.changes || 0;
-          if (changes === 0 && guestCount > 0) {
-            await db.run(
-              `UPDATE bookings SET guest_count = ?
-               WHERE property_id = ? AND platform = 'airbnb' AND start_date = ? AND end_date = ?
-               AND guest_count IS NULL`,
-              [guestCount, propertyId, startDate, endDate]
-            );
-          }
+        const workbook = XLSX.readFile(filePath);
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        rows = XLSX.utils.sheet_to_json(sheet);
+      } catch (err) {
+        console.log(`Enrich: could not read ${file}: ${err.message}`);
+        continue;
+      }
+
+      console.log(`Enrich: ${file} - ${rows.length} rows`);
+
+      for (const row of rows) {
+        parsed++;
+
+        const status = row['Status'] || '';
+        if (status.includes('cancelled')) {
+          skipped++;
+          continue;
         }
 
-        if (changes > 0) {
-          updated++;
+        const guestName = row['Guest Name(s)'] || '';
+        const roomType = row['Unit type'] || '';
+        const checkIn = row['Check-in'] || '';
+        const checkOut = row['Check-out'] || '';
+        const bookerCountry = row['Booker country'] || '';
+        const adults = parseInt(row['Adults']) || 0;
+        const children = parseInt(row['Children']) || 0;
+        const guestCount = adults + children;
+
+        if (!roomType || !checkIn || !checkOut || !guestName) {
+          skipped++;
+          continue;
         }
-      } catch (err) {
-        console.error(`Enrich: error updating ${guestName}: ${err.message}`);
+
+        const propertyId = BOOKING_ROOM_MAP[roomType];
+        if (!propertyId) {
+          skipped++;
+          continue;
+        }
+
+        const country = bookerCountry ? bookerCountry.toUpperCase() : null;
+
+        try {
+          const changes = await updateBooking(db, isPostgres, propertyId, 'booking', checkIn, checkOut, guestName, country, guestCount);
+          if (changes > 0) updated++;
+        } catch (err) {
+          console.error(`Enrich: error updating ${guestName}: ${err.message}`);
+        }
       }
     }
   }
