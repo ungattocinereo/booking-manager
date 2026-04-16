@@ -12,7 +12,7 @@ const db = USE_POSTGRES
   ? require('../backend/src/database-postgres')
   : require('../backend/src/database');
 
-const EXPORTS_DIR = path.join(__dirname, '..', 'Exports');
+const EXPORTS_DIR = path.join(__dirname, '..', 'exports');
 
 // Airbnb listing name -> property_id
 const LISTING_MAP = {

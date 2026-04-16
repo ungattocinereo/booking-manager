@@ -822,35 +822,65 @@ window.addEventListener('popstate', (e) => {
   switchTab(tab, false);
 });
 
-async function loadData() {
+async function fetchJsonOrNull(url) {
   try {
-    const [propsRes, bookingsRes, cleanersRes] = await Promise.all([
-      fetch(`${API}/properties`),
-      fetch(`${API}/bookings`),
-      fetch(`${API}/cleaners`)
-    ]);
-    properties = await propsRes.json();
-    bookings = await bookingsRes.json();
-    cleaners = await cleanersRes.json();
-
-    allAssignments = {};
-    properties.forEach(p => allAssignments[p.id] = []);
-    cleaners.forEach(c => {
-      (c.properties || []).forEach(p => {
-        if (!allAssignments[p.id]) allAssignments[p.id] = [];
-        allAssignments[p.id].push(c.id);
-      });
-    });
-
-    updateStats();
-    renderCalendar();
-    renderCleaners();
-    document.getElementById('lastSync').textContent = new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-
-    if (typeof lucide !== 'undefined') lucide.createIcons();
-  } catch (err) {
-    toast('Ошибка загрузки: ' + err.message);
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const data = await res.json();
+    return Array.isArray(data) ? data : null;
+  } catch {
+    return null;
   }
+}
+
+let hasLoadedOnce = false;
+
+async function loadData({ silent = false, attempt = 1 } = {}) {
+  const lastSyncEl = document.getElementById('lastSync');
+  if (!hasLoadedOnce && !silent) lastSyncEl.textContent = 'Загрузка…';
+
+  const [props, bks, cls] = await Promise.all([
+    fetchJsonOrNull(`${API}/properties`),
+    fetchJsonOrNull(`${API}/bookings`),
+    fetchJsonOrNull(`${API}/cleaners`)
+  ]);
+
+  const allOk = props && bks && cls;
+
+  if (!allOk) {
+    if (attempt < 3) {
+      const delay = attempt * 1500;
+      if (!hasLoadedOnce) lastSyncEl.textContent = 'Загрузка…';
+      setTimeout(() => loadData({ silent: true, attempt: attempt + 1 }), delay);
+      return;
+    }
+    if (!hasLoadedOnce) {
+      lastSyncEl.textContent = 'Ошибка загрузки';
+      toast('Ошибка загрузки. Нажмите «Синхронизация».');
+    }
+    return;
+  }
+
+  properties = props;
+  bookings = bks;
+  cleaners = cls;
+
+  allAssignments = {};
+  properties.forEach(p => allAssignments[p.id] = []);
+  cleaners.forEach(c => {
+    (c.properties || []).forEach(p => {
+      if (!allAssignments[p.id]) allAssignments[p.id] = [];
+      allAssignments[p.id].push(c.id);
+    });
+  });
+
+  updateStats();
+  renderCalendar();
+  renderCleaners();
+  lastSyncEl.textContent = 'Обновлено ' + new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+  hasLoadedOnce = true;
+
+  if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
 function updateStats() {
