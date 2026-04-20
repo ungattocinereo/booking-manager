@@ -7,12 +7,13 @@ on:
   push:
     branches: [monitor/nuove-prenotazioni]
     paths:
-      - "monitor-app/exports/**"
-      - "monitor-app/scripts/**"
-      - "monitor-app/lib/**"
+      - "monitor-app/**"
+      - ".github/workflows/monitor-sync.yml"
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 concurrency:
   group: monitor-sync
@@ -22,6 +23,8 @@ jobs:
   sync:
     if: github.ref == 'refs/heads/monitor/nuove-prenotazioni' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
     runs-on: ubuntu-latest
+    outputs:
+      head_sha: ${{ steps.head.outputs.sha }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -51,7 +54,25 @@ jobs:
           git add monitor-app/data
           if git diff --cached --quiet; then
             echo "No data changes"
-            exit 0
+          else
+            git commit -m "data: auto-sync $(date -u +%Y-%m-%dT%H:%MZ)"
+            git push origin monitor/nuove-prenotazioni
           fi
-          git commit -m "data: auto-sync $(date -u +%Y-%m-%dT%H:%MZ)"
-          git push origin monitor/nuove-prenotazioni
+
+      - id: head
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: monitor-app
+
+  deploy:
+    needs: sync
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
