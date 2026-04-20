@@ -32,6 +32,12 @@ exports/*.xlsx
 exports/*.json
 !exports/README.md
 
+# monitor-app deploy bundle needs its own copies (committed to its branch only).
+# Files live in monitor-app/exports/ and MUST be shipped with the Vercel deploy.
+!monitor-app/exports/*.csv
+!monitor-app/exports/*.xls
+!monitor-app/exports/*.xlsx
+
 # Scraper data & debug (contain PII / credentials)
 scraper/*.json
 scraper/*.png
