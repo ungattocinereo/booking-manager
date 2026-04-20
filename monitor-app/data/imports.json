@@ -1,0 +1,32 @@
+[
+  {
+    "filename": "airbnb.csv",
+    "checksum": "bc9dc723bfa7749e4d9f810929bbfae03363d8b9ac518c19ea3e70257f63c69a",
+    "source": "airbnb",
+    "importedAt": "2026-04-20T17:25:53.349Z",
+    "records": 18,
+    "created": 1,
+    "cancelled": 0,
+    "updated": 17
+  },
+  {
+    "filename": "airbnb2.csv",
+    "checksum": "abed57affc0d6f7be5c595305f357b9eb50a46b0da91ef2a8f1585477d01b56f",
+    "source": "airbnb",
+    "importedAt": "2026-04-20T17:25:53.350Z",
+    "records": 21,
+    "created": 0,
+    "cancelled": 0,
+    "updated": 21
+  },
+  {
+    "filename": "airbnb3.csv",
+    "checksum": "1e287abf9991ad4a47d413cf1c3f44065d3638a75ce9b7d80f85789debc4d2b6",
+    "source": "airbnb",
+    "importedAt": "2026-04-20T17:25:53.350Z",
+    "records": 12,
+    "created": 0,
+    "cancelled": 0,
+    "updated": 12
+  }
+]

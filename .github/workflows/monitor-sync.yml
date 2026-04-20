@@ -1,0 +1,57 @@
+name: monitor-sync
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+  push:
+    branches: [monitor/nuove-prenotazioni]
+    paths:
+      - "monitor-app/exports/**"
+      - "monitor-app/scripts/**"
+      - "monitor-app/lib/**"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: monitor-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    if: github.ref == 'refs/heads/monitor/nuove-prenotazioni' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: monitor/nuove-prenotazioni
+          fetch-depth: 1
+          persist-credentials: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install deps
+        working-directory: monitor-app
+        run: npm install --no-audit --no-fund
+
+      - name: Run sync
+        working-directory: monitor-app
+        env:
+          UPSTREAM_API: https://b.amalfi.day/api/bookings
+          SINCE: "2026-04-17"
+        run: npm run sync
+
+      - name: Commit data changes
+        run: |
+          git config user.name "monitor-sync-bot"
+          git config user.email "actions@github.com"
+          git add monitor-app/data
+          if git diff --cached --quiet; then
+            echo "No data changes"
+            exit 0
+          fi
+          git commit -m "data: auto-sync $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push origin monitor/nuove-prenotazioni

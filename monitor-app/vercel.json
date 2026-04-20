@@ -1,9 +1,0 @@
-{
-  "version": 2,
-  "crons": [
-    { "path": "/api/sync", "schedule": "0 * * * *" }
-  ],
-  "rewrites": [
-    { "source": "/", "destination": "/public/index.html" }
-  ]
-}

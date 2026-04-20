@@ -1,13 +1,16 @@
 {
   "name": "monitor-app",
   "private": true,
-  "version": "0.1.0",
-  "description": "Nuove Prenotazioni — public monitor for Harmony / Royal / Carina bookings",
+  "version": "0.2.0",
+  "description": "Static GitHub Pages monitor for Harmony/Royal/Carina bookings",
+  "type": "commonjs",
   "engines": {
     "node": ">=20"
   },
+  "scripts": {
+    "sync": "node scripts/sync.js"
+  },
   "dependencies": {
-    "pg": "^8.11.3",
     "xlsx": "^0.18.5"
   }
 }

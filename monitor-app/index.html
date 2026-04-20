@@ -877,17 +877,88 @@
     document.getElementById('logsSummary').textContent = `Importazioni file (${data.exports_log?.length || 0})`;
   }
 
+  let rawEvents = null;
+
+  function buildViewFromEvents(events, asOfIso, sinceIso) {
+    const asOfMs = new Date(asOfIso).getTime();
+    const sinceMs = new Date(`${sinceIso}T00:00:00.000Z`).getTime();
+    const agg = new Map();
+    for (const ev of events) {
+      if (new Date(ev.detectedAt).getTime() > asOfMs) continue;
+      let a = agg.get(ev.bookingKey);
+      if (!a) {
+        a = {
+          bookingKey: ev.bookingKey, propertyId: ev.propertyId, platform: ev.platform,
+          startDate: ev.startDate, endDate: ev.endDate, guestName: ev.guestName,
+          reservationUrl: ev.reservationUrl, confirmationCode: ev.confirmationCode,
+          bookingCreatedAt: ev.bookingCreatedAt, firstSeenAt: ev.detectedAt,
+          lastEvent: ev.eventType, cancelledAt: null, sources: new Set([ev.source])
+        };
+        agg.set(ev.bookingKey, a);
+      } else {
+        a.lastEvent = ev.eventType;
+        if (ev.eventType === 'cancelled') a.cancelledAt = ev.detectedAt;
+        if (ev.eventType !== 'cancelled' && ev.guestName) a.guestName = ev.guestName;
+        if (ev.reservationUrl) a.reservationUrl = ev.reservationUrl;
+        if (ev.confirmationCode) a.confirmationCode = ev.confirmationCode;
+        if (ev.bookingCreatedAt) a.bookingCreatedAt = ev.bookingCreatedAt;
+        a.sources.add(ev.source);
+      }
+    }
+    const LISTING_MAP = { harmony:'37988248', royal:'973032288955949308', carina:'20551225' };
+    const bookings = [];
+    for (const a of agg.values()) {
+      const firstSeen = a.bookingCreatedAt || a.firstSeenAt;
+      if (!firstSeen) continue;
+      const firstSeenMs = new Date(firstSeen).getTime();
+      const inRange = firstSeenMs >= sinceMs ||
+        (a.lastEvent === 'cancelled' && a.cancelledAt && new Date(a.cancelledAt).getTime() >= sinceMs);
+      if (!inRange) continue;
+      let link = a.reservationUrl;
+      if (!link && a.platform === 'airbnb' && LISTING_MAP[a.propertyId]) {
+        link = `https://www.airbnb.com/hosting/listings/${LISTING_MAP[a.propertyId]}/calendar${a.startDate ? `?date=${a.startDate}` : ''}`;
+      }
+      bookings.push({
+        bookingKey: a.bookingKey, propertyId: a.propertyId, platform: a.platform,
+        startDate: a.startDate, endDate: a.endDate, guestName: a.guestName,
+        confirmationCode: a.confirmationCode, firstSeenAt: firstSeen,
+        status: a.lastEvent === 'cancelled' ? 'cancelled' : 'active',
+        cancelledAt: a.cancelledAt, link, sources: [...a.sources]
+      });
+    }
+    bookings.sort((x, y) => new Date(y.firstSeenAt) - new Date(x.firstSeenAt));
+    const PROPS = [
+      { id:'harmony', name:'Harmony', accent:'#c9512e', icon:'home' },
+      { id:'royal',   name:'Royal',   accent:'#1f3d8a', icon:'crown' },
+      { id:'carina',  name:'Carina',  accent:'#0b7a7a', icon:'heart' }
+    ];
+    return PROPS.map(p => ({ ...p, events: bookings.filter(b => b.propertyId === p.id) }));
+  }
+
   async function load() {
     const content = document.getElementById('content');
-    content.innerHTML = '<div class="loader">Caricamento</div>';
+    if (!rawEvents) content.innerHTML = '<div class="loader">Caricamento</div>';
     try {
-      const iso = currentAsOfIso();
-      const url = `/api/monitor?since=${state.since}${state.asOf ? `&as_of=${state.asOf}` : ''}`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      state.availableDates = data.available_dates || [];
-      renderProps(data);
+      if (!rawEvents) {
+        const res = await fetch(`./data/monitor.json?t=${Date.now()}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        rawEvents = data.events || [];
+        state.availableDates = data.available_dates || [];
+        state.importsLog = data.imports_log || [];
+        state.generatedAt = data.generated_at;
+        state.since = data.since || state.since;
+      }
+      const asOf = currentAsOfIso();
+      const asOfIso = asOf === state.todayIso
+        ? new Date().toISOString()
+        : new Date(`${asOf}T23:59:59.999Z`).toISOString();
+      const properties = buildViewFromEvents(rawEvents, asOfIso, state.since);
+      renderProps({
+        properties,
+        updated_at: state.generatedAt || new Date().toISOString(),
+        exports_log: state.importsLog || []
+      });
       renderDatepicker();
       updateTimenav();
     } catch (err) {
