@@ -28,5 +28,35 @@
     "created": 0,
     "cancelled": 0,
     "updated": 12
+  },
+  {
+    "filename": "airbnb.csv",
+    "checksum": "eaa5ca2f77579361b1f2647eef0304bdd3891f2e7b4d9839281435a115f418e4",
+    "source": "airbnb",
+    "importedAt": "2026-04-21T11:12:49.332Z",
+    "records": 20,
+    "created": 0,
+    "cancelled": 0,
+    "updated": 4
+  },
+  {
+    "filename": "airbnb2.csv",
+    "checksum": "86e041f0e2dea7ab773a13a7d350d8c6f14cd1e8771bd964ae53f9a7c41f67f0",
+    "source": "airbnb",
+    "importedAt": "2026-04-21T11:12:49.333Z",
+    "records": 22,
+    "created": 0,
+    "cancelled": 0,
+    "updated": 1
+  },
+  {
+    "filename": "airbnb3.csv",
+    "checksum": "c6ff6f6738e2598f93d85c5cf1b08ba9a578ca09fb9684935aa21ab2494bf9e9",
+    "source": "airbnb",
+    "importedAt": "2026-04-21T11:12:49.333Z",
+    "records": 12,
+    "created": 0,
+    "cancelled": 0,
+    "updated": 2
   }
 ]
