@@ -63,9 +63,13 @@ async function fetchBookings(params = {}) {
     const data = await res.json();
     return Array.isArray(data)
       ? data.filter(b => {
-          const summary = b.raw_summary || '';
-          const isUnavailable = summary.includes('Not available') || summary.includes('CLOSED') || b.booking_type === 'blocked';
-          if (isUnavailable && !b.guest_name) return false;
+          const platform = (b.platform || '').toLowerCase();
+          if (platform === 'booking') return true;
+          if (platform === 'airbnb') {
+            const summary = b.raw_summary || '';
+            const isUnavailable = summary.includes('Not available') || summary.includes('CLOSED') || b.booking_type === 'blocked';
+            if (isUnavailable && !b.guest_name) return false;
+          }
           return true;
         })
       : [];
