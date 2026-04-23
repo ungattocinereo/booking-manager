@@ -1,4 +1,9 @@
 {
+  "git": {
+    "deploymentEnabled": {
+      "monitor/nuove-prenotazioni": false
+    }
+  },
   "crons": [
     { "path": "/api/sync", "schedule": "0 6 * * *" }
   ],
