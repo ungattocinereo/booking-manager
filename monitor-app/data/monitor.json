@@ -1,7 +1,8 @@
 {
   "since": "2026-04-17",
-  "generated_at": "2026-04-24T06:16:48.936Z",
+  "generated_at": "2026-04-24T08:31:06.411Z",
   "available_dates": [
+    "2026-04-24",
     "2026-04-21",
     "2026-04-20",
     "2026-04-19",
@@ -26,6 +27,22 @@
       "accent": "#c9512e",
       "icon": "home",
       "events": [
+        {
+          "bookingKey": "harmony|airbnb|2026-08-09|2026-08-14",
+          "propertyId": "harmony",
+          "platform": "airbnb",
+          "startDate": "2026-08-09",
+          "endDate": "2026-08-14",
+          "guestName": null,
+          "confirmationCode": null,
+          "firstSeenAt": "2026-04-24T06:50:22.728Z",
+          "status": "active",
+          "cancelledAt": null,
+          "link": "https://www.airbnb.com/hosting/reservations/details/HMRRBWCN22",
+          "sources": [
+            "upstream_api"
+          ]
+        },
         {
           "bookingKey": "harmony|airbnb|2026-06-18|2026-06-21",
           "propertyId": "harmony",
@@ -86,8 +103,8 @@
           "guestName": "Ella Lucy Cleary-Morgan",
           "confirmationCode": "HMRRBWCN22",
           "firstSeenAt": "2026-04-19T07:58:12.985Z",
-          "status": "active",
-          "cancelledAt": null,
+          "status": "cancelled",
+          "cancelledAt": "2026-04-24T08:31:06.409Z",
           "link": "https://www.airbnb.com/hosting/reservations/details/HMRRBWCN22",
           "sources": [
             "upstream_api",
@@ -2008,6 +2025,36 @@
       "sourceRef": "airbnb3.csv",
       "bookingCreatedAt": "2026-04-20T06:54:32.520Z",
       "detectedAt": "2026-04-21T11:12:49.333Z"
+    },
+    {
+      "eventType": "created",
+      "bookingKey": "harmony|airbnb|2026-08-09|2026-08-14",
+      "propertyId": "harmony",
+      "platform": "airbnb",
+      "startDate": "2026-08-09",
+      "endDate": "2026-08-14",
+      "guestName": null,
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HMRRBWCN22",
+      "confirmationCode": null,
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync",
+      "bookingCreatedAt": "2026-04-24T06:50:22.728Z",
+      "detectedAt": "2026-04-24T08:31:06.408Z"
+    },
+    {
+      "eventType": "cancelled",
+      "bookingKey": "harmony|airbnb|2026-08-09|2026-08-15",
+      "propertyId": "harmony",
+      "platform": "airbnb",
+      "startDate": "2026-08-09",
+      "endDate": "2026-08-15",
+      "guestName": "Ella Lucy Cleary-Morgan",
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HMRRBWCN22",
+      "confirmationCode": "HMRRBWCN22",
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync",
+      "bookingCreatedAt": "2026-04-19T07:58:12.985Z",
+      "detectedAt": "2026-04-24T08:31:06.409Z"
     }
   ],
   "imports_log": [
