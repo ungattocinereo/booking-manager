@@ -1874,6 +1874,51 @@
       "sourceRef": "hourly_sync",
       "bookingCreatedAt": "2026-04-19T07:58:12.985Z",
       "detectedAt": "2026-04-24T08:31:06.409Z"
+    },
+    {
+      "eventType": "created",
+      "bookingKey": "harmony|airbnb|2026-05-27|2026-05-30",
+      "propertyId": "harmony",
+      "platform": "airbnb",
+      "startDate": "2026-05-27",
+      "endDate": "2026-05-30",
+      "guestName": null,
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HMXSWWWAZJ",
+      "confirmationCode": null,
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync",
+      "bookingCreatedAt": "2026-04-25T06:50:22.876Z",
+      "detectedAt": "2026-04-25T07:18:19.679Z"
+    },
+    {
+      "eventType": "created",
+      "bookingKey": "harmony|airbnb|2026-07-29|2026-08-06",
+      "propertyId": "harmony",
+      "platform": "airbnb",
+      "startDate": "2026-07-29",
+      "endDate": "2026-08-06",
+      "guestName": null,
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HM5QDCRMTM",
+      "confirmationCode": null,
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync",
+      "bookingCreatedAt": "2026-04-25T06:50:22.897Z",
+      "detectedAt": "2026-04-25T07:18:19.679Z"
+    },
+    {
+      "eventType": "cancelled",
+      "bookingKey": "harmony|airbnb|2026-08-27|2026-09-02",
+      "propertyId": "harmony",
+      "platform": "airbnb",
+      "startDate": "2026-08-27",
+      "endDate": "2026-09-02",
+      "guestName": "Caitlin Kerr",
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HMMTTY4EYA",
+      "confirmationCode": "HMMTTY4EYA",
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync",
+      "bookingCreatedAt": "2026-03-28T19:32:10.519Z",
+      "detectedAt": "2026-04-25T07:18:19.679Z"
     }
   ],
   "imports": [
