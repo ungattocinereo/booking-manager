@@ -1964,6 +1964,21 @@
       "sourceRef": "hourly_sync",
       "bookingCreatedAt": "2026-04-13T06:28:07.312Z",
       "detectedAt": "2026-04-26T08:01:51.939Z"
+    },
+    {
+      "eventType": "created",
+      "bookingKey": "carina|airbnb|2026-07-27|2026-07-30",
+      "propertyId": "carina",
+      "platform": "airbnb",
+      "startDate": "2026-07-27",
+      "endDate": "2026-07-30",
+      "guestName": null,
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HMM5KRF5A2",
+      "confirmationCode": null,
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync",
+      "bookingCreatedAt": "2026-04-27T06:50:22.112Z",
+      "detectedAt": "2026-04-27T07:14:39.478Z"
     }
   ],
   "imports": [
