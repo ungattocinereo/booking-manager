@@ -2084,6 +2084,51 @@
       "sourceRef": "hourly_sync",
       "bookingCreatedAt": "2026-05-03T06:46:03.194Z",
       "detectedAt": "2026-05-03T07:06:19.120Z"
+    },
+    {
+      "eventType": "created",
+      "bookingKey": "harmony|airbnb|2026-05-08|2026-05-11",
+      "propertyId": "harmony",
+      "platform": "airbnb",
+      "startDate": "2026-05-08",
+      "endDate": "2026-05-11",
+      "guestName": null,
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HM383R4PAP",
+      "confirmationCode": null,
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync",
+      "bookingCreatedAt": "2026-05-04T06:50:22.215Z",
+      "detectedAt": "2026-05-04T09:03:13.381Z"
+    },
+    {
+      "eventType": "created",
+      "bookingKey": "harmony|airbnb|2026-07-09|2026-07-12",
+      "propertyId": "harmony",
+      "platform": "airbnb",
+      "startDate": "2026-07-09",
+      "endDate": "2026-07-12",
+      "guestName": null,
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HMW3XHSN3P",
+      "confirmationCode": null,
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync",
+      "bookingCreatedAt": "2026-05-04T06:50:22.247Z",
+      "detectedAt": "2026-05-04T09:03:13.381Z"
+    },
+    {
+      "eventType": "created",
+      "bookingKey": "carina|airbnb|2026-05-22|2026-05-24",
+      "propertyId": "carina",
+      "platform": "airbnb",
+      "startDate": "2026-05-22",
+      "endDate": "2026-05-24",
+      "guestName": null,
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HMFHFMK5XP",
+      "confirmationCode": null,
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync",
+      "bookingCreatedAt": "2026-05-04T06:50:21.807Z",
+      "detectedAt": "2026-05-04T09:03:13.381Z"
     }
   ],
   "imports": [
