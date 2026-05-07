@@ -1,7 +1,8 @@
 {
   "since": "2026-04-17",
-  "generated_at": "2026-05-07T04:55:57.025Z",
+  "generated_at": "2026-05-07T07:43:22.186Z",
   "available_dates": [
+    "2026-05-07",
     "2026-05-05",
     "2026-05-04",
     "2026-05-03",
@@ -37,6 +38,38 @@
       "accent": "#c9512e",
       "icon": "home",
       "events": [
+        {
+          "bookingKey": "harmony|airbnb|2026-09-10|2026-09-14",
+          "propertyId": "harmony",
+          "platform": "airbnb",
+          "startDate": "2026-09-10",
+          "endDate": "2026-09-14",
+          "guestName": null,
+          "confirmationCode": null,
+          "firstSeenAt": "2026-05-07T06:50:22.368Z",
+          "status": "active",
+          "cancelledAt": null,
+          "link": "https://www.airbnb.com/hosting/reservations/details/HMZMESA4KB",
+          "sources": [
+            "upstream_api"
+          ]
+        },
+        {
+          "bookingKey": "harmony|airbnb|2026-06-03|2026-06-06",
+          "propertyId": "harmony",
+          "platform": "airbnb",
+          "startDate": "2026-06-03",
+          "endDate": "2026-06-06",
+          "guestName": null,
+          "confirmationCode": null,
+          "firstSeenAt": "2026-05-07T06:50:22.338Z",
+          "status": "active",
+          "cancelledAt": null,
+          "link": "https://www.airbnb.com/hosting/reservations/details/HMZT5YEFT4",
+          "sources": [
+            "upstream_api"
+          ]
+        },
         {
           "bookingKey": "harmony|airbnb|2026-07-09|2026-07-12",
           "propertyId": "harmony",
@@ -228,6 +261,23 @@
           "status": "cancelled",
           "cancelledAt": "2026-04-24T08:31:06.409Z",
           "link": "https://www.airbnb.com/hosting/reservations/details/HMRRBWCN22",
+          "sources": [
+            "upstream_api",
+            "export_airbnb_csv"
+          ]
+        },
+        {
+          "bookingKey": "harmony|airbnb|2026-06-09|2026-06-13",
+          "propertyId": "harmony",
+          "platform": "airbnb",
+          "startDate": "2026-06-09",
+          "endDate": "2026-06-13",
+          "guestName": "Andrea Ramirez Tonone",
+          "confirmationCode": "HM4RYXW5S3",
+          "firstSeenAt": "2026-04-16T05:40:55.613Z",
+          "status": "cancelled",
+          "cancelledAt": "2026-05-07T07:43:22.170Z",
+          "link": "https://www.airbnb.com/hosting/reservations/details/HM4RYXW5S3",
           "sources": [
             "upstream_api",
             "export_airbnb_csv"
@@ -2641,6 +2691,51 @@
       "sourceRef": "hourly_sync",
       "bookingCreatedAt": "2026-05-03T06:46:03.194Z",
       "detectedAt": "2026-05-05T07:18:23.258Z"
+    },
+    {
+      "eventType": "created",
+      "bookingKey": "harmony|airbnb|2026-06-03|2026-06-06",
+      "propertyId": "harmony",
+      "platform": "airbnb",
+      "startDate": "2026-06-03",
+      "endDate": "2026-06-06",
+      "guestName": null,
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HMZT5YEFT4",
+      "confirmationCode": null,
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync",
+      "bookingCreatedAt": "2026-05-07T06:50:22.338Z",
+      "detectedAt": "2026-05-07T07:43:22.170Z"
+    },
+    {
+      "eventType": "created",
+      "bookingKey": "harmony|airbnb|2026-09-10|2026-09-14",
+      "propertyId": "harmony",
+      "platform": "airbnb",
+      "startDate": "2026-09-10",
+      "endDate": "2026-09-14",
+      "guestName": null,
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HMZMESA4KB",
+      "confirmationCode": null,
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync",
+      "bookingCreatedAt": "2026-05-07T06:50:22.368Z",
+      "detectedAt": "2026-05-07T07:43:22.170Z"
+    },
+    {
+      "eventType": "cancelled",
+      "bookingKey": "harmony|airbnb|2026-06-09|2026-06-13",
+      "propertyId": "harmony",
+      "platform": "airbnb",
+      "startDate": "2026-06-09",
+      "endDate": "2026-06-13",
+      "guestName": "Andrea Ramirez Tonone",
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HM4RYXW5S3",
+      "confirmationCode": "HM4RYXW5S3",
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync",
+      "bookingCreatedAt": "2026-04-16T05:40:55.613Z",
+      "detectedAt": "2026-05-07T07:43:22.170Z"
     }
   ],
   "imports_log": [
