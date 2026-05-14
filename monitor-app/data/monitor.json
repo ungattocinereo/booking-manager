@@ -1,7 +1,8 @@
 {
   "since": "2026-04-17",
-  "generated_at": "2026-05-14T04:07:29.059Z",
+  "generated_at": "2026-05-14T07:28:29.716Z",
   "available_dates": [
+    "2026-05-14",
     "2026-05-12",
     "2026-05-11",
     "2026-05-09",
@@ -346,6 +347,22 @@
       "icon": "crown",
       "events": [
         {
+          "bookingKey": "royal|airbnb|2026-06-02|2026-06-05",
+          "propertyId": "royal",
+          "platform": "airbnb",
+          "startDate": "2026-06-02",
+          "endDate": "2026-06-05",
+          "guestName": null,
+          "confirmationCode": null,
+          "firstSeenAt": "2026-05-14T06:50:22.652Z",
+          "status": "active",
+          "cancelledAt": null,
+          "link": "https://www.airbnb.com/hosting/reservations/details/HMABXS3T4P",
+          "sources": [
+            "upstream_api"
+          ]
+        },
+        {
           "bookingKey": "royal|airbnb|2026-07-14|2026-07-17",
           "propertyId": "royal",
           "platform": "airbnb",
@@ -434,6 +451,22 @@
       "accent": "#0b7a7a",
       "icon": "heart",
       "events": [
+        {
+          "bookingKey": "carina|airbnb|2026-05-13|2026-05-17",
+          "propertyId": "carina",
+          "platform": "airbnb",
+          "startDate": "2026-05-13",
+          "endDate": "2026-05-17",
+          "guestName": null,
+          "confirmationCode": null,
+          "firstSeenAt": "2026-05-14T06:50:21.704Z",
+          "status": "active",
+          "cancelledAt": null,
+          "link": "https://www.airbnb.com/hosting/reservations/details/HMKWE9W5PN",
+          "sources": [
+            "upstream_api"
+          ]
+        },
         {
           "bookingKey": "carina|airbnb|2026-07-14|2026-07-17",
           "propertyId": "carina",
@@ -607,6 +640,23 @@
           "status": "active",
           "cancelledAt": null,
           "link": "https://www.airbnb.com/hosting/reservations/details/HMQQ5M5WMT",
+          "sources": [
+            "upstream_api",
+            "export_airbnb_csv"
+          ]
+        },
+        {
+          "bookingKey": "carina|airbnb|2026-05-14|2026-05-18",
+          "propertyId": "carina",
+          "platform": "airbnb",
+          "startDate": "2026-05-14",
+          "endDate": "2026-05-18",
+          "guestName": "Lisa Hitzinger",
+          "confirmationCode": "HMKWE9W5PN",
+          "firstSeenAt": "2026-04-14T06:28:08.596Z",
+          "status": "cancelled",
+          "cancelledAt": "2026-05-14T07:28:29.713Z",
+          "link": "https://www.airbnb.com/hosting/reservations/details/HMKWE9W5PN",
           "sources": [
             "upstream_api",
             "export_airbnb_csv"
@@ -2895,6 +2945,51 @@
       "sourceRef": "hourly_sync",
       "bookingCreatedAt": "2026-05-12T06:50:24.062Z",
       "detectedAt": "2026-05-12T09:40:11.825Z"
+    },
+    {
+      "eventType": "created",
+      "bookingKey": "royal|airbnb|2026-06-02|2026-06-05",
+      "propertyId": "royal",
+      "platform": "airbnb",
+      "startDate": "2026-06-02",
+      "endDate": "2026-06-05",
+      "guestName": null,
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HMABXS3T4P",
+      "confirmationCode": null,
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync",
+      "bookingCreatedAt": "2026-05-14T06:50:22.652Z",
+      "detectedAt": "2026-05-14T07:28:29.713Z"
+    },
+    {
+      "eventType": "created",
+      "bookingKey": "carina|airbnb|2026-05-13|2026-05-17",
+      "propertyId": "carina",
+      "platform": "airbnb",
+      "startDate": "2026-05-13",
+      "endDate": "2026-05-17",
+      "guestName": null,
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HMKWE9W5PN",
+      "confirmationCode": null,
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync",
+      "bookingCreatedAt": "2026-05-14T06:50:21.704Z",
+      "detectedAt": "2026-05-14T07:28:29.713Z"
+    },
+    {
+      "eventType": "cancelled",
+      "bookingKey": "carina|airbnb|2026-05-14|2026-05-18",
+      "propertyId": "carina",
+      "platform": "airbnb",
+      "startDate": "2026-05-14",
+      "endDate": "2026-05-18",
+      "guestName": "Lisa Hitzinger",
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HMKWE9W5PN",
+      "confirmationCode": "HMKWE9W5PN",
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync",
+      "bookingCreatedAt": "2026-04-14T06:28:08.596Z",
+      "detectedAt": "2026-05-14T07:28:29.713Z"
     }
   ],
   "imports_log": [
