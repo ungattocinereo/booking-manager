@@ -115,6 +115,40 @@ function extractCountry(contact) {
   return null;
 }
 
+function getField(row, ...names) {
+  for (const name of names) {
+    if (row[name] !== undefined && row[name] !== null && row[name] !== '') {
+      return row[name];
+    }
+  }
+
+  const normalized = Object.fromEntries(
+    Object.entries(row).map(([key, value]) => [key.trim().toLowerCase(), value])
+  );
+
+  for (const name of names) {
+    const value = normalized[name.trim().toLowerCase()];
+    if (value !== undefined && value !== null && value !== '') {
+      return value;
+    }
+  }
+
+  return '';
+}
+
+function bookingKey(propertyId, platform, startDate, endDate) {
+  return `${propertyId}|${platform}|${startDate}|${endDate}`;
+}
+
+function isActiveAirbnbStatus(status) {
+  const normalized = String(status || '').trim().toLowerCase();
+  return normalized !== ''
+    && !normalized.includes('cancel')
+    && !normalized.includes('declin')
+    && !normalized.includes('expir')
+    && !normalized.includes('request');
+}
+
 async function updateBooking(db, isPostgres, propertyId, platform, startDate, endDate, guestName, country, guestCount) {
   let changes = 0;
   if (isPostgres) {
@@ -135,6 +169,65 @@ async function updateBooking(db, isPostgres, propertyId, platform, startDate, en
   return changes;
 }
 
+async function deleteBooking(db, isPostgres, propertyId, platform, startDate, endDate) {
+  let changes = 0;
+  if (isPostgres) {
+    const result = await db.execute(
+      `DELETE FROM bookings
+       WHERE property_id = $1 AND platform = $2 AND start_date = $3 AND end_date = $4`,
+      [propertyId, platform, startDate, endDate]
+    );
+    changes = result.rowCount || 0;
+  } else {
+    const result = await db.run(
+      `DELETE FROM bookings
+       WHERE property_id = ? AND platform = ? AND start_date = ? AND end_date = ?`,
+      [propertyId, platform, startDate, endDate]
+    );
+    changes = result.changes || 0;
+  }
+  return changes;
+}
+
+async function deleteAirbnbReservationsMissingFromExport(db, isPostgres, confirmedKeys, minDate, maxDate) {
+  if (!minDate || !maxDate) return 0;
+
+  let rows;
+  if (isPostgres) {
+    const result = await db.execute(
+      `SELECT id, property_id, start_date::text AS start_date, end_date::text AS end_date
+       FROM bookings
+       WHERE platform = 'airbnb'
+         AND booking_type = 'reservation'
+         AND raw_summary = 'Reserved'
+         AND start_date >= $1
+         AND start_date <= $2`,
+      [minDate, maxDate]
+    );
+    rows = result.rows || [];
+  } else {
+    rows = await db.all(
+      `SELECT id, property_id, start_date, end_date
+       FROM bookings
+       WHERE platform = 'airbnb'
+         AND booking_type = 'reservation'
+         AND raw_summary = 'Reserved'
+         AND start_date >= ?
+         AND start_date <= ?`,
+      [minDate, maxDate]
+    );
+  }
+
+  let deleted = 0;
+  for (const row of rows) {
+    const key = bookingKey(row.property_id, 'airbnb', row.start_date.slice(0, 10), row.end_date.slice(0, 10));
+    if (!confirmedKeys.has(key)) {
+      deleted += await deleteBooking(db, isPostgres, row.property_id, 'airbnb', row.start_date, row.end_date);
+    }
+  }
+  return deleted;
+}
+
 /**
  * Enrich bookings from Airbnb CSV and Booking.com XLS exports.
  * @param {object} db - The database module (already initialized)
@@ -145,6 +238,10 @@ async function enrichFromExports(db, isPostgres) {
   let parsed = 0;
   let updated = 0;
   let skipped = 0;
+  let deleted = 0;
+  const confirmedAirbnbKeys = new Set();
+  let airbnbMinDate = null;
+  let airbnbMaxDate = null;
 
   // Gracefully handle missing exports directory
   if (!fs.existsSync(EXPORTS_DIR)) {
@@ -182,6 +279,7 @@ async function enrichFromExports(db, isPostgres) {
       for (const row of rows) {
         parsed++;
 
+        const status = row['Status'] || row['status'] || '';
         const guestName = row['Guest name'] || row['Guest Name'];
         const contact = row['Contact'];
         const listing = row['Listing'];
@@ -206,6 +304,20 @@ async function enrichFromExports(db, isPostgres) {
           continue;
         }
 
+        if (!isActiveAirbnbStatus(status)) {
+          try {
+            deleted += await deleteBooking(db, isPostgres, propertyId, 'airbnb', startDate, endDate);
+          } catch (err) {
+            console.error(`Enrich: error deleting non-confirmed Airbnb row ${guestName || propertyId}: ${err.message}`);
+          }
+          skipped++;
+          continue;
+        }
+
+        confirmedAirbnbKeys.add(bookingKey(propertyId, 'airbnb', startDate, endDate));
+        if (!airbnbMinDate || startDate < airbnbMinDate) airbnbMinDate = startDate;
+        if (!airbnbMaxDate || startDate > airbnbMaxDate) airbnbMaxDate = startDate;
+
         const country = extractCountry(contact);
         const adults = parseInt(row['# of adults']) || 0;
         const children = parseInt(row['# of children']) || 0;
@@ -219,6 +331,18 @@ async function enrichFromExports(db, isPostgres) {
           console.error(`Enrich: error updating ${guestName}: ${err.message}`);
         }
       }
+    }
+
+    try {
+      deleted += await deleteAirbnbReservationsMissingFromExport(
+        db,
+        isPostgres,
+        confirmedAirbnbKeys,
+        airbnbMinDate,
+        airbnbMaxDate
+      );
+    } catch (err) {
+      console.error(`Enrich: error deleting Airbnb rows missing from confirmed export: ${err.message}`);
     }
   }
 
@@ -252,19 +376,30 @@ async function enrichFromExports(db, isPostgres) {
       for (const row of rows) {
         parsed++;
 
-        const status = row['Status'] || '';
-        if (status.includes('cancelled')) {
+        const status = getField(row, 'Status') || '';
+        if (String(status).toLowerCase().includes('cancelled')) {
+          const roomType = getField(row, 'Unit type');
+          const checkIn = getField(row, 'Check-in');
+          const checkOut = getField(row, 'Check-out');
+          const propertyId = BOOKING_ROOM_MAP[roomType];
+          if (propertyId && checkIn && checkOut) {
+            try {
+              deleted += await deleteBooking(db, isPostgres, propertyId, 'booking', checkIn, checkOut);
+            } catch (err) {
+              console.error(`Enrich: error deleting cancelled Booking.com row: ${err.message}`);
+            }
+          }
           skipped++;
           continue;
         }
 
-        const guestName = row['Guest Name(s)'] || '';
-        const roomType = row['Unit type'] || '';
-        const checkIn = row['Check-in'] || '';
-        const checkOut = row['Check-out'] || '';
-        const bookerCountry = row['Booker country'] || '';
-        const adults = parseInt(row['Adults']) || 0;
-        const children = parseInt(row['Children']) || 0;
+        const guestName = getField(row, 'Guest Name(s)', 'Guest name(s)', 'Booked by');
+        const roomType = getField(row, 'Unit type');
+        const checkIn = getField(row, 'Check-in');
+        const checkOut = getField(row, 'Check-out');
+        const bookerCountry = getField(row, 'Booker country');
+        const adults = parseInt(getField(row, 'Adults')) || 0;
+        const children = parseInt(getField(row, 'Children')) || 0;
         const guestCount = adults + children;
 
         if (!roomType || !checkIn || !checkOut || !guestName) {
@@ -290,8 +425,8 @@ async function enrichFromExports(db, isPostgres) {
     }
   }
 
-  console.log(`Enrich: parsed=${parsed}, updated=${updated}, skipped=${skipped}`);
-  return { parsed, updated, skipped };
+  console.log(`Enrich: parsed=${parsed}, updated=${updated}, skipped=${skipped}, deleted=${deleted}`);
+  return { parsed, updated, skipped, deleted };
 }
 
 module.exports = { enrichFromExports };

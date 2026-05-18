@@ -128,6 +128,40 @@ function extractCountry(contact) {
   return null;
 }
 
+function getField(row, ...names) {
+  for (const name of names) {
+    if (row[name] !== undefined && row[name] !== null && row[name] !== '') {
+      return row[name];
+    }
+  }
+
+  const normalized = Object.fromEntries(
+    Object.entries(row).map(([key, value]) => [key.trim().toLowerCase(), value])
+  );
+
+  for (const name of names) {
+    const value = normalized[name.trim().toLowerCase()];
+    if (value !== undefined && value !== null && value !== '') {
+      return value;
+    }
+  }
+
+  return '';
+}
+
+function bookingKey(propertyId, platform, startDate, endDate) {
+  return `${propertyId}|${platform}|${startDate}|${endDate}`;
+}
+
+function isActiveAirbnbStatus(status) {
+  const normalized = String(status || '').trim().toLowerCase();
+  return normalized !== ''
+    && !normalized.includes('cancel')
+    && !normalized.includes('declin')
+    && !normalized.includes('expir')
+    && !normalized.includes('request');
+}
+
 async function updateBooking(propertyId, platform, startDate, endDate, guestName, country, guestCount) {
   let changes = 0;
   if (USE_POSTGRES) {
@@ -148,6 +182,66 @@ async function updateBooking(propertyId, platform, startDate, endDate, guestName
   return changes;
 }
 
+async function deleteBooking(propertyId, platform, startDate, endDate) {
+  let changes = 0;
+  if (USE_POSTGRES) {
+    const result = await db.execute(
+      `DELETE FROM bookings
+       WHERE property_id = $1 AND platform = $2 AND start_date = $3 AND end_date = $4`,
+      [propertyId, platform, startDate, endDate]
+    );
+    changes = result.rowCount || 0;
+  } else {
+    const result = await db.run(
+      `DELETE FROM bookings
+       WHERE property_id = ? AND platform = ? AND start_date = ? AND end_date = ?`,
+      [propertyId, platform, startDate, endDate]
+    );
+    changes = result.changes || 0;
+  }
+  return changes;
+}
+
+async function deleteAirbnbReservationsMissingFromExport(confirmedKeys, minDate, maxDate) {
+  if (!minDate || !maxDate) return 0;
+
+  let rows;
+  if (USE_POSTGRES) {
+    const result = await db.execute(
+      `SELECT id, property_id, start_date::text AS start_date, end_date::text AS end_date
+       FROM bookings
+       WHERE platform = 'airbnb'
+         AND booking_type = 'reservation'
+         AND raw_summary = 'Reserved'
+         AND start_date >= $1
+         AND start_date <= $2`,
+      [minDate, maxDate]
+    );
+    rows = result.rows || [];
+  } else {
+    rows = await db.all(
+      `SELECT id, property_id, start_date, end_date
+       FROM bookings
+       WHERE platform = 'airbnb'
+         AND booking_type = 'reservation'
+         AND raw_summary = 'Reserved'
+         AND start_date >= ?
+         AND start_date <= ?`,
+      [minDate, maxDate]
+    );
+  }
+
+  let deleted = 0;
+  for (const row of rows) {
+    const key = bookingKey(row.property_id, 'airbnb', row.start_date.slice(0, 10), row.end_date.slice(0, 10));
+    if (!confirmedKeys.has(key)) {
+      deleted += await deleteBooking(row.property_id, 'airbnb', row.start_date, row.end_date);
+      console.log(`  Deleted non-confirmed Airbnb hold: ${row.property_id} [${row.start_date.slice(0, 10)} - ${row.end_date.slice(0, 10)}]`);
+    }
+  }
+  return deleted;
+}
+
 async function processAirbnbCSVs() {
   const csvFiles = fs.readdirSync(EXPORTS_DIR).filter(f => f.endsWith('.csv'));
   if (csvFiles.length === 0) {
@@ -157,7 +251,10 @@ async function processAirbnbCSVs() {
 
   console.log(`\n=== Airbnb CSVs: ${csvFiles.join(', ')} ===`);
 
-  let parsed = 0, updated = 0, skipped = 0;
+  let parsed = 0, updated = 0, skipped = 0, deleted = 0;
+  const confirmedKeys = new Set();
+  let minDate = null;
+  let maxDate = null;
 
   for (const file of csvFiles) {
     const filePath = path.join(EXPORTS_DIR, file);
@@ -171,6 +268,7 @@ async function processAirbnbCSVs() {
     for (const row of rows) {
       parsed++;
 
+      const status = row['Status'] || row['status'] || '';
       const guestName = row['Guest name'] || row['Guest Name'];
       const contact = row['Contact'];
       const listing = row['Listing'];
@@ -195,6 +293,24 @@ async function processAirbnbCSVs() {
         skipped++;
         continue;
       }
+
+      if (!isActiveAirbnbStatus(status)) {
+        try {
+          const changes = await deleteBooking(propertyId, 'airbnb', startDate, endDate);
+          deleted += changes;
+          if (changes > 0) {
+            console.log(`  Deleted non-confirmed Airbnb row: ${guestName || propertyId} -> ${propertyId} [${startDate} - ${endDate}]`);
+          }
+        } catch (err) {
+          console.error(`  Error deleting non-confirmed Airbnb row ${guestName || propertyId}: ${err.message}`);
+        }
+        skipped++;
+        continue;
+      }
+
+      confirmedKeys.add(bookingKey(propertyId, 'airbnb', startDate, endDate));
+      if (!minDate || startDate < minDate) minDate = startDate;
+      if (!maxDate || startDate > maxDate) maxDate = startDate;
 
       const country = extractCountry(contact);
       const adults = parseInt(row['# of adults']) || 0;
@@ -221,7 +337,9 @@ async function processAirbnbCSVs() {
     }
   }
 
-  return { parsed, updated, skipped };
+  deleted += await deleteAirbnbReservationsMissingFromExport(confirmedKeys, minDate, maxDate);
+
+  return { parsed, updated, skipped, deleted };
 }
 
 async function processBookingXLS() {
@@ -233,7 +351,7 @@ async function processBookingXLS() {
 
   console.log(`\n=== Booking.com XLS: ${xlsFiles.join(', ')} ===`);
 
-  let parsed = 0, updated = 0, skipped = 0;
+  let parsed = 0, updated = 0, skipped = 0, deleted = 0;
 
   for (const file of xlsFiles) {
     const filePath = path.join(EXPORTS_DIR, file);
@@ -247,20 +365,35 @@ async function processBookingXLS() {
     for (const row of rows) {
       parsed++;
 
-      const status = row['Status'] || '';
+      const status = getField(row, 'Status') || '';
       // Skip cancelled bookings
-      if (status.includes('cancelled')) {
+      if (String(status).toLowerCase().includes('cancelled')) {
+        const roomType = getField(row, 'Unit type');
+        const checkIn = getField(row, 'Check-in');
+        const checkOut = getField(row, 'Check-out');
+        const propertyId = BOOKING_ROOM_MAP[roomType];
+        if (propertyId && checkIn && checkOut) {
+          try {
+            const changes = await deleteBooking(propertyId, 'booking', checkIn, checkOut);
+            deleted += changes;
+            if (changes > 0) {
+              console.log(`  Deleted cancelled Booking.com row: ${propertyId} [${checkIn} - ${checkOut}]`);
+            }
+          } catch (err) {
+            console.error(`  Error deleting cancelled Booking.com row: ${err.message}`);
+          }
+        }
         skipped++;
         continue;
       }
 
-      const guestName = row['Guest Name(s)'] || '';
-      const roomType = row['Unit type'] || '';
-      const checkIn = row['Check-in'] || '';
-      const checkOut = row['Check-out'] || '';
-      const bookerCountry = row['Booker country'] || '';
-      const adults = parseInt(row['Adults']) || 0;
-      const children = parseInt(row['Children']) || 0;
+      const guestName = getField(row, 'Guest Name(s)', 'Guest name(s)', 'Booked by');
+      const roomType = getField(row, 'Unit type');
+      const checkIn = getField(row, 'Check-in');
+      const checkOut = getField(row, 'Check-out');
+      const bookerCountry = getField(row, 'Booker country');
+      const adults = parseInt(getField(row, 'Adults')) || 0;
+      const children = parseInt(getField(row, 'Children')) || 0;
       const guestCount = adults + children;
 
       if (!roomType || !checkIn || !checkOut) {
@@ -300,7 +433,7 @@ async function processBookingXLS() {
     }
   }
 
-  return { parsed, updated, skipped };
+  return { parsed, updated, skipped, deleted };
 }
 
 async function main() {
@@ -311,8 +444,8 @@ async function main() {
   const booking = await processBookingXLS();
 
   console.log(`\n--- Summary ---`);
-  console.log(`Airbnb:  parsed=${airbnb.parsed}, updated=${airbnb.updated}, skipped=${airbnb.skipped}`);
-  console.log(`Booking: parsed=${booking.parsed}, updated=${booking.updated}, skipped=${booking.skipped}`);
+  console.log(`Airbnb:  parsed=${airbnb.parsed}, updated=${airbnb.updated}, skipped=${airbnb.skipped}, deleted=${airbnb.deleted}`);
+  console.log(`Booking: parsed=${booking.parsed}, updated=${booking.updated}, skipped=${booking.skipped}, deleted=${booking.deleted}`);
   console.log(`Total updated: ${airbnb.updated + booking.updated}`);
 
   // Close database connection

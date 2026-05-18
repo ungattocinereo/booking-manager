@@ -213,6 +213,47 @@ class Database {
     );
   }
 
+  // City tax (tassa di soggiorno) operations
+  async getTaxPending(date) {
+    return this.query(
+      `SELECT b.*, p.name as property_name,
+              (b.end_date - b.start_date) as nights
+       FROM bookings b
+       JOIN properties p ON b.property_id = p.id
+       WHERE b.end_date = $1::date
+         AND b.tax_paid = false
+         AND NOT (
+           (b.raw_summary LIKE '%Not available%' OR b.raw_summary LIKE '%CLOSED%' OR b.booking_type IN ('blocked', 'unavailable'))
+           AND b.guest_name IS NULL
+         )
+       ORDER BY p.name ASC`,
+      [date]
+    );
+  }
+
+  async getTaxByDate(date) {
+    return this.query(
+      `SELECT b.*, p.name as property_name,
+              (b.end_date - b.start_date) as nights
+       FROM bookings b
+       JOIN properties p ON b.property_id = p.id
+       WHERE b.end_date = $1::date
+         AND NOT (
+           (b.raw_summary LIKE '%Not available%' OR b.raw_summary LIKE '%CLOSED%' OR b.booking_type IN ('blocked', 'unavailable'))
+           AND b.guest_name IS NULL
+         )
+       ORDER BY p.name ASC`,
+      [date]
+    );
+  }
+
+  async updateTaxPaid(bookingId, paid) {
+    return this.execute(
+      'UPDATE bookings SET tax_paid = $1, tax_paid_at = CASE WHEN $1 THEN NOW() ELSE NULL END WHERE id = $2',
+      [paid, bookingId]
+    );
+  }
+
   async close() {
     if (this.pool) {
       await this.pool.end();

@@ -659,6 +659,59 @@
       .stats-section { padding: 16px; }
       .stats-grid { grid-template-columns: 1fr; }
     }
+
+    /* ===== TAX TAB ===== */
+    .tax-section { padding: 24px; max-width: 800px; margin: 0 auto; }
+    .tax-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+    .tax-date-picker { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .tax-date-picker label { font-weight: 600; font-size: 14px; }
+    .tax-date-picker input[type="date"] {
+      padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+      font-size: 14px; font-family: inherit; background: var(--card);
+    }
+    .tax-summary {
+      display: flex; gap: 16px; margin-bottom: 16px; flex-wrap: wrap;
+    }
+    .tax-summary-card {
+      background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm);
+      padding: 12px 20px; display: flex; align-items: center; gap: 8px; font-size: 14px;
+    }
+    .tax-summary-card .num { font-weight: 700; font-size: 20px; }
+    .tax-list { display: flex; flex-direction: column; gap: 10px; }
+    .tax-row {
+      display: flex; align-items: center; gap: 14px; padding: 14px 18px;
+      background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm);
+      box-shadow: var(--shadow-sm); transition: border-color .2s;
+    }
+    .tax-row.tax-unpaid { border-left: 4px solid var(--warning); }
+    .tax-row.tax-paid { border-left: 4px solid var(--success); background: var(--success-light); }
+    .tax-row-property { font-weight: 600; font-size: 14px; min-width: 120px; }
+    .tax-row-guest { font-size: 14px; color: var(--text-secondary); flex: 1; }
+    .tax-row-nights { font-size: 13px; color: var(--text-secondary); }
+    .tax-row-platform { font-size: 16px; }
+    .tax-row-check {
+      display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none;
+    }
+    .tax-checkbox {
+      width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--border);
+      display: flex; align-items: center; justify-content: center; transition: all .15s;
+      background: var(--card); cursor: pointer;
+    }
+    .tax-checkbox.checked {
+      background: var(--success); border-color: var(--success); color: #fff;
+    }
+    .tax-paid-label { font-size: 13px; color: var(--success); font-weight: 500; }
+    .tax-unpaid-label { font-size: 13px; color: var(--warning); font-weight: 500; }
+    .tax-paid-time { font-size: 12px; color: var(--text-secondary); }
+    .tax-empty {
+      text-align: center; padding: 48px 20px; color: var(--text-secondary); font-size: 15px;
+    }
+    .tax-empty-icon { font-size: 40px; margin-bottom: 12px; }
+    .btn-secondary {
+      background: var(--card); border: 1px solid var(--border); color: var(--text);
+      border-radius: var(--radius-sm); cursor: pointer; font-family: inherit;
+    }
+    .btn-secondary:hover { background: var(--bg); }
   </style>
 </head>
 <body>
@@ -689,6 +742,9 @@
     </div>
     <div class="nav-item" data-tab="stats" onclick="switchTab('stats')">
       <i data-lucide="bar-chart-3" style="width:16px;height:16px;"></i>Статистика
+    </div>
+    <div class="nav-item" data-tab="tax" onclick="switchTab('tax')">
+      <i data-lucide="receipt" style="width:16px;height:16px;"></i>Налоги
     </div>
   </div>
 
@@ -790,6 +846,20 @@
     <div class="cleaners-grid" id="cleanersGrid"></div>
   </div>
 
+  <!-- TAX TAB -->
+  <div class="tax-section" id="taxTab" style="display:none">
+    <div class="tax-header">
+      <div class="tax-date-picker">
+        <label for="taxDate">📅 Дата выезда:</label>
+        <input type="date" id="taxDate" onchange="loadTaxData()">
+        <button class="btn btn-secondary" onclick="taxSetToday()" style="padding:6px 12px;font-size:13px;">Сегодня</button>
+        <button class="btn btn-secondary" onclick="taxSetTomorrow()" style="padding:6px 12px;font-size:13px;">Завтра</button>
+      </div>
+    </div>
+    <div id="taxSummary" class="tax-summary" style="display:none"></div>
+    <div id="taxList" class="tax-list"></div>
+  </div>
+
   <div class="toast" id="toast"></div>
 
 <script>
@@ -800,17 +870,19 @@ let bookings = [];
 let cleaners = [];
 let allAssignments = {};
 
-const TAB_ROUTES = { '/stats': 'stats', '/maid': 'cleaners' };
-const ROUTE_TABS = { stats: '/stats', cleaners: '/maid' };
+const TAB_ROUTES = { '/stats': 'stats', '/maid': 'cleaners', '/tax': 'tax' };
+const ROUTE_TABS = { stats: '/stats', cleaners: '/maid', tax: '/tax' };
 
 function switchTab(tab, pushState = true) {
   document.querySelectorAll('.nav-item').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
   document.getElementById('calendarTab').style.display = tab === 'calendar' ? 'block' : 'none';
   document.getElementById('cleanersTab').style.display = tab === 'cleaners' ? 'block' : 'none';
   document.getElementById('statsTab').style.display = tab === 'stats' ? 'block' : 'none';
+  document.getElementById('taxTab').style.display = tab === 'tax' ? 'block' : 'none';
   document.getElementById('statsBar').style.display = tab === 'calendar' ? 'flex' : 'none';
   document.getElementById('legend').style.display = tab === 'calendar' ? 'flex' : 'none';
   if (tab === 'stats') renderStats();
+  if (tab === 'tax') loadTaxData();
   if (pushState) {
     const url = ROUTE_TABS[tab] || '/';
     history.pushState({ tab }, '', url);
@@ -885,6 +957,7 @@ async function loadData({ silent = false, attempt = 1 } = {}) {
 
 function updateStats() {
   const realBookings = bookings.filter(b => {
+    if (b.platform === 'booking') return true;
     const summary = b.raw_summary || '';
     const isUnavailable = summary.includes('Not available') || summary.includes('CLOSED') || b.booking_type === 'blocked';
     if (isUnavailable && b.guest_name) return true;
@@ -1162,8 +1235,8 @@ function renderCalendar() {
         const bar = document.createElement('div');
         const label = booking.raw_summary || booking.platform;
         const isUnavailable = label.includes('Not available') || label.includes('CLOSED') || booking.booking_type === 'blocked';
-        // If guest_name exists, it's a real booking (not blocked)
-        const isBlocked = isUnavailable && !booking.guest_name;
+        // Booking.com iCal marks all real reservations as "CLOSED - Not available" — never a real owner block.
+        const isBlocked = isUnavailable && !booking.guest_name && booking.platform !== 'booking';
 
         bar.className = `booking-bar ${booking.platform}${isBlocked ? ' not-available' : ''}`;
         bar.style.gridRow = row;
@@ -1357,7 +1430,7 @@ function renderStats() {
   const seasonBookings = bookings.filter(b => {
     const summary = b.raw_summary || '';
     const isUnavailable = summary.includes('Not available') || summary.includes('CLOSED') || b.booking_type === 'blocked';
-    if (isUnavailable && !b.guest_name) return false;
+    if (isUnavailable && !b.guest_name && b.platform !== 'booking') return false;
     const start = new Date(b.start_date + 'T00:00:00');
     const end = new Date(b.end_date + 'T00:00:00');
     // Overlaps with April–November
@@ -1654,11 +1727,115 @@ document.head.appendChild(style);
 if (typeof lucide !== 'undefined') lucide.createIcons();
 
 // Route-based tab on page load
-const initTab = TAB_ROUTES[location.pathname] || 'calendar';
+const TAB_ROUTE_MAP = { '/stats': 'stats', '/maid': 'cleaners', '/tax': 'tax' };
+const initTab = TAB_ROUTE_MAP[location.pathname] || 'calendar';
 if (initTab !== 'calendar') switchTab(initTab, false);
+
+// Init tax date to today
+const taxDateEl = document.getElementById('taxDate');
+if (taxDateEl) taxDateEl.value = new Date().toISOString().split('T')[0];
 
 loadData();
 setInterval(loadData, 5 * 60 * 1000);
+
+// ===== TAX (Tassa di Soggiorno) =====
+async function loadTaxData() {
+  const date = document.getElementById('taxDate').value;
+  if (!date) return;
+
+  const listEl = document.getElementById('taxList');
+  const summaryEl = document.getElementById('taxSummary');
+  listEl.innerHTML = '<div class="tax-empty"><div class="tax-empty-icon">⏳</div>Загрузка...</div>';
+  summaryEl.style.display = 'none';
+
+  try {
+    const res = await fetch(`${API}/tax?date=${date}`);
+    if (!res.ok) throw new Error('Failed');
+    const rows = await res.json();
+
+    if (!rows.length) {
+      listEl.innerHTML = '<div class="tax-empty"><div class="tax-empty-icon">📭</div>Нет выездов на эту дату</div>';
+      return;
+    }
+
+    const paid = rows.filter(r => r.tax_paid).length;
+    const unpaid = rows.length - paid;
+    const totalGuests = rows.reduce((s, r) => s + (r.guest_count || 0), 0);
+
+    summaryEl.style.display = 'flex';
+    summaryEl.innerHTML = `
+      <div class="tax-summary-card"><span class="num">${rows.length}</span> выездов</div>
+      <div class="tax-summary-card" style="color:var(--success)"><span class="num">${paid}</span> оплачено</div>
+      <div class="tax-summary-card" style="color:var(--warning)"><span class="num">${unpaid}</span> не оплачено</div>
+      ${totalGuests ? `<div class="tax-summary-card">👥 <span class="num">${totalGuests}</span> гостей</div>` : ''}
+    `;
+
+    listEl.innerHTML = rows.map(r => {
+      const platformIcon = r.platform === 'airbnb' ? '🩷' : '🔵';
+      const nights = r.nights || '?';
+      const paidClass = r.tax_paid ? 'tax-paid' : 'tax-unpaid';
+      const checkClass = r.tax_paid ? 'checked' : '';
+      const checkIcon = r.tax_paid ? '✓' : '';
+      const paidLabel = r.tax_paid
+        ? `<span class="tax-paid-label">Оплачено</span>${r.tax_paid_at ? `<span class="tax-paid-time">${formatTaxTime(r.tax_paid_at)}</span>` : ''}`
+        : '<span class="tax-unpaid-label">Не оплачено</span>';
+
+      return `
+        <div class="tax-row ${paidClass}" id="tax-row-${r.id}">
+          <span class="tax-row-platform">${platformIcon}</span>
+          <span class="tax-row-property">${r.property_name || r.property_id}</span>
+          <span class="tax-row-guest">${r.guest_name || '—'}${r.guest_country ? ' ' + flagEmoji(r.guest_country) : ''}</span>
+          <span class="tax-row-nights">${nights} ночей</span>
+          <div class="tax-row-check" onclick="toggleTaxPaid(${r.id}, ${!r.tax_paid})">
+            <div class="tax-checkbox ${checkClass}">${checkIcon}</div>
+            ${paidLabel}
+          </div>
+        </div>
+      `;
+    }).join('');
+  } catch (e) {
+    listEl.innerHTML = '<div class="tax-empty"><div class="tax-empty-icon">❌</div>Ошибка загрузки данных</div>';
+  }
+}
+
+async function toggleTaxPaid(bookingId, paid) {
+  try {
+    const res = await fetch(`${API}/tax`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ booking_id: bookingId, tax_paid: paid })
+    });
+    if (!res.ok) throw new Error('Failed');
+    loadTaxData(); // Refresh
+  } catch (e) {
+    toast('Ошибка обновления статуса налога');
+  }
+}
+
+function taxSetToday() {
+  document.getElementById('taxDate').value = new Date().toISOString().split('T')[0];
+  loadTaxData();
+}
+
+function taxSetTomorrow() {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  document.getElementById('taxDate').value = d.toISOString().split('T')[0];
+  loadTaxData();
+}
+
+function formatTaxTime(iso) {
+  try {
+    const d = new Date(iso);
+    return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }) + ' ' + d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+  } catch { return ''; }
+}
+
+function flagEmoji(code) {
+  if (!code || code.length !== 2) return '';
+  const base = 0x1F1E6;
+  return String.fromCodePoint(base + code.charCodeAt(0) - 65) + String.fromCodePoint(base + code.charCodeAt(1) - 65);
+}
 </script>
 </body>
 </html>

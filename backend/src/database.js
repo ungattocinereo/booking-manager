@@ -25,11 +25,35 @@ class Database {
             reject(err);
             return;
           }
-          // Migration: add slug column if missing
-          this.db.run('ALTER TABLE cleaners ADD COLUMN slug TEXT UNIQUE', () => {
-            console.log('✅ Database initialized');
-            resolve();
-          });
+          const migrations = [
+            'ALTER TABLE bookings ADD COLUMN guest_country TEXT',
+            'ALTER TABLE bookings ADD COLUMN guest_count INTEGER',
+            'ALTER TABLE bookings ADD COLUMN reservation_url TEXT',
+            'ALTER TABLE bookings ADD COLUMN phone_last4 TEXT',
+            'ALTER TABLE bookings ADD COLUMN booking_type TEXT DEFAULT "reservation"',
+            'ALTER TABLE cleaners ADD COLUMN slug TEXT',
+            'CREATE UNIQUE INDEX IF NOT EXISTS idx_cleaners_slug ON cleaners(slug)',
+            'ALTER TABLE bookings ADD COLUMN tax_paid INTEGER DEFAULT 0',
+            'ALTER TABLE bookings ADD COLUMN tax_paid_at TEXT',
+          ];
+
+          const runMigration = (index = 0) => {
+            if (index >= migrations.length) {
+              console.log('✅ Database initialized');
+              resolve();
+              return;
+            }
+
+            this.db.run(migrations[index], (migrationErr) => {
+              if (migrationErr && !/duplicate column name/i.test(migrationErr.message)) {
+                reject(migrationErr);
+                return;
+              }
+              runMigration(index + 1);
+            });
+          };
+
+          runMigration();
         });
       });
     });
@@ -93,6 +117,18 @@ class Database {
         updateFields += ', guest_country = ?';
         updateParams.push(guestCountry);
       }
+      if (reservationUrl) {
+        updateFields += ', reservation_url = ?';
+        updateParams.push(reservationUrl);
+      }
+      if (phoneLast4) {
+        updateFields += ', phone_last4 = ?';
+        updateParams.push(phoneLast4);
+      }
+      if (bookingType) {
+        updateFields += ', booking_type = ?';
+        updateParams.push(bookingType);
+      }
       updateParams.push(existing.id);
       return this.run(
         `UPDATE bookings SET ${updateFields} WHERE id = ?`,
@@ -101,9 +137,20 @@ class Database {
     } else {
       // Insert
       return this.run(
-        `INSERT INTO bookings (property_id, platform, start_date, end_date, raw_summary, guest_name, guest_country)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [propertyId, platform, startDate, endDate, rawSummary, guestName || null, guestCountry || null]
+        `INSERT INTO bookings (property_id, platform, start_date, end_date, raw_summary, guest_name, guest_country, reservation_url, phone_last4, booking_type)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          propertyId,
+          platform,
+          startDate,
+          endDate,
+          rawSummary,
+          guestName || null,
+          guestCountry || null,
+          reservationUrl || null,
+          phoneLast4 || null,
+          bookingType || 'reservation'
+        ]
       );
     }
   }
@@ -223,6 +270,48 @@ class Database {
     return this.run(
       'UPDATE cleaning_tasks SET status = ?, completed_at = ? WHERE id = ?',
       [status, completedAt, taskId]
+    );
+  }
+
+  // City tax (tassa di soggiorno) operations
+  async getTaxPending(date) {
+    return this.all(
+      `SELECT b.*, p.name as property_name,
+              CAST(julianday(b.end_date) - julianday(b.start_date) AS INTEGER) as nights
+       FROM bookings b
+       JOIN properties p ON b.property_id = p.id
+       WHERE b.end_date = ?
+         AND b.tax_paid = 0
+         AND NOT (
+           (b.raw_summary LIKE '%Not available%' OR b.raw_summary LIKE '%CLOSED%' OR b.booking_type IN ('blocked', 'unavailable'))
+           AND b.guest_name IS NULL
+         )
+       ORDER BY p.name ASC`,
+      [date]
+    );
+  }
+
+  async getTaxByDate(date) {
+    return this.all(
+      `SELECT b.*, p.name as property_name,
+              CAST(julianday(b.end_date) - julianday(b.start_date) AS INTEGER) as nights
+       FROM bookings b
+       JOIN properties p ON b.property_id = p.id
+       WHERE b.end_date = ?
+         AND NOT (
+           (b.raw_summary LIKE '%Not available%' OR b.raw_summary LIKE '%CLOSED%' OR b.booking_type IN ('blocked', 'unavailable'))
+           AND b.guest_name IS NULL
+         )
+       ORDER BY p.name ASC`,
+      [date]
+    );
+  }
+
+  async updateTaxPaid(bookingId, paid) {
+    const paidAt = paid ? new Date().toISOString() : null;
+    return this.run(
+      'UPDATE bookings SET tax_paid = ?, tax_paid_at = ? WHERE id = ?',
+      [paid ? 1 : 0, paidAt, bookingId]
     );
   }
 

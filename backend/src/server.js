@@ -248,6 +248,34 @@ app.get('/stats', (req, res) => {
 app.get('/maid', (req, res) => {
   res.sendFile(path.join(__dirname, '../../frontend/public/index.html'));
 });
+app.get('/tax', (req, res) => {
+  res.sendFile(path.join(__dirname, '../../frontend/public/index.html'));
+});
+
+// ===== TAX (TASSA DI SOGGIORNO) =====
+
+app.get('/api/tax', async (req, res) => {
+  try {
+    const { date } = req.query;
+    if (!date) return res.status(400).json({ error: 'date query parameter is required (YYYY-MM-DD)' });
+    const rows = await db.getTaxByDate(date);
+    res.json(rows.map(r => ({ ...r, tax_paid: !!r.tax_paid })));
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.patch('/api/tax', async (req, res) => {
+  try {
+    const { booking_id, tax_paid } = req.body || {};
+    if (!booking_id) return res.status(400).json({ error: 'booking_id is required' });
+    if (typeof tax_paid !== 'boolean') return res.status(400).json({ error: 'tax_paid must be boolean' });
+    await db.updateTaxPaid(booking_id, tax_paid);
+    res.json({ ok: true, booking_id, tax_paid });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 // ===== SYNC =====
 

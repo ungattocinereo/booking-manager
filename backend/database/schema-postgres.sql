@@ -65,3 +65,7 @@ ALTER TABLE bookings ADD COLUMN IF NOT EXISTS guest_count INTEGER;
 
 -- Add slug column to cleaners (migration)
 ALTER TABLE cleaners ADD COLUMN IF NOT EXISTS slug VARCHAR(100) UNIQUE;
+
+-- Add city tax tracking columns (migration)
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS tax_paid BOOLEAN DEFAULT FALSE;
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS tax_paid_at TIMESTAMP;
