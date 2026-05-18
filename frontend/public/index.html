@@ -689,7 +689,7 @@
     .tax-row.tax-paid { border-left: 3px solid var(--success); }
     .tax-row-property { font-weight: 600; font-size: 13px; min-width: 90px; }
     .tax-row-guest { font-size: 13px; color: var(--text-secondary); flex: 1; }
-    .tax-row-nights { font-size: 12px; color: var(--text-secondary); }
+    .tax-row-amount { font-size: 13px; font-weight: 600; color: var(--text); min-width: 60px; }
     .tax-row-platform { font-size: 14px; }
     .tax-row-check { display: flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; }
     .tax-checkbox {
@@ -945,8 +945,8 @@ async function loadData({ silent = false, attempt = 1 } = {}) {
   if (document.getElementById('taxTab').style.display !== 'none') {
     allTaxBookings = bookings.filter(b => {
       const summary = (b.raw_summary || '');
-      const isUnavail = summary.includes('Not available') || summary.includes('CLOSED') || (b.booking_type || '').match(/^(blocked|unavailable)$/);
-      if (isUnavail && !b.guest_name) return false;
+      const isBlocked = summary.includes('Not available') || summary.includes('CLOSED') || (b.booking_type || '').match(/^(blocked|unavailable)$/);
+      if (isBlocked && !b.guest_name) return false;
       return true;
     });
     renderTaxList();
@@ -1754,8 +1754,9 @@ async function loadTaxData() {
     // Filter to real bookings only, group by end_date
     allTaxBookings = all.filter(b => {
       const summary = (b.raw_summary || '');
-      const isUnavail = summary.includes('Not available') || summary.includes('CLOSED') || (b.booking_type || '').match(/^(blocked|unavailable)$/);
-      if (isUnavail && !b.guest_name) return false;
+      const isBlocked = summary.includes('Not available') || summary.includes('CLOSED') || (b.booking_type || '').match(/^(blocked|unavailable)$/);
+      // Exclude only blocked WITHOUT guest name
+      if (isBlocked && !b.guest_name) return false;
       return true;
     });
 
@@ -1806,7 +1807,10 @@ function renderTaxList() {
 
     for (const r of rows) {
       const platformIcon = r.platform === 'airbnb' ? '🩷' : '🔵';
-      const nights = r.nights || '?';
+      // Calculate tax amount: €2.50 per person per night
+      const nights = r.nights || 0;
+      const guests = r.guest_count || 0;
+      const taxAmount = (guests > 0) ? `€${(guests * nights * 2.5).toFixed(0)}` : '';
       const paidClass = r.tax_paid ? 'tax-paid' : 'tax-unpaid';
       const checkClass = r.tax_paid ? 'checked' : '';
       const checkIcon = r.tax_paid ? '✓' : '';
@@ -1820,7 +1824,7 @@ function renderTaxList() {
       html += `<span class="tax-row-platform">${platformIcon}</span>`;
       html += `<span class="tax-row-property">${r.property_name || r.property_id}</span>`;
       html += `<span class="tax-row-guest">${guest}${flag}</span>`;
-      html += `<span class="tax-row-nights">${nights}н</span>`;
+      html += `<span class="tax-row-amount">${taxAmount}</span>`;
       html += `<div class="tax-row-check" onclick="toggleTaxPaid(${r.id}, ${!r.tax_paid})">`;
       html += `<div class="tax-checkbox ${checkClass}">${checkIcon}</div>`;
       html += paidLabel;
