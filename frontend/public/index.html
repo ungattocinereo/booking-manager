@@ -374,6 +374,7 @@
       gap: 10px;
       margin-bottom: 10px;
       max-width: 100%;
+      flex-wrap: wrap;
     }
     .calendar-today-btn {
       min-height: 36px;
@@ -389,6 +390,30 @@
     .calendar-today-btn:hover {
       border-color: #a5b4fc;
       background: #e0e7ff;
+    }
+    .calendar-today-date {
+      min-height: 36px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: rgba(255,255,255,.82);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 650;
+      box-shadow: var(--shadow-sm);
+      white-space: nowrap;
+    }
+    .calendar-today-date::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-light);
+      flex-shrink: 0;
     }
 
     .calendar-container {
@@ -591,8 +616,6 @@
       box-shadow: none;
       filter: grayscale(1);
       opacity: .86;
-      font-size: 9px;
-      padding: 0 6px;
     }
     .booking-bar.completed:hover {
       opacity: 1;
@@ -1061,43 +1084,45 @@
       .calendar-toolbar {
         justify-content: flex-start;
         margin-bottom: 8px;
+        gap: 8px;
+      }
+      .calendar-today-date {
+        min-height: 34px;
+        padding: 6px 10px;
+        font-size: 12px;
       }
       .calendar-scroll-wrapper {
-        --calendar-property-col-width: 50px;
+        --calendar-property-col-width: 144px;
       }
 
       .cal-property-header,
       .cal-group-header,
       .cal-property-name {
-        padding-left: 7px;
-        padding-right: 7px;
-        justify-content: center;
-      }
-      .cal-property-header-title,
-      .cal-property-title {
-        display: none;
+        padding-left: 8px;
+        padding-right: 8px;
+        justify-content: flex-start;
       }
       .cal-property-header-icon {
-        display: inline-flex;
+        display: none;
       }
       .cal-group-label {
-        font-size: 0;
-        letter-spacing: 0;
-      }
-      .cal-group-label::after {
-        content: "";
-        display: block;
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: #cbd5e1;
+        min-width: 0;
+        font-size: 8px;
+        letter-spacing: .3px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
       .cal-property-name {
         gap: 6px;
+        font-size: 10.5px;
       }
       .cal-property-icon {
         width: 24px;
         height: 24px;
+      }
+      .cal-property-title {
+        display: inline;
       }
 
       .cleaners-grid {
@@ -1348,6 +1373,7 @@
       <button class="btn btn-secondary calendar-today-btn" type="button" onclick="scrollCalendarToToday()">
         <i data-lucide="calendar-clock" style="width:15px;height:15px;"></i>Сегодня
       </button>
+      <span class="calendar-today-date" id="calendarTodayDate"></span>
     </div>
     <div class="calendar-container">
       <div class="calendar-scroll-wrapper" id="calendarScroll">
@@ -1836,12 +1862,21 @@ function getCalendarCenteredScrollLeft(scroll, dayIndex) {
   return Math.max(0, Math.min(centeredLeft, maxLeft));
 }
 
+function updateCalendarTodayDate(today) {
+  const el = document.getElementById('calendarTodayDate');
+  if (!el) return;
+  const weekday = today.toLocaleDateString('ru-RU', { weekday: 'short' }).replace('.', '');
+  const date = today.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+  el.textContent = `${weekday}, ${date}`;
+}
+
 function renderCalendar() {
   const grid = document.getElementById('calendarGrid');
   const scroll = document.getElementById('calendarScroll');
   const previousScrollLeft = scroll?.scrollLeft || 0;
   const today = new Date();
   today.setHours(0,0,0,0);
+  updateCalendarTodayDate(today);
 
   const startDate = addCalendarDays(today, -CALENDAR_PAST_DAYS);
   const endDate = new Date(today.getFullYear(), 11, 31);
@@ -1976,11 +2011,9 @@ function renderCalendar() {
         bar.style.gridRow = row;
         bar.style.gridColumn = `${startIdx + 2} / ${endIdx + 3}`;
         bar.style.position = 'relative';
-        const barTop = isCompleted ? 24 : 7;
-        const barHeight = isCompleted ? 10 : 28;
-        bar.style.top = `${barTop}px`;
-        bar.style.height = `${barHeight}px`;
-        bar.style.marginBottom = `-${barHeight}px`;
+        bar.style.top = '7px';
+        bar.style.height = '28px';
+        bar.style.marginBottom = '-28px';
         bar.style.marginLeft = '19px';
         bar.style.marginRight = '19px';
 
