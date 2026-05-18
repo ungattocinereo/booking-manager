@@ -689,7 +689,7 @@
     .tax-row.tax-paid { border-left: 3px solid var(--success); }
     .tax-row-property { font-weight: 600; font-size: 13px; min-width: 90px; }
     .tax-row-guest { font-size: 13px; color: var(--text-secondary); flex: 1; }
-    .tax-row-nights { font-size: 12px; color: var(--text-secondary); }
+    .tax-row-nights { font-size: 12px; color: var(--text); font-weight: 600; min-width: 92px; text-align: right; white-space: nowrap; }
     .tax-row-platform { font-size: 14px; }
     .tax-row-check { display: flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; }
     .tax-checkbox {
@@ -943,12 +943,7 @@ async function loadData({ silent = false, attempt = 1 } = {}) {
 
   // Update tax data if tax tab is visible
   if (document.getElementById('taxTab').style.display !== 'none') {
-    allTaxBookings = bookings.filter(b => {
-      const summary = (b.raw_summary || '');
-      const isUnavail = summary.includes('Not available') || summary.includes('CLOSED') || (b.booking_type || '').match(/^(blocked|unavailable)$/);
-      if (isUnavail && !b.guest_name) return false;
-      return true;
-    });
+    allTaxBookings = bookings.filter(b => isTaxableBooking(b, bookings));
     renderTaxList();
   }
   lastSyncEl.textContent = 'Обновлено ' + new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
@@ -958,13 +953,7 @@ async function loadData({ silent = false, attempt = 1 } = {}) {
 }
 
 function updateStats() {
-  const realBookings = bookings.filter(b => {
-    if (b.platform === 'booking') return true;
-    const summary = b.raw_summary || '';
-    const isUnavailable = summary.includes('Not available') || summary.includes('CLOSED') || b.booking_type === 'blocked';
-    if (isUnavailable && b.guest_name) return true;
-    return !isUnavailable;
-  });
+  const realBookings = bookings.filter(b => isRealGuestBooking(b, bookings));
   const bookingComCount = realBookings.filter(b => b.platform === 'booking').length;
   const airbnbCount = realBookings.filter(b => b.platform === 'airbnb').length;
 
@@ -1099,6 +1088,75 @@ function countryToFlag(code) {
   const c = code.toUpperCase();
   return String.fromCodePoint(...[...c].map(ch => 0x1F1E6 + ch.charCodeAt(0) - 65));
 }
+
+function isUnavailableBooking(b) {
+  const summary = String(b.raw_summary || '').toLowerCase();
+  const type = String(b.booking_type || '').toLowerCase();
+  return summary.includes('not available') ||
+    summary.includes('closed') ||
+    type === 'blocked' ||
+    type === 'unavailable';
+}
+
+function hasGuestDetails(b) {
+  return Boolean((b.guest_name || '').trim()) || Number(b.guest_count) > 0;
+}
+
+function isGroupedBookingClosure(b, allBookings = bookings) {
+  if (b.platform !== 'booking' || !isUnavailableBooking(b) || hasGuestDetails(b)) return false;
+  const sameClosedRange = allBookings.filter(other =>
+    other !== b &&
+    other.platform === 'booking' &&
+    other.start_date === b.start_date &&
+    other.end_date === b.end_date &&
+    isUnavailableBooking(other) &&
+    !hasGuestDetails(other)
+  );
+  return sameClosedRange.length > 0;
+}
+
+function isRealGuestBooking(b, allBookings = bookings) {
+  if (isGroupedBookingClosure(b, allBookings)) return false;
+  if (b.platform === 'booking') return true;
+  if (isUnavailableBooking(b)) return hasGuestDetails(b);
+  return true;
+}
+
+function isTaxableBooking(b, allBookings = bookings) {
+  if (!isRealGuestBooking(b, allBookings)) return false;
+  if (isUnavailableBooking(b) && !hasGuestDetails(b)) return false;
+  return true;
+}
+
+function nightsBetween(startDate, endDate) {
+  if (!startDate || !endDate) return null;
+  const start = new Date(startDate + 'T00:00:00');
+  const end = new Date(endDate + 'T00:00:00');
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return null;
+  const nights = Math.round((end - start) / 86400000);
+  return nights > 0 ? nights : null;
+}
+
+function formatEuro(amount) {
+  return new Intl.NumberFormat('ru-RU', {
+    style: 'currency',
+    currency: 'EUR',
+    minimumFractionDigits: amount % 1 === 0 ? 0 : 2,
+    maximumFractionDigits: 2
+  }).format(amount);
+}
+
+function taxAmountLabel(booking) {
+  const nights = Number(booking.nights) || nightsBetween(booking.start_date, booking.end_date);
+  const guests = Number(booking.guest_count) || null;
+  const rate = 2.5;
+
+  if (nights && guests) return formatEuro(nights * guests * rate);
+  if (nights) return `${formatEuro(nights * rate)} / чел.`;
+  if (guests) return `${formatEuro(guests * rate)} / ночь`;
+  return `${formatEuro(rate)} / чел.·ночь`;
+}
+
 const COUNTRY_NAMES = {
   us:'США',ca:'Канада',gb:'Великобритания',fr:'Франция',de:'Германия',it:'Италия',es:'Испания',
   pt:'Португалия',nl:'Нидерланды',be:'Бельгия',ch:'Швейцария',at:'Австрия',dk:'Дания',se:'Швеция',
@@ -1235,10 +1293,8 @@ function renderCalendar() {
         if (width <= 0) return;
 
         const bar = document.createElement('div');
-        const label = booking.raw_summary || booking.platform;
-        const isUnavailable = label.includes('Not available') || label.includes('CLOSED') || booking.booking_type === 'blocked';
-        // Booking.com iCal marks all real reservations as "CLOSED - Not available" — never a real owner block.
-        const isBlocked = isUnavailable && !booking.guest_name && booking.platform !== 'booking';
+        const isUnavailable = isUnavailableBooking(booking);
+        const isBlocked = isUnavailable && !hasGuestDetails(booking) && (booking.platform !== 'booking' || isGroupedBookingClosure(booking, bookings));
 
         bar.className = `booking-bar ${booking.platform}${isBlocked ? ' not-available' : ''}`;
         bar.style.gridRow = row;
@@ -1430,9 +1486,7 @@ function renderStats() {
 
   // Filter real bookings in season
   const seasonBookings = bookings.filter(b => {
-    const summary = b.raw_summary || '';
-    const isUnavailable = summary.includes('Not available') || summary.includes('CLOSED') || b.booking_type === 'blocked';
-    if (isUnavailable && !b.guest_name && b.platform !== 'booking') return false;
+    if (!isRealGuestBooking(b, bookings)) return false;
     const start = new Date(b.start_date + 'T00:00:00');
     const end = new Date(b.end_date + 'T00:00:00');
     // Overlaps with April–November
@@ -1752,12 +1806,7 @@ async function loadTaxData() {
     const all = await res.json();
 
     // Filter to real bookings only, group by end_date
-    allTaxBookings = all.filter(b => {
-      const summary = (b.raw_summary || '');
-      const isUnavail = summary.includes('Not available') || summary.includes('CLOSED') || (b.booking_type || '').match(/^(blocked|unavailable)$/);
-      if (isUnavail && !b.guest_name) return false;
-      return true;
-    });
+    allTaxBookings = all.filter(b => isTaxableBooking(b, all));
 
     renderTaxList();
   } catch (e) {
@@ -1806,7 +1855,7 @@ function renderTaxList() {
 
     for (const r of rows) {
       const platformIcon = r.platform === 'airbnb' ? '🩷' : '🔵';
-      const nights = r.nights || '?';
+      const taxAmount = taxAmountLabel(r);
       const paidClass = r.tax_paid ? 'tax-paid' : 'tax-unpaid';
       const checkClass = r.tax_paid ? 'checked' : '';
       const checkIcon = r.tax_paid ? '✓' : '';
@@ -1820,7 +1869,7 @@ function renderTaxList() {
       html += `<span class="tax-row-platform">${platformIcon}</span>`;
       html += `<span class="tax-row-property">${r.property_name || r.property_id}</span>`;
       html += `<span class="tax-row-guest">${guest}${flag}</span>`;
-      html += `<span class="tax-row-nights">${nights}н</span>`;
+      html += `<span class="tax-row-nights">${taxAmount}</span>`;
       html += `<div class="tax-row-check" onclick="toggleTaxPaid(${r.id}, ${!r.tax_paid})">`;
       html += `<div class="tax-checkbox ${checkClass}">${checkIcon}</div>`;
       html += paidLabel;
