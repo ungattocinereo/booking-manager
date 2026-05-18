@@ -118,7 +118,7 @@
     .header h1 {
       font-size: 18px;
       font-weight: 700;
-      letter-spacing: -0.3px;
+      letter-spacing: 0;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -229,7 +229,7 @@
     .stat-card .stat-value {
       font-size: 24px;
       font-weight: 700;
-      letter-spacing: -0.5px;
+      letter-spacing: 0;
     }
     .stat-breakdown {
       display: flex;
@@ -314,7 +314,7 @@
       font-size: 15px;
       font-weight: 700;
       margin-bottom: 4px;
-      letter-spacing: -0.2px;
+      letter-spacing: 0;
     }
     .tooltip-dates {
       font-size: 12px;
@@ -675,7 +675,7 @@
     .stats-summary-card .value {
       font-size: 24px;
       font-weight: 700;
-      letter-spacing: -0.5px;
+      letter-spacing: 0;
     }
     .stats-summary-card .sub {
       font-size: 12px;
@@ -702,37 +702,188 @@
       color: var(--text);
     }
     /* ===== TAX TAB ===== */
-    .tax-section { padding: 24px; max-width: 900px; margin: 0 auto; overflow: hidden; }
-    .tax-header { margin-bottom: 16px; }
-    .tax-controls { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
-    .tax-controls label { display: flex; align-items: center; gap: 4px; cursor: pointer; }
-    .tax-list { max-height: calc(100vh - 180px); overflow-y: auto; overscroll-behavior: contain; }
-    .tax-date-group { margin-bottom: 4px; }
+    .tax-section { padding: 24px; max-width: 1040px; margin: 0 auto; overflow: hidden; }
+    .tax-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 18px;
+      margin-bottom: 14px;
+    }
+    .tax-title-kicker {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+    }
+    .tax-title {
+      margin-top: 2px;
+      font-size: 24px;
+      line-height: 1.15;
+      font-weight: 750;
+      letter-spacing: 0;
+      color: var(--text);
+    }
+    .tax-summary {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+      max-width: 560px;
+    }
+    .tax-summary-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 32px;
+      padding: 6px 10px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--card);
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-weight: 600;
+      box-shadow: var(--shadow-sm);
+      white-space: nowrap;
+    }
+    .tax-summary-pill strong { color: var(--text); font-size: 13px; }
+    .tax-summary-pill.warning { border-color: #fed7aa; background: #fff7ed; color: #9a3412; }
+    .tax-summary-pill.warning strong { color: #9a3412; }
+    .tax-summary-pill.success { border-color: #bbf7d0; background: #f0fdf4; color: #047857; }
+    .tax-summary-pill.success strong { color: #047857; }
+    .tax-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+    .tax-controls label {
+      min-height: 36px;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px 10px;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: rgba(255,255,255,.76);
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-weight: 500;
+    }
+    .tax-controls input[type="checkbox"] { accent-color: var(--accent); }
+    .tax-list { max-height: calc(100vh - 214px); overflow-y: auto; overscroll-behavior: contain; padding-right: 4px; }
+    .tax-date-group { margin-bottom: 16px; }
     .tax-date-header {
       position: sticky; top: 0; z-index: 10;
-      background: var(--bg); padding: 8px 14px; font-size: 13px; font-weight: 600;
-      color: var(--text-secondary); border-bottom: 1px solid var(--border);
-      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 8px;
+      background: rgba(240,242,245,.94);
+      backdrop-filter: blur(10px);
+      padding: 10px 2px;
+      font-size: 13px;
+      font-weight: 650;
+      color: var(--text-secondary);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
     }
-    .tax-date-header.today { background: var(--accent-light); color: var(--accent); }
+    .tax-date-header.today { color: var(--accent); }
     .tax-date-header .date-badge {
       background: var(--accent); color: #fff; padding: 2px 8px; border-radius: 10px; font-size: 11px;
     }
     .tax-date-header.today .date-badge { background: var(--accent); }
-    .tax-date-header .unpaid-count { font-size: 12px; color: var(--warning); font-weight: 500; }
+    .tax-date-header .unpaid-count { font-size: 12px; color: var(--warning); font-weight: 600; white-space: nowrap; }
+    .tax-date-header .paid-count { font-size: 12px; color: var(--success); font-weight: 600; white-space: nowrap; }
     .tax-row {
-      display: flex; align-items: center; gap: 12px; padding: 10px 16px;
-      background: var(--card); border-bottom: 1px solid var(--border);
-      transition: background .15s;
+      --property-color: var(--accent);
+      --property-bg: var(--accent-light);
+      display: grid;
+      grid-template-columns: minmax(190px, 1.08fr) minmax(220px, 1.4fr) minmax(116px, auto) minmax(128px, auto);
+      align-items: center;
+      gap: 14px;
+      padding: 14px;
+      margin-bottom: 8px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--property-color);
+      border-radius: 8px;
+      box-shadow: var(--shadow-sm);
+      transition: transform .15s, box-shadow .15s, border-color .15s;
     }
-    .tax-row:hover { background: #f8f9fb; }
-    .tax-row.tax-unpaid { border-left: 3px solid var(--warning); }
-    .tax-row.tax-paid { border-left: 3px solid var(--success); }
-    .tax-row-property { font-weight: 600; font-size: 13px; min-width: 90px; }
-    .tax-row-guest { font-size: 13px; color: var(--text-secondary); flex: 1; }
-    .tax-row-nights { font-size: 12px; color: var(--text); font-weight: 600; min-width: 92px; text-align: right; white-space: nowrap; }
-    .tax-row-platform { font-size: 14px; }
-    .tax-row-check { display: flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; }
+    .tax-row:hover { transform: translateY(-1px); box-shadow: var(--shadow); border-color: #d1d5db; }
+    .tax-row.tax-paid { border-left-color: var(--success); opacity: .82; }
+    .tax-row-property {
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .tax-property-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--property-bg);
+      color: var(--property-color);
+    }
+    .tax-property-name {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 14px;
+      font-weight: 650;
+      color: var(--text);
+    }
+    .tax-platform {
+      margin-top: 1px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+    }
+    .tax-row-guest {
+      min-width: 0;
+      color: var(--text);
+    }
+    .tax-guest-name {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .tax-stay {
+      margin-top: 2px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .tax-row-nights {
+      justify-self: end;
+      display: inline-flex;
+      align-items: center;
+      min-height: 34px;
+      padding: 7px 11px;
+      border-radius: 999px;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 750;
+      white-space: nowrap;
+    }
+    .tax-row-check { display: flex; align-items: center; justify-content: flex-end; gap: 7px; cursor: pointer; user-select: none; }
     .tax-checkbox {
       width: 20px; height: 20px; border-radius: 5px; border: 2px solid var(--border);
       display: flex; align-items: center; justify-content: center; transition: all .15s;
@@ -866,66 +1017,84 @@
         padding-top: 16px;
       }
       .tax-header {
-        margin-bottom: 10px;
+        display: block;
+        margin-bottom: 12px;
+      }
+      .tax-title { font-size: 22px; }
+      .tax-summary {
+        justify-content: flex-start;
+        max-width: none;
+        margin-top: 10px;
       }
       .tax-controls {
         gap: 8px 10px;
+        align-items: center;
+        justify-content: flex-start;
       }
       .tax-controls .btn {
         min-height: 36px;
       }
       .tax-controls label {
         min-height: 36px;
-        padding: 6px 0;
+        padding: 7px 10px;
       }
       .tax-list {
-        max-height: calc(100dvh - 152px);
-        border: 1px solid var(--border);
-        border-radius: 10px;
-        background: var(--card);
+        max-height: calc(100dvh - 210px);
+        padding-right: 0;
       }
       .tax-date-header {
         top: 0;
-        padding: 9px 10px;
+        padding: 9px 0;
         gap: 8px;
         font-size: 12px;
       }
-      .tax-date-header .unpaid-count {
+      .tax-date-header .unpaid-count,
+      .tax-date-header .paid-count {
         white-space: nowrap;
       }
       .tax-row {
         display: grid;
-        grid-template-columns: 22px minmax(74px, auto) minmax(0, 1fr);
-        gap: 4px 8px;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 8px 10px;
         align-items: center;
-        padding: 10px;
-      }
-      .tax-row-platform {
-        grid-row: 1 / 3;
-        align-self: start;
+        padding: 12px;
       }
       .tax-row-property {
+        grid-column: 1 / 2;
         min-width: 0;
-        font-size: 12px;
       }
       .tax-row-guest {
+        grid-column: 1 / 3;
+        grid-row: 2;
         min-width: 0;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
       }
       .tax-row-nights {
         grid-column: 2 / 3;
-        min-width: 0;
-        width: max-content;
+        grid-row: 1;
         max-width: 100%;
-        text-align: left;
+        justify-self: end;
+        min-height: 30px;
+        padding: 6px 9px;
+        font-size: 12px;
       }
       .tax-row-check {
-        grid-column: 3 / 4;
+        grid-column: 1 / 3;
+        grid-row: 3;
         justify-self: end;
         max-width: 100%;
         gap: 5px;
+      }
+      .tax-property-icon {
+        width: 30px;
+        height: 30px;
+      }
+      .tax-property-name,
+      .tax-guest-name {
+        font-size: 13px;
+      }
+      .tax-platform,
+      .tax-stay {
+        font-size: 11px;
       }
       .tax-paid-time {
         display: none;
@@ -938,12 +1107,32 @@
         padding-left: 12px;
         padding-right: 12px;
       }
+      .tax-summary-pill {
+        width: calc(50% - 4px);
+        justify-content: center;
+      }
+      .tax-summary-pill:first-child {
+        width: 100%;
+      }
       .tax-row {
-        grid-template-columns: 20px minmax(66px, auto) minmax(0, 1fr);
+        grid-template-columns: minmax(0, 1fr);
       }
       .tax-row-property,
       .tax-row-guest,
       .tax-row-nights,
+      .tax-row-check {
+        grid-column: 1;
+      }
+      .tax-row-guest { grid-row: auto; }
+      .tax-row-nights {
+        grid-row: auto;
+        justify-self: start;
+      }
+      .tax-row-check {
+        grid-row: auto;
+        justify-self: stretch;
+        justify-content: space-between;
+      }
       .tax-paid-label,
       .tax-unpaid-label {
         font-size: 12px;
@@ -1086,11 +1275,15 @@
   <!-- TAX TAB -->
   <div class="tax-section" id="taxTab" style="display:none">
     <div class="tax-header">
-      <div class="tax-controls">
-        <button class="btn btn-secondary" onclick="taxScrollToToday()" style="padding:6px 14px;font-size:13px;">📍 Сегодня</button>
-        <label style="font-size:13px;color:var(--text-secondary);"><input type="checkbox" id="taxShowAll" onchange="renderTaxList()" checked> Все</label>
-        <label style="font-size:13px;color:var(--text-secondary);"><input type="checkbox" id="taxShowUnpaidOnly" onchange="renderTaxList()"> Только неоплаченные</label>
+      <div>
+        <div class="tax-title-kicker">Tassa di soggiorno</div>
+        <h2 class="tax-title">Налоги</h2>
       </div>
+      <div class="tax-summary" id="taxSummary"></div>
+    </div>
+    <div class="tax-controls">
+      <button class="btn btn-secondary" onclick="taxScrollToToday()" style="padding:6px 14px;font-size:13px;">📍 Сегодня</button>
+      <label><input type="checkbox" id="taxShowUnpaidOnly" onchange="renderTaxList()"> Только неоплаченные</label>
     </div>
     <div id="taxList" class="tax-list"></div>
   </div>
@@ -1327,6 +1520,44 @@ const propertyConfig = {
   'harmony':  { icon: 'music',    color: '#059669', bg: '#ecfdf5' }
 };
 
+const propertyNameFallback = {
+  awesome: 'Awesome Apartments',
+  orange: 'Orange Room',
+  vingtage: 'Vingtage Room',
+  youth: 'Youth Room',
+  solo: 'Solo Room',
+  carina: 'Carina',
+  royal: 'Royal',
+  harmony: 'Harmony'
+};
+
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, ch => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }[ch]));
+}
+
+function propertyMeta(propertyId) {
+  const prop = properties.find(p => p.id === propertyId);
+  const cfg = propertyConfig[propertyId] || { icon: 'home', color: '#6b7280', bg: '#f9fafb' };
+  return {
+    name: prop?.name || propertyNameFallback[propertyId] || propertyId,
+    icon: cfg.icon,
+    color: cfg.color,
+    bg: cfg.bg
+  };
+}
+
+function platformLabel(platform) {
+  if (platform === 'booking') return 'Booking.com';
+  if (platform === 'airbnb') return 'Airbnb';
+  return platform || 'Other';
+}
+
 function countryToFlag(code) {
   if (!code) return '';
   const c = code.toUpperCase();
@@ -1390,15 +1621,39 @@ function formatEuro(amount) {
   }).format(amount);
 }
 
+function taxAmountValue(booking) {
+  const nights = Number(booking.nights) || nightsBetween(booking.start_date, booking.end_date);
+  const guests = Number(booking.guest_count) || null;
+  if (!nights || !guests) return null;
+  return nights * guests * 2.5;
+}
+
 function taxAmountLabel(booking) {
+  const knownAmount = taxAmountValue(booking);
+  if (knownAmount != null) return formatEuro(knownAmount);
+
   const nights = Number(booking.nights) || nightsBetween(booking.start_date, booking.end_date);
   const guests = Number(booking.guest_count) || null;
   const rate = 2.5;
 
-  if (nights && guests) return formatEuro(nights * guests * rate);
   if (nights) return `${formatEuro(nights * rate)} / чел.`;
   if (guests) return `${formatEuro(guests * rate)} / ночь`;
   return `${formatEuro(rate)} / чел.·ночь`;
+}
+
+function formatTaxDate(iso) {
+  if (!iso) return '—';
+  return new Date(iso + 'T12:00:00').toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+}
+
+function taxStayLabel(booking) {
+  const nights = Number(booking.nights) || nightsBetween(booking.start_date, booking.end_date);
+  const guests = Number(booking.guest_count) || null;
+  return [
+    `${formatTaxDate(booking.start_date)} → ${formatTaxDate(booking.end_date)}`,
+    nights ? `${nights} ${nights === 1 ? 'ночь' : nights < 5 ? 'ночи' : 'ночей'}` : null,
+    guests ? `${guests} чел.` : null
+  ].filter(Boolean).join(' · ');
 }
 
 const COUNTRY_NAMES = {
@@ -2043,6 +2298,7 @@ let allTaxBookings = [];
 async function loadTaxData() {
   const listEl = document.getElementById('taxList');
   listEl.innerHTML = '<div class="tax-empty"><div class="tax-empty-icon">⏳</div>Загрузка...</div>';
+  renderTaxSummary([]);
 
   try {
     const res = await fetch(`${API}/bookings`);
@@ -2058,6 +2314,27 @@ async function loadTaxData() {
   }
 }
 
+function renderTaxSummary(source = allTaxBookings) {
+  const el = document.getElementById('taxSummary');
+  if (!el) return;
+
+  const total = source.length;
+  const unpaid = source.filter(b => !b.tax_paid);
+  const paid = total - unpaid.length;
+  const knownDue = unpaid.reduce((sum, b) => {
+    const amount = taxAmountValue(b);
+    return amount == null ? sum : sum + amount;
+  }, 0);
+  const unknownDue = unpaid.filter(b => taxAmountValue(b) == null).length;
+
+  el.innerHTML = `
+    <span class="tax-summary-pill warning"><strong>${unpaid.length}</strong> к оплате</span>
+    <span class="tax-summary-pill"><strong>${knownDue ? formatEuro(knownDue) : '—'}</strong>${unknownDue ? ` + ${unknownDue} без гостей` : ''}</span>
+    <span class="tax-summary-pill success"><strong>${paid}</strong> оплачено</span>
+    <span class="tax-summary-pill"><strong>${total}</strong> всего</span>
+  `;
+}
+
 function renderTaxList() {
   const listEl = document.getElementById('taxList');
   const showUnpaidOnly = document.getElementById('taxShowUnpaidOnly').checked;
@@ -2066,6 +2343,7 @@ function renderTaxList() {
   if (showUnpaidOnly) {
     filtered = filtered.filter(b => !b.tax_paid);
   }
+  renderTaxSummary(allTaxBookings);
 
   // Group by end_date
   const groups = {};
@@ -2085,8 +2363,9 @@ function renderTaxList() {
 
   let html = '';
   for (const date of dates) {
-    const rows = groups[date].sort((a, b) => (a.property_name || a.property_id).localeCompare(b.property_name || b.property_id));
+    const rows = groups[date].sort((a, b) => propertyMeta(a.property_id).name.localeCompare(propertyMeta(b.property_id).name));
     const unpaidCount = rows.filter(r => !r.tax_paid).length;
+    const paidCount = rows.length - unpaidCount;
     const isToday = date === today;
     const weekday = new Date(date + 'T12:00:00').toLocaleDateString('ru-RU', { weekday: 'short', day: 'numeric', month: 'short' });
 
@@ -2094,11 +2373,11 @@ function renderTaxList() {
     html += `<div class="tax-date-header ${isToday ? 'today' : ''}">`;
     html += `<span>${weekday} ${isToday ? '<span class="date-badge">сегодня</span>' : ''}</span>`;
     if (unpaidCount > 0) html += `<span class="unpaid-count">⚠️ ${unpaidCount} не оплачено</span>`;
-    else html += `<span style="font-size:12px;color:var(--success)">✅ всё оплачено</span>`;
+    else html += `<span class="paid-count">✓ ${paidCount || rows.length} оплачено</span>`;
     html += `</div>`;
 
     for (const r of rows) {
-      const platformIcon = r.platform === 'airbnb' ? '🩷' : '🔵';
+      const meta = propertyMeta(r.property_id);
       const taxAmount = taxAmountLabel(r);
       const paidClass = r.tax_paid ? 'tax-paid' : 'tax-unpaid';
       const checkClass = r.tax_paid ? 'checked' : '';
@@ -2106,13 +2385,12 @@ function renderTaxList() {
       const paidLabel = r.tax_paid
         ? `<span class="tax-paid-label">✓</span>${r.tax_paid_at ? `<span class="tax-paid-time">${formatTaxTime(r.tax_paid_at)}</span>` : ''}`
         : '<span class="tax-unpaid-label">не оплачено</span>';
-      const guest = r.guest_name || '—';
+      const guest = escapeHtml(r.guest_name || '—');
       const flag = r.guest_country ? ' ' + flagEmoji(r.guest_country) : '';
 
-      html += `<div class="tax-row ${paidClass}" id="tax-row-${r.id}">`;
-      html += `<span class="tax-row-platform">${platformIcon}</span>`;
-      html += `<span class="tax-row-property">${r.property_name || r.property_id}</span>`;
-      html += `<span class="tax-row-guest">${guest}${flag}</span>`;
+      html += `<div class="tax-row ${paidClass}" id="tax-row-${r.id}" style="--property-color:${meta.color};--property-bg:${meta.bg}">`;
+      html += `<div class="tax-row-property"><span class="tax-property-icon"><i data-lucide="${meta.icon}" style="width:16px;height:16px;"></i></span><span style="min-width:0"><span class="tax-property-name">${escapeHtml(meta.name)}</span><span class="tax-platform">${escapeHtml(platformLabel(r.platform))}</span></span></div>`;
+      html += `<div class="tax-row-guest"><div class="tax-guest-name">${guest}${flag}</div><div class="tax-stay">${escapeHtml(taxStayLabel(r))}</div></div>`;
       html += `<span class="tax-row-nights">${taxAmount}</span>`;
       html += `<div class="tax-row-check" onclick="toggleTaxPaid(${r.id}, ${!r.tax_paid})">`;
       html += `<div class="tax-checkbox ${checkClass}">${checkIcon}</div>`;
@@ -2123,6 +2401,7 @@ function renderTaxList() {
   }
 
   listEl.innerHTML = html;
+  if (typeof lucide !== 'undefined') lucide.createIcons();
 
   // Scroll to today if exists
   setTimeout(() => {
