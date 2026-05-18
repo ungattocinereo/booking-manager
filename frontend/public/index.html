@@ -401,7 +401,6 @@
 
     .calendar-scroll-wrapper {
       --calendar-property-col-width: 180px;
-      --calendar-property-col-compact-width: 56px;
       --calendar-day-width: 38px;
       overflow-x: auto;
       position: relative;
@@ -409,9 +408,6 @@
       overscroll-behavior-x: contain;
       -webkit-overflow-scrolling: touch;
       touch-action: pan-x pan-y;
-    }
-    .calendar-scroll-wrapper.calendar-labels-compact {
-      --calendar-property-col-width: var(--calendar-property-col-compact-width);
     }
     .calendar-scroll-wrapper::-webkit-scrollbar { height: 6px; }
     .calendar-scroll-wrapper::-webkit-scrollbar-track { background: transparent; }
@@ -453,19 +449,6 @@
       color: var(--text-secondary);
       line-height: 0;
     }
-    .calendar-labels-compact .cal-property-header {
-      justify-content: center;
-      padding-left: 8px;
-      padding-right: 8px;
-    }
-    .calendar-labels-compact .cal-property-header-title { display: none; }
-    .calendar-labels-compact .cal-property-header-icon { display: inline-flex; }
-    .calendar-labels-compact .cal-group-header.cal-property-col {
-      justify-content: center;
-      padding-left: 0;
-      padding-right: 0;
-    }
-
     .cal-day-header {
       padding: 6px 0;
       text-align: center;
@@ -486,6 +469,7 @@
     }
     .cal-day-header.today {
       background: var(--accent-light);
+      box-shadow: inset 2px 0 var(--accent), inset -1px 0 #c7d2fe;
     }
     .cal-day-header.today .day-num {
       color: var(--accent);
@@ -533,41 +517,22 @@
       color: #9ca3af;
       text-transform: uppercase;
     }
-    .calendar-labels-compact .cal-group-label {
-      writing-mode: vertical-rl;
-      transform: rotate(180deg);
-      letter-spacing: .5px;
-      font-size: 9px;
-      max-height: 24px;
-      overflow: hidden;
-    }
-
     /* Property rows */
     .cal-property-name {
       padding: 0 16px;
-      font-size: 13px;
-      font-weight: 500;
+      font-size: 12px;
+      font-weight: 600;
       border-bottom: 1px solid #f3f4f6;
       display: flex;
       align-items: center;
       gap: 8px;
       height: 42px;
     }
-    .calendar-labels-compact .cal-property-name {
-      justify-content: center;
-      padding-left: 8px;
-      padding-right: 8px;
-    }
     .cal-property-title {
       min-width: 0;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-    }
-    .calendar-labels-compact .cal-property-title {
-      width: 0;
-      opacity: 0;
-      visibility: hidden;
     }
     .cal-property-icon {
       width: 28px;
@@ -586,7 +551,10 @@
       min-width: var(--calendar-day-width);
       position: relative;
     }
-    .cal-cell.today { background: rgba(79,70,229,.03); }
+    .cal-cell.today {
+      background: rgba(79,70,229,.04);
+      box-shadow: inset 2px 0 var(--accent), inset -1px 0 #c7d2fe;
+    }
     .cal-cell.past { background: #f7f7f8; }
     .cal-cell.weekend { background: rgba(217,119,6,.02); }
     .cal-cell.past.weekend { background: #f4f4f5; }
@@ -617,18 +585,31 @@
     .booking-bar.booking { background: var(--booking); }
     .booking-bar.other { background: #6b7280; }
     .booking-bar.completed {
-      background: rgba(255,255,255,.92) !important;
-      border: 1px solid #9ca3af;
+      background: linear-gradient(90deg, #fff, #f3f4f6) !important;
+      border: 1px solid #6b7280;
       color: #374151;
       box-shadow: none;
       filter: grayscale(1);
-      opacity: .78;
+      opacity: .86;
+      font-size: 9px;
+      padding: 0 6px;
     }
     .booking-bar.completed:hover {
-      opacity: .95;
+      opacity: 1;
     }
     .booking-bar.completed .bar-label {
       color: #374151;
+    }
+    .booking-bar.completed::after {
+      content: "";
+      position: absolute;
+      left: 5px;
+      right: 5px;
+      top: 50%;
+      height: 1px;
+      background: rgba(55,65,81,.5);
+      transform: translateY(-50%);
+      pointer-events: none;
     }
 
     .booking-bar.not-available {
@@ -952,13 +933,21 @@
       font-weight: 650;
       color: var(--text);
     }
+    .tax-property-copy {
+      min-width: 0;
+      overflow: hidden;
+      white-space: nowrap;
+    }
     .tax-platform {
-      margin-top: 1px;
-      font-size: 11px;
+      display: inline-block;
+      margin-left: 5px;
+      font-size: 8px;
+      line-height: 1;
       font-weight: 700;
       letter-spacing: .04em;
       text-transform: uppercase;
       color: var(--text-secondary);
+      transform: translateY(-.45em);
     }
     .tax-row-guest {
       min-width: 0;
@@ -1074,18 +1063,36 @@
         margin-bottom: 8px;
       }
       .calendar-scroll-wrapper {
-        --calendar-property-col-width: 138px;
-        --calendar-property-col-compact-width: 48px;
+        --calendar-property-col-width: 50px;
       }
 
       .cal-property-header,
       .cal-group-header,
       .cal-property-name {
-        padding-left: 10px;
-        padding-right: 10px;
+        padding-left: 7px;
+        padding-right: 7px;
+        justify-content: center;
+      }
+      .cal-property-header-title,
+      .cal-property-title {
+        display: none;
+      }
+      .cal-property-header-icon {
+        display: inline-flex;
+      }
+      .cal-group-label {
+        font-size: 0;
+        letter-spacing: 0;
+      }
+      .cal-group-label::after {
+        content: "";
+        display: block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #cbd5e1;
       }
       .cal-property-name {
-        font-size: 12px;
         gap: 6px;
       }
       .cal-property-icon {
@@ -1209,7 +1216,6 @@
       .tax-guest-name {
         font-size: 13px;
       }
-      .tax-platform,
       .tax-stay {
         font-size: 11px;
       }
@@ -1434,7 +1440,6 @@ function switchTab(tab, pushState = true) {
   document.getElementById('legend').style.display = tab === 'calendar' ? 'flex' : 'none';
   if (tab === 'calendar') requestAnimationFrame(() => {
     if (!calendarHasAutoScrolledToday) centerCalendarTodayOnce();
-    updateCalendarLabelDensity();
   });
   if (tab === 'stats') renderStats();
   if (tab === 'tax') loadTaxData();
@@ -1680,9 +1685,9 @@ function propertyMeta(propertyId) {
 }
 
 function platformLabel(platform) {
-  if (platform === 'booking') return 'Booking.com';
-  if (platform === 'airbnb') return 'Airbnb';
-  return platform || 'Other';
+  if (platform === 'booking') return 'BOOKING';
+  if (platform === 'airbnb') return 'AIRBNB';
+  return String(platform || 'OTHER').toUpperCase();
 }
 
 function countryToFlag(code) {
@@ -1797,10 +1802,8 @@ const COUNTRY_NAMES = {
 const DAY_MS = 86400000;
 const CALENDAR_PAST_DAYS = 45;
 const CALENDAR_DAY_WIDTH = 38;
-const CALENDAR_LABEL_COMPACT_THRESHOLD = 46;
 let calendarTodayScrollLeft = 0;
 let calendarHasAutoScrolledToday = false;
-let calendarScrollFrame = 0;
 
 function addCalendarDays(date, amount) {
   const next = new Date(date);
@@ -1809,32 +1812,10 @@ function addCalendarDays(date, amount) {
   return next;
 }
 
-function updateCalendarLabelDensity() {
-  const scroll = document.getElementById('calendarScroll');
-  if (!scroll) return;
-  const awayFromToday = Math.abs(scroll.scrollLeft - calendarTodayScrollLeft);
-  scroll.classList.toggle('calendar-labels-compact', awayFromToday > CALENDAR_LABEL_COMPACT_THRESHOLD);
-}
-
-function bindCalendarScrollDensity() {
-  const scroll = document.getElementById('calendarScroll');
-  if (!scroll || scroll.dataset.densityBound === 'true') return;
-  scroll.dataset.densityBound = 'true';
-  scroll.addEventListener('scroll', () => {
-    if (calendarScrollFrame) return;
-    calendarScrollFrame = requestAnimationFrame(() => {
-      calendarScrollFrame = 0;
-      updateCalendarLabelDensity();
-    });
-  }, { passive: true });
-}
-
 function scrollCalendarToToday({ behavior = 'smooth' } = {}) {
   const scroll = document.getElementById('calendarScroll');
   if (!scroll) return;
   scroll.scrollTo({ left: calendarTodayScrollLeft, behavior });
-  if (behavior === 'auto') updateCalendarLabelDensity();
-  else setTimeout(updateCalendarLabelDensity, 360);
 }
 
 function centerCalendarTodayOnce() {
@@ -1843,6 +1824,16 @@ function centerCalendarTodayOnce() {
   scrollCalendarToToday({ behavior: 'auto' });
   calendarHasAutoScrolledToday = true;
   return true;
+}
+
+function getCalendarCenteredScrollLeft(scroll, dayIndex) {
+  if (!scroll || dayIndex < 0) return 0;
+  const styles = getComputedStyle(scroll);
+  const propertyColWidth = parseFloat(styles.getPropertyValue('--calendar-property-col-width')) || 0;
+  const dayWidth = parseFloat(styles.getPropertyValue('--calendar-day-width')) || CALENDAR_DAY_WIDTH;
+  const centeredLeft = propertyColWidth + (dayIndex * dayWidth) + (dayWidth / 2) - (scroll.clientWidth / 2);
+  const maxLeft = Math.max(0, scroll.scrollWidth - scroll.clientWidth);
+  return Math.max(0, Math.min(centeredLeft, maxLeft));
 }
 
 function renderCalendar() {
@@ -1859,7 +1850,6 @@ function renderCalendar() {
   while (d <= endDate) { days.push(new Date(d)); d.setDate(d.getDate() + 1); }
   const totalDays = days.length;
   const calendarTodayIndex = days.findIndex(day => day.getTime() === today.getTime());
-  calendarTodayScrollLeft = Math.max(0, calendarTodayIndex * CALENDAR_DAY_WIDTH);
 
   grid.style.display = 'grid';
   grid.style.gridTemplateColumns = `var(--calendar-property-col-width) repeat(${totalDays}, var(--calendar-day-width))`;
@@ -1986,9 +1976,11 @@ function renderCalendar() {
         bar.style.gridRow = row;
         bar.style.gridColumn = `${startIdx + 2} / ${endIdx + 3}`;
         bar.style.position = 'relative';
-        bar.style.top = '7px';
-        bar.style.height = '28px';
-        bar.style.marginBottom = '-28px';
+        const barTop = isCompleted ? 24 : 7;
+        const barHeight = isCompleted ? 10 : 28;
+        bar.style.top = `${barTop}px`;
+        bar.style.height = `${barHeight}px`;
+        bar.style.marginBottom = `-${barHeight}px`;
         bar.style.marginLeft = '19px';
         bar.style.marginRight = '19px';
 
@@ -2019,16 +2011,14 @@ function renderCalendar() {
     });
   });
 
-  bindCalendarScrollDensity();
   requestAnimationFrame(() => {
     if (!scroll) return;
+    calendarTodayScrollLeft = getCalendarCenteredScrollLeft(scroll, calendarTodayIndex);
     if (!calendarHasAutoScrolledToday) {
       if (centerCalendarTodayOnce()) return;
-      updateCalendarLabelDensity();
       return;
     }
     scroll.scrollLeft = Math.min(previousScrollLeft, Math.max(0, scroll.scrollWidth - scroll.clientWidth));
-    updateCalendarLabelDensity();
   });
 }
 
@@ -2589,7 +2579,7 @@ function renderTaxList() {
       const flag = r.guest_country ? ' ' + flagEmoji(r.guest_country) : '';
 
       html += `<div class="tax-row ${paidClass}" id="tax-row-${r.id}" style="--property-color:${meta.color};--property-bg:${meta.bg}">`;
-      html += `<div class="tax-row-property"><span class="tax-property-icon"><i data-lucide="${meta.icon}" style="width:16px;height:16px;"></i></span><span style="min-width:0"><span class="tax-property-name">${escapeHtml(meta.name)}</span><span class="tax-platform">${escapeHtml(platformLabel(r.platform))}</span></span></div>`;
+      html += `<div class="tax-row-property"><span class="tax-property-icon"><i data-lucide="${meta.icon}" style="width:16px;height:16px;"></i></span><span class="tax-property-copy"><span class="tax-property-name">${escapeHtml(meta.name)}</span><sup class="tax-platform">${escapeHtml(platformLabel(r.platform))}</sup></span></div>`;
       html += `<div class="tax-row-guest"><div class="tax-guest-name">${guest}${flag}</div><div class="tax-stay">${escapeHtml(taxStayLabel(r))}</div></div>`;
       html += `<span class="tax-row-nights">${taxAmount}</span>`;
       html += `<div class="tax-row-check" onclick="toggleTaxPaid(${r.id}, ${!r.tax_paid})">`;
