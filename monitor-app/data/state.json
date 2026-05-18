@@ -2339,6 +2339,21 @@
       "sourceRef": "hourly_sync",
       "bookingCreatedAt": "2026-05-17T06:50:21.681Z",
       "detectedAt": "2026-05-17T09:05:37.892Z"
+    },
+    {
+      "eventType": "cancelled",
+      "bookingKey": "royal|airbnb|2026-09-02|2026-09-16",
+      "propertyId": "royal",
+      "platform": "airbnb",
+      "startDate": "2026-09-02",
+      "endDate": "2026-09-16",
+      "guestName": "Bettina Meschenmoser",
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HMHMQRYWR5",
+      "confirmationCode": "HMHMQRYWR5",
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync",
+      "bookingCreatedAt": "2026-03-28T19:32:10.990Z",
+      "detectedAt": "2026-05-18T08:30:46.697Z"
     }
   ],
   "imports": [

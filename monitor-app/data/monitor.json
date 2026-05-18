@@ -1,7 +1,8 @@
 {
   "since": "2026-04-17",
-  "generated_at": "2026-05-18T04:24:39.705Z",
+  "generated_at": "2026-05-18T08:30:46.700Z",
   "available_dates": [
+    "2026-05-18",
     "2026-05-17",
     "2026-05-14",
     "2026-05-12",
@@ -455,6 +456,23 @@
           "status": "cancelled",
           "cancelledAt": "2026-04-26T08:01:51.939Z",
           "link": "https://www.airbnb.com/hosting/reservations/details/HM58F3DNTN",
+          "sources": [
+            "upstream_api",
+            "export_airbnb_csv"
+          ]
+        },
+        {
+          "bookingKey": "royal|airbnb|2026-09-02|2026-09-16",
+          "propertyId": "royal",
+          "platform": "airbnb",
+          "startDate": "2026-09-02",
+          "endDate": "2026-09-16",
+          "guestName": "Bettina Meschenmoser",
+          "confirmationCode": "HMHMQRYWR5",
+          "firstSeenAt": "2026-03-28T19:32:10.990Z",
+          "status": "cancelled",
+          "cancelledAt": "2026-05-18T08:30:46.697Z",
+          "link": "https://www.airbnb.com/hosting/reservations/details/HMHMQRYWR5",
           "sources": [
             "upstream_api",
             "export_airbnb_csv"
@@ -3022,6 +3040,21 @@
       "sourceRef": "hourly_sync",
       "bookingCreatedAt": "2026-05-17T06:50:21.681Z",
       "detectedAt": "2026-05-17T09:05:37.892Z"
+    },
+    {
+      "eventType": "cancelled",
+      "bookingKey": "royal|airbnb|2026-09-02|2026-09-16",
+      "propertyId": "royal",
+      "platform": "airbnb",
+      "startDate": "2026-09-02",
+      "endDate": "2026-09-16",
+      "guestName": "Bettina Meschenmoser",
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HMHMQRYWR5",
+      "confirmationCode": "HMHMQRYWR5",
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync",
+      "bookingCreatedAt": "2026-03-28T19:32:10.990Z",
+      "detectedAt": "2026-05-18T08:30:46.697Z"
     }
   ],
   "imports_log": [
