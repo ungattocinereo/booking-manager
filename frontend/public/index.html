@@ -427,6 +427,7 @@
     .calendar-scroll-wrapper {
       --calendar-property-col-width: 180px;
       --calendar-day-width: 38px;
+      --calendar-grid-line: #e1e5eb;
       overflow-x: auto;
       position: relative;
       max-width: 100%;
@@ -450,7 +451,7 @@
       left: 0;
       z-index: 10;
       background: var(--card);
-      border-right: 1px solid var(--border);
+      border-right: 1px solid #d8dee7;
       width: var(--calendar-property-col-width);
       min-width: var(--calendar-property-col-width);
       transition: width .18s ease, min-width .18s ease, padding .18s ease;
@@ -464,7 +465,7 @@
       text-transform: uppercase;
       letter-spacing: .5px;
       background: #f9fafb;
-      border-bottom: 1px solid var(--border);
+      border-bottom: 1px solid var(--calendar-grid-line);
       display: flex;
       align-items: center;
       gap: 8px;
@@ -479,8 +480,8 @@
       text-align: center;
       font-size: 11px;
       background: #f9fafb;
-      border-bottom: 1px solid var(--border);
-      border-right: 1px solid #f3f4f6;
+      border-bottom: 1px solid var(--calendar-grid-line);
+      border-right: 1px solid var(--calendar-grid-line);
       min-width: var(--calendar-day-width);
     }
     .cal-day-header .day-num {
@@ -530,7 +531,8 @@
     .cal-group-header {
       padding: 0 16px;
       background: #f3f4f6;
-      border-bottom: 1px solid var(--border);
+      border-bottom: 1px solid var(--calendar-grid-line);
+      border-right: 1px solid var(--calendar-grid-line);
       height: 28px;
       display: flex;
       align-items: center;
@@ -547,7 +549,7 @@
       padding: 0 16px;
       font-size: 12px;
       font-weight: 600;
-      border-bottom: 1px solid #f3f4f6;
+      border-bottom: 1px solid var(--calendar-grid-line);
       display: flex;
       align-items: center;
       gap: 8px;
@@ -570,8 +572,8 @@
     }
 
     .cal-cell {
-      border-bottom: 1px solid #f3f4f6;
-      border-right: 1px solid #fafafa;
+      border-bottom: 1px solid var(--calendar-grid-line);
+      border-right: 1px solid var(--calendar-grid-line);
       height: 42px;
       min-width: var(--calendar-day-width);
       position: relative;
@@ -622,17 +624,6 @@
     }
     .booking-bar.completed .bar-label {
       color: #374151;
-    }
-    .booking-bar.completed::after {
-      content: "";
-      position: absolute;
-      left: 5px;
-      right: 5px;
-      top: 50%;
-      height: 1px;
-      background: rgba(55,65,81,.5);
-      transform: translateY(-50%);
-      pointer-events: none;
     }
 
     .booking-bar.not-available {
