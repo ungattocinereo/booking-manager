@@ -8,6 +8,13 @@
     { "path": "/api/sync", "schedule": "0 6 * * *" }
   ],
   "rewrites": [
+    { "source": "/favicon.ico", "destination": "/frontend/public/favicon.ico" },
+    { "source": "/favicon-16.png", "destination": "/frontend/public/favicon-16.png" },
+    { "source": "/favicon-32.png", "destination": "/frontend/public/favicon-32.png" },
+    { "source": "/apple-touch-icon.png", "destination": "/frontend/public/apple-touch-icon.png" },
+    { "source": "/icon-192.png", "destination": "/frontend/public/icon-192.png" },
+    { "source": "/icon-512.png", "destination": "/frontend/public/icon-512.png" },
+    { "source": "/manifest.json", "destination": "/frontend/public/manifest.json" },
     { "source": "/maid/:slug", "destination": "/frontend/public/maid.html" },
     { "source": "/stats", "destination": "/frontend/public/index.html" },
     { "source": "/maid", "destination": "/frontend/public/index.html" },
