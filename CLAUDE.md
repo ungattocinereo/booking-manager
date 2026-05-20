@@ -67,7 +67,7 @@ Both paths share the database layer — `server.js` and each `api/*.js` file che
 
 ### Properties
 
-8 properties configured: Vingtage Room, Orange Room, Solo Room, Youth Room, Awesome Apartments, Carina, Harmony, Royal. First four have both Airbnb + Booking.com feeds; the rest are Airbnb-only.
+9 properties configured: Vingtage Room, Orange Room, Solo Room, Youth Room, Awesome Apartments, Carina, Harmony, Royal, Villa Susy. First four have both Airbnb + Booking.com feeds, Villa Susy is Booking.com-only, and the rest are Airbnb-only.
 
 ### Cleaners have a `slug` field
 

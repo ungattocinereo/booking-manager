@@ -1666,7 +1666,8 @@ const propertyConfig = {
   'solo':     { icon: 'user',     color: '#4f46e5', bg: '#eef2ff' },
   'carina':   { icon: 'heart',    color: '#e11d48', bg: '#fff1f2' },
   'royal':    { icon: 'crown',    color: '#ca8a04', bg: '#fefce8' },
-  'harmony':  { icon: 'music',    color: '#059669', bg: '#ecfdf5' }
+  'harmony':  { icon: 'music',    color: '#059669', bg: '#ecfdf5' },
+  'susy':     { icon: 'building-2', color: '#0f766e', bg: '#f0fdfa' }
 };
 
 const propertyNameFallback = {
@@ -1677,7 +1678,8 @@ const propertyNameFallback = {
   solo: 'Solo Room',
   carina: 'Carina',
   royal: 'Royal',
-  harmony: 'Harmony'
+  harmony: 'Harmony',
+  susy: 'Villa Susy'
 };
 
 function escapeHtml(value) {
@@ -1921,7 +1923,8 @@ function renderCalendar() {
 
   const groups = [
     { name: 'Dragone', properties: ['awesome', 'orange', 'vingtage', 'youth', 'solo'] },
-    { name: 'Salvatore / Margarita', properties: ['carina', 'royal', 'harmony'] }
+    { name: 'Salvatore / Margarita', properties: ['carina', 'royal', 'harmony'] },
+    { name: 'Susy', properties: ['susy'] }
   ];
 
   let currentRow = 2;

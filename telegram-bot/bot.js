@@ -98,7 +98,8 @@ const PROPERTY_NAMES = {
   awesome: 'Awesome Apartments',
   carina: 'Carina',
   harmony: 'Harmony',
-  royal: 'Royal'
+  royal: 'Royal',
+  susy: 'Villa Susy'
 };
 
 // ── Formatters ───────────────────────────────────────────
@@ -234,7 +235,8 @@ const PROPERTY_PATTERNS = {
   'harmony': 'harmony', 'гармон': 'harmony',
   'royal': 'royal', 'роял': 'royal',
   'vingtage': 'vingtage', 'винтаж': 'vingtage',
-  'youth': 'youth', 'юс': 'youth'
+  'youth': 'youth', 'юс': 'youth',
+  'susy': 'susy', 'сюзи': 'susy', 'суси': 'susy'
 };
 
 function detectProperty(text) {
@@ -250,8 +252,8 @@ function isBookingQuery(text) {
   const keywords = [
     'бронирован', 'заезд', 'выезд', 'уборк', 'свободн', 'занят',
     'booking', 'check-in', 'check-out', 'clean', 'available',
-    'orange', 'solo', 'awesome', 'carina', 'harmony', 'royal', 'vingtage', 'youth',
-    'оранж', 'офиген', 'карин', 'гармон', 'роял', 'винтаж',
+    'orange', 'solo', 'awesome', 'carina', 'harmony', 'royal', 'vingtage', 'youth', 'susy',
+    'оранж', 'офиген', 'карин', 'гармон', 'роял', 'винтаж', 'сюзи', 'суси',
     'когда', 'покажи', 'какие', 'кто', 'ближайш', 'следующ'
   ];
   return keywords.some(k => lower.includes(k));

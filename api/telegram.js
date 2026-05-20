@@ -95,7 +95,8 @@ async function fetchCleaningTasks(params = {}) {
 const PROPERTY_NAMES = {
   orange: 'Orange Room', solo: 'Solo Room', youth: 'Youth Room',
   vingtage: 'Vingtage Room', awesome: 'Awesome Apartments',
-  carina: 'Carina', harmony: 'Harmony', royal: 'Royal'
+  carina: 'Carina', harmony: 'Harmony', royal: 'Royal',
+  susy: 'Villa Susy'
 };
 
 // ── Formatters ───────────────────────────────────────────
@@ -216,7 +217,8 @@ const PROPERTY_PATTERNS = {
   'harmony': 'harmony', 'гармон': 'harmony',
   'royal': 'royal', 'роял': 'royal',
   'vingtage': 'vingtage', 'винтаж': 'vingtage',
-  'youth': 'youth', 'юс': 'youth'
+  'youth': 'youth', 'юс': 'youth',
+  'susy': 'susy', 'сюзи': 'susy', 'суси': 'susy'
 };
 
 function detectProperty(text) {

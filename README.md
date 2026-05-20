@@ -8,7 +8,7 @@ Booking and cleaning calendar for vacation rental properties in Atrani, Italy. S
 
 ## Features
 
-- **Calendar sync** — hourly iCal sync from Airbnb + Booking.com (16 feeds, 8 properties)
+- **Calendar sync** — hourly iCal sync from Airbnb + Booking.com (13 feeds, 9 properties)
 - **Gantt timeline** — visual booking calendar with color-coded platforms, guest names, country flags
 - **Cleaning management** — auto-generated cleaning tasks on checkout dates, cleaner assignment
 - **Maid calendar** — mobile-first Italian-language page for each cleaner at `/maid/:slug`
@@ -28,6 +28,7 @@ Booking and cleaning calendar for vacation rental properties in Atrani, Italy. S
 | Carina | Airbnb | Salvatore / Margarita |
 | Harmony | Airbnb | Salvatore / Margarita |
 | Royal | Airbnb | Salvatore / Margarita |
+| Villa Susy | Booking.com | Susy |
 
 ## Architecture
 
