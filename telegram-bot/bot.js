@@ -127,12 +127,83 @@ function formatBookings(bookings, title) {
       const icon = platformIcon(b.platform);
       const flag = countryToFlag(b.guest_country);
       const guest = b.guest_name ? ` — ${b.guest_name}${flag ? ' ' + flag : ''}` : '';
-      lines.push(`${icon} ${name} (${nights} ${nights === 1 ? 'ночь' : nights < 5 ? 'ночи' : 'ночей'}, → ${fmtDate(b.end_date)})${guest}`);
+      lines.push(`${icon} ${name} (${nights} ${pluralNights(nights)}, → ${fmtDate(b.end_date)})${guest}`);
     }
     lines.push('');
   }
 
   return lines.join('\n').trim();
+}
+
+function pluralNights(nights) {
+  const abs = Math.abs(nights);
+  const lastTwo = abs % 100;
+  const last = abs % 10;
+  if (lastTwo >= 11 && lastTwo <= 14) return 'ночей';
+  if (last === 1) return 'ночь';
+  if (last >= 2 && last <= 4) return 'ночи';
+  return 'ночей';
+}
+
+function sortBookingsByProperty(bookings) {
+  return bookings.sort((a, b) => {
+    const aName = PROPERTY_NAMES[a.property_id] || a.property_id;
+    const bName = PROPERTY_NAMES[b.property_id] || b.property_id;
+    return aName.localeCompare(bName, 'ru');
+  });
+}
+
+function bookingGuestSuffix(booking) {
+  const flag = countryToFlag(booking.guest_country);
+  return booking.guest_name ? ` — ${booking.guest_name}${flag ? ' ' + flag : ''}` : '';
+}
+
+function formatTodayLine(booking, detail) {
+  const name = PROPERTY_NAMES[booking.property_id] || booking.property_id;
+  return `${platformIcon(booking.platform)} ${name} (${detail})${bookingGuestSuffix(booking)}`;
+}
+
+function formatTodaySection(title, bookings, lineFormatter, emptyText = 'Нет') {
+  const lines = [`<b>${title}</b>`];
+
+  if (!bookings || bookings.length === 0) {
+    lines.push(emptyText);
+    return lines.join('\n');
+  }
+
+  for (const booking of sortBookingsByProperty(bookings)) {
+    lines.push(lineFormatter(booking));
+  }
+
+  return lines.join('\n');
+}
+
+function formatTodayOverview(bookings, today) {
+  if (!bookings) {
+    return `🏠 Сегодня (${fmtDate(today)})\n\nНет бронирований`;
+  }
+
+  const arrivals = bookings.filter(b => b.start_date === today);
+  const checkouts = bookings.filter(b => b.end_date === today);
+  const staying = bookings.filter(b => b.start_date < today && b.end_date > today);
+
+  const sections = [
+    `🏠 <b>Сегодня (${fmtDate(today)})</b>`,
+    formatTodaySection('Заезды', arrivals, (b) => {
+      const nights = nightsBetween(b.start_date, b.end_date);
+      return formatTodayLine(b, `${nights} ${pluralNights(nights)}, выезд ${fmtDate(b.end_date)}`);
+    }, 'Заездов нет'),
+    formatTodaySection('Выезды', checkouts, (b) => {
+      const nights = nightsBetween(b.start_date, b.end_date);
+      return formatTodayLine(b, `с ${fmtDate(b.start_date)}, ${nights} ${pluralNights(nights)}`);
+    }, 'Выездов нет'),
+    formatTodaySection('Остаются', staying, (b) => {
+      const remainingNights = nightsBetween(today, b.end_date);
+      return formatTodayLine(b, `до ${fmtDate(b.end_date)}, еще ${remainingNights} ${pluralNights(remainingNights)}`);
+    }, 'Никто не остается')
+  ];
+
+  return sections.join('\n\n').trim();
 }
 
 function formatCleaning(tasks, title) {
@@ -231,7 +302,7 @@ bot.onText(/^\/week(?:@\w+)?(?:\s+(.+))?$/, async (msg, match) => {
   } catch (e) { console.error(e); await bot.sendMessage(msg.chat.id, '❌ Ошибка'); }
 });
 
-// /today — check-ins today
+// /today — arrivals, checkouts, and ongoing stays today
 bot.onText(/^\/today(?:@\w+)?$/, async (msg) => {
   if (msg.chat.id.toString() !== FAMILY_CHAT_ID) return;
   const today = getDate(0);
@@ -240,8 +311,8 @@ bot.onText(/^\/today(?:@\w+)?$/, async (msg) => {
     await bot.sendChatAction(msg.chat.id, 'typing');
     let bookings = await fetchBookings({ from_date: today });
     if (!bookings) { await bot.sendMessage(msg.chat.id, '❌ API недоступен'); return; }
-    bookings = bookings.filter(b => b.start_date === today);
-    await bot.sendMessage(msg.chat.id, formatBookings(bookings, `Заезды сегодня (${fmtDate(today)})`), { parse_mode: 'HTML' });
+    bookings = bookings.filter(b => b.start_date <= today || b.end_date === today);
+    await bot.sendMessage(msg.chat.id, formatTodayOverview(bookings, today), { parse_mode: 'HTML' });
   } catch (e) { console.error(e); await bot.sendMessage(msg.chat.id, '❌ Ошибка'); }
 });
 
@@ -302,7 +373,7 @@ bot.onText(/^\/help(?:@\w+)?$/, async (msg) => {
 /bookings — бронирования на месяц
 /bookings orange — конкретный апартамент
 /week — бронирования на неделю
-/today — заезды сегодня
+/today — заезды, выезды и кто остается сегодня
 /tomorrow — заезды завтра
 /cleaning — уборки сегодня
 /cleaning tomorrow — уборки завтра
