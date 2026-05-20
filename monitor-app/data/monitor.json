@@ -1,6 +1,6 @@
 {
   "since": "2026-04-17",
-  "generated_at": "2026-05-20T16:28:05.462Z",
+  "generated_at": "2026-05-20T18:39:59.679Z",
   "available_dates": [
     "2026-05-20",
     "2026-05-19",
@@ -536,6 +536,22 @@
       "accent": "#0b7a7a",
       "icon": "heart",
       "events": [
+        {
+          "bookingKey": "carina|airbnb|2026-09-18|2026-09-21",
+          "propertyId": "carina",
+          "platform": "airbnb",
+          "startDate": "2026-09-18",
+          "endDate": "2026-09-21",
+          "guestName": null,
+          "confirmationCode": null,
+          "firstSeenAt": "2026-05-20T16:34:12.376Z",
+          "status": "active",
+          "cancelledAt": null,
+          "link": "https://www.airbnb.com/hosting/reservations/details/HM99BSJWR3",
+          "sources": [
+            "upstream_api"
+          ]
+        },
         {
           "bookingKey": "carina|airbnb|2026-05-13|2026-05-17",
           "propertyId": "carina",
@@ -3150,6 +3166,21 @@
       "sourceRef": "hourly_sync",
       "bookingCreatedAt": "2026-05-20T06:41:36.171Z",
       "detectedAt": "2026-05-20T09:59:35.592Z"
+    },
+    {
+      "eventType": "created",
+      "bookingKey": "carina|airbnb|2026-09-18|2026-09-21",
+      "propertyId": "carina",
+      "platform": "airbnb",
+      "startDate": "2026-09-18",
+      "endDate": "2026-09-21",
+      "guestName": null,
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HM99BSJWR3",
+      "confirmationCode": null,
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync",
+      "bookingCreatedAt": "2026-05-20T16:34:12.376Z",
+      "detectedAt": "2026-05-20T18:39:59.676Z"
     }
   ],
   "imports_log": [
