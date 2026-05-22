@@ -2414,6 +2414,51 @@
       "sourceRef": "hourly_sync",
       "bookingCreatedAt": "2026-05-20T16:34:12.376Z",
       "detectedAt": "2026-05-20T18:39:59.676Z"
+    },
+    {
+      "eventType": "created",
+      "bookingKey": "royal|airbnb|2026-07-05|2026-07-09",
+      "propertyId": "royal",
+      "platform": "airbnb",
+      "startDate": "2026-07-05",
+      "endDate": "2026-07-09",
+      "guestName": null,
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HMY8MHYHMT",
+      "confirmationCode": null,
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync",
+      "bookingCreatedAt": "2026-05-22T06:11:53.545Z",
+      "detectedAt": "2026-05-22T09:24:59.129Z"
+    },
+    {
+      "eventType": "created",
+      "bookingKey": "royal|airbnb|2026-09-05|2026-09-09",
+      "propertyId": "royal",
+      "platform": "airbnb",
+      "startDate": "2026-09-05",
+      "endDate": "2026-09-09",
+      "guestName": null,
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HMH5C2ZWD2",
+      "confirmationCode": null,
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync",
+      "bookingCreatedAt": "2026-05-22T06:11:53.569Z",
+      "detectedAt": "2026-05-22T09:24:59.129Z"
+    },
+    {
+      "eventType": "created",
+      "bookingKey": "carina|airbnb|2026-07-31|2026-08-04",
+      "propertyId": "carina",
+      "platform": "airbnb",
+      "startDate": "2026-07-31",
+      "endDate": "2026-08-04",
+      "guestName": null,
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HMCAC9SK9B",
+      "confirmationCode": null,
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync",
+      "bookingCreatedAt": "2026-05-22T06:11:52.679Z",
+      "detectedAt": "2026-05-22T09:24:59.129Z"
     }
   ],
   "imports": [
