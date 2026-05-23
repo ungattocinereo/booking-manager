@@ -32,21 +32,38 @@ function bookingKey(propertyId, platform, startDate, endDate) {
   return `${propertyId}|${platform}|${startDate}|${endDate}`;
 }
 
+function isUnavailable(row) {
+  const summary = String(row.raw_summary || '').toLowerCase();
+  const type = String(row.booking_type || '').toLowerCase();
+  return summary.includes('not available') ||
+    summary.includes('closed') ||
+    type === 'blocked' ||
+    type === 'unavailable';
+}
+
+function hasGuestDetails(row) {
+  return Boolean(String(row.guest_name || '').trim()) || Number(row.guest_count) > 0;
+}
+
 async function fetchUpstream(propertyId) {
   const url = `${UPSTREAM_API}?property_id=${encodeURIComponent(propertyId)}`;
   const res = await fetch(url);
   if (!res.ok) throw new Error(`${propertyId}: HTTP ${res.status}`);
   const rows = await res.json();
   return rows
-    .filter(r => r.platform === 'airbnb' && r.booking_type !== 'blocked' && r.booking_type !== 'unavailable')
+    .filter(r => r.platform === 'airbnb')
+    .filter(r => !(isUnavailable(r) && !hasGuestDetails(r)))
     .map(r => ({
       propertyId: r.property_id,
       platform: r.platform,
       startDate: String(r.start_date).slice(0, 10),
       endDate: String(r.end_date).slice(0, 10),
       guestName: r.guest_name,
+      guestCount: r.guest_count,
       reservationUrl: r.reservation_url,
       bookingCreatedAt: r.created_at,
+      rawSummary: r.raw_summary,
+      bookingType: r.booking_type,
       bookingKey: bookingKey(r.property_id, r.platform, String(r.start_date).slice(0,10), String(r.end_date).slice(0,10))
     }));
 }
@@ -115,11 +132,14 @@ async function main() {
         startDate: cur.startDate,
         endDate: cur.endDate,
         guestName: cur.guestName,
+        guestCount: cur.guestCount,
         reservationUrl: cur.reservationUrl,
         confirmationCode: null,
         source: 'upstream_api',
         sourceRef: isBootstrap ? 'bootstrap' : 'hourly_sync',
         bookingCreatedAt: cur.bookingCreatedAt,
+        rawSummary: cur.rawSummary,
+        bookingType: cur.bookingType,
         detectedAt: isBootstrap ? cur.bookingCreatedAt : nowIso()
       });
       createdByApi++;
@@ -139,11 +159,14 @@ async function main() {
       startDate: last.startDate,
       endDate: last.endDate,
       guestName: last.guestName,
+      guestCount: last.guestCount,
       reservationUrl: last.reservationUrl,
       confirmationCode: last.confirmationCode,
       source: 'upstream_api',
       sourceRef: 'hourly_sync',
       bookingCreatedAt: last.bookingCreatedAt,
+      rawSummary: last.rawSummary,
+      bookingType: last.bookingType,
       detectedAt: nowIso()
     });
     cancelledByApi++;
@@ -186,6 +209,7 @@ async function main() {
             startDate: row.startDate,
             endDate: row.endDate,
             guestName: row.guestName,
+            guestCount: lastEv.guestCount,
             reservationUrl: lastEv.reservationUrl,
             confirmationCode: row.confirmationCode || lastEv.confirmationCode,
             source: 'export_airbnb_csv',
@@ -208,6 +232,7 @@ async function main() {
           startDate: row.startDate,
           endDate: row.endDate,
           guestName: row.guestName,
+          guestCount: null,
           reservationUrl: null,
           confirmationCode: row.confirmationCode,
           source: 'export_airbnb_csv',
@@ -231,6 +256,7 @@ async function main() {
           startDate: row.startDate,
           endDate: row.endDate,
           guestName: row.guestName || lastEv.guestName,
+          guestCount: lastEv.guestCount,
           reservationUrl: lastEv.reservationUrl,
           confirmationCode: row.confirmationCode || lastEv.confirmationCode,
           source: 'export_airbnb_csv',
@@ -270,9 +296,12 @@ async function main() {
         startDate: ev.startDate,
         endDate: ev.endDate,
         guestName: ev.guestName,
+        guestCount: ev.guestCount,
         reservationUrl: ev.reservationUrl,
         confirmationCode: ev.confirmationCode,
         bookingCreatedAt: ev.bookingCreatedAt,
+        rawSummary: ev.rawSummary,
+        bookingType: ev.bookingType,
         firstSeenAt: ev.detectedAt,
         lastEvent: ev.eventType,
         cancelledAt: null,
@@ -283,9 +312,12 @@ async function main() {
       a.lastEvent = ev.eventType;
       if (ev.eventType === 'cancelled') a.cancelledAt = ev.detectedAt;
       if (ev.eventType !== 'cancelled' && ev.guestName) a.guestName = ev.guestName;
+      if (Number(ev.guestCount) > 0) a.guestCount = ev.guestCount;
       if (ev.reservationUrl) a.reservationUrl = ev.reservationUrl;
       if (ev.confirmationCode) a.confirmationCode = ev.confirmationCode;
       if (ev.bookingCreatedAt) a.bookingCreatedAt = ev.bookingCreatedAt;
+      if (ev.rawSummary) a.rawSummary = ev.rawSummary;
+      if (ev.bookingType) a.bookingType = ev.bookingType;
       a.sources.add(ev.source);
     }
   }
@@ -315,11 +347,14 @@ async function main() {
       startDate: a.startDate,
       endDate: a.endDate,
       guestName: a.guestName,
+      guestCount: a.guestCount,
       confirmationCode: a.confirmationCode,
       firstSeenAt: firstSeen,
       status: a.lastEvent === 'cancelled' ? 'cancelled' : 'active',
       cancelledAt: a.cancelledAt,
       link: linkFor(a),
+      rawSummary: a.rawSummary,
+      bookingType: a.bookingType,
       sources: [...a.sources]
     });
   }
