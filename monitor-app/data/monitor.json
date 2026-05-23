@@ -1,7 +1,8 @@
 {
   "since": "2026-04-17",
-  "generated_at": "2026-05-23T04:24:36.175Z",
+  "generated_at": "2026-05-23T07:15:33.631Z",
   "available_dates": [
+    "2026-05-23",
     "2026-05-22",
     "2026-05-20",
     "2026-05-19",
@@ -57,8 +58,8 @@
           "guestName": null,
           "confirmationCode": null,
           "firstSeenAt": "2026-05-20T06:41:36.171Z",
-          "status": "active",
-          "cancelledAt": null,
+          "status": "cancelled",
+          "cancelledAt": "2026-05-23T07:15:33.629Z",
           "link": "https://www.airbnb.com/hosting/reservations/details/HMM9AKN9ZQ",
           "sources": [
             "upstream_api"
@@ -73,8 +74,8 @@
           "guestName": null,
           "confirmationCode": null,
           "firstSeenAt": "2026-05-20T06:41:36.159Z",
-          "status": "active",
-          "cancelledAt": null,
+          "status": "cancelled",
+          "cancelledAt": "2026-05-23T07:15:33.629Z",
           "link": "https://www.airbnb.com/hosting/reservations/details/HMA95BEQ53",
           "sources": [
             "upstream_api"
@@ -89,8 +90,8 @@
           "guestName": null,
           "confirmationCode": null,
           "firstSeenAt": "2026-05-19T06:15:05.857Z",
-          "status": "active",
-          "cancelledAt": null,
+          "status": "cancelled",
+          "cancelledAt": "2026-05-23T07:15:33.629Z",
           "link": "https://www.airbnb.com/hosting/reservations/details/HM8HHCZCEJ",
           "sources": [
             "upstream_api"
@@ -105,8 +106,8 @@
           "guestName": null,
           "confirmationCode": null,
           "firstSeenAt": "2026-05-17T06:50:21.681Z",
-          "status": "active",
-          "cancelledAt": null,
+          "status": "cancelled",
+          "cancelledAt": "2026-05-23T07:15:33.629Z",
           "link": "https://www.airbnb.com/hosting/reservations/details/HMPK83CNDZ",
           "sources": [
             "upstream_api"
@@ -406,6 +407,23 @@
             "upstream_api",
             "export_airbnb_csv"
           ]
+        },
+        {
+          "bookingKey": "harmony|airbnb|2026-05-30|2026-06-02",
+          "propertyId": "harmony",
+          "platform": "airbnb",
+          "startDate": "2026-05-30",
+          "endDate": "2026-06-02",
+          "guestName": "Yaiza Sánchez-Pascuala Platero",
+          "confirmationCode": "HM42TC9BNN",
+          "firstSeenAt": "2026-03-28T19:32:10.498Z",
+          "status": "cancelled",
+          "cancelledAt": "2026-05-23T07:15:33.628Z",
+          "link": "https://www.airbnb.com/hosting/reservations/details/HM42TC9BNN",
+          "sources": [
+            "upstream_api",
+            "export_airbnb_csv"
+          ]
         }
       ]
     },
@@ -424,8 +442,8 @@
           "guestName": null,
           "confirmationCode": null,
           "firstSeenAt": "2026-05-22T06:11:53.569Z",
-          "status": "active",
-          "cancelledAt": null,
+          "status": "cancelled",
+          "cancelledAt": "2026-05-23T07:15:33.629Z",
           "link": "https://www.airbnb.com/hosting/reservations/details/HMH5C2ZWD2",
           "sources": [
             "upstream_api"
@@ -440,8 +458,8 @@
           "guestName": null,
           "confirmationCode": null,
           "firstSeenAt": "2026-05-22T06:11:53.545Z",
-          "status": "active",
-          "cancelledAt": null,
+          "status": "cancelled",
+          "cancelledAt": "2026-05-23T07:15:33.629Z",
           "link": "https://www.airbnb.com/hosting/reservations/details/HMY8MHYHMT",
           "sources": [
             "upstream_api"
@@ -578,8 +596,8 @@
           "guestName": null,
           "confirmationCode": null,
           "firstSeenAt": "2026-05-22T06:11:52.679Z",
-          "status": "active",
-          "cancelledAt": null,
+          "status": "cancelled",
+          "cancelledAt": "2026-05-23T07:15:33.629Z",
           "link": "https://www.airbnb.com/hosting/reservations/details/HMCAC9SK9B",
           "sources": [
             "upstream_api"
@@ -594,8 +612,8 @@
           "guestName": null,
           "confirmationCode": null,
           "firstSeenAt": "2026-05-20T16:34:12.376Z",
-          "status": "active",
-          "cancelledAt": null,
+          "status": "cancelled",
+          "cancelledAt": "2026-05-23T07:15:33.629Z",
           "link": "https://www.airbnb.com/hosting/reservations/details/HM99BSJWR3",
           "sources": [
             "upstream_api"
@@ -3275,6 +3293,141 @@
       "sourceRef": "hourly_sync",
       "bookingCreatedAt": "2026-05-22T06:11:52.679Z",
       "detectedAt": "2026-05-22T09:24:59.129Z"
+    },
+    {
+      "eventType": "cancelled",
+      "bookingKey": "harmony|airbnb|2026-05-30|2026-06-02",
+      "propertyId": "harmony",
+      "platform": "airbnb",
+      "startDate": "2026-05-30",
+      "endDate": "2026-06-02",
+      "guestName": "Yaiza Sánchez-Pascuala Platero",
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HM42TC9BNN",
+      "confirmationCode": "HM42TC9BNN",
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync",
+      "bookingCreatedAt": "2026-03-28T19:32:10.498Z",
+      "detectedAt": "2026-05-23T07:15:33.628Z"
+    },
+    {
+      "eventType": "cancelled",
+      "bookingKey": "harmony|airbnb|2026-07-13|2026-07-17",
+      "propertyId": "harmony",
+      "platform": "airbnb",
+      "startDate": "2026-07-13",
+      "endDate": "2026-07-17",
+      "guestName": null,
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HMPK83CNDZ",
+      "confirmationCode": null,
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync",
+      "bookingCreatedAt": "2026-05-17T06:50:21.681Z",
+      "detectedAt": "2026-05-23T07:15:33.629Z"
+    },
+    {
+      "eventType": "cancelled",
+      "bookingKey": "harmony|airbnb|2026-06-09|2026-06-12",
+      "propertyId": "harmony",
+      "platform": "airbnb",
+      "startDate": "2026-06-09",
+      "endDate": "2026-06-12",
+      "guestName": null,
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HM8HHCZCEJ",
+      "confirmationCode": null,
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync",
+      "bookingCreatedAt": "2026-05-19T06:15:05.857Z",
+      "detectedAt": "2026-05-23T07:15:33.629Z"
+    },
+    {
+      "eventType": "cancelled",
+      "bookingKey": "harmony|airbnb|2026-08-17|2026-08-20",
+      "propertyId": "harmony",
+      "platform": "airbnb",
+      "startDate": "2026-08-17",
+      "endDate": "2026-08-20",
+      "guestName": null,
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HMA95BEQ53",
+      "confirmationCode": null,
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync",
+      "bookingCreatedAt": "2026-05-20T06:41:36.159Z",
+      "detectedAt": "2026-05-23T07:15:33.629Z"
+    },
+    {
+      "eventType": "cancelled",
+      "bookingKey": "harmony|airbnb|2026-09-26|2026-09-29",
+      "propertyId": "harmony",
+      "platform": "airbnb",
+      "startDate": "2026-09-26",
+      "endDate": "2026-09-29",
+      "guestName": null,
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HMM9AKN9ZQ",
+      "confirmationCode": null,
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync",
+      "bookingCreatedAt": "2026-05-20T06:41:36.171Z",
+      "detectedAt": "2026-05-23T07:15:33.629Z"
+    },
+    {
+      "eventType": "cancelled",
+      "bookingKey": "carina|airbnb|2026-09-18|2026-09-21",
+      "propertyId": "carina",
+      "platform": "airbnb",
+      "startDate": "2026-09-18",
+      "endDate": "2026-09-21",
+      "guestName": null,
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HM99BSJWR3",
+      "confirmationCode": null,
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync",
+      "bookingCreatedAt": "2026-05-20T16:34:12.376Z",
+      "detectedAt": "2026-05-23T07:15:33.629Z"
+    },
+    {
+      "eventType": "cancelled",
+      "bookingKey": "royal|airbnb|2026-07-05|2026-07-09",
+      "propertyId": "royal",
+      "platform": "airbnb",
+      "startDate": "2026-07-05",
+      "endDate": "2026-07-09",
+      "guestName": null,
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HMY8MHYHMT",
+      "confirmationCode": null,
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync",
+      "bookingCreatedAt": "2026-05-22T06:11:53.545Z",
+      "detectedAt": "2026-05-23T07:15:33.629Z"
+    },
+    {
+      "eventType": "cancelled",
+      "bookingKey": "royal|airbnb|2026-09-05|2026-09-09",
+      "propertyId": "royal",
+      "platform": "airbnb",
+      "startDate": "2026-09-05",
+      "endDate": "2026-09-09",
+      "guestName": null,
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HMH5C2ZWD2",
+      "confirmationCode": null,
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync",
+      "bookingCreatedAt": "2026-05-22T06:11:53.569Z",
+      "detectedAt": "2026-05-23T07:15:33.629Z"
+    },
+    {
+      "eventType": "cancelled",
+      "bookingKey": "carina|airbnb|2026-07-31|2026-08-04",
+      "propertyId": "carina",
+      "platform": "airbnb",
+      "startDate": "2026-07-31",
+      "endDate": "2026-08-04",
+      "guestName": null,
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HMCAC9SK9B",
+      "confirmationCode": null,
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync",
+      "bookingCreatedAt": "2026-05-22T06:11:52.679Z",
+      "detectedAt": "2026-05-23T07:15:33.629Z"
     }
   ],
   "imports_log": [
