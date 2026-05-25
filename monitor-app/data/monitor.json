@@ -1,7 +1,8 @@
 {
   "since": "2026-04-17",
-  "generated_at": "2026-05-25T04:45:28.591Z",
+  "generated_at": "2026-05-25T08:57:17.242Z",
   "available_dates": [
+    "2026-05-25",
     "2026-05-23",
     "2026-05-18",
     "2026-05-14",
@@ -45,6 +46,26 @@
       "accent": "#c9512e",
       "icon": "home",
       "events": [
+        {
+          "bookingKey": "harmony|airbnb|2026-05-30|2026-06-02",
+          "propertyId": "harmony",
+          "platform": "airbnb",
+          "startDate": "2026-05-30",
+          "endDate": "2026-06-02",
+          "guestName": "Yaiza Sánchez-Pascuala Platero",
+          "guestCount": 2,
+          "confirmationCode": "HM42TC9BNN",
+          "firstSeenAt": "2026-05-25T06:08:15.644Z",
+          "status": "active",
+          "cancelledAt": "2026-05-23T07:15:33.628Z",
+          "link": "https://www.airbnb.com/hosting/reservations/details/HMR4JYPKTN",
+          "rawSummary": "Reserved",
+          "bookingType": "reservation",
+          "sources": [
+            "upstream_api",
+            "export_airbnb_csv"
+          ]
+        },
         {
           "bookingKey": "harmony|airbnb|2026-09-17|2026-09-22",
           "propertyId": "harmony",
@@ -335,23 +356,6 @@
           "status": "cancelled",
           "cancelledAt": "2026-04-25T07:18:19.679Z",
           "link": "https://www.airbnb.com/hosting/reservations/details/HMMTTY4EYA",
-          "sources": [
-            "upstream_api",
-            "export_airbnb_csv"
-          ]
-        },
-        {
-          "bookingKey": "harmony|airbnb|2026-05-30|2026-06-02",
-          "propertyId": "harmony",
-          "platform": "airbnb",
-          "startDate": "2026-05-30",
-          "endDate": "2026-06-02",
-          "guestName": "Yaiza Sánchez-Pascuala Platero",
-          "confirmationCode": "HM42TC9BNN",
-          "firstSeenAt": "2026-03-28T19:32:10.498Z",
-          "status": "cancelled",
-          "cancelledAt": "2026-05-23T07:15:33.628Z",
-          "link": "https://www.airbnb.com/hosting/reservations/details/HM42TC9BNN",
           "sources": [
             "upstream_api",
             "export_airbnb_csv"
@@ -3056,6 +3060,24 @@
       "sourceRef": "hourly_sync",
       "bookingCreatedAt": "2026-03-28T19:32:10.498Z",
       "detectedAt": "2026-05-23T07:15:33.628Z"
+    },
+    {
+      "eventType": "created",
+      "bookingKey": "harmony|airbnb|2026-05-30|2026-06-02",
+      "propertyId": "harmony",
+      "platform": "airbnb",
+      "startDate": "2026-05-30",
+      "endDate": "2026-06-02",
+      "guestName": "Yaiza Sánchez-Pascuala Platero",
+      "guestCount": 2,
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HMR4JYPKTN",
+      "confirmationCode": null,
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync",
+      "bookingCreatedAt": "2026-05-25T06:08:15.644Z",
+      "rawSummary": "Reserved",
+      "bookingType": "reservation",
+      "detectedAt": "2026-05-25T08:57:17.239Z"
     }
   ],
   "imports_log": [
