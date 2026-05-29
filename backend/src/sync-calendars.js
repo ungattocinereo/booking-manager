@@ -173,6 +173,19 @@ async function generateCleaningTasks() {
   let tasksSkipped = 0;
   
   for (const booking of bookings) {
+    const summary = String(booking.raw_summary || '').toLowerCase();
+    const bookingType = String(booking.booking_type || '').toLowerCase();
+    const isUnavailable = summary.includes('not available') ||
+      summary.includes('closed') ||
+      bookingType === 'blocked' ||
+      bookingType === 'unavailable';
+    const hasGuestDetails = Boolean((booking.guest_name || '').trim()) || Number(booking.guest_count) > 0;
+
+    if (isUnavailable && !hasGuestDetails) {
+      tasksSkipped++;
+      continue;
+    }
+
     // Create cleaning task for checkout day
     try {
       const result = await db.createCleaningTask(booking.property_id, booking.end_date, 'checkout_cleaning');

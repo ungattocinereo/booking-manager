@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS properties (
 CREATE TABLE IF NOT EXISTS bookings (
   id SERIAL PRIMARY KEY,
   property_id VARCHAR(50) NOT NULL REFERENCES properties(id),
-  platform VARCHAR(50) NOT NULL CHECK (platform IN ('airbnb', 'booking')),
+  platform VARCHAR(50) NOT NULL CHECK (platform IN ('airbnb', 'booking', 'direct')),
   start_date DATE NOT NULL,
   end_date DATE NOT NULL,
   raw_summary TEXT,

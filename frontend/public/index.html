@@ -52,6 +52,8 @@
       --airbnb-light: #fff1f2;
       --booking: #003b95;
       --booking-light: #eff6ff;
+      --direct: #047857;
+      --direct-light: #ecfdf5;
       --success: #059669;
       --success-light: #ecfdf5;
       --warning: #d97706;
@@ -354,6 +356,7 @@
     }
     .legend-dot.airbnb { background: var(--airbnb); }
     .legend-dot.booking { background: var(--booking); }
+    .legend-dot.direct { background: var(--direct); }
     .legend-dot.completed {
       background: #fff;
       border: 1px solid #6b7280;
@@ -610,6 +613,10 @@
     .booking-bar:hover { opacity: .85; z-index: 30; }
     .booking-bar.airbnb { background: var(--airbnb); }
     .booking-bar.booking { background: var(--booking); }
+    .booking-bar.direct {
+      background: var(--direct);
+      z-index: 12;
+    }
     .booking-bar.other { background: #6b7280; }
     .booking-bar.completed {
       background: linear-gradient(90deg, #fff, #f3f4f6) !important;
@@ -628,6 +635,7 @@
 
     .booking-bar.not-available {
       opacity: .55;
+      z-index: 1;
       background-image: repeating-linear-gradient(
         45deg, rgba(255,255,255,.25), rgba(255,255,255,.25) 3px, transparent 3px, transparent 6px
       );
@@ -1354,6 +1362,7 @@
   <div class="legend" id="legend">
     <div class="legend-item"><div class="legend-dot airbnb"></div>Airbnb</div>
     <div class="legend-item"><div class="legend-dot booking"></div>Booking.com</div>
+    <div class="legend-item"><div class="legend-dot direct"></div>Direct</div>
     <div class="legend-item"><div class="legend-dot completed"></div>Завершено</div>
     <div class="legend-item"><div class="legend-dot unavailable"></div>Недоступно</div>
   </div>
@@ -1644,7 +1653,9 @@ function updateStats() {
       const cfg = propertyConfig[b.property_id] || { icon: 'home', color: '#6b7280', bg: '#f9fafb' };
       const platformBadge = b.platform === 'airbnb'
         ? '<span style="color:var(--airbnb);font-weight:600;font-size:11px;">Airbnb</span>'
-        : '<span style="color:var(--booking);font-weight:600;font-size:11px;">Booking</span>';
+        : b.platform === 'direct'
+          ? '<span style="color:var(--direct);font-weight:600;font-size:11px;">Direct</span>'
+          : '<span style="color:var(--booking);font-weight:600;font-size:11px;">Booking</span>';
       const guest = b.guest_name ? `<span style="font-size:11px;color:var(--text-secondary);">${b.guest_name}</span>` : '';
       return `<div class="stat-checkin-item">
         <div class="prop-icon" style="background:${cfg.bg};color:${cfg.color};"><i data-lucide="${cfg.icon}" style="width:12px;height:12px;"></i></div>
@@ -1706,6 +1717,7 @@ function propertyMeta(propertyId) {
 function platformLabel(platform) {
   if (platform === 'booking') return 'BOOKING';
   if (platform === 'airbnb') return 'AIRBNB';
+  if (platform === 'direct') return 'DIRECT';
   return String(platform || 'OTHER').toUpperCase();
 }
 
@@ -2468,14 +2480,16 @@ async function syncCalendars() {
   btn.innerHTML = '<i data-lucide="loader-2" style="width:14px;height:14px;animation:spin 1s linear infinite;"></i>Синхронизация...';
   if (typeof lucide !== 'undefined') lucide.createIcons();
   try {
-    await fetch(`${API}/sync`, { method: 'POST' });
-    setTimeout(async () => {
-      await loadData();
-      btn.disabled = false;
-      btn.innerHTML = '<i data-lucide="refresh-cw" style="width:14px;height:14px;"></i>Синхронизация';
-      if (typeof lucide !== 'undefined') lucide.createIcons();
-      toast('✅ Синхронизация завершена');
-    }, 3000);
+    const res = await fetch(`${API}/sync`, { method: 'POST' });
+    const result = await res.json().catch(() => null);
+    if (!res.ok || result?.success === false) {
+      throw new Error(result?.error || `HTTP ${res.status}`);
+    }
+    await loadData();
+    btn.disabled = false;
+    btn.innerHTML = '<i data-lucide="refresh-cw" style="width:14px;height:14px;"></i>Синхронизация';
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+    toast('✅ Синхронизация завершена');
   } catch (err) {
     toast('❌ Ошибка синхронизации: ' + err.message);
     btn.disabled = false;

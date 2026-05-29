@@ -42,6 +42,7 @@ function platformIcon(platform) {
   const p = platform.toLowerCase();
   if (p.includes('airbnb')) return '🩷';
   if (p.includes('booking')) return '🔵';
+  if (p.includes('direct')) return '🟢';
   return '⬜';
 }
 

@@ -136,10 +136,6 @@ function getField(row, ...names) {
   return '';
 }
 
-function bookingKey(propertyId, platform, startDate, endDate) {
-  return `${propertyId}|${platform}|${startDate}|${endDate}`;
-}
-
 function isActiveAirbnbStatus(status) {
   const normalized = String(status || '').trim().toLowerCase();
   return normalized !== ''
@@ -189,59 +185,17 @@ async function deleteBooking(db, isPostgres, propertyId, platform, startDate, en
   return changes;
 }
 
-async function deleteAirbnbReservationsMissingFromExport(db, isPostgres, confirmedKeys, minDate, maxDate) {
-  if (!minDate || !maxDate) return 0;
-
-  let rows;
-  if (isPostgres) {
-    const result = await db.execute(
-      `SELECT id, property_id, start_date::text AS start_date, end_date::text AS end_date
-       FROM bookings
-       WHERE platform = 'airbnb'
-         AND booking_type = 'reservation'
-         AND raw_summary = 'Reserved'
-         AND start_date >= $1
-         AND start_date <= $2`,
-      [minDate, maxDate]
-    );
-    rows = result.rows || [];
-  } else {
-    rows = await db.all(
-      `SELECT id, property_id, start_date, end_date
-       FROM bookings
-       WHERE platform = 'airbnb'
-         AND booking_type = 'reservation'
-         AND raw_summary = 'Reserved'
-         AND start_date >= ?
-         AND start_date <= ?`,
-      [minDate, maxDate]
-    );
-  }
-
-  let deleted = 0;
-  for (const row of rows) {
-    const key = bookingKey(row.property_id, 'airbnb', row.start_date.slice(0, 10), row.end_date.slice(0, 10));
-    if (!confirmedKeys.has(key)) {
-      deleted += await deleteBooking(db, isPostgres, row.property_id, 'airbnb', row.start_date, row.end_date);
-    }
-  }
-  return deleted;
-}
-
 /**
  * Enrich bookings from Airbnb CSV and Booking.com XLS exports.
  * @param {object} db - The database module (already initialized)
  * @param {boolean} isPostgres - Whether using Postgres (vs SQLite)
- * @returns {{ parsed: number, updated: number, skipped: number }}
+ * @returns {{ parsed: number, updated: number, skipped: number, deleted: number }}
  */
 async function enrichFromExports(db, isPostgres) {
   let parsed = 0;
   let updated = 0;
   let skipped = 0;
   let deleted = 0;
-  const confirmedAirbnbKeys = new Set();
-  let airbnbMinDate = null;
-  let airbnbMaxDate = null;
 
   // Gracefully handle missing exports directory
   if (!fs.existsSync(EXPORTS_DIR)) {
@@ -304,19 +258,12 @@ async function enrichFromExports(db, isPostgres) {
           continue;
         }
 
+        // Airbnb iCal is the source of truth for active reservations. CSV exports are
+        // manual snapshots, so they must only enrich matching bookings, never delete.
         if (!isActiveAirbnbStatus(status)) {
-          try {
-            deleted += await deleteBooking(db, isPostgres, propertyId, 'airbnb', startDate, endDate);
-          } catch (err) {
-            console.error(`Enrich: error deleting non-confirmed Airbnb row ${guestName || propertyId}: ${err.message}`);
-          }
           skipped++;
           continue;
         }
-
-        confirmedAirbnbKeys.add(bookingKey(propertyId, 'airbnb', startDate, endDate));
-        if (!airbnbMinDate || startDate < airbnbMinDate) airbnbMinDate = startDate;
-        if (!airbnbMaxDate || startDate > airbnbMaxDate) airbnbMaxDate = startDate;
 
         const country = extractCountry(contact);
         const adults = parseInt(row['# of adults']) || 0;
@@ -333,17 +280,6 @@ async function enrichFromExports(db, isPostgres) {
       }
     }
 
-    try {
-      deleted += await deleteAirbnbReservationsMissingFromExport(
-        db,
-        isPostgres,
-        confirmedAirbnbKeys,
-        airbnbMinDate,
-        airbnbMaxDate
-      );
-    } catch (err) {
-      console.error(`Enrich: error deleting Airbnb rows missing from confirmed export: ${err.message}`);
-    }
   }
 
   // Process Booking.com XLS files
