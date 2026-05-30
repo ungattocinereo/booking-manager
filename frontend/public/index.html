@@ -37,17 +37,17 @@
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;750;800&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #f0f2f5;
+      --bg: #f2f4f7;
       --card: #ffffff;
       --border: #e4e7ec;
       --text: #111827;
       --text-secondary: #6b7280;
-      --accent: #4f46e5;
-      --accent-light: #eef2ff;
-      --accent-hover: #4338ca;
+      --accent: #0f766e;
+      --accent-light: #e6f5f3;
+      --accent-hover: #0d5f5d;
       --airbnb: #D8304E;
       --airbnb-light: #fff1f2;
       --booking: #003b95;
@@ -57,9 +57,9 @@
       --warning: #d97706;
       --warning-light: #fffbeb;
       --danger: #dc2626;
-      --shadow-sm: 0 1px 2px rgba(0,0,0,.05);
-      --shadow: 0 1px 3px rgba(0,0,0,.1), 0 1px 2px rgba(0,0,0,.06);
-      --shadow-md: 0 4px 6px -1px rgba(0,0,0,.1), 0 2px 4px -2px rgba(0,0,0,.1);
+      --shadow-sm: 0 1px 2px rgba(15,23,42,.06);
+      --shadow: 0 2px 8px rgba(15,23,42,.08), 0 1px 2px rgba(15,23,42,.06);
+      --shadow-md: 0 16px 40px rgba(15,23,42,.16);
       --radius: 12px;
       --radius-sm: 8px;
     }
@@ -73,7 +73,7 @@
     }
 
     body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-family: 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
       background: var(--bg);
       color: var(--text);
       line-height: 1.5;
@@ -184,6 +184,7 @@
       align-items: center;
       gap: 6px;
       font-family: inherit;
+      text-decoration: none;
     }
     .btn-primary { background: var(--accent); color: #fff; }
     .btn-primary:hover { background: var(--accent-hover); }
@@ -298,7 +299,7 @@
       white-space: nowrap;
       box-shadow: 0 4px 12px rgba(0,0,0,.25);
       pointer-events: none;
-      font-family: 'Inter', sans-serif;
+      font-family: 'Manrope', sans-serif;
     }
     .booking-tooltip::after {
       content: '';
@@ -367,42 +368,59 @@
 
     /* ===== CALENDAR ===== */
     .calendar-section { padding: 0 28px 28px; overflow: hidden; }
+    .calendar-board { display: block; }
+    .mobile-agenda { display: none; }
     .calendar-toolbar {
-      display: flex;
-      justify-content: flex-end;
+      background: rgba(255,255,255,.94);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      padding: 12px;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
       align-items: center;
-      gap: 10px;
-      margin-bottom: 10px;
+      gap: 12px;
+      margin-bottom: 12px;
       max-width: 100%;
+    }
+    .calendar-toolbar-main,
+    .calendar-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+    .calendar-controls {
+      justify-content: flex-end;
       flex-wrap: wrap;
     }
     .calendar-today-btn {
-      min-height: 36px;
+      min-height: 38px;
       display: inline-flex;
       align-items: center;
       gap: 7px;
-      padding: 7px 13px;
-      border-color: #c7d2fe;
+      padding: 8px 13px;
+      border-color: #a7d8d2;
       color: var(--accent);
-      background: rgba(238,242,255,.9);
+      background: var(--accent-light);
       box-shadow: var(--shadow-sm);
     }
     .calendar-today-btn:hover {
-      border-color: #a5b4fc;
-      background: #e0e7ff;
+      border-color: #63b7ad;
+      background: #d9efeb;
     }
     .calendar-today-date {
-      min-height: 36px;
+      min-height: 38px;
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 7px 12px;
+      padding: 8px 12px;
       border: 1px solid var(--border);
       border-radius: var(--radius-sm);
       background: rgba(255,255,255,.82);
       color: var(--text);
       font-size: 13px;
-      font-weight: 650;
+      font-weight: 700;
       box-shadow: var(--shadow-sm);
       white-space: nowrap;
     }
@@ -415,145 +433,229 @@
       box-shadow: 0 0 0 3px var(--accent-light);
       flex-shrink: 0;
     }
-
+    .calendar-control {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 38px;
+      padding: 0 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: #fff;
+      color: var(--text-secondary);
+      box-shadow: var(--shadow-sm);
+    }
+    .calendar-control svg { flex-shrink: 0; }
+    .calendar-select {
+      min-height: 36px;
+      border: 0;
+      outline: 0;
+      color: var(--text);
+      background: transparent;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 650;
+      cursor: pointer;
+      max-width: 170px;
+    }
+    .segmented-control {
+      min-height: 38px;
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      padding: 3px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: #f8fafc;
+      box-shadow: var(--shadow-sm);
+    }
+    .segment-btn {
+      min-height: 30px;
+      border: 0;
+      border-radius: 7px;
+      padding: 0 10px;
+      background: transparent;
+      color: var(--text-secondary);
+      font: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .segment-btn.active {
+      background: var(--text);
+      color: #fff;
+      box-shadow: var(--shadow-sm);
+    }
+    .toggle-pill {
+      min-height: 38px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 11px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: #fff;
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-weight: 650;
+      cursor: pointer;
+      box-shadow: var(--shadow-sm);
+      user-select: none;
+    }
+    .toggle-pill input {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
     .calendar-container {
       background: var(--card);
       border-radius: var(--radius);
       border: 1px solid var(--border);
       overflow: hidden;
       max-width: 100%;
+      box-shadow: var(--shadow);
     }
-
     .calendar-scroll-wrapper {
-      --calendar-property-col-width: 180px;
-      --calendar-day-width: 38px;
-      --calendar-grid-line: #e1e5eb;
-      overflow-x: auto;
+      --calendar-property-col-width: 190px;
+      --calendar-day-width: 30px;
+      --calendar-grid-line: #e1e7ef;
+      overflow: auto hidden;
       position: relative;
       max-width: 100%;
       overscroll-behavior-x: contain;
       -webkit-overflow-scrolling: touch;
       touch-action: pan-x pan-y;
+      background: #fff;
     }
-    .calendar-scroll-wrapper::-webkit-scrollbar { height: 6px; }
-    .calendar-scroll-wrapper::-webkit-scrollbar-track { background: transparent; }
-    .calendar-scroll-wrapper::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
-    .calendar-scroll-wrapper::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
-
+    .calendar-scroll-wrapper::-webkit-scrollbar { height: 10px; }
+    .calendar-scroll-wrapper::-webkit-scrollbar-track { background: #f8fafc; }
+    .calendar-scroll-wrapper::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; border: 2px solid #f8fafc; }
+    .calendar-scroll-wrapper::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     .calendar-grid {
       display: grid;
       min-width: max-content;
+      position: relative;
     }
-
-    /* Property column (sticky) */
+    .calendar-empty-state {
+      padding: 36px;
+      color: var(--text-secondary);
+      font-size: 14px;
+      text-align: center;
+    }
     .cal-property-col {
       position: sticky;
       left: 0;
-      z-index: 10;
-      background: var(--card);
-      border-right: 1px solid #d8dee7;
+      z-index: 18;
+      background: #fff;
+      border-right: 1px solid #cfd8e3;
       width: var(--calendar-property-col-width);
       min-width: var(--calendar-property-col-width);
       transition: width .18s ease, min-width .18s ease, padding .18s ease;
+      box-shadow: 8px 0 16px rgba(15,23,42,.04);
     }
-
     .cal-property-header {
+      position: sticky;
+      top: 0;
+      z-index: 28;
       padding: 12px 16px;
+      min-height: 54px;
       font-size: 11px;
-      font-weight: 600;
+      font-weight: 800;
       color: var(--text-secondary);
       text-transform: uppercase;
-      letter-spacing: .5px;
-      background: #f9fafb;
+      letter-spacing: .06em;
+      background: linear-gradient(180deg, #fff, #f8fafc);
       border-bottom: 1px solid var(--calendar-grid-line);
       display: flex;
       align-items: center;
       gap: 8px;
     }
     .cal-property-header-icon {
-      display: none;
+      display: inline-flex;
       color: var(--text-secondary);
       line-height: 0;
     }
     .cal-day-header {
-      padding: 6px 0;
+      position: sticky;
+      top: 0;
+      z-index: 16;
+      min-height: 54px;
+      padding: 8px 0 7px;
       text-align: center;
       font-size: 11px;
-      background: #f9fafb;
+      background: linear-gradient(180deg, #fff, #f8fafc);
       border-bottom: 1px solid var(--calendar-grid-line);
       border-right: 1px solid var(--calendar-grid-line);
       min-width: var(--calendar-day-width);
     }
     .cal-day-header .day-num {
-      font-weight: 600;
+      font-weight: 800;
       font-size: 13px;
       color: var(--text);
+      line-height: 1.05;
     }
     .cal-day-header .day-name {
       color: var(--text-secondary);
       font-size: 10px;
+      margin-top: 3px;
     }
     .cal-day-header.today {
       background: var(--accent-light);
-      box-shadow: inset 2px 0 var(--accent), inset -1px 0 #c7d2fe;
+      box-shadow: inset 2px 0 var(--accent), inset -1px 0 #99d1c8;
     }
-    .cal-day-header.today .day-num {
-      color: var(--accent);
-    }
-    .cal-day-header.past {
-      background: #f3f4f6;
-    }
+    .cal-day-header.today .day-num { color: var(--accent); }
+    .cal-day-header.past { background: #f3f4f6; }
     .cal-day-header.past .day-num,
-    .cal-day-header.past .day-name {
-      color: #9ca3af;
-    }
-    .cal-day-header.weekend { background: #fefce8; }
+    .cal-day-header.past .day-name { color: #9ca3af; }
+    .cal-day-header.weekend { background: #fff8eb; }
     .cal-day-header.past.weekend { background: #f1f3f5; }
     .cal-day-header.weekend .day-name { color: var(--warning); }
     .cal-day-header.past.weekend .day-name { color: #9ca3af; }
     .cal-day-header.month-start { border-left: 2px solid var(--accent); }
-
     .cal-month-label {
       position: absolute;
       top: 0;
+      min-width: 58px;
       font-size: 10px;
-      font-weight: 700;
+      font-weight: 800;
       color: var(--accent);
       text-transform: uppercase;
-      letter-spacing: .5px;
-      padding: 2px 8px;
-      background: var(--accent-light);
-      border-radius: 0 0 6px 6px;
-      z-index: 5;
+      letter-spacing: .08em;
+      padding: 3px 8px;
+      background: #dff1ee;
+      border: 1px solid #b8ded8;
+      border-top: 0;
+      border-radius: 0 0 8px 8px;
+      z-index: 20;
+      pointer-events: none;
     }
-
-    /* Property groups */
     .cal-group-header {
       padding: 0 16px;
-      background: #f3f4f6;
+      background: #eef2f6;
       border-bottom: 1px solid var(--calendar-grid-line);
       border-right: 1px solid var(--calendar-grid-line);
-      height: 28px;
+      height: 30px;
       display: flex;
       align-items: center;
     }
     .cal-group-label {
       font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 1px;
-      color: #9ca3af;
+      font-weight: 800;
+      letter-spacing: .09em;
+      color: #64748b;
       text-transform: uppercase;
     }
-    /* Property rows */
     .cal-property-name {
       padding: 0 16px;
       font-size: 12px;
-      font-weight: 600;
+      font-weight: 750;
       border-bottom: 1px solid var(--calendar-grid-line);
       display: flex;
       align-items: center;
       gap: 8px;
-      height: 42px;
+      height: 46px;
     }
     .cal-property-title {
       min-width: 0;
@@ -562,72 +664,86 @@
       white-space: nowrap;
     }
     .cal-property-icon {
-      width: 28px;
-      height: 28px;
-      border-radius: 7px;
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
     }
-
     .cal-cell {
       border-bottom: 1px solid var(--calendar-grid-line);
       border-right: 1px solid var(--calendar-grid-line);
-      height: 42px;
+      height: 46px;
       min-width: var(--calendar-day-width);
       position: relative;
+      background: #fff;
     }
     .cal-cell.today {
-      background: rgba(79,70,229,.04);
-      box-shadow: inset 2px 0 var(--accent), inset -1px 0 #c7d2fe;
+      background: rgba(15,118,110,.06);
+      box-shadow: inset 2px 0 var(--accent), inset -1px 0 #99d1c8;
+    }
+    .cal-cell.today::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 1px;
+      width: 2px;
+      background: var(--accent);
+      opacity: .9;
     }
     .cal-cell.past { background: #f7f7f8; }
-    .cal-cell.weekend { background: rgba(217,119,6,.02); }
-    .cal-cell.past.weekend { background: #f4f4f5; }
+    .cal-cell.weekend { background: rgba(217,119,6,.035); }
+    .cal-cell.past.weekend { background: #f2f3f5; }
     .cal-cell.month-start { border-left: 2px solid var(--accent); }
-
-    /* Booking bars */
     .booking-bar {
-      position: absolute;
-      top: 7px;
-      bottom: 7px;
-      border-radius: 14px;
-      z-index: 2;
+      border: 0;
+      position: relative;
+      z-index: 4;
       display: flex;
       align-items: center;
-      padding: 0 8px;
-      font-size: 10px;
-      font-weight: 500;
-      color: rgba(255,255,255,.9);
+      min-width: 10px;
+      height: 32px;
+      margin: 7px 4px -32px;
+      border-radius: 999px;
+      padding: 0 10px;
+      color: rgba(255,255,255,.95);
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 750;
       white-space: nowrap;
-      overflow: visible;
-      cursor: default;
-      min-width: 8px;
-      box-shadow: 0 1px 2px rgba(0,0,0,.15);
-      transition: opacity .15s;
+      overflow: hidden;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(15,23,42,.18);
+      transition: transform .15s ease, opacity .15s ease, box-shadow .15s ease;
     }
-    .booking-bar:hover { opacity: .85; z-index: 30; }
+    .booking-bar:hover,
+    .booking-bar:focus-visible {
+      transform: translateY(-1px);
+      opacity: .95;
+      z-index: 30;
+      box-shadow: 0 8px 20px rgba(15,23,42,.22);
+      outline: none;
+    }
     .booking-bar.airbnb { background: var(--airbnb); }
     .booking-bar.booking { background: var(--booking); }
-    .booking-bar.other { background: #6b7280; }
+    .booking-bar.direct { background: var(--direct); z-index: 12; }
+    .booking-bar.other { background: #64748b; }
     .booking-bar.completed {
       background: linear-gradient(90deg, #fff, #f3f4f6) !important;
-      border: 1px solid #6b7280;
-      color: #374151;
+      border: 1px solid #94a3b8;
+      color: #475569;
       box-shadow: none;
       filter: grayscale(1);
-      opacity: .86;
+      opacity: .78;
     }
-    .booking-bar.completed:hover {
-      opacity: 1;
-    }
-    .booking-bar.completed .bar-label {
-      color: #374151;
-    }
-
+    .booking-bar.completed:hover { opacity: .94; }
+    .booking-bar.completed .bar-label { color: #475569; }
     .booking-bar.not-available {
-      opacity: .55;
+      opacity: .56;
+      z-index: 1;
       background-image: repeating-linear-gradient(
         45deg, rgba(255,255,255,.25), rgba(255,255,255,.25) 3px, transparent 3px, transparent 6px
       );
@@ -636,12 +752,310 @@
       background-image: repeating-linear-gradient(
         45deg, rgba(107,114,128,.14), rgba(107,114,128,.14) 3px, transparent 3px, transparent 6px
       );
-      opacity: .7;
+      opacity: .65;
     }
-
     .booking-bar .bar-label {
       overflow: hidden;
       text-overflow: ellipsis;
+    }
+
+    /* ===== MOBILE AGENDA ===== */
+    .mobile-agenda-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+    .mobile-agenda-head {
+      padding: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid var(--border);
+      background: #fff;
+    }
+    .mobile-agenda-title {
+      font-size: 17px;
+      font-weight: 800;
+      color: var(--text);
+    }
+    .mobile-agenda-subtitle {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 1px;
+    }
+    .mobile-agenda-actions {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      scrollbar-width: none;
+    }
+    .mobile-agenda-actions::-webkit-scrollbar { display: none; }
+    .agenda-chip {
+      min-height: 36px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: #fff;
+      color: var(--text-secondary);
+      padding: 0 12px;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 750;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+    .agenda-chip.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .agenda-list {
+      padding: 10px 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .agenda-date-group { display: grid; gap: 8px; }
+    .agenda-date-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      padding: 2px 2px 0;
+    }
+    .agenda-item {
+      display: grid;
+      grid-template-columns: 42px minmax(0,1fr) auto;
+      align-items: center;
+      gap: 10px;
+      padding: 11px;
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--property-color, var(--accent));
+      border-radius: 10px;
+      background: #fff;
+      box-shadow: var(--shadow-sm);
+      cursor: pointer;
+    }
+    .agenda-item-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--property-bg, var(--accent-light));
+      color: var(--property-color, var(--accent));
+    }
+    .agenda-item-title {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--text);
+    }
+    .agenda-item-meta {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      margin-top: 1px;
+      color: var(--text-secondary);
+      font-size: 12px;
+    }
+    .agenda-type {
+      justify-self: end;
+      border-radius: 999px;
+      padding: 5px 8px;
+      font-size: 11px;
+      font-weight: 800;
+      white-space: nowrap;
+      background: var(--accent-light);
+      color: var(--accent);
+    }
+    .agenda-type.checkout { background: #fff7ed; color: var(--warning); }
+    .agenda-type.conflict { background: #fef2f2; color: var(--danger); }
+    .agenda-empty {
+      padding: 28px 14px;
+      text-align: center;
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    /* ===== BOOKING DETAILS PANEL ===== */
+    .booking-panel-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15,23,42,.28);
+      backdrop-filter: blur(2px);
+      z-index: 240;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .18s ease;
+    }
+    .booking-panel-backdrop.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .booking-panel {
+      position: fixed;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: min(420px, calc(100vw - 40px));
+      background: #fff;
+      border-left: 1px solid var(--border);
+      box-shadow: var(--shadow-md);
+      z-index: 250;
+      transform: translateX(104%);
+      transition: transform .22s ease;
+      display: flex;
+      flex-direction: column;
+    }
+    .booking-panel.open { transform: translateX(0); }
+    .booking-panel-header {
+      padding: 18px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: flex-start;
+    }
+    .booking-panel-kicker {
+      color: var(--text-secondary);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 5px;
+    }
+    .booking-panel-title {
+      font-size: 20px;
+      line-height: 1.2;
+      font-weight: 800;
+      color: var(--text);
+    }
+    .booking-panel-close {
+      width: 36px;
+      height: 36px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #fff;
+      color: var(--text-secondary);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .booking-panel-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 18px;
+    }
+    .booking-detail-hero {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: #f8fafc;
+      margin-bottom: 14px;
+    }
+    .booking-detail-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--property-bg);
+      color: var(--property-color);
+      flex-shrink: 0;
+    }
+    .booking-detail-property {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--text);
+    }
+    .booking-detail-dates {
+      margin-top: 2px;
+      color: var(--text-secondary);
+      font-size: 13px;
+    }
+    .booking-detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .booking-detail-card {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      background: #fff;
+      min-width: 0;
+    }
+    .booking-detail-label {
+      color: var(--text-secondary);
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      margin-bottom: 4px;
+    }
+    .booking-detail-value {
+      min-width: 0;
+      overflow-wrap: anywhere;
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 750;
+    }
+    .booking-platform-pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      border-radius: 999px;
+      padding: 0 10px;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+    .booking-platform-pill.airbnb { background: var(--airbnb); }
+    .booking-platform-pill.booking { background: var(--booking); }
+    .booking-platform-pill.direct { background: var(--direct); }
+    .booking-platform-pill.other { background: #64748b; }
+    .booking-panel-actions {
+      display: grid;
+      gap: 8px;
+      padding-top: 4px;
+    }
+    .booking-panel-actions .btn {
+      min-height: 40px;
+      justify-content: center;
+    }
+    .booking-status-note {
+      border-radius: 10px;
+      padding: 11px 12px;
+      background: #f8fafc;
+      color: var(--text-secondary);
+      font-size: 13px;
+      line-height: 1.45;
+      margin-bottom: 14px;
     }
 
     /* ===== CLEANERS ===== */
@@ -1012,6 +1426,9 @@
     .btn-secondary:hover { background: var(--bg); }
 
     @media (max-width: 768px) {
+      body {
+        padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+      }
       .header {
         height: 56px;
         padding: 0 12px;
@@ -1036,18 +1453,40 @@
       }
 
       .nav {
-        padding: 0 12px;
-        gap: 2px;
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 180;
+        padding: 7px 8px calc(7px + env(safe-area-inset-bottom, 0px));
+        gap: 4px;
+        border-top: 1px solid var(--border);
+        border-bottom: 0;
+        box-shadow: 0 -12px 28px rgba(15,23,42,.08);
       }
       .nav-item {
-        min-height: 48px;
-        padding: 13px 14px;
-        font-size: 13px;
+        min-height: 54px;
+        flex: 1 1 0;
+        justify-content: center;
+        flex-direction: column;
+        gap: 3px;
+        padding: 7px 4px;
+        font-size: 11px;
+        border-bottom: 0;
+        border-radius: 12px;
+      }
+      .nav-item.active {
+        background: var(--accent-light);
+        border-bottom-color: transparent;
+      }
+      .nav-item svg,
+      .nav-item i {
+        width: 18px !important;
+        height: 18px !important;
       }
 
       .stats-bar {
-        padding: 12px;
-        gap: 10px;
+        display: none !important;
       }
       .stat-card {
         min-width: 148px;
@@ -1058,9 +1497,7 @@
       }
 
       .legend {
-        padding: 0 12px 10px;
-        gap: 12px;
-        white-space: nowrap;
+        display: none !important;
       }
 
       .calendar-section,
@@ -1070,12 +1507,34 @@
         padding-left: 12px;
         padding-right: 12px;
       }
-      .calendar-section { padding-bottom: 18px; }
+      .calendar-section { padding-top: 12px; padding-bottom: 18px; }
+      .mobile-agenda { display: block; }
+      .calendar-board { display: none; }
+      .calendar-section.mobile-calendar-visible .calendar-board { display: block; }
       .calendar-container { border-radius: 10px; }
       .calendar-toolbar {
-        justify-content: flex-start;
-        margin-bottom: 8px;
+        grid-template-columns: 1fr;
         gap: 8px;
+        padding: 10px;
+        margin-bottom: 8px;
+      }
+      .calendar-toolbar-main,
+      .calendar-controls {
+        justify-content: flex-start;
+        overflow-x: auto;
+        scrollbar-width: none;
+        flex-wrap: nowrap;
+      }
+      .calendar-toolbar-main::-webkit-scrollbar,
+      .calendar-controls::-webkit-scrollbar {
+        display: none;
+      }
+      .calendar-control,
+      .toggle-pill,
+      .segmented-control,
+      .calendar-today-btn,
+      .calendar-today-date {
+        flex: 0 0 auto;
       }
       .calendar-today-date {
         min-height: 34px;
@@ -1084,6 +1543,7 @@
       }
       .calendar-scroll-wrapper {
         --calendar-property-col-width: 144px;
+        --calendar-day-width: 36px;
       }
 
       .cal-property-header,
@@ -1114,6 +1574,27 @@
       }
       .cal-property-title {
         display: inline;
+      }
+      .booking-panel {
+        top: auto;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        max-height: 86dvh;
+        border-left: 0;
+        border-radius: 18px 18px 0 0;
+        transform: translateY(104%);
+      }
+      .booking-panel.open { transform: translateY(0); }
+      .booking-panel-header {
+        padding: 16px;
+      }
+      .booking-panel-body {
+        padding: 16px;
+      }
+      .booking-detail-grid {
+        grid-template-columns: 1fr;
       }
 
       .cleaners-grid {
@@ -1360,15 +1841,44 @@
 
   <!-- CALENDAR TAB -->
   <div class="calendar-section active" id="calendarTab">
-    <div class="calendar-toolbar">
-      <button class="btn btn-secondary calendar-today-btn" type="button" onclick="scrollCalendarToToday()">
-        <i data-lucide="calendar-clock" style="width:15px;height:15px;"></i>Сегодня
-      </button>
-      <span class="calendar-today-date" id="calendarTodayDate"></span>
-    </div>
-    <div class="calendar-container">
-      <div class="calendar-scroll-wrapper" id="calendarScroll">
-        <div id="calendarGrid"></div>
+    <div class="mobile-agenda" id="mobileAgenda"></div>
+    <div class="calendar-board">
+      <div class="calendar-toolbar">
+        <div class="calendar-toolbar-main">
+          <button class="btn btn-secondary calendar-today-btn" type="button" onclick="scrollCalendarToToday()">
+            <i data-lucide="calendar-clock" style="width:15px;height:15px;"></i>Сегодня
+          </button>
+          <span class="calendar-today-date" id="calendarTodayDate"></span>
+        </div>
+        <div class="calendar-controls">
+          <div class="calendar-control">
+            <i data-lucide="calendar-range" style="width:15px;height:15px;"></i>
+            <select class="calendar-select" id="calendarMonthSelect" onchange="jumpCalendarToMonth(this.value)" aria-label="Месяц"></select>
+          </div>
+          <div class="segmented-control" id="calendarZoomControl" aria-label="Масштаб календаря"></div>
+          <div class="calendar-control">
+            <i data-lucide="building-2" style="width:15px;height:15px;"></i>
+            <select class="calendar-select" id="calendarGroupFilter" onchange="setCalendarGroup(this.value)" aria-label="Группа апартаментов"></select>
+          </div>
+          <div class="calendar-control">
+            <i data-lucide="tag" style="width:15px;height:15px;"></i>
+            <select class="calendar-select" id="calendarPlatformFilter" onchange="setCalendarPlatform(this.value)" aria-label="Платформа">
+              <option value="all">Все платформы</option>
+              <option value="airbnb">Airbnb</option>
+              <option value="booking">Booking.com</option>
+              <option value="direct">Direct</option>
+            </select>
+          </div>
+          <label class="toggle-pill">
+            <input type="checkbox" id="calendarHideCompleted" onchange="setCalendarHideCompleted(this.checked)">
+            Скрыть завершенные
+          </label>
+        </div>
+      </div>
+      <div class="calendar-container">
+        <div class="calendar-scroll-wrapper" id="calendarScroll">
+          <div id="calendarGrid"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -1435,6 +1945,19 @@
   </div>
 
   <div class="toast" id="toast"></div>
+  <div class="booking-panel-backdrop" id="bookingPanelBackdrop" onclick="closeBookingPanel()"></div>
+  <aside class="booking-panel" id="bookingPanel" aria-hidden="true">
+    <div class="booking-panel-header">
+      <div>
+        <div class="booking-panel-kicker" id="bookingPanelKicker">Бронирование</div>
+        <div class="booking-panel-title" id="bookingPanelTitle">—</div>
+      </div>
+      <button class="booking-panel-close" type="button" onclick="closeBookingPanel()" aria-label="Закрыть">
+        <i data-lucide="x" style="width:18px;height:18px;"></i>
+      </button>
+    </div>
+    <div class="booking-panel-body" id="bookingPanelBody"></div>
+  </aside>
 
 <script>
 const API = '/api';
@@ -1455,9 +1978,12 @@ function switchTab(tab, pushState = true) {
   document.getElementById('taxTab').style.display = tab === 'tax' ? 'block' : 'none';
   document.getElementById('statsBar').style.display = tab === 'calendar' ? 'flex' : 'none';
   document.getElementById('legend').style.display = tab === 'calendar' ? 'flex' : 'none';
-  if (tab === 'calendar') requestAnimationFrame(() => {
-    if (!calendarHasAutoScrolledToday) centerCalendarTodayOnce();
-  });
+  if (tab === 'calendar') {
+    renderMobileAgenda();
+    requestAnimationFrame(() => {
+      if (!calendarHasAutoScrolledToday) centerCalendarTodayOnce();
+    });
+  }
   if (tab === 'stats') renderStats();
   if (tab === 'tax') loadTaxData();
   if (pushState) {
@@ -1525,6 +2051,7 @@ async function loadData({ silent = false, attempt = 1 } = {}) {
 
   updateStats();
   renderCalendar();
+  renderMobileAgenda();
   renderCleaners();
 
   // Update tax data if tax tab is visible
@@ -1664,6 +2191,7 @@ const propertyConfig = {
   'vingtage': { icon: 'wine',     color: '#be185d', bg: '#fdf2f8' },
   'youth':    { icon: 'zap',      color: '#0891b2', bg: '#ecfeff' },
   'solo':     { icon: 'user',     color: '#4f46e5', bg: '#eef2ff' },
+  'central':  { icon: 'door-open', color: '#2563eb', bg: '#eff6ff' },
   'carina':   { icon: 'heart',    color: '#e11d48', bg: '#fff1f2' },
   'royal':    { icon: 'crown',    color: '#ca8a04', bg: '#fefce8' },
   'harmony':  { icon: 'music',    color: '#059669', bg: '#ecfdf5' },
@@ -1676,6 +2204,7 @@ const propertyNameFallback = {
   vingtage: 'Vingtage Room',
   youth: 'Youth Room',
   solo: 'Solo Room',
+  central: 'Central Room',
   carina: 'Carina',
   royal: 'Royal',
   harmony: 'Harmony',
@@ -1819,10 +2348,31 @@ const COUNTRY_NAMES = {
 };
 
 const DAY_MS = 86400000;
-const CALENDAR_PAST_DAYS = 45;
-const CALENDAR_DAY_WIDTH = 38;
+const CALENDAR_VIEW_MODES = {
+  twoWeeks: { label: '14 дней', days: 14, dayWidth: 62 },
+  month: { label: '30 дней', days: 30, dayWidth: 46 },
+  quarter: { label: '90 дней', days: 90, dayWidth: 30 },
+  season: { label: 'Сезон', season: true, dayWidth: 24 }
+};
+const CALENDAR_GROUPS = [
+  { id: 'dragone', name: 'Dragone', properties: ['awesome', 'central', 'orange', 'vingtage', 'youth', 'solo'] },
+  { id: 'dipino', name: 'Dipino', properties: ['carina', 'royal', 'harmony'] },
+  { id: 'susy', name: 'Susy', properties: ['susy'] }
+];
+const CALENDAR_PLATFORM_CLASS = { airbnb: 'airbnb', booking: 'booking', direct: 'direct' };
+let calendarState = {
+  view: 'quarter',
+  anchorDate: null,
+  group: 'all',
+  platform: 'all',
+  hideCompleted: false
+};
 let calendarTodayScrollLeft = 0;
 let calendarHasAutoScrolledToday = false;
+let calendarCurrentDayWidth = CALENDAR_VIEW_MODES.quarter.dayWidth;
+let calendarCurrentStartDate = null;
+let mobileAgendaRange = 'today';
+let mobileCalendarVisible = false;
 
 function addCalendarDays(date, amount) {
   const next = new Date(date);
@@ -1831,7 +2381,41 @@ function addCalendarDays(date, amount) {
   return next;
 }
 
+function parseLocalDate(iso) {
+  const d = new Date(iso + 'T00:00:00');
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function toLocalIso(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function todayLocal() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return today;
+}
+
+function formatBookingDate(iso, options = { day: 'numeric', month: 'short' }) {
+  if (!iso) return '—';
+  return parseLocalDate(iso).toLocaleDateString('ru-RU', options);
+}
+
 function scrollCalendarToToday({ behavior = 'smooth' } = {}) {
+  const today = todayLocal();
+  const [rangeStart, rangeEnd] = getCalendarRange();
+  const todayInRange = today >= rangeStart && today <= rangeEnd;
+  if (!todayInRange) {
+    calendarState.anchorDate = toLocalIso(today);
+    calendarHasAutoScrolledToday = false;
+    renderCalendar({ focusDate: today, behavior });
+    return;
+  }
+
   const scroll = document.getElementById('calendarScroll');
   if (!scroll) return;
   scroll.scrollTo({ left: calendarTodayScrollLeft, behavior });
@@ -1849,7 +2433,7 @@ function getCalendarCenteredScrollLeft(scroll, dayIndex) {
   if (!scroll || dayIndex < 0) return 0;
   const styles = getComputedStyle(scroll);
   const propertyColWidth = parseFloat(styles.getPropertyValue('--calendar-property-col-width')) || 0;
-  const dayWidth = parseFloat(styles.getPropertyValue('--calendar-day-width')) || CALENDAR_DAY_WIDTH;
+  const dayWidth = parseFloat(styles.getPropertyValue('--calendar-day-width')) || calendarCurrentDayWidth;
   const centeredLeft = propertyColWidth + (dayIndex * dayWidth) + (dayWidth / 2) - (scroll.clientWidth / 2);
   const maxLeft = Math.max(0, scroll.scrollWidth - scroll.clientWidth);
   return Math.max(0, Math.min(centeredLeft, maxLeft));
@@ -1863,16 +2447,121 @@ function updateCalendarTodayDate(today) {
   el.textContent = `${weekday}, ${date}`;
 }
 
-function renderCalendar() {
+function getCalendarRange() {
+  const today = todayLocal();
+  const mode = CALENDAR_VIEW_MODES[calendarState.view] || CALENDAR_VIEW_MODES.quarter;
+  if (mode.season) {
+    const year = today.getFullYear();
+    return [new Date(year, 3, 1), new Date(year, 10, 30)];
+  }
+
+  const anchor = calendarState.anchorDate ? parseLocalDate(calendarState.anchorDate) : today;
+  return [anchor, addCalendarDays(anchor, mode.days - 1)];
+}
+
+function getCalendarGroupsForRender() {
+  if (calendarState.group === 'all') return CALENDAR_GROUPS;
+  return CALENDAR_GROUPS.filter(group => group.id === calendarState.group);
+}
+
+function getCalendarBookingsForProperty(propId, startDate, endDate, today) {
+  const seen = new Set();
+  return bookings.filter(b => {
+    if (b.property_id !== propId) return false;
+    if (calendarState.platform !== 'all' && b.platform !== calendarState.platform) return false;
+    const start = parseLocalDate(b.start_date);
+    const end = parseLocalDate(b.end_date);
+    if (calendarState.hideCompleted && end <= today) return false;
+    if (end < startDate || start > endDate) return false;
+    const key = `${b.platform}_${b.start_date}_${b.end_date}_${b.guest_name || ''}_${b.reservation_url || ''}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function renderCalendarControls() {
+  const zoomEl = document.getElementById('calendarZoomControl');
+  if (zoomEl) {
+    zoomEl.innerHTML = Object.entries(CALENDAR_VIEW_MODES).map(([id, mode]) => `
+      <button type="button" class="segment-btn ${calendarState.view === id ? 'active' : ''}" onclick="setCalendarView('${id}')">${mode.label}</button>
+    `).join('');
+  }
+
+  const groupEl = document.getElementById('calendarGroupFilter');
+  if (groupEl) {
+    groupEl.innerHTML = '<option value="all">Все группы</option>' +
+      CALENDAR_GROUPS.map(group => `<option value="${group.id}" ${calendarState.group === group.id ? 'selected' : ''}>${group.name}</option>`).join('');
+    groupEl.value = calendarState.group;
+  }
+
+  const platformEl = document.getElementById('calendarPlatformFilter');
+  if (platformEl) platformEl.value = calendarState.platform;
+
+  const hideEl = document.getElementById('calendarHideCompleted');
+  if (hideEl) hideEl.checked = calendarState.hideCompleted;
+
+  const monthEl = document.getElementById('calendarMonthSelect');
+  if (monthEl) {
+    const today = todayLocal();
+    const selected = calendarState.anchorDate ? parseLocalDate(calendarState.anchorDate) : today;
+    const year = today.getFullYear();
+    const monthNames = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+    monthEl.innerHTML = monthNames.map((name, index) => {
+      const value = `${year}-${String(index + 1).padStart(2, '0')}`;
+      const isSelected = selected.getFullYear() === year && selected.getMonth() === index;
+      return `<option value="${value}" ${isSelected ? 'selected' : ''}>${name}</option>`;
+    }).join('');
+  }
+}
+
+function setCalendarView(view) {
+  if (!CALENDAR_VIEW_MODES[view]) return;
+  calendarState.view = view;
+  calendarState.anchorDate = calendarState.anchorDate || toLocalIso(todayLocal());
+  calendarHasAutoScrolledToday = false;
+  renderCalendar({ focusDate: calendarState.view === 'season' ? todayLocal() : parseLocalDate(calendarState.anchorDate) });
+}
+
+function setCalendarGroup(group) {
+  calendarState.group = group;
+  renderCalendar({ preserveScroll: true });
+}
+
+function setCalendarPlatform(platform) {
+  calendarState.platform = platform;
+  renderCalendar({ preserveScroll: true });
+}
+
+function setCalendarHideCompleted(checked) {
+  calendarState.hideCompleted = checked;
+  renderCalendar({ preserveScroll: true });
+}
+
+function jumpCalendarToMonth(value) {
+  if (!value) return;
+  const anchor = parseLocalDate(`${value}-01`);
+  calendarState.anchorDate = toLocalIso(anchor);
+  calendarHasAutoScrolledToday = false;
+  renderCalendar({ focusDate: anchor, behavior: 'auto' });
+}
+
+function renderCalendar({ preserveScroll = false, focusDate = null, behavior = 'auto' } = {}) {
   const grid = document.getElementById('calendarGrid');
   const scroll = document.getElementById('calendarScroll');
-  const previousScrollLeft = scroll?.scrollLeft || 0;
-  const today = new Date();
-  today.setHours(0,0,0,0);
-  updateCalendarTodayDate(today);
+  if (!grid || !scroll) return;
 
-  const startDate = addCalendarDays(today, -CALENDAR_PAST_DAYS);
-  const endDate = new Date(today.getFullYear(), 11, 31);
+  const previousScrollLeft = scroll.scrollLeft || 0;
+  const today = todayLocal();
+  updateCalendarTodayDate(today);
+  renderCalendarControls();
+
+  const mode = CALENDAR_VIEW_MODES[calendarState.view] || CALENDAR_VIEW_MODES.quarter;
+  calendarCurrentDayWidth = mode.dayWidth;
+  scroll.style.setProperty('--calendar-day-width', `${mode.dayWidth}px`);
+
+  const [startDate, endDate] = getCalendarRange();
+  calendarCurrentStartDate = startDate;
   const days = [];
   const d = new Date(startDate);
   while (d <= endDate) { days.push(new Date(d)); d.setDate(d.getDate() + 1); }
@@ -1882,15 +2571,14 @@ function renderCalendar() {
   grid.style.display = 'grid';
   grid.style.gridTemplateColumns = `var(--calendar-property-col-width) repeat(${totalDays}, var(--calendar-day-width))`;
   grid.innerHTML = '';
-  scroll?.querySelectorAll('.cal-month-label').forEach(label => label.remove());
+  scroll.querySelectorAll('.cal-month-label').forEach(label => label.remove());
 
   const dayNames = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
   const monthNames = ['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'];
 
-  // Header
   const propHeader = document.createElement('div');
   propHeader.className = 'cal-property-header cal-property-col';
-  propHeader.innerHTML = '<span class="cal-property-header-title">Апартаменты</span><span class="cal-property-header-icon"><i data-lucide="home" style="width:15px;height:15px;"></i></span>';
+  propHeader.innerHTML = '<span class="cal-property-header-icon"><i data-lucide="home" style="width:15px;height:15px;"></i></span><span class="cal-property-header-title">Апартаменты</span>';
   propHeader.style.gridRow = '1';
   propHeader.style.gridColumn = '1';
   grid.appendChild(propHeader);
@@ -1907,38 +2595,34 @@ function renderCalendar() {
     el.style.gridRow = '1';
     el.style.gridColumn = col;
     el.innerHTML = `<div class="day-num">${day.getDate()}</div><div class="day-name">${dayNames[day.getDay()]}</div>`;
+    grid.appendChild(el);
 
     if (isMonthStart || i === 0) {
-      el.title = monthNames[day.getMonth()] + ' ' + day.getFullYear();
-      if (isMonthStart) {
-        const label = document.createElement('div');
-        label.className = 'cal-month-label';
-        label.textContent = monthNames[day.getMonth()];
-        label.style.left = `calc(var(--calendar-property-col-width) + ${i * CALENDAR_DAY_WIDTH}px)`;
-        scroll?.appendChild(label);
-      }
+      const label = document.createElement('div');
+      label.className = 'cal-month-label';
+      label.textContent = `${monthNames[day.getMonth()]} ${day.getFullYear()}`;
+      label.style.left = `calc(var(--calendar-property-col-width) + ${i * mode.dayWidth}px)`;
+      scroll.appendChild(label);
     }
-    grid.appendChild(el);
   });
 
-  const groups = [
-    { name: 'Dragone', properties: ['awesome', 'orange', 'vingtage', 'youth', 'solo'] },
-    { name: 'Salvatore / Margarita', properties: ['carina', 'royal', 'harmony'] },
-    { name: 'Susy', properties: ['susy'] }
-  ];
-
   let currentRow = 2;
+  let visiblePropertyCount = 0;
+  const groups = getCalendarGroupsForRender();
 
   groups.forEach(group => {
-    // Group header
+    const groupProperties = group.properties
+      .map(propId => properties.find(p => p.id === propId))
+      .filter(Boolean);
+    if (!groupProperties.length) return;
+
     const gh = document.createElement('div');
     gh.className = 'cal-group-header cal-property-col';
     gh.style.gridRow = currentRow;
     gh.style.gridColumn = '1';
-    gh.innerHTML = `<span class="cal-group-label">${group.name}</span>`;
+    gh.innerHTML = `<span class="cal-group-label">${escapeHtml(group.name)}</span>`;
     grid.appendChild(gh);
 
-    // Group header spacer cells
     days.forEach((_, i) => {
       const spacer = document.createElement('div');
       spacer.className = 'cal-group-header';
@@ -1948,13 +2632,11 @@ function renderCalendar() {
     });
     currentRow++;
 
-    group.properties.forEach(propId => {
-      const prop = properties.find(p => p.id === propId);
-      if (!prop) return;
+    groupProperties.forEach(prop => {
       const row = currentRow;
-      const cfg = propertyConfig[propId] || { icon: 'home', color: '#6b7280', bg: '#f9fafb' };
+      const cfg = propertyConfig[prop.id] || { icon: 'home', color: '#6b7280', bg: '#f9fafb' };
+      visiblePropertyCount++;
 
-      // Property name
       const nameEl = document.createElement('div');
       nameEl.className = 'cal-property-name cal-property-col';
       nameEl.style.gridRow = row;
@@ -1963,11 +2645,10 @@ function renderCalendar() {
         <div class="cal-property-icon" style="background:${cfg.bg}; color:${cfg.color};">
           <i data-lucide="${cfg.icon}" style="width:14px;height:14px;"></i>
         </div>
-        <span class="cal-property-title">${prop.name}</span>
+        <span class="cal-property-title">${escapeHtml(prop.name)}</span>
       `;
       grid.appendChild(nameEl);
 
-      // Day cells
       days.forEach((day, dayIdx) => {
         const cell = document.createElement('div');
         const isToday = day.getTime() === today.getTime();
@@ -1980,57 +2661,30 @@ function renderCalendar() {
         grid.appendChild(cell);
       });
 
-      // Booking bars
-      const seen = new Set();
-      bookings.filter(b => b.property_id === prop.id).filter(b => {
-        const key = `${b.start_date}_${b.end_date}`;
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      }).forEach(booking => {
-        const start = new Date(booking.start_date + 'T00:00:00');
-        const end = new Date(booking.end_date + 'T00:00:00');
+      getCalendarBookingsForProperty(prop.id, startDate, endDate, today).forEach(booking => {
+        const start = parseLocalDate(booking.start_date);
+        const end = parseLocalDate(booking.end_date);
         const startIdx = Math.max(0, Math.round((start - startDate) / DAY_MS));
-        const endIdx = Math.min(totalDays, Math.round((end - startDate) / DAY_MS));
-        if (endIdx <= 0 || startIdx >= totalDays) return;
-        const width = (endIdx - startIdx) * CALENDAR_DAY_WIDTH - 2;
+        const endBoundaryIdx = Math.min(totalDays, Math.round((end - startDate) / DAY_MS));
+        if (endBoundaryIdx <= 0 || startIdx >= totalDays) return;
+        const width = Math.max(0, (endBoundaryIdx - startIdx) * mode.dayWidth);
         if (width <= 0) return;
 
-        const bar = document.createElement('div');
         const isUnavailable = isUnavailableBooking(booking);
         const isBlocked = isUnavailable && !hasGuestDetails(booking) && (booking.platform !== 'booking' || isGroupedBookingClosure(booking, bookings));
         const isCompleted = end <= today;
+        const platformClass = CALENDAR_PLATFORM_CLASS[booking.platform] || 'other';
+        const barText = booking.guest_name || (isBlocked ? 'Недоступно' : platformLabel(booking.platform));
+        const shortLabel = width > 104 ? barText : (width > 52 ? String(barText).split(' ')[0] : '');
 
-        bar.className = `booking-bar ${booking.platform}${isBlocked ? ' not-available' : ''}${isCompleted ? ' completed' : ''}`;
+        const bar = document.createElement('button');
+        bar.type = 'button';
+        bar.className = `booking-bar ${platformClass}${isBlocked ? ' not-available' : ''}${isCompleted ? ' completed' : ''}`;
         bar.style.gridRow = row;
-        bar.style.gridColumn = `${startIdx + 2} / ${endIdx + 3}`;
-        bar.style.position = 'relative';
-        bar.style.top = '7px';
-        bar.style.height = '28px';
-        bar.style.marginBottom = '-28px';
-        bar.style.marginLeft = '19px';
-        bar.style.marginRight = '19px';
-
-        // Build styled tooltip
-        const nameText = booking.guest_name || booking.platform.toUpperCase();
-        const dStart = new Date(booking.start_date + 'T00:00:00');
-        const dEnd = new Date(booking.end_date + 'T00:00:00');
-        const fmtD = (dt) => dt.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
-        const countryFlag = booking.guest_country ? countryToFlag(booking.guest_country) : '';
-        const countryName = booking.guest_country ? (COUNTRY_NAMES[booking.guest_country.toLowerCase()] || booking.guest_country.toUpperCase()) : '';
-        const guestCountHtml = booking.guest_count ? `<div class="tooltip-country">👥 ${booking.guest_count} чел.</div>` : '';
-        const countryHtml = countryFlag ? `<div class="tooltip-country">${countryFlag} ${countryName}</div>` : '';
-        const completedHtml = isCompleted ? '<div class="tooltip-country">Завершено</div>' : '';
-
-        // Show guest name on bar — always prefer name over "Reserved"/"CLOSED"
-        const barText = booking.guest_name || (isBlocked ? '' : booking.platform);
-        const shortLabel = width > 80 ? barText : (width > 40 ? (booking.guest_name ? booking.guest_name.split(' ')[0] : '') : '');
-        bar.innerHTML = `<span class="bar-label">${shortLabel}</span>
-          <div class="booking-tooltip">
-            <div class="tooltip-name">${nameText}</div>
-            <div class="tooltip-dates">Заезд ${fmtD(dStart)} → Выезд ${fmtD(dEnd)}</div>
-            ${completedHtml}${guestCountHtml}${countryHtml}
-          </div>`;
+        bar.style.gridColumn = `${startIdx + 2} / ${endBoundaryIdx + 2}`;
+        bar.innerHTML = `<span class="bar-label">${escapeHtml(shortLabel)}</span>`;
+        bar.setAttribute('aria-label', `${propertyMeta(booking.property_id).name}: ${barText}`);
+        bar.addEventListener('click', () => openBookingPanel(booking.id));
         grid.appendChild(bar);
       });
 
@@ -2038,16 +2692,294 @@ function renderCalendar() {
     });
   });
 
+  if (!visiblePropertyCount) {
+    grid.innerHTML = '<div class="calendar-empty-state">Нет апартаментов для выбранной группы.</div>';
+  }
+
   requestAnimationFrame(() => {
     if (!scroll) return;
     calendarTodayScrollLeft = getCalendarCenteredScrollLeft(scroll, calendarTodayIndex);
-    if (!calendarHasAutoScrolledToday) {
-      if (centerCalendarTodayOnce()) return;
+    const targetDate = focusDate || (calendarState.view === 'season' ? today : null);
+    if (targetDate) {
+      const focusIndex = days.findIndex(day => day.getTime() === targetDate.getTime());
+      if (focusIndex >= 0) {
+        scroll.scrollTo({ left: getCalendarCenteredScrollLeft(scroll, focusIndex), behavior });
+        return;
+      }
+    }
+    if (preserveScroll) {
+      scroll.scrollLeft = Math.min(previousScrollLeft, Math.max(0, scroll.scrollWidth - scroll.clientWidth));
       return;
     }
-    scroll.scrollLeft = Math.min(previousScrollLeft, Math.max(0, scroll.scrollWidth - scroll.clientWidth));
+    if (!calendarHasAutoScrolledToday && calendarTodayIndex >= 0 && calendarState.view === 'season') {
+      centerCalendarTodayOnce();
+      return;
+    }
+    scroll.scrollLeft = 0;
   });
+
+  if (typeof lucide !== 'undefined') lucide.createIcons();
 }
+
+function detectBookingConflicts(source = bookings) {
+  const conflicts = [];
+  const byProp = {};
+  source.filter(b => isRealGuestBooking(b, source)).forEach(b => {
+    if (!byProp[b.property_id]) byProp[b.property_id] = [];
+    byProp[b.property_id].push(b);
+  });
+
+  Object.entries(byProp).forEach(([propId, rows]) => {
+    const sorted = rows.slice().sort((a, b) => a.start_date.localeCompare(b.start_date));
+    for (let i = 0; i < sorted.length - 1; i++) {
+      for (let j = i + 1; j < sorted.length; j++) {
+        if (sorted[j].start_date < sorted[i].end_date) {
+          conflicts.push({ propertyId: propId, property: propertyMeta(propId).name, a: sorted[i], b: sorted[j] });
+        } else {
+          break;
+        }
+      }
+    }
+  });
+  return conflicts;
+}
+
+function setMobileAgendaRange(range) {
+  mobileAgendaRange = range;
+  renderMobileAgenda();
+}
+
+function toggleMobileCalendar() {
+  mobileCalendarVisible = !mobileCalendarVisible;
+  renderMobileAgenda();
+  if (mobileCalendarVisible) requestAnimationFrame(() => scrollCalendarToToday({ behavior: 'auto' }));
+}
+
+function agendaWindow() {
+  const today = todayLocal();
+  if (mobileAgendaRange === 'tomorrow') {
+    const tomorrow = addCalendarDays(today, 1);
+    return [tomorrow, tomorrow];
+  }
+  if (mobileAgendaRange === 'week') return [today, addCalendarDays(today, 6)];
+  return [today, today];
+}
+
+function renderMobileAgenda() {
+  const el = document.getElementById('mobileAgenda');
+  const calendarTab = document.getElementById('calendarTab');
+  if (!el || !calendarTab) return;
+
+  calendarTab.classList.toggle('mobile-calendar-visible', mobileCalendarVisible);
+  const [startDate, endDate] = agendaWindow();
+  const startIso = toLocalIso(startDate);
+  const endIso = toLocalIso(endDate);
+  const realBookings = bookings.filter(b => isRealGuestBooking(b, bookings));
+  const conflicts = detectBookingConflicts(bookings).filter(c =>
+    (c.a.start_date <= endIso && c.a.end_date >= startIso) ||
+    (c.b.start_date <= endIso && c.b.end_date >= startIso)
+  );
+
+  const events = [];
+  realBookings.forEach(b => {
+    if (b.start_date >= startIso && b.start_date <= endIso) {
+      events.push({ date: b.start_date, type: 'checkin', booking: b });
+    }
+    if (b.end_date >= startIso && b.end_date <= endIso) {
+      events.push({ date: b.end_date, type: 'checkout', booking: b });
+    }
+  });
+  events.sort((a, b) => a.date.localeCompare(b.date) || (a.type === 'checkout' ? -1 : 1));
+
+  const byDate = {};
+  events.forEach(event => {
+    if (!byDate[event.date]) byDate[event.date] = [];
+    byDate[event.date].push(event);
+  });
+  const dates = Object.keys(byDate).sort();
+  const title = mobileAgendaRange === 'tomorrow' ? 'Завтра' : mobileAgendaRange === 'week' ? 'Ближайшие 7 дней' : 'Сегодня';
+  const subtitle = mobileAgendaRange === 'week'
+    ? `${formatBookingDate(startIso)} - ${formatBookingDate(endIso)}`
+    : formatBookingDate(startIso, { weekday: 'long', day: 'numeric', month: 'long' });
+
+  let html = `
+    <div class="mobile-agenda-card">
+      <div class="mobile-agenda-head">
+        <div>
+          <div class="mobile-agenda-title">${title}</div>
+          <div class="mobile-agenda-subtitle">${subtitle}</div>
+        </div>
+        <button class="btn btn-secondary btn-sm" type="button" onclick="toggleMobileCalendar()">
+          <i data-lucide="${mobileCalendarVisible ? 'list' : 'calendar-days'}" style="width:14px;height:14px;"></i>${mobileCalendarVisible ? 'Список' : 'Timeline'}
+        </button>
+      </div>
+      <div class="mobile-agenda-actions">
+        ${['today','tomorrow','week'].map(range => {
+          const label = range === 'today' ? 'Сегодня' : range === 'tomorrow' ? 'Завтра' : '7 дней';
+          return `<button type="button" class="agenda-chip ${mobileAgendaRange === range ? 'active' : ''}" onclick="setMobileAgendaRange('${range}')">${label}</button>`;
+        }).join('')}
+      </div>
+      <div class="agenda-list">
+  `;
+
+  if (conflicts.length) {
+    html += `<div class="agenda-date-group">
+      <div class="agenda-date-header"><span>Конфликты</span><span>${conflicts.length}</span></div>
+      ${conflicts.slice(0, 3).map(c => {
+        const meta = propertyMeta(c.propertyId);
+        return `<div class="agenda-item" style="--property-color:${meta.color};--property-bg:${meta.bg}" onclick="openBookingPanel(${c.a.id})">
+          <div class="agenda-item-icon"><i data-lucide="alert-triangle" style="width:18px;height:18px;"></i></div>
+          <div><div class="agenda-item-title">${escapeHtml(c.property)}</div><div class="agenda-item-meta">${formatBookingDate(c.a.start_date)} - ${formatBookingDate(c.b.end_date)}</div></div>
+          <span class="agenda-type conflict">конфликт</span>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }
+
+  if (!dates.length && !conflicts.length) {
+    html += '<div class="agenda-empty">Нет заездов, выездов и конфликтов.</div>';
+  } else {
+    dates.forEach(date => {
+      const dateObj = parseLocalDate(date);
+      const header = dateObj.toLocaleDateString('ru-RU', { weekday: 'short', day: 'numeric', month: 'short' });
+      html += `<div class="agenda-date-group"><div class="agenda-date-header"><span>${header}</span><span>${byDate[date].length}</span></div>`;
+      byDate[date].forEach(event => {
+        const booking = event.booking;
+        const meta = propertyMeta(booking.property_id);
+        const isCheckout = event.type === 'checkout';
+        const guest = booking.guest_name || platformLabel(booking.platform);
+        const flag = booking.guest_country ? ` ${countryToFlag(booking.guest_country)}` : '';
+        const taxNote = isCheckout && isTaxableBooking(booking, bookings) && !booking.tax_paid ? ' · налог не отмечен' : '';
+        html += `<div class="agenda-item" style="--property-color:${meta.color};--property-bg:${meta.bg}" onclick="openBookingPanel(${booking.id})">
+          <div class="agenda-item-icon"><i data-lucide="${isCheckout ? 'sparkles' : 'log-in'}" style="width:18px;height:18px;"></i></div>
+          <div>
+            <div class="agenda-item-title">${escapeHtml(meta.name)}</div>
+            <div class="agenda-item-meta">${escapeHtml(guest)}${flag}${taxNote}</div>
+          </div>
+          <span class="agenda-type ${isCheckout ? 'checkout' : 'checkin'}">${isCheckout ? 'выезд' : 'заезд'}</span>
+        </div>`;
+      });
+      html += '</div>';
+    });
+  }
+
+  html += '</div></div>';
+  el.innerHTML = html;
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+function openBookingPanel(bookingId) {
+  const booking = bookings.find(b => String(b.id) === String(bookingId));
+  if (!booking) return;
+
+  const panel = document.getElementById('bookingPanel');
+  const backdrop = document.getElementById('bookingPanelBackdrop');
+  const titleEl = document.getElementById('bookingPanelTitle');
+  const kickerEl = document.getElementById('bookingPanelKicker');
+  const bodyEl = document.getElementById('bookingPanelBody');
+  if (!panel || !backdrop || !titleEl || !bodyEl) return;
+
+  const meta = propertyMeta(booking.property_id);
+  const nights = nightsBetween(booking.start_date, booking.end_date);
+  const countryFlag = booking.guest_country ? countryToFlag(booking.guest_country) : '';
+  const countryName = booking.guest_country ? (COUNTRY_NAMES[booking.guest_country.toLowerCase()] || booking.guest_country.toUpperCase()) : '—';
+  const completed = parseLocalDate(booking.end_date) <= todayLocal();
+  const unavailable = isUnavailableBooking(booking);
+  const taxable = isTaxableBooking(booking, bookings);
+  const taxPaid = Boolean(booking.tax_paid);
+  const platformClass = CALENDAR_PLATFORM_CLASS[booking.platform] || 'other';
+
+  kickerEl.textContent = completed ? 'Завершено' : unavailable ? 'Недоступность' : 'Бронирование';
+  titleEl.textContent = booking.guest_name || platformLabel(booking.platform);
+  bodyEl.innerHTML = `
+    <div class="booking-detail-hero" style="--property-color:${meta.color};--property-bg:${meta.bg}">
+      <div class="booking-detail-icon"><i data-lucide="${meta.icon}" style="width:20px;height:20px;"></i></div>
+      <div>
+        <div class="booking-detail-property">${escapeHtml(meta.name)}</div>
+        <div class="booking-detail-dates">${formatBookingDate(booking.start_date)} → ${formatBookingDate(booking.end_date)}${nights ? ` · ${nights} ${nights === 1 ? 'ночь' : nights < 5 ? 'ночи' : 'ночей'}` : ''}</div>
+      </div>
+    </div>
+    <div class="booking-status-note">
+      ${completed ? 'Эта бронь уже завершена.' : unavailable ? 'Это закрытый или недоступный период.' : 'Активная или будущая бронь.'}
+    </div>
+    <div class="booking-detail-grid">
+      <div class="booking-detail-card">
+        <div class="booking-detail-label">Платформа</div>
+        <div class="booking-detail-value"><span class="booking-platform-pill ${platformClass}">${escapeHtml(platformLabel(booking.platform))}</span></div>
+      </div>
+      <div class="booking-detail-card">
+        <div class="booking-detail-label">Гости</div>
+        <div class="booking-detail-value">${booking.guest_count ? `${booking.guest_count} чел.` : '—'}</div>
+      </div>
+      <div class="booking-detail-card">
+        <div class="booking-detail-label">Страна</div>
+        <div class="booking-detail-value">${countryFlag ? `${countryFlag} ${escapeHtml(countryName)}` : '—'}</div>
+      </div>
+      <div class="booking-detail-card">
+        <div class="booking-detail-label">Налог</div>
+        <div class="booking-detail-value">${taxable ? `${taxAmountLabel(booking)} · ${taxPaid ? 'оплачен' : 'не отмечен'}` : '—'}</div>
+      </div>
+      <div class="booking-detail-card">
+        <div class="booking-detail-label">Заезд</div>
+        <div class="booking-detail-value">${formatBookingDate(booking.start_date, { weekday: 'short', day: 'numeric', month: 'long' })}</div>
+      </div>
+      <div class="booking-detail-card">
+        <div class="booking-detail-label">Выезд / уборка</div>
+        <div class="booking-detail-value">${formatBookingDate(booking.end_date, { weekday: 'short', day: 'numeric', month: 'long' })}</div>
+      </div>
+    </div>
+    <div class="booking-panel-actions">
+      ${booking.reservation_url ? `<a class="btn btn-primary" href="${escapeHtml(booking.reservation_url)}" target="_blank" rel="noopener"><i data-lucide="external-link" style="width:15px;height:15px;"></i>Открыть бронь</a>` : ''}
+      ${taxable ? `<button class="btn btn-secondary" type="button" onclick="setBookingTaxPaidFromPanel(${booking.id}, ${!taxPaid})"><i data-lucide="${taxPaid ? 'rotate-ccw' : 'check'}" style="width:15px;height:15px;"></i>${taxPaid ? 'Снять отметку налога' : 'Отметить налог оплачен'}</button>` : ''}
+    </div>
+  `;
+
+  panel.classList.add('open');
+  panel.setAttribute('aria-hidden', 'false');
+  backdrop.classList.add('show');
+  document.body.style.overflow = 'hidden';
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+function closeBookingPanel() {
+  const panel = document.getElementById('bookingPanel');
+  const backdrop = document.getElementById('bookingPanelBackdrop');
+  if (!panel || !backdrop) return;
+  panel.classList.remove('open');
+  panel.setAttribute('aria-hidden', 'true');
+  backdrop.classList.remove('show');
+  document.body.style.overflow = '';
+}
+
+async function setBookingTaxPaidFromPanel(bookingId, paid) {
+  try {
+    const res = await fetch(`${API}/tax`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ booking_id: bookingId, tax_paid: paid })
+    });
+    if (!res.ok) throw new Error('Failed');
+    const booking = bookings.find(b => String(b.id) === String(bookingId));
+    if (booking) {
+      booking.tax_paid = paid;
+      booking.tax_paid_at = paid ? new Date().toISOString() : null;
+      const taxBooking = allTaxBookings.find(b => String(b.id) === String(bookingId));
+      if (taxBooking) {
+        taxBooking.tax_paid = paid;
+        taxBooking.tax_paid_at = booking.tax_paid_at;
+      }
+      openBookingPanel(bookingId);
+      renderCalendar({ preserveScroll: true });
+      renderMobileAgenda();
+    }
+  } catch {
+    toast('Ошибка обновления налога');
+  }
+}
+
+window.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape') closeBookingPanel();
+});
 
 function renderCleaners() {
   const grid = document.getElementById('cleanersGrid');
@@ -2276,7 +3208,7 @@ function renderStats() {
     </div>
   `;
 
-  const chartFont = { family: "'Inter', sans-serif" };
+  const chartFont = { family: "'Manrope', sans-serif" };
   const defaultOpts = {
     responsive: true,
     maintainAspectRatio: true,
