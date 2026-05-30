@@ -1,3 +1,7 @@
+declare const process: {
+  env: Record<string, string | undefined>;
+};
+
 const PUBLIC_ASSET_PATHS = new Set([
   '/favicon.ico',
   '/favicon-16.png',
@@ -8,30 +12,30 @@ const PUBLIC_ASSET_PATHS = new Set([
   '/manifest.json',
 ]);
 
-function isVercelHost(hostname) {
+function isVercelHost(hostname: string) {
   return hostname === 'vercel.app' || hostname.endsWith('.vercel.app');
 }
 
-function isPublicMaidPath(pathname) {
+function isPublicMaidPath(pathname: string) {
   return pathname.startsWith('/maid/');
 }
 
-function isPublicMaidApiPath(pathname) {
+function isPublicMaidApiPath(pathname: string) {
   return pathname.startsWith('/api/maid/');
 }
 
-function hasBearerSecret(request, secret) {
+function hasBearerSecret(request: Request, secret: string) {
   const authorization = request.headers.get('authorization') || '';
   return Boolean(secret && authorization === `Bearer ${secret}`);
 }
 
-function hasTelegramSecret(request) {
+function hasTelegramSecret(request: Request) {
   const secret = process.env.TELEGRAM_WEBHOOK_SECRET || '';
   const header = request.headers.get('x-telegram-bot-api-secret-token') || '';
   return Boolean(secret && header === secret);
 }
 
-function isAllowedMachinePath(pathname, request) {
+function isAllowedMachinePath(pathname: string, request: Request) {
   if (pathname === '/api/sync') {
     return hasBearerSecret(request, process.env.CRON_SECRET || '');
   }
@@ -53,7 +57,7 @@ function blockedResponse() {
   });
 }
 
-export default function middleware(request) {
+export default function middleware(request: Request) {
   const url = new URL(request.url);
 
   if (!isVercelHost(url.hostname)) return;

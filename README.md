@@ -82,7 +82,7 @@ Booking and cleaning calendar for vacation rental properties in Atrani, Italy. S
 - Protected: `/`, `/stats`, exact `/maid`, `/tax`, admin `/api/*`
 - Machine clients that call protected admin APIs can use a Cloudflare Access service token via `BOOKING_MANAGER_CF_ACCESS_CLIENT_ID` and `BOOKING_MANAGER_CF_ACCESS_CLIENT_SECRET`
 
-The root `middleware.mjs` blocks direct `*.vercel.app` access to admin pages and APIs while preserving public maid links, cron with `CRON_SECRET`, and Telegram webhook calls with `TELEGRAM_WEBHOOK_SECRET`.
+The root `middleware.ts` blocks direct `*.vercel.app` access to admin pages and APIs while preserving public maid links, cron with `CRON_SECRET`, and Telegram webhook calls with `TELEGRAM_WEBHOOK_SECRET`.
 
 ## Quick Start
 
