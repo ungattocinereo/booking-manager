@@ -520,6 +520,7 @@
     .calendar-scroll-wrapper {
       --calendar-property-col-width: 190px;
       --calendar-day-width: 30px;
+      --calendar-today-width: 48px;
       --calendar-grid-line: #e1e7ef;
       overflow: auto hidden;
       position: relative;
@@ -602,10 +603,20 @@
       margin-top: 3px;
     }
     .cal-day-header.today {
-      background: var(--accent-light);
-      box-shadow: inset 2px 0 var(--accent), inset -1px 0 #99d1c8;
+      min-width: var(--calendar-today-width);
+      background: linear-gradient(180deg, #dff1ee 0%, #f4fbfa 100%);
+      border-left: 1px solid #89ccc2;
+      border-right: 1px solid #89ccc2;
+      box-shadow: inset 0 -3px 0 var(--accent), 0 8px 18px rgba(15,118,110,.12);
     }
-    .cal-day-header.today .day-num { color: var(--accent); }
+    .cal-day-header.today .day-num {
+      color: var(--accent);
+      font-size: 16px;
+    }
+    .cal-day-header.today .day-name {
+      color: #0f766e;
+      font-weight: 800;
+    }
     .cal-day-header.past { background: #f3f4f6; }
     .cal-day-header.past .day-num,
     .cal-day-header.past .day-name { color: #9ca3af; }
@@ -613,6 +624,10 @@
     .cal-day-header.past.weekend { background: #f1f3f5; }
     .cal-day-header.weekend .day-name { color: var(--warning); }
     .cal-day-header.past.weekend .day-name { color: #9ca3af; }
+    .cal-day-header.today.weekend {
+      background: linear-gradient(180deg, #dff1ee 0%, #f4fbfa 100%);
+    }
+    .cal-day-header.today.weekend .day-name { color: #0f766e; }
     .cal-day-header.month-start { border-left: 2px solid var(--accent); }
     .cal-month-label {
       position: absolute;
@@ -681,22 +696,28 @@
       background: #fff;
     }
     .cal-cell.today {
-      background: rgba(15,118,110,.06);
-      box-shadow: inset 2px 0 var(--accent), inset -1px 0 #99d1c8;
+      min-width: var(--calendar-today-width);
+      background: linear-gradient(180deg, rgba(15,118,110,.11), rgba(15,118,110,.045));
+      box-shadow: inset 1px 0 rgba(15,118,110,.28), inset -1px 0 rgba(15,118,110,.24);
     }
     .cal-cell.today::after {
       content: "";
       position: absolute;
       top: 0;
       bottom: 0;
-      left: 1px;
-      width: 2px;
+      left: 50%;
+      width: 3px;
+      transform: translateX(-50%);
       background: var(--accent);
-      opacity: .9;
+      border-radius: 999px;
+      opacity: .55;
     }
     .cal-cell.past { background: #f7f7f8; }
     .cal-cell.weekend { background: rgba(217,119,6,.035); }
     .cal-cell.past.weekend { background: #f2f3f5; }
+    .cal-cell.today.weekend {
+      background: linear-gradient(180deg, rgba(15,118,110,.11), rgba(15,118,110,.045));
+    }
     .cal-cell.month-start { border-left: 2px solid var(--accent); }
     .booking-bar {
       border: 0;
@@ -977,16 +998,31 @@
       background: #f8fafc;
       margin-bottom: 14px;
     }
-    .booking-detail-icon {
-      width: 44px;
-      height: 44px;
+    .booking-night-badge {
+      width: 58px;
+      height: 58px;
       border-radius: 12px;
       display: inline-flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
       background: var(--property-bg);
       color: var(--property-color);
       flex-shrink: 0;
+      border: 1px solid rgba(15,23,42,.08);
+      line-height: 1;
+    }
+    .booking-night-number {
+      font-size: 28px;
+      font-weight: 850;
+      letter-spacing: 0;
+    }
+    .booking-night-label {
+      margin-top: 4px;
+      font-size: 10px;
+      font-weight: 800;
+      color: var(--text-secondary);
+      text-transform: uppercase;
     }
     .booking-detail-property {
       font-size: 15px;
@@ -2358,6 +2394,7 @@ const CALENDAR_VIEW_MODES = {
   season: { label: 'Сезон', season: true, dayWidth: 24 }
 };
 const CALENDAR_ARCHIVE_DAYS = 45;
+const CALENDAR_ARCHIVE_VIEWS = new Set(['quarter', 'season']);
 const CALENDAR_GROUPS = [
   { id: 'dragone', name: 'Dragone', properties: ['awesome', 'central', 'orange', 'vingtage', 'youth', 'solo'] },
   { id: 'dipino', name: 'Dipino', properties: ['carina', 'royal', 'harmony'] },
@@ -2374,6 +2411,8 @@ let calendarState = {
 let calendarTodayScrollLeft = 0;
 let calendarHasAutoScrolledToday = false;
 let calendarCurrentDayWidth = CALENDAR_VIEW_MODES.quarter.dayWidth;
+let calendarDayOffsets = [];
+let calendarDayWidths = [];
 let calendarCurrentStartDate = null;
 let mobileAgendaRange = 'today';
 let mobileCalendarVisible = false;
@@ -2402,6 +2441,26 @@ function todayLocal() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   return today;
+}
+
+function shouldShowCalendarArchive(view = calendarState.view) {
+  return CALENDAR_ARCHIVE_VIEWS.has(view);
+}
+
+function getCalendarTodayWidth(mode) {
+  return Math.max(mode.dayWidth + 18, Math.round(mode.dayWidth * 1.6));
+}
+
+function getCalendarDayWidth(day, today, mode) {
+  return day.getTime() === today.getTime() ? getCalendarTodayWidth(mode) : mode.dayWidth;
+}
+
+function sumCalendarDayWidths(startIndex, endIndex) {
+  const start = Math.max(0, startIndex);
+  const end = Math.min(calendarDayWidths.length, endIndex);
+  let total = 0;
+  for (let i = start; i < end; i++) total += calendarDayWidths[i] || calendarCurrentDayWidth;
+  return total;
 }
 
 function formatBookingDate(iso, options = { day: 'numeric', month: 'short' }) {
@@ -2438,7 +2497,9 @@ function getCalendarCenteredScrollLeft(scroll, dayIndex) {
   const styles = getComputedStyle(scroll);
   const propertyColWidth = parseFloat(styles.getPropertyValue('--calendar-property-col-width')) || 0;
   const dayWidth = parseFloat(styles.getPropertyValue('--calendar-day-width')) || calendarCurrentDayWidth;
-  const centeredLeft = propertyColWidth + (dayIndex * dayWidth) + (dayWidth / 2) - (scroll.clientWidth / 2);
+  const dayLeft = calendarDayOffsets[dayIndex] ?? (dayIndex * dayWidth);
+  const visualDayWidth = calendarDayWidths[dayIndex] || dayWidth;
+  const centeredLeft = propertyColWidth + dayLeft + (visualDayWidth / 2) - (scroll.clientWidth / 2);
   const maxLeft = Math.max(0, scroll.scrollWidth - scroll.clientWidth);
   return Math.max(0, Math.min(centeredLeft, maxLeft));
 }
@@ -2460,7 +2521,8 @@ function getCalendarRange() {
   }
 
   const anchor = calendarState.anchorDate ? parseLocalDate(calendarState.anchorDate) : today;
-  return [addCalendarDays(anchor, -CALENDAR_ARCHIVE_DAYS), addCalendarDays(anchor, mode.days - 1)];
+  const archiveDays = shouldShowCalendarArchive() ? CALENDAR_ARCHIVE_DAYS : 0;
+  return [addCalendarDays(anchor, -archiveDays), addCalendarDays(anchor, mode.days - 1)];
 }
 
 function getCalendarGroupsForRender() {
@@ -2522,7 +2584,8 @@ function renderCalendarControls() {
 function setCalendarView(view) {
   if (!CALENDAR_VIEW_MODES[view]) return;
   calendarState.view = view;
-  calendarState.anchorDate = calendarState.anchorDate || toLocalIso(todayLocal());
+  const todayIso = toLocalIso(todayLocal());
+  calendarState.anchorDate = shouldShowCalendarArchive(view) ? (calendarState.anchorDate || todayIso) : todayIso;
   calendarHasAutoScrolledToday = false;
   renderCalendar({ focusDate: calendarState.view === 'season' ? todayLocal() : parseLocalDate(calendarState.anchorDate) });
 }
@@ -2562,7 +2625,9 @@ function renderCalendar({ preserveScroll = false, focusDate = null, behavior = '
 
   const mode = CALENDAR_VIEW_MODES[calendarState.view] || CALENDAR_VIEW_MODES.quarter;
   calendarCurrentDayWidth = mode.dayWidth;
+  const todayWidth = getCalendarTodayWidth(mode);
   scroll.style.setProperty('--calendar-day-width', `${mode.dayWidth}px`);
+  scroll.style.setProperty('--calendar-today-width', `${todayWidth}px`);
 
   const [startDate, endDate] = getCalendarRange();
   calendarCurrentStartDate = startDate;
@@ -2571,9 +2636,16 @@ function renderCalendar({ preserveScroll = false, focusDate = null, behavior = '
   while (d <= endDate) { days.push(new Date(d)); d.setDate(d.getDate() + 1); }
   const totalDays = days.length;
   const calendarTodayIndex = days.findIndex(day => day.getTime() === today.getTime());
+  calendarDayWidths = days.map(day => getCalendarDayWidth(day, today, mode));
+  calendarDayOffsets = [];
+  let dayOffset = 0;
+  calendarDayWidths.forEach((width, index) => {
+    calendarDayOffsets[index] = dayOffset;
+    dayOffset += width;
+  });
 
   grid.style.display = 'grid';
-  grid.style.gridTemplateColumns = `var(--calendar-property-col-width) repeat(${totalDays}, var(--calendar-day-width))`;
+  grid.style.gridTemplateColumns = `var(--calendar-property-col-width) ${calendarDayWidths.map(width => `${width}px`).join(' ')}`;
   grid.innerHTML = '';
   scroll.querySelectorAll('.cal-month-label').forEach(label => label.remove());
 
@@ -2605,7 +2677,7 @@ function renderCalendar({ preserveScroll = false, focusDate = null, behavior = '
       const label = document.createElement('div');
       label.className = 'cal-month-label';
       label.textContent = `${monthNames[day.getMonth()]} ${day.getFullYear()}`;
-      label.style.left = `calc(var(--calendar-property-col-width) + ${i * mode.dayWidth}px)`;
+      label.style.left = `calc(var(--calendar-property-col-width) + ${calendarDayOffsets[i] || 0}px)`;
       scroll.appendChild(label);
     }
   });
@@ -2672,28 +2744,31 @@ function renderCalendar({ preserveScroll = false, focusDate = null, behavior = '
         const rawEndBoundaryIdx = Math.round((end - startDate) / DAY_MS);
         const startIdx = Math.max(0, rawStartIdx);
         const endBoundaryIdx = Math.min(totalDays, rawEndBoundaryIdx);
-        if (endBoundaryIdx <= 0 || startIdx >= totalDays) return;
-        const width = Math.max(0, (endBoundaryIdx - startIdx) * mode.dayWidth);
-        if (width <= 0) return;
+        if (endBoundaryIdx < 0 || startIdx >= totalDays) return;
         const startIsVisible = rawStartIdx >= 0;
         const endIsVisible = rawEndBoundaryIdx < totalDays;
         const gridEndLine = endIsVisible ? endBoundaryIdx + 3 : endBoundaryIdx + 2;
-        const halfDayOffset = Math.max(4, mode.dayWidth / 2);
+        const startColumnWidth = calendarDayWidths[startIdx] || mode.dayWidth;
+        const endColumnWidth = calendarDayWidths[endBoundaryIdx] || mode.dayWidth;
+        const startHalfDayOffset = Math.max(4, startColumnWidth / 2);
+        const endHalfDayOffset = Math.max(4, endColumnWidth / 2);
+        const visibleWidth = sumCalendarDayWidths(startIdx, endBoundaryIdx + (endIsVisible ? 1 : 0));
+        if (visibleWidth <= 0) return;
 
         const isUnavailable = isUnavailableBooking(booking);
         const isBlocked = isUnavailable && !hasGuestDetails(booking) && (booking.platform !== 'booking' || isGroupedBookingClosure(booking, bookings));
         const isCompleted = end <= today;
         const platformClass = CALENDAR_PLATFORM_CLASS[booking.platform] || 'other';
         const barText = booking.guest_name || (isBlocked ? 'Недоступно' : platformLabel(booking.platform));
-        const shortLabel = width > 104 ? barText : (width > 52 ? String(barText).split(' ')[0] : '');
+        const shortLabel = visibleWidth > 104 ? barText : (visibleWidth > 52 ? String(barText).split(' ')[0] : '');
 
         const bar = document.createElement('button');
         bar.type = 'button';
         bar.className = `booking-bar ${platformClass}${isBlocked ? ' not-available' : ''}${isCompleted ? ' completed' : ''}`;
         bar.style.gridRow = row;
         bar.style.gridColumn = `${startIdx + 2} / ${gridEndLine}`;
-        bar.style.marginLeft = startIsVisible ? `${halfDayOffset}px` : '4px';
-        bar.style.marginRight = endIsVisible ? `${halfDayOffset}px` : '4px';
+        bar.style.marginLeft = startIsVisible ? `${startHalfDayOffset}px` : '4px';
+        bar.style.marginRight = endIsVisible ? `${endHalfDayOffset}px` : '4px';
         bar.innerHTML = `<span class="bar-label">${escapeHtml(shortLabel)}</span>`;
         bar.setAttribute('aria-label', `${propertyMeta(booking.property_id).name}: ${barText}`);
         bar.addEventListener('click', () => openBookingPanel(booking.id));
@@ -2900,15 +2975,19 @@ function openBookingPanel(bookingId) {
   const taxable = isTaxableBooking(booking, bookings);
   const taxPaid = Boolean(booking.tax_paid);
   const platformClass = CALENDAR_PLATFORM_CLASS[booking.platform] || 'other';
+  const nightWord = nights === 1 ? 'ночь' : (nights > 1 && nights < 5 ? 'ночи' : 'ночей');
 
   kickerEl.textContent = completed ? 'Завершено' : unavailable ? 'Недоступность' : 'Бронирование';
   titleEl.textContent = booking.guest_name || platformLabel(booking.platform);
   bodyEl.innerHTML = `
     <div class="booking-detail-hero" style="--property-color:${meta.color};--property-bg:${meta.bg}">
-      <div class="booking-detail-icon"><i data-lucide="${meta.icon}" style="width:20px;height:20px;"></i></div>
+      <div class="booking-night-badge" aria-label="${nights || 0} ${nightWord}">
+        <div class="booking-night-number">${nights || '—'}</div>
+        <div class="booking-night-label">${nightWord}</div>
+      </div>
       <div>
         <div class="booking-detail-property">${escapeHtml(meta.name)}</div>
-        <div class="booking-detail-dates">${formatBookingDate(booking.start_date)} → ${formatBookingDate(booking.end_date)}${nights ? ` · ${nights} ${nights === 1 ? 'ночь' : nights < 5 ? 'ночи' : 'ночей'}` : ''}</div>
+        <div class="booking-detail-dates">Заезд ${formatBookingDate(booking.start_date)} → выезд ${formatBookingDate(booking.end_date)}</div>
       </div>
     </div>
     <div class="booking-status-note">
