@@ -14,6 +14,14 @@ const IMPORTS_PATH = path.join(DATA_DIR, 'imports.json');
 
 const UPSTREAM_API = process.env.UPSTREAM_API || 'https://b.amalfi.day/api/bookings';
 const SINCE = process.env.SINCE || '2026-04-17';
+const CF_ACCESS_CLIENT_ID =
+  process.env.BOOKING_MANAGER_CF_ACCESS_CLIENT_ID ||
+  process.env.CF_ACCESS_CLIENT_ID ||
+  process.env.CLOUDFLARE_ACCESS_CLIENT_ID;
+const CF_ACCESS_CLIENT_SECRET =
+  process.env.BOOKING_MANAGER_CF_ACCESS_CLIENT_SECRET ||
+  process.env.CF_ACCESS_CLIENT_SECRET ||
+  process.env.CLOUDFLARE_ACCESS_CLIENT_SECRET;
 
 function loadJson(p, fallback) {
   try { return JSON.parse(fs.readFileSync(p, 'utf8')); }
@@ -32,6 +40,16 @@ function bookingKey(propertyId, platform, startDate, endDate) {
   return `${propertyId}|${platform}|${startDate}|${endDate}`;
 }
 
+function upstreamFetchOptions() {
+  if (!CF_ACCESS_CLIENT_ID || !CF_ACCESS_CLIENT_SECRET) return undefined;
+  return {
+    headers: {
+      'CF-Access-Client-Id': CF_ACCESS_CLIENT_ID,
+      'CF-Access-Client-Secret': CF_ACCESS_CLIENT_SECRET
+    }
+  };
+}
+
 function isUnavailable(row) {
   const summary = String(row.raw_summary || '').toLowerCase();
   const type = String(row.booking_type || '').toLowerCase();
@@ -47,7 +65,7 @@ function hasGuestDetails(row) {
 
 async function fetchUpstream(propertyId) {
   const url = `${UPSTREAM_API}?property_id=${encodeURIComponent(propertyId)}`;
-  const res = await fetch(url);
+  const res = await fetch(url, upstreamFetchOptions());
   if (!res.ok) throw new Error(`${propertyId}: HTTP ${res.status}`);
   const rows = await res.json();
   return rows
