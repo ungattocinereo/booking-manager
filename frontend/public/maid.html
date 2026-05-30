@@ -29,7 +29,7 @@
 
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;750;800&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg: #f8f9fb;
@@ -38,15 +38,15 @@
       --text: #1a1d26;
       --text-secondary: #6b7280;
       --text-tertiary: #9ca3af;
-      --accent: #4f46e5;
-      --accent-light: #eef2ff;
+      --accent: #0f766e;
+      --accent-light: #e6f5f3;
       --checkin: #059669;
       --checkin-light: #ecfdf5;
       --checkin-border: #a7f3d0;
       --checkout: #ea580c;
       --checkout-light: #fff7ed;
       --checkout-border: #fed7aa;
-      --today-bg: #4f46e5;
+      --today-bg: #0f766e;
       --today-text: #ffffff;
       --radius: 16px;
       --radius-sm: 12px;
@@ -57,7 +57,7 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-family: 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
       background: var(--bg);
       color: var(--text);
       line-height: 1.5;
@@ -136,6 +136,36 @@
       font-weight: 600;
     }
 
+    /* Quick navigation */
+    .quick-nav {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      padding: 10px 20px;
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+    }
+    .quick-pill {
+      min-height: 40px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: #fff;
+      color: var(--text-secondary);
+      font: inherit;
+      font-size: 13px;
+      font-weight: 750;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .quick-pill.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
     /* Content */
     .content {
       padding: 16px 16px 32px;
@@ -199,7 +229,8 @@
       background: var(--card);
       border-radius: var(--radius-sm);
       border: 1px solid var(--border);
-      padding: 14px 16px;
+      border-left: 4px solid var(--property-color, var(--accent));
+      padding: 15px 16px;
       margin-bottom: 8px;
       box-shadow: var(--shadow);
       display: flex;
@@ -259,6 +290,27 @@
     }
     .event-type-label.checkin { color: var(--checkin); }
     .event-type-label.checkout { color: var(--checkout); }
+    .event-action {
+      margin-top: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 28px;
+      border-radius: 999px;
+      padding: 0 9px;
+      font-size: 12px;
+      font-weight: 750;
+      background: var(--bg);
+      color: var(--text);
+    }
+    .event-action.checkout {
+      background: var(--checkout-light);
+      color: var(--checkout);
+    }
+    .event-action.checkin {
+      background: var(--checkin-light);
+      color: var(--checkin);
+    }
 
     /* Empty state */
     .empty-month {
@@ -372,6 +424,7 @@ const propertyConfig = {
   'vingtage': { icon: 'wine',     color: '#be185d', bg: '#fdf2f8', name: 'Vingtage Room' },
   'youth':    { icon: 'zap',      color: '#0891b2', bg: '#ecfeff', name: 'Youth Room' },
   'solo':     { icon: 'user',     color: '#4f46e5', bg: '#eef2ff', name: 'Solo Room' },
+  'central':  { icon: 'door-open', color: '#2563eb', bg: '#eff6ff', name: 'Central Room' },
   'carina':   { icon: 'heart',    color: '#e11d48', bg: '#fff1f2', name: 'Carina' },
   'royal':    { icon: 'crown',    color: '#ca8a04', bg: '#fefce8', name: 'Royal' },
   'harmony':  { icon: 'music',    color: '#059669', bg: '#ecfdf5', name: 'Harmony' },
@@ -390,6 +443,7 @@ const slug = pathParts[pathParts.length - 1];
 
 let data = null;
 let currentMonth = null; // { year, month }
+let viewMode = 'today'; // today | tomorrow | month
 
 async function loadData() {
   try {
@@ -401,7 +455,10 @@ async function loadData() {
     data = await res.json();
     const events = getEvents();
     const months = getAvailableMonths(events);
-    currentMonth = months.length > 0 ? months[0] : { year: new Date().getFullYear(), month: new Date().getMonth() };
+    const today = new Date();
+    currentMonth = months.find(m => m.year === today.getFullYear() && m.month === today.getMonth())
+      || months[0]
+      || { year: today.getFullYear(), month: today.getMonth() };
     render();
   } catch (err) {
     showError();
@@ -479,6 +536,27 @@ function getMonthEvents(events, year, month) {
   return events.filter(e => e.dateObj.getFullYear() === year && e.dateObj.getMonth() === month);
 }
 
+function toLocalIso(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function getViewEvents(events) {
+  const today = new Date();
+  today.setHours(0,0,0,0);
+
+  if (viewMode === 'today' || viewMode === 'tomorrow') {
+    const target = new Date(today);
+    if (viewMode === 'tomorrow') target.setDate(target.getDate() + 1);
+    const targetIso = toLocalIso(target);
+    return events.filter(e => e.date === targetIso);
+  }
+
+  return getMonthEvents(events, currentMonth.year, currentMonth.month);
+}
+
 function getAvailableMonths(events) {
   const months = new Set();
   for (const e of events) {
@@ -507,7 +585,7 @@ function render() {
 
   const events = getEvents();
   const months = getAvailableMonths(events);
-  const monthEvents = getMonthEvents(events, currentMonth.year, currentMonth.month);
+  const selectedEvents = getViewEvents(events);
 
   const today = new Date();
   today.setHours(0,0,0,0);
@@ -515,7 +593,7 @@ function render() {
 
   // Group events by date
   const byDate = {};
-  for (const e of monthEvents) {
+  for (const e of selectedEvents) {
     if (!byDate[e.date]) byDate[e.date] = [];
     byDate[e.date].push(e);
   }
@@ -549,29 +627,49 @@ function render() {
   }
   html += '</div>';
 
+  // Quick view navigation
+  html += `<div class="quick-nav">
+    <button class="quick-pill ${viewMode === 'today' ? 'active' : ''}" onclick="switchViewMode('today')">
+      <i data-lucide="sun" style="width:15px;height:15px;"></i>Oggi
+    </button>
+    <button class="quick-pill ${viewMode === 'tomorrow' ? 'active' : ''}" onclick="switchViewMode('tomorrow')">
+      <i data-lucide="calendar-plus" style="width:15px;height:15px;"></i>Domani
+    </button>
+    <button class="quick-pill ${viewMode === 'month' ? 'active' : ''}" onclick="switchViewMode('month')">
+      <i data-lucide="calendar-days" style="width:15px;height:15px;"></i>Mese
+    </button>
+  </div>`;
+
   // Month navigation
-  html += '<div class="month-nav">';
-  for (const m of months) {
-    const isActive = m.year === currentMonth.year && m.month === currentMonth.month;
-    const isCurrentMonth = m.year === today.getFullYear() && m.month === today.getMonth();
-    html += `<div class="month-pill${isActive ? ' active' : ''}${isCurrentMonth ? ' has-today' : ''}"
-      onclick="switchMonth(${m.year}, ${m.month})">
-      ${MONTHS_SHORT_IT[m.month]}${m.year !== today.getFullYear() ? ' ' + m.year : ''}
-    </div>`;
+  if (viewMode === 'month') {
+    html += '<div class="month-nav">';
+    for (const m of months) {
+      const isActive = m.year === currentMonth.year && m.month === currentMonth.month;
+      const isCurrentMonth = m.year === today.getFullYear() && m.month === today.getMonth();
+      html += `<div class="month-pill${isActive ? ' active' : ''}${isCurrentMonth ? ' has-today' : ''}"
+        onclick="switchMonth(${m.year}, ${m.month})">
+        ${MONTHS_SHORT_IT[m.month]}${m.year !== today.getFullYear() ? ' ' + m.year : ''}
+      </div>`;
+    }
+    html += '</div>';
   }
-  html += '</div>';
 
   // Content
   html += '<div class="content">';
 
   if (sortedDates.length === 0) {
+    const emptyText = viewMode === 'month'
+      ? `Non ci sono arrivi o partenze a ${MONTHS_IT[currentMonth.month]}.`
+      : viewMode === 'tomorrow'
+        ? 'Non ci sono arrivi o partenze domani.'
+        : 'Non ci sono arrivi o partenze oggi.';
     html += `
       <div class="empty-month">
         <div class="empty-month-icon">
           <i data-lucide="calendar-x" style="width:28px;height:28px;"></i>
         </div>
         <h3>Nessun evento</h3>
-        <p>Non ci sono arrivi o partenze a ${MONTHS_IT[currentMonth.month]}.</p>
+        <p>${emptyText}</p>
       </div>
     `;
   } else {
@@ -604,7 +702,8 @@ function render() {
         if (flag) guestInfo.push(flag);
         const detailText = guestInfo.length > 0 ? guestInfo.join(' · ') : (ev.type === 'checkin' ? 'Check-in' : 'Check-out');
 
-        html += `<div class="event-card">
+        const actionText = ev.type === 'checkout' ? 'Pulizia dopo la partenza' : 'Preparare arrivo';
+        html += `<div class="event-card" style="--property-color:${ev.cfg.color}">
           <div class="event-type-badge ${ev.type}">
             <i data-lucide="${typeIcon}" style="width:20px;height:20px;"></i>
           </div>
@@ -618,6 +717,9 @@ function render() {
             <div class="event-detail">
               <span class="event-type-label ${ev.type}">${typeLabel}</span>
               <span>${detailText}</span>
+            </div>
+            <div class="event-action ${ev.type}">
+              <i data-lucide="${ev.type === 'checkout' ? 'sparkles' : 'door-open'}" style="width:13px;height:13px;"></i>${actionText}
             </div>
           </div>
         </div>`;
@@ -634,9 +736,16 @@ function render() {
 }
 
 function switchMonth(year, month) {
+  viewMode = 'month';
   currentMonth = { year, month };
   render();
   // Scroll to top of content
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function switchViewMode(mode) {
+  viewMode = mode;
+  render();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
