@@ -33,6 +33,7 @@ const BOOKING_ROOM_MAP = {
   'Vintage Room': 'vingtage',
   'Youth room': 'youth',
   'Solo Traveller room': 'solo',
+  'Central Room': 'susy',
 };
 
 // Phone prefix -> country code
