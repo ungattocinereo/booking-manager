@@ -74,6 +74,16 @@ Booking and cleaning calendar for vacation rental properties in Atrani, Italy. S
 | `/maid` | Cleaning management — cleaner assignments, slug links | Russian |
 | `/maid/:slug` | Maid calendar — check-ins/check-outs for specific cleaner | Italian |
 
+## Access Control
+
+`b.amalfi.day` admin routes are intended to sit behind Cloudflare Access. The public maid routes remain unauthenticated:
+
+- Public: `/maid/:slug`, `/api/maid/:slug`, icon/manifest assets
+- Protected: `/`, `/stats`, exact `/maid`, `/tax`, admin `/api/*`
+- Machine clients that call protected admin APIs can use a Cloudflare Access service token via `BOOKING_MANAGER_CF_ACCESS_CLIENT_ID` and `BOOKING_MANAGER_CF_ACCESS_CLIENT_SECRET`
+
+The root `middleware.mjs` blocks direct `*.vercel.app` access to admin pages and APIs while preserving public maid links, cron with `CRON_SECRET`, and Telegram webhook calls with `TELEGRAM_WEBHOOK_SECRET`.
+
 ## Quick Start
 
 ### Vercel (production)
@@ -87,6 +97,10 @@ Deploys automatically from `main`. Required environment variables:
 | `CRON_SECRET` | Secret for hourly sync cron authentication |
 | `TELEGRAM_BOT_TOKEN` | Telegram bot token |
 | `TELEGRAM_CHAT_ID` | Family group chat ID |
+| `FAMILY_CHAT_ID` | Family group chat ID used by the Telegram webhook/bot |
+| `TELEGRAM_WEBHOOK_SECRET` | Secret token for Telegram webhook requests |
+| `BOOKING_MANAGER_CF_ACCESS_CLIENT_ID` | Optional Cloudflare Access service token ID for machine clients |
+| `BOOKING_MANAGER_CF_ACCESS_CLIENT_SECRET` | Optional Cloudflare Access service token secret for machine clients |
 
 ### Local development
 

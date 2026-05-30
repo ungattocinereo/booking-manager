@@ -1,9 +1,12 @@
 # 📝 Changelog
 
-## [Unreleased] - 2026-05-20
+## [Unreleased] - 2026-05-30
 
 ### ✨ Новое
 
+- Создана точка отката перед закрытием админки: `rollback/pre-cloudflare-access-2026-05-30` на `820a27a9e6e94f0ac8eec76590e287df0201cbc5`.
+- Добавлена кодовая страховка для Vercel: прямые `*.vercel.app` URL больше не открывают админку, публичные `/maid/:slug` и `/api/maid/:slug` остаются доступными без пароля.
+- Подготовлены машинные клиенты к Cloudflare Access service token для мониторинга и Telegram-бота.
 - Добавлен апартамент Villa Susy с отдельным разделом Susy и Booking.com iCal-фидом.
 
 ## [2.0.0] - 2026-03-23 - Docker Edition

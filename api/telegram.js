@@ -1,8 +1,13 @@
 const fetch = require('node-fetch');
 
+const USE_POSTGRES = process.env.POSTGRES_URL || process.env.DATABASE_URL;
+const db = USE_POSTGRES
+  ? require('../backend/src/database-postgres')
+  : require('../backend/src/database');
+const { formatBooking, formatCleaningTask } = require('./_helpers');
+
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const FAMILY_CHAT_ID = process.env.FAMILY_CHAT_ID;
-const BOOKING_API_URL = process.env.BOOKING_API_URL || 'https://b.amalfi.day';
 const WEBHOOK_SECRET = process.env.TELEGRAM_WEBHOOK_SECRET || '';
 
 // ── Telegram API ────────────────────────────────────────
@@ -55,39 +60,43 @@ function countryToFlag(code) {
   return String.fromCodePoint(...[...c].map(ch => 0x1F1E6 + ch.charCodeAt(0) - 65));
 }
 
+async function ensureDb() {
+  if (!db.pool && !db.db) {
+    await db.init();
+  }
+}
+
+function filterRealBookings(bookings) {
+  return bookings.filter(b => {
+    const platform = (b.platform || '').toLowerCase();
+    if (platform === 'booking') return true;
+    if (platform === 'airbnb') {
+      const summary = b.raw_summary || '';
+      const isUnavailable = summary.includes('Not available') || summary.includes('CLOSED') || b.booking_type === 'blocked';
+      if (isUnavailable && !b.guest_name) return false;
+    }
+    return true;
+  });
+}
+
 async function fetchBookings(params = {}) {
   try {
-    const url = new URL('/api/bookings', BOOKING_API_URL);
-    Object.keys(params).forEach(k => url.searchParams.append(k, params[k]));
-    const res = await fetch(url.toString());
-    const data = await res.json();
-    return Array.isArray(data)
-      ? data.filter(b => {
-          const platform = (b.platform || '').toLowerCase();
-          if (platform === 'booking') return true;
-          if (platform === 'airbnb') {
-            const summary = b.raw_summary || '';
-            const isUnavailable = summary.includes('Not available') || summary.includes('CLOSED') || b.booking_type === 'blocked';
-            if (isUnavailable && !b.guest_name) return false;
-          }
-          return true;
-        })
-      : [];
+    await ensureDb();
+    const rows = await db.getBookings(params.property_id, params.from_date);
+    return filterRealBookings(rows.map(formatBooking));
   } catch (e) {
-    console.error('API error:', e.message);
+    console.error('Database error:', e.message);
     return null;
   }
 }
 
 async function fetchCleaningTasks(params = {}) {
   try {
-    const url = new URL('/api/cleaning-tasks', BOOKING_API_URL);
-    Object.keys(params).forEach(k => url.searchParams.append(k, params[k]));
-    const res = await fetch(url.toString());
-    const data = await res.json();
-    return Array.isArray(data) ? data : [];
+    await ensureDb();
+    const rows = await db.getCleaningTasks(params.cleaner_id, params.from_date);
+    return rows.map(formatCleaningTask);
   } catch (e) {
-    console.error('API error:', e.message);
+    console.error('Database error:', e.message);
     return null;
   }
 }
@@ -324,8 +333,11 @@ module.exports = async (req, res) => {
     return res.status(500).json({ error: 'Missing bot config' });
   }
 
-  // Verify webhook secret if configured
-  if (WEBHOOK_SECRET && req.headers['x-telegram-bot-api-secret-token'] !== WEBHOOK_SECRET) {
+  if (!WEBHOOK_SECRET) {
+    return res.status(500).json({ error: 'Missing webhook secret' });
+  }
+
+  if (req.headers['x-telegram-bot-api-secret-token'] !== WEBHOOK_SECRET) {
     return res.status(403).json({ error: 'Forbidden' });
   }
 

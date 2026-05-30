@@ -45,6 +45,8 @@ jobs:
         env:
           UPSTREAM_API: https://b.amalfi.day/api/bookings
           SINCE: "2026-04-17"
+          BOOKING_MANAGER_CF_ACCESS_CLIENT_ID: ${{ secrets.BOOKING_MANAGER_CF_ACCESS_CLIENT_ID }}
+          BOOKING_MANAGER_CF_ACCESS_CLIENT_SECRET: ${{ secrets.BOOKING_MANAGER_CF_ACCESS_CLIENT_SECRET }}
         run: npm run sync
 
       - name: Commit data changes
