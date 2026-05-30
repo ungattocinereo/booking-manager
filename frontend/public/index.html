@@ -732,15 +732,18 @@
     .booking-bar.direct { background: var(--direct); z-index: 12; }
     .booking-bar.other { background: #64748b; }
     .booking-bar.completed {
-      background: linear-gradient(90deg, #fff, #f3f4f6) !important;
+      background: rgba(255,255,255,.82) !important;
       border: 1px solid #94a3b8;
-      color: #475569;
+      color: #64748b;
       box-shadow: none;
-      filter: grayscale(1);
-      opacity: .78;
+      filter: none;
+      opacity: .94;
     }
-    .booking-bar.completed:hover { opacity: .94; }
-    .booking-bar.completed .bar-label { color: #475569; }
+    .booking-bar.completed:hover {
+      background: #fff !important;
+      opacity: 1;
+    }
+    .booking-bar.completed .bar-label { color: #64748b; }
     .booking-bar.not-available {
       opacity: .56;
       z-index: 1;
@@ -752,7 +755,7 @@
       background-image: repeating-linear-gradient(
         45deg, rgba(107,114,128,.14), rgba(107,114,128,.14) 3px, transparent 3px, transparent 6px
       );
-      opacity: .65;
+      opacity: .72;
     }
     .booking-bar .bar-label {
       overflow: hidden;
@@ -2354,6 +2357,7 @@ const CALENDAR_VIEW_MODES = {
   quarter: { label: '90 дней', days: 90, dayWidth: 30 },
   season: { label: 'Сезон', season: true, dayWidth: 24 }
 };
+const CALENDAR_ARCHIVE_DAYS = 45;
 const CALENDAR_GROUPS = [
   { id: 'dragone', name: 'Dragone', properties: ['awesome', 'central', 'orange', 'vingtage', 'youth', 'solo'] },
   { id: 'dipino', name: 'Dipino', properties: ['carina', 'royal', 'harmony'] },
@@ -2456,7 +2460,7 @@ function getCalendarRange() {
   }
 
   const anchor = calendarState.anchorDate ? parseLocalDate(calendarState.anchorDate) : today;
-  return [anchor, addCalendarDays(anchor, mode.days - 1)];
+  return [addCalendarDays(anchor, -CALENDAR_ARCHIVE_DAYS), addCalendarDays(anchor, mode.days - 1)];
 }
 
 function getCalendarGroupsForRender() {
@@ -2711,7 +2715,7 @@ function renderCalendar({ preserveScroll = false, focusDate = null, behavior = '
       scroll.scrollLeft = Math.min(previousScrollLeft, Math.max(0, scroll.scrollWidth - scroll.clientWidth));
       return;
     }
-    if (!calendarHasAutoScrolledToday && calendarTodayIndex >= 0 && calendarState.view === 'season') {
+    if (!calendarHasAutoScrolledToday && calendarTodayIndex >= 0) {
       centerCalendarTodayOnce();
       return;
     }
