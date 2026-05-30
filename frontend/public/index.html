@@ -2668,11 +2668,17 @@ function renderCalendar({ preserveScroll = false, focusDate = null, behavior = '
       getCalendarBookingsForProperty(prop.id, startDate, endDate, today).forEach(booking => {
         const start = parseLocalDate(booking.start_date);
         const end = parseLocalDate(booking.end_date);
-        const startIdx = Math.max(0, Math.round((start - startDate) / DAY_MS));
-        const endBoundaryIdx = Math.min(totalDays, Math.round((end - startDate) / DAY_MS));
+        const rawStartIdx = Math.round((start - startDate) / DAY_MS);
+        const rawEndBoundaryIdx = Math.round((end - startDate) / DAY_MS);
+        const startIdx = Math.max(0, rawStartIdx);
+        const endBoundaryIdx = Math.min(totalDays, rawEndBoundaryIdx);
         if (endBoundaryIdx <= 0 || startIdx >= totalDays) return;
         const width = Math.max(0, (endBoundaryIdx - startIdx) * mode.dayWidth);
         if (width <= 0) return;
+        const startIsVisible = rawStartIdx >= 0;
+        const endIsVisible = rawEndBoundaryIdx < totalDays;
+        const gridEndLine = endIsVisible ? endBoundaryIdx + 3 : endBoundaryIdx + 2;
+        const halfDayOffset = Math.max(4, mode.dayWidth / 2);
 
         const isUnavailable = isUnavailableBooking(booking);
         const isBlocked = isUnavailable && !hasGuestDetails(booking) && (booking.platform !== 'booking' || isGroupedBookingClosure(booking, bookings));
@@ -2685,7 +2691,9 @@ function renderCalendar({ preserveScroll = false, focusDate = null, behavior = '
         bar.type = 'button';
         bar.className = `booking-bar ${platformClass}${isBlocked ? ' not-available' : ''}${isCompleted ? ' completed' : ''}`;
         bar.style.gridRow = row;
-        bar.style.gridColumn = `${startIdx + 2} / ${endBoundaryIdx + 2}`;
+        bar.style.gridColumn = `${startIdx + 2} / ${gridEndLine}`;
+        bar.style.marginLeft = startIsVisible ? `${halfDayOffset}px` : '4px';
+        bar.style.marginRight = endIsVisible ? `${halfDayOffset}px` : '4px';
         bar.innerHTML = `<span class="bar-label">${escapeHtml(shortLabel)}</span>`;
         bar.setAttribute('aria-label', `${propertyMeta(booking.property_id).name}: ${barText}`);
         bar.addEventListener('click', () => openBookingPanel(booking.id));
