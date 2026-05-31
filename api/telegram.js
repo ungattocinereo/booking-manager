@@ -4,6 +4,8 @@ const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const FAMILY_CHAT_ID = process.env.FAMILY_CHAT_ID;
 const BOOKING_API_URL = process.env.BOOKING_API_URL || 'https://b.amalfi.day';
 const WEBHOOK_SECRET = process.env.TELEGRAM_WEBHOOK_SECRET || '';
+const CF_ACCESS_CLIENT_ID = process.env.CF_ACCESS_CLIENT_ID || '';
+const CF_ACCESS_CLIENT_SECRET = process.env.CF_ACCESS_CLIENT_SECRET || '';
 
 // ── Telegram API ────────────────────────────────────────
 
@@ -56,11 +58,19 @@ function countryToFlag(code) {
   return String.fromCodePoint(...[...c].map(ch => 0x1F1E6 + ch.charCodeAt(0) - 65));
 }
 
+function bookingApiHeaders() {
+  if (!CF_ACCESS_CLIENT_ID || !CF_ACCESS_CLIENT_SECRET) return {};
+  return {
+    'CF-Access-Client-Id': CF_ACCESS_CLIENT_ID,
+    'CF-Access-Client-Secret': CF_ACCESS_CLIENT_SECRET
+  };
+}
+
 async function fetchBookings(params = {}) {
   try {
     const url = new URL('/api/bookings', BOOKING_API_URL);
     Object.keys(params).forEach(k => url.searchParams.append(k, params[k]));
-    const res = await fetch(url.toString());
+    const res = await fetch(url.toString(), { headers: bookingApiHeaders() });
     const data = await res.json();
     return Array.isArray(data)
       ? data.filter(b => {
@@ -84,7 +94,7 @@ async function fetchCleaningTasks(params = {}) {
   try {
     const url = new URL('/api/cleaning-tasks', BOOKING_API_URL);
     Object.keys(params).forEach(k => url.searchParams.append(k, params[k]));
-    const res = await fetch(url.toString());
+    const res = await fetch(url.toString(), { headers: bookingApiHeaders() });
     const data = await res.json();
     return Array.isArray(data) ? data : [];
   } catch (e) {
