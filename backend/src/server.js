@@ -7,6 +7,7 @@ const USE_POSTGRES = process.env.POSTGRES_URL || process.env.DATABASE_URL;
 const db = USE_POSTGRES 
   ? require('./database-postgres')
   : require('./database');
+const { formatBooking, formatCleaningTask } = require('../../api/_helpers');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -29,6 +30,58 @@ app.get('/api/properties', async (req, res) => {
   try {
     const properties = await db.getProperties();
     res.json(properties);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/dashboard', async (req, res) => {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const full = req.query.full === '1';
+    const seasonYear = req.query.season_year || new Date().getFullYear();
+    const snapshotsLimit = req.query.snapshots_limit || req.query.limit || 1000;
+
+    const [properties, bookings, cleaningTasks, cleaners, statsSnapshots] = await Promise.all([
+      db.getProperties(),
+      db.getBookings(null, full ? null : today),
+      db.getCleaningTasks(null, today),
+      db.getCleaners(),
+      full && typeof db.getStatsSnapshots === 'function'
+        ? db.getStatsSnapshots({ seasonYear, limit: snapshotsLimit })
+        : Promise.resolve([])
+    ]);
+
+    for (const cleaner of cleaners) {
+      cleaner.properties = await db.getCleanerProperties(cleaner.id);
+    }
+
+    const formattedBookings = bookings.map(formatBooking);
+    const formattedTasks = cleaningTasks.map(formatCleaningTask);
+
+    const stats = {
+      total_properties: properties.length,
+      total_bookings: formattedBookings.length,
+      total_cleaning_tasks: formattedTasks.length,
+      pending_cleaning_tasks: formattedTasks.filter(t => t.status === 'pending').length,
+      total_cleaners: cleaners.length
+    };
+
+    const byProperty = {};
+    for (const booking of formattedBookings) {
+      if (!byProperty[booking.property_id]) byProperty[booking.property_id] = [];
+      byProperty[booking.property_id].push(booking);
+    }
+
+    res.json({
+      stats,
+      properties,
+      bookings: formattedBookings,
+      bookings_by_property: byProperty,
+      cleaning_tasks: formattedTasks,
+      cleaners,
+      stats_snapshots: statsSnapshots
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

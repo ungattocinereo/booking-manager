@@ -2689,7 +2689,7 @@ async function fetchJsonOrNull(url) {
     const res = await fetch(url);
     if (!res.ok) return null;
     const data = await res.json();
-    return Array.isArray(data) ? data : null;
+    return data || null;
   } catch {
     return null;
   }
@@ -2702,12 +2702,11 @@ async function loadData({ silent = false, attempt = 1 } = {}) {
   if (!hasLoadedOnce && !silent) lastSyncEl.textContent = 'Загрузка…';
 
   const statsYear = new Date().getFullYear();
-  const [props, bks, cls, snapshots] = await Promise.all([
-    fetchJsonOrNull(`${API}/properties`),
-    fetchJsonOrNull(`${API}/bookings`),
-    fetchJsonOrNull(`${API}/cleaners`),
-    fetchJsonOrNull(`${API}/bookings?stats_snapshots=1&season_year=${statsYear}&limit=1000`)
-  ]);
+  const dashboard = await fetchJsonOrNull(`${API}/dashboard?full=1&season_year=${statsYear}&snapshots_limit=1000`);
+  const props = Array.isArray(dashboard?.properties) ? dashboard.properties : null;
+  const bks = Array.isArray(dashboard?.bookings) ? dashboard.bookings : null;
+  const cls = Array.isArray(dashboard?.cleaners) ? dashboard.cleaners : null;
+  const snapshots = Array.isArray(dashboard?.stats_snapshots) ? dashboard.stats_snapshots : [];
 
   const allOk = props && bks && cls;
 
@@ -5100,9 +5099,12 @@ async function loadTaxData() {
   renderTaxSummary([]);
 
   try {
-    const res = await fetch(`${API}/bookings`);
-    if (!res.ok) throw new Error('Failed');
-    const all = await res.json();
+    let all = bookings;
+    if (!Array.isArray(all) || all.length === 0) {
+      const dashboard = await fetchJsonOrNull(`${API}/dashboard?full=1`);
+      all = Array.isArray(dashboard?.bookings) ? dashboard.bookings : null;
+    }
+    if (!Array.isArray(all)) throw new Error('Failed');
 
     // Filter to real bookings only, group by end_date
     allTaxBookings = all.filter(b => isTaxableBooking(b, all));
