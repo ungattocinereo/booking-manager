@@ -1,6 +1,6 @@
 {
   "since": "2026-04-17",
-  "generated_at": "2026-05-31T08:25:56.010Z",
+  "generated_at": "2026-05-31T08:55:37.527Z",
   "available_dates": [
     "2026-05-31",
     "2026-05-29",
@@ -461,6 +461,23 @@
           ]
         },
         {
+          "bookingKey": "harmony|airbnb|2026-06-06|2026-06-09",
+          "propertyId": "harmony",
+          "platform": "airbnb",
+          "startDate": "2026-06-06",
+          "endDate": "2026-06-09",
+          "guestName": "Julie Rempel",
+          "confirmationCode": "HM2KNAT5TS",
+          "firstSeenAt": "2026-04-01T06:36:55.942Z",
+          "status": "active",
+          "cancelledAt": null,
+          "link": "https://www.airbnb.com/hosting/reservations/details/HM2KNAT5TS",
+          "sources": [
+            "upstream_api",
+            "export_airbnb_csv"
+          ]
+        },
+        {
           "bookingKey": "harmony|airbnb|2026-08-27|2026-09-02",
           "propertyId": "harmony",
           "platform": "airbnb",
@@ -472,6 +489,74 @@
           "status": "cancelled",
           "cancelledAt": "2026-04-25T07:18:19.679Z",
           "link": "https://www.airbnb.com/hosting/reservations/details/HMMTTY4EYA",
+          "sources": [
+            "upstream_api",
+            "export_airbnb_csv"
+          ]
+        },
+        {
+          "bookingKey": "harmony|airbnb|2026-07-18|2026-07-22",
+          "propertyId": "harmony",
+          "platform": "airbnb",
+          "startDate": "2026-07-18",
+          "endDate": "2026-07-22",
+          "guestName": "Danny Leeson",
+          "confirmationCode": "HMZQ3HZNQH",
+          "firstSeenAt": "2026-03-28T19:32:10.514Z",
+          "status": "active",
+          "cancelledAt": null,
+          "link": "https://www.airbnb.com/hosting/reservations/details/HMZQ3HZNQH",
+          "sources": [
+            "upstream_api",
+            "export_airbnb_csv"
+          ]
+        },
+        {
+          "bookingKey": "harmony|airbnb|2026-07-04|2026-07-08",
+          "propertyId": "harmony",
+          "platform": "airbnb",
+          "startDate": "2026-07-04",
+          "endDate": "2026-07-08",
+          "guestName": "Eunjoo 신",
+          "confirmationCode": "HMHQ25YSZK",
+          "firstSeenAt": "2026-03-28T19:32:10.510Z",
+          "status": "active",
+          "cancelledAt": null,
+          "link": "https://www.airbnb.com/hosting/reservations/details/HMHQ25YSZK",
+          "sources": [
+            "upstream_api",
+            "export_airbnb_csv"
+          ]
+        },
+        {
+          "bookingKey": "harmony|airbnb|2026-06-23|2026-06-30",
+          "propertyId": "harmony",
+          "platform": "airbnb",
+          "startDate": "2026-06-23",
+          "endDate": "2026-06-30",
+          "guestName": "Maria Lundgren",
+          "confirmationCode": "HMPCRTPH24",
+          "firstSeenAt": "2026-03-28T19:32:10.506Z",
+          "status": "active",
+          "cancelledAt": null,
+          "link": "https://www.airbnb.com/hosting/reservations/details/HMPCRTPH24",
+          "sources": [
+            "upstream_api",
+            "export_airbnb_csv"
+          ]
+        },
+        {
+          "bookingKey": "harmony|airbnb|2026-06-13|2026-06-18",
+          "propertyId": "harmony",
+          "platform": "airbnb",
+          "startDate": "2026-06-13",
+          "endDate": "2026-06-18",
+          "guestName": "Marina Fileva",
+          "confirmationCode": "HMDWMCQ2M9",
+          "firstSeenAt": "2026-03-28T19:32:10.502Z",
+          "status": "active",
+          "cancelledAt": null,
+          "link": "https://www.airbnb.com/hosting/reservations/details/HMDWMCQ2M9",
           "sources": [
             "upstream_api",
             "export_airbnb_csv"
@@ -623,6 +708,23 @@
           ]
         },
         {
+          "bookingKey": "royal|airbnb|2026-09-18|2026-09-21",
+          "propertyId": "royal",
+          "platform": "airbnb",
+          "startDate": "2026-09-18",
+          "endDate": "2026-09-21",
+          "guestName": "Sandra Jarque",
+          "confirmationCode": "HMB2CME9RX",
+          "firstSeenAt": "2026-04-16T11:19:00.646Z",
+          "status": "active",
+          "cancelledAt": null,
+          "link": "https://www.airbnb.com/hosting/reservations/details/HMB2CME9RX",
+          "sources": [
+            "upstream_api",
+            "export_airbnb_csv"
+          ]
+        },
+        {
           "bookingKey": "royal|airbnb|2026-05-05|2026-05-10",
           "propertyId": "royal",
           "platform": "airbnb",
@@ -640,6 +742,74 @@
           ]
         },
         {
+          "bookingKey": "royal|airbnb|2026-06-21|2026-06-28",
+          "propertyId": "royal",
+          "platform": "airbnb",
+          "startDate": "2026-06-21",
+          "endDate": "2026-06-28",
+          "guestName": "Laura De Keyser",
+          "confirmationCode": "HM8R9N3PJ9",
+          "firstSeenAt": "2026-03-30T20:26:15.905Z",
+          "status": "active",
+          "cancelledAt": null,
+          "link": "https://www.airbnb.com/hosting/reservations/details/HM8R9N3PJ9",
+          "sources": [
+            "upstream_api",
+            "export_airbnb_csv"
+          ]
+        },
+        {
+          "bookingKey": "royal|airbnb|2026-07-11|2026-07-14",
+          "propertyId": "royal",
+          "platform": "airbnb",
+          "startDate": "2026-07-11",
+          "endDate": "2026-07-14",
+          "guestName": "Maxime Fritz",
+          "confirmationCode": "HMKQKN52MR",
+          "firstSeenAt": "2026-03-30T08:39:19.309Z",
+          "status": "active",
+          "cancelledAt": null,
+          "link": "https://www.airbnb.com/hosting/reservations/details/HMKQKN52MR",
+          "sources": [
+            "upstream_api",
+            "export_airbnb_csv"
+          ]
+        },
+        {
+          "bookingKey": "royal|airbnb|2026-10-08|2026-10-12",
+          "propertyId": "royal",
+          "platform": "airbnb",
+          "startDate": "2026-10-08",
+          "endDate": "2026-10-12",
+          "guestName": "Jean Pierre Le Guen",
+          "confirmationCode": "HM3JTYQ9HW",
+          "firstSeenAt": "2026-03-28T19:32:10.999Z",
+          "status": "active",
+          "cancelledAt": null,
+          "link": "https://www.airbnb.com/hosting/reservations/details/HM3JTYQ9HW",
+          "sources": [
+            "upstream_api",
+            "export_airbnb_csv"
+          ]
+        },
+        {
+          "bookingKey": "royal|airbnb|2026-09-24|2026-09-27",
+          "propertyId": "royal",
+          "platform": "airbnb",
+          "startDate": "2026-09-24",
+          "endDate": "2026-09-27",
+          "guestName": "Shiran Katsnelson",
+          "confirmationCode": "HMKKP94BJ2",
+          "firstSeenAt": "2026-03-28T19:32:10.994Z",
+          "status": "active",
+          "cancelledAt": null,
+          "link": "https://www.airbnb.com/hosting/reservations/details/HMKKP94BJ2",
+          "sources": [
+            "upstream_api",
+            "export_airbnb_csv"
+          ]
+        },
+        {
           "bookingKey": "royal|airbnb|2026-09-02|2026-09-16",
           "propertyId": "royal",
           "platform": "airbnb",
@@ -651,6 +821,142 @@
           "status": "cancelled",
           "cancelledAt": "2026-05-18T08:30:46.697Z",
           "link": "https://www.airbnb.com/hosting/reservations/details/HMHMQRYWR5",
+          "sources": [
+            "upstream_api",
+            "export_airbnb_csv"
+          ]
+        },
+        {
+          "bookingKey": "royal|airbnb|2026-08-26|2026-08-29",
+          "propertyId": "royal",
+          "platform": "airbnb",
+          "startDate": "2026-08-26",
+          "endDate": "2026-08-29",
+          "guestName": "Рузанна Адамян",
+          "confirmationCode": "HM5ZHW9WKP",
+          "firstSeenAt": "2026-03-28T19:32:10.986Z",
+          "status": "active",
+          "cancelledAt": null,
+          "link": "https://www.airbnb.com/hosting/reservations/details/HM5ZHW9WKP",
+          "sources": [
+            "upstream_api",
+            "export_airbnb_csv"
+          ]
+        },
+        {
+          "bookingKey": "royal|airbnb|2026-07-31|2026-08-07",
+          "propertyId": "royal",
+          "platform": "airbnb",
+          "startDate": "2026-07-31",
+          "endDate": "2026-08-07",
+          "guestName": "Dániel Kiss",
+          "confirmationCode": "HMYHPXJ8MF",
+          "firstSeenAt": "2026-03-28T19:32:10.982Z",
+          "status": "active",
+          "cancelledAt": null,
+          "link": "https://www.airbnb.com/hosting/reservations/details/HMYHPXJ8MF",
+          "sources": [
+            "upstream_api",
+            "export_airbnb_csv"
+          ]
+        },
+        {
+          "bookingKey": "royal|airbnb|2026-07-20|2026-07-24",
+          "propertyId": "royal",
+          "platform": "airbnb",
+          "startDate": "2026-07-20",
+          "endDate": "2026-07-24",
+          "guestName": "Laura Nees",
+          "confirmationCode": "HM25QAZY9C",
+          "firstSeenAt": "2026-03-28T19:32:10.978Z",
+          "status": "active",
+          "cancelledAt": null,
+          "link": "https://www.airbnb.com/hosting/reservations/details/HM25QAZY9C",
+          "sources": [
+            "upstream_api",
+            "export_airbnb_csv"
+          ]
+        },
+        {
+          "bookingKey": "royal|airbnb|2026-06-29|2026-07-03",
+          "propertyId": "royal",
+          "platform": "airbnb",
+          "startDate": "2026-06-29",
+          "endDate": "2026-07-03",
+          "guestName": "Josh Real-Diaz",
+          "confirmationCode": "HMRC2FFWBP",
+          "firstSeenAt": "2026-03-28T19:32:10.969Z",
+          "status": "active",
+          "cancelledAt": null,
+          "link": "https://www.airbnb.com/hosting/reservations/details/HMRC2FFWBP",
+          "sources": [
+            "upstream_api",
+            "export_airbnb_csv"
+          ]
+        },
+        {
+          "bookingKey": "royal|airbnb|2026-06-17|2026-06-21",
+          "propertyId": "royal",
+          "platform": "airbnb",
+          "startDate": "2026-06-17",
+          "endDate": "2026-06-21",
+          "guestName": "Jason Wilding",
+          "confirmationCode": "HMKPZQPBQJ",
+          "firstSeenAt": "2026-03-28T19:32:10.965Z",
+          "status": "active",
+          "cancelledAt": null,
+          "link": "https://www.airbnb.com/hosting/reservations/details/HMKPZQPBQJ",
+          "sources": [
+            "upstream_api",
+            "export_airbnb_csv"
+          ]
+        },
+        {
+          "bookingKey": "royal|airbnb|2026-06-10|2026-06-17",
+          "propertyId": "royal",
+          "platform": "airbnb",
+          "startDate": "2026-06-10",
+          "endDate": "2026-06-17",
+          "guestName": "Martine Mjørud",
+          "confirmationCode": "HMH39DWE8F",
+          "firstSeenAt": "2026-03-28T19:32:10.961Z",
+          "status": "active",
+          "cancelledAt": null,
+          "link": "https://www.airbnb.com/hosting/reservations/details/HMH39DWE8F",
+          "sources": [
+            "upstream_api",
+            "export_airbnb_csv"
+          ]
+        },
+        {
+          "bookingKey": "royal|airbnb|2026-06-05|2026-06-09",
+          "propertyId": "royal",
+          "platform": "airbnb",
+          "startDate": "2026-06-05",
+          "endDate": "2026-06-09",
+          "guestName": "Maria Matilde De Sousa Neves",
+          "confirmationCode": "HMMESFCTMX",
+          "firstSeenAt": "2026-03-28T19:32:10.957Z",
+          "status": "active",
+          "cancelledAt": null,
+          "link": "https://www.airbnb.com/hosting/reservations/details/HMMESFCTMX",
+          "sources": [
+            "upstream_api",
+            "export_airbnb_csv"
+          ]
+        },
+        {
+          "bookingKey": "royal|airbnb|2026-05-26|2026-06-02",
+          "propertyId": "royal",
+          "platform": "airbnb",
+          "startDate": "2026-05-26",
+          "endDate": "2026-06-02",
+          "guestName": "Luisanna Onnis",
+          "confirmationCode": "HMX54TCPCA",
+          "firstSeenAt": "2026-03-28T19:32:10.953Z",
+          "status": "active",
+          "cancelledAt": null,
+          "link": "https://www.airbnb.com/hosting/reservations/details/HMX54TCPCA",
           "sources": [
             "upstream_api",
             "export_airbnb_csv"
@@ -946,6 +1252,193 @@
           "status": "cancelled",
           "cancelledAt": "2026-05-14T07:28:29.713Z",
           "link": "https://www.airbnb.com/hosting/reservations/details/HMKWE9W5PN",
+          "sources": [
+            "upstream_api",
+            "export_airbnb_csv"
+          ]
+        },
+        {
+          "bookingKey": "carina|airbnb|2026-06-14|2026-06-18",
+          "propertyId": "carina",
+          "platform": "airbnb",
+          "startDate": "2026-06-14",
+          "endDate": "2026-06-18",
+          "guestName": "Alejandra Cifuentes",
+          "confirmationCode": "HMR45RPMPH",
+          "firstSeenAt": "2026-04-12T06:28:06.966Z",
+          "status": "active",
+          "cancelledAt": null,
+          "link": "https://www.airbnb.com/hosting/reservations/details/HMR45RPMPH",
+          "sources": [
+            "upstream_api",
+            "export_airbnb_csv"
+          ]
+        },
+        {
+          "bookingKey": "carina|airbnb|2026-07-10|2026-07-13",
+          "propertyId": "carina",
+          "platform": "airbnb",
+          "startDate": "2026-07-10",
+          "endDate": "2026-07-13",
+          "guestName": "Elliot Abry",
+          "confirmationCode": "HMM5XBDFEW",
+          "firstSeenAt": "2026-04-04T06:28:07.207Z",
+          "status": "active",
+          "cancelledAt": null,
+          "link": "https://www.airbnb.com/hosting/reservations/details/HMM5XBDFEW",
+          "sources": [
+            "upstream_api",
+            "export_airbnb_csv"
+          ]
+        },
+        {
+          "bookingKey": "carina|airbnb|2026-09-12|2026-09-16",
+          "propertyId": "carina",
+          "platform": "airbnb",
+          "startDate": "2026-09-12",
+          "endDate": "2026-09-16",
+          "guestName": "Corinna Zacher",
+          "confirmationCode": "HMAYPYQ5H8",
+          "firstSeenAt": "2026-03-30T13:11:04.765Z",
+          "status": "active",
+          "cancelledAt": null,
+          "link": "https://www.airbnb.com/hosting/reservations/details/HMAYPYQ5H8",
+          "sources": [
+            "upstream_api",
+            "export_airbnb_csv"
+          ]
+        },
+        {
+          "bookingKey": "carina|airbnb|2026-08-12|2026-08-22",
+          "propertyId": "carina",
+          "platform": "airbnb",
+          "startDate": "2026-08-12",
+          "endDate": "2026-08-22",
+          "guestName": "Shannon Downie",
+          "confirmationCode": "HMNSMT4RC5",
+          "firstSeenAt": "2026-03-28T19:32:10.119Z",
+          "status": "active",
+          "cancelledAt": null,
+          "link": "https://www.airbnb.com/hosting/reservations/details/HMNSMT4RC5",
+          "sources": [
+            "upstream_api",
+            "export_airbnb_csv"
+          ]
+        },
+        {
+          "bookingKey": "carina|airbnb|2026-08-05|2026-08-12",
+          "propertyId": "carina",
+          "platform": "airbnb",
+          "startDate": "2026-08-05",
+          "endDate": "2026-08-12",
+          "guestName": "Emilio Samuel Nieto",
+          "confirmationCode": "HMHBBMT3SE",
+          "firstSeenAt": "2026-03-28T19:32:10.115Z",
+          "status": "active",
+          "cancelledAt": null,
+          "link": "https://www.airbnb.com/hosting/reservations/details/HMHBBMT3SE",
+          "sources": [
+            "upstream_api",
+            "export_airbnb_csv"
+          ]
+        },
+        {
+          "bookingKey": "carina|airbnb|2026-07-21|2026-07-24",
+          "propertyId": "carina",
+          "platform": "airbnb",
+          "startDate": "2026-07-21",
+          "endDate": "2026-07-24",
+          "guestName": "Zeynep Kurtpınar",
+          "confirmationCode": "HMFPDT3TZS",
+          "firstSeenAt": "2026-03-28T19:32:10.110Z",
+          "status": "active",
+          "cancelledAt": null,
+          "link": "https://www.airbnb.com/hosting/reservations/details/HMFPDT3TZS",
+          "sources": [
+            "upstream_api",
+            "export_airbnb_csv"
+          ]
+        },
+        {
+          "bookingKey": "carina|airbnb|2026-07-18|2026-07-21",
+          "propertyId": "carina",
+          "platform": "airbnb",
+          "startDate": "2026-07-18",
+          "endDate": "2026-07-21",
+          "guestName": "Tom Burke",
+          "confirmationCode": "HM9SJH33W8",
+          "firstSeenAt": "2026-03-28T19:32:10.106Z",
+          "status": "active",
+          "cancelledAt": null,
+          "link": "https://www.airbnb.com/hosting/reservations/details/HM9SJH33W8",
+          "sources": [
+            "upstream_api",
+            "export_airbnb_csv"
+          ]
+        },
+        {
+          "bookingKey": "carina|airbnb|2026-06-25|2026-06-29",
+          "propertyId": "carina",
+          "platform": "airbnb",
+          "startDate": "2026-06-25",
+          "endDate": "2026-06-29",
+          "guestName": "Piper Worsley",
+          "confirmationCode": "HM5T9RJ83J",
+          "firstSeenAt": "2026-03-28T19:32:10.102Z",
+          "status": "active",
+          "cancelledAt": null,
+          "link": "https://www.airbnb.com/hosting/reservations/details/HM5T9RJ83J",
+          "sources": [
+            "upstream_api",
+            "export_airbnb_csv"
+          ]
+        },
+        {
+          "bookingKey": "carina|airbnb|2026-06-05|2026-06-12",
+          "propertyId": "carina",
+          "platform": "airbnb",
+          "startDate": "2026-06-05",
+          "endDate": "2026-06-12",
+          "guestName": "Iben Bergholt Laursen",
+          "confirmationCode": "HMRF8JWQY8",
+          "firstSeenAt": "2026-03-28T19:32:10.094Z",
+          "status": "active",
+          "cancelledAt": null,
+          "link": "https://www.airbnb.com/hosting/reservations/details/HMRF8JWQY8",
+          "sources": [
+            "upstream_api",
+            "export_airbnb_csv"
+          ]
+        },
+        {
+          "bookingKey": "carina|airbnb|2026-06-01|2026-06-05",
+          "propertyId": "carina",
+          "platform": "airbnb",
+          "startDate": "2026-06-01",
+          "endDate": "2026-06-05",
+          "guestName": "Ryann Haburchak",
+          "confirmationCode": "HMTBSD4DNR",
+          "firstSeenAt": "2026-03-28T19:32:10.091Z",
+          "status": "active",
+          "cancelledAt": null,
+          "link": "https://www.airbnb.com/hosting/reservations/details/HMTBSD4DNR",
+          "sources": [
+            "upstream_api",
+            "export_airbnb_csv"
+          ]
+        },
+        {
+          "bookingKey": "carina|airbnb|2026-05-29|2026-06-01",
+          "propertyId": "carina",
+          "platform": "airbnb",
+          "startDate": "2026-05-29",
+          "endDate": "2026-06-01",
+          "guestName": "Brianna Kuchenmeister",
+          "confirmationCode": "HM44AHDRDX",
+          "firstSeenAt": "2026-03-28T19:32:10.086Z",
+          "status": "active",
+          "cancelledAt": null,
+          "link": "https://www.airbnb.com/hosting/reservations/details/HM44AHDRDX",
           "sources": [
             "upstream_api",
             "export_airbnb_csv"

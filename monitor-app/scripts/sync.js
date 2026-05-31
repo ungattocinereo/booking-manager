@@ -357,6 +357,7 @@ async function main() {
   }
 
   const sinceDate = new Date(`${SINCE}T00:00:00.000Z`);
+  const today = nowIso().slice(0, 10);
 
   function linkFor(a) {
     if (a.reservationUrl) return a.reservationUrl;
@@ -371,7 +372,9 @@ async function main() {
     const firstSeen = a.bookingCreatedAt || a.firstSeenAt;
     if (!firstSeen) continue;
     const firstSeenDate = new Date(firstSeen);
+    const isCurrentOrFutureActive = a.lastEvent !== 'cancelled' && a.endDate >= today;
     const inRange = firstSeenDate >= sinceDate ||
+      isCurrentOrFutureActive ||
       (a.lastEvent === 'cancelled' && a.cancelledAt && new Date(a.cancelledAt) >= sinceDate);
     if (!inRange) continue;
     bookings.push({
