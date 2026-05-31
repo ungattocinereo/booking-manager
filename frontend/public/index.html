@@ -2041,6 +2041,7 @@ const API = '/api';
 let properties = [];
 let bookings = [];
 let cleaners = [];
+let statsSnapshots = [];
 let allAssignments = {};
 
 const TAB_ROUTES = { '/stats': 'stats', '/maid': 'cleaners', '/tax': 'tax' };
@@ -2078,7 +2079,7 @@ async function fetchJsonOrNull(url) {
     const res = await fetch(url);
     if (!res.ok) return null;
     const data = await res.json();
-    return Array.isArray(data) ? data : null;
+    return data || null;
   } catch {
     return null;
   }
@@ -2090,11 +2091,12 @@ async function loadData({ silent = false, attempt = 1 } = {}) {
   const lastSyncEl = document.getElementById('lastSync');
   if (!hasLoadedOnce && !silent) lastSyncEl.textContent = 'Загрузка…';
 
-  const [props, bks, cls] = await Promise.all([
-    fetchJsonOrNull(`${API}/properties`),
-    fetchJsonOrNull(`${API}/bookings`),
-    fetchJsonOrNull(`${API}/cleaners`)
-  ]);
+  const statsYear = new Date().getFullYear();
+  const dashboard = await fetchJsonOrNull(`${API}/dashboard?full=1&season_year=${statsYear}&snapshots_limit=1000`);
+  const props = Array.isArray(dashboard?.properties) ? dashboard.properties : null;
+  const bks = Array.isArray(dashboard?.bookings) ? dashboard.bookings : null;
+  const cls = Array.isArray(dashboard?.cleaners) ? dashboard.cleaners : null;
+  const snapshots = Array.isArray(dashboard?.stats_snapshots) ? dashboard.stats_snapshots : [];
 
   const allOk = props && bks && cls;
 
@@ -2115,6 +2117,7 @@ async function loadData({ silent = false, attempt = 1 } = {}) {
   properties = props;
   bookings = bks;
   cleaners = cls;
+  statsSnapshots = snapshots || [];
 
   allAssignments = {};
   properties.forEach(p => allAssignments[p.id] = []);
@@ -2134,6 +2137,9 @@ async function loadData({ silent = false, attempt = 1 } = {}) {
   if (document.getElementById('taxTab').style.display !== 'none') {
     allTaxBookings = bookings.filter(b => isTaxableBooking(b, bookings));
     renderTaxList();
+  }
+  if (document.getElementById('statsTab').style.display !== 'none') {
+    renderStats();
   }
   lastSyncEl.textContent = 'Обновлено ' + new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
   hasLoadedOnce = true;
@@ -2490,34 +2496,52 @@ function shouldShowCalendarArchive(view = calendarState.view) {
   return CALENDAR_ARCHIVE_VIEWS.has(view);
 }
 
+function formatCalendarPx(value) {
+  return `${Math.round(value * 1000) / 1000}px`;
+}
+
 function getCalendarPropertyColWidth(scroll) {
   if (!scroll) return 0;
   const styles = getComputedStyle(scroll);
   return parseFloat(styles.getPropertyValue('--calendar-property-col-width')) || 0;
 }
 
-function getCalendarBaseDayWidth(mode, days, today, scroll) {
-  if (!mode.fitToWidth || !scroll) return mode.dayWidth;
-  const todayInRange = days.some(day => day.getTime() === today.getTime());
-  const widthUnits = days.length + (todayInRange ? 1 : 0);
-  const availableWidth = Math.max(0, scroll.clientWidth - getCalendarPropertyColWidth(scroll));
-  return Math.max(mode.dayWidth, availableWidth / Math.max(widthUnits, 1));
+function buildCalendarDayMetrics(days, mode, today, scroll) {
+  const todayIndex = days.findIndex(day => day.getTime() === today.getTime());
+  const propertyColWidth = getCalendarPropertyColWidth(scroll);
+  const widthUnits = days.length + (todayIndex >= 0 ? 1 : 0);
+  const availableWidth = Math.max(0, scroll.clientWidth - propertyColWidth);
+  const baseWidth = mode.fitToWidth && availableWidth > 0
+    ? Math.max(mode.dayWidth, availableWidth / Math.max(widthUnits, 1))
+    : mode.dayWidth;
+  const widths = days.map((_, index) => index === todayIndex ? baseWidth * 2 : baseWidth);
+  const offsets = [];
+  let totalWidth = 0;
+  widths.forEach(width => {
+    offsets.push(totalWidth);
+    totalWidth += width;
+  });
+
+  return { todayIndex, baseWidth, widths, offsets, totalWidth };
 }
 
-function getCalendarTodayWidth(dayWidth) {
-  return dayWidth * 2;
-}
+function getCalendarHandoverRange(metrics, start, end, startDate, endDate) {
+  const startIdx = Math.round((start - startDate) / DAY_MS);
+  const endIdx = Math.round((end - startDate) / DAY_MS);
+  const startsBeforeRange = start < startDate;
+  const endsAfterRange = end > endDate;
+  const visualStart = startsBeforeRange
+    ? 0
+    : (metrics.offsets[startIdx] ?? metrics.totalWidth) + ((metrics.widths[startIdx] || 0) / 2);
+  const visualEnd = endsAfterRange
+    ? metrics.totalWidth
+    : (metrics.offsets[endIdx] ?? metrics.totalWidth) + ((metrics.widths[endIdx] || 0) / 2);
+  const left = Math.max(0, Math.min(visualStart, metrics.totalWidth));
 
-function getCalendarDayWidth(day, today, dayWidth) {
-  return day.getTime() === today.getTime() ? getCalendarTodayWidth(dayWidth) : dayWidth;
-}
-
-function sumCalendarDayWidths(startIndex, endIndex) {
-  const start = Math.max(0, startIndex);
-  const end = Math.min(calendarDayWidths.length, endIndex);
-  let total = 0;
-  for (let i = start; i < end; i++) total += calendarDayWidths[i] || calendarCurrentDayWidth;
-  return total;
+  return {
+    left,
+    width: Math.max(0, Math.min(visualEnd, metrics.totalWidth) - left)
+  };
 }
 
 function syncCalendarPropertyColumnState() {
@@ -2707,23 +2731,17 @@ function renderCalendar({ preserveScroll = false, focusDate = null, behavior = '
   while (d <= endDate) { days.push(new Date(d)); d.setDate(d.getDate() + 1); }
   const totalDays = days.length;
   const mode = CALENDAR_VIEW_MODES[calendarState.view] || CALENDAR_VIEW_MODES.quarter;
-  const baseDayWidth = getCalendarBaseDayWidth(mode, days, today, scroll);
-  calendarCurrentDayWidth = baseDayWidth;
-  const todayWidth = getCalendarTodayWidth(baseDayWidth);
-  scroll.style.setProperty('--calendar-day-width', `${baseDayWidth}px`);
-  scroll.style.setProperty('--calendar-today-width', `${todayWidth}px`);
-  const calendarTodayIndex = days.findIndex(day => day.getTime() === today.getTime());
-  calendarDayWidths = days.map(day => getCalendarDayWidth(day, today, baseDayWidth));
-  calendarDayOffsets = [];
-  let dayOffset = 0;
-  calendarDayWidths.forEach((width, index) => {
-    calendarDayOffsets[index] = dayOffset;
-    dayOffset += width;
-  });
+  const dayMetrics = buildCalendarDayMetrics(days, mode, today, scroll);
+  const calendarTodayIndex = dayMetrics.todayIndex;
+  calendarCurrentDayWidth = dayMetrics.baseWidth;
+  calendarDayWidths = dayMetrics.widths;
+  calendarDayOffsets = dayMetrics.offsets;
+  scroll.style.setProperty('--calendar-day-width', formatCalendarPx(dayMetrics.baseWidth));
+  scroll.style.setProperty('--calendar-today-width', formatCalendarPx(dayMetrics.baseWidth * 2));
 
   grid.style.display = 'grid';
-  grid.style.gridTemplateColumns = `var(--calendar-property-col-width) ${calendarDayWidths.map(width => `${width}px`).join(' ')}`;
-  grid.style.width = `calc(var(--calendar-property-col-width) + ${dayOffset}px)`;
+  grid.style.gridTemplateColumns = `var(--calendar-property-col-width) ${dayMetrics.widths.map(formatCalendarPx).join(' ')}`;
+  grid.style.width = `calc(var(--calendar-property-col-width) + ${formatCalendarPx(dayMetrics.totalWidth)})`;
   grid.innerHTML = '';
   scroll.querySelectorAll('.cal-month-label').forEach(label => label.remove());
 
@@ -2748,6 +2766,7 @@ function renderCalendar({ preserveScroll = false, focusDate = null, behavior = '
     el.className = 'cal-day-header' + (isToday ? ' today' : '') + (isPast ? ' past' : '') + (isWeekend ? ' weekend' : '') + (isMonthStart ? ' month-start' : '');
     el.style.gridRow = '1';
     el.style.gridColumn = col;
+    el.style.minWidth = formatCalendarPx(dayMetrics.widths[i]);
     el.innerHTML = `<div class="day-num">${day.getDate()}</div><div class="day-name">${dayNames[day.getDay()]}</div>`;
     grid.appendChild(el);
 
@@ -2755,7 +2774,7 @@ function renderCalendar({ preserveScroll = false, focusDate = null, behavior = '
       const label = document.createElement('div');
       label.className = 'cal-month-label';
       label.textContent = `${monthNames[day.getMonth()]} ${day.getFullYear()}`;
-      label.style.left = `calc(var(--calendar-property-col-width) + ${calendarDayOffsets[i] || 0}px)`;
+      label.style.left = `calc(var(--calendar-property-col-width) + ${formatCalendarPx(dayMetrics.offsets[i] || 0)})`;
       scroll.appendChild(label);
     }
   });
@@ -2782,6 +2801,7 @@ function renderCalendar({ preserveScroll = false, focusDate = null, behavior = '
       spacer.className = 'cal-group-header';
       spacer.style.gridRow = currentRow;
       spacer.style.gridColumn = i + 2;
+      spacer.style.minWidth = formatCalendarPx(dayMetrics.widths[i]);
       grid.appendChild(spacer);
     });
     currentRow++;
@@ -2812,25 +2832,15 @@ function renderCalendar({ preserveScroll = false, focusDate = null, behavior = '
         cell.className = 'cal-cell' + (isToday ? ' today' : '') + (isPast ? ' past' : '') + (isWeekend ? ' weekend' : '') + (isMonthStart ? ' month-start' : '');
         cell.style.gridRow = row;
         cell.style.gridColumn = dayIdx + 2;
+        cell.style.minWidth = formatCalendarPx(dayMetrics.widths[dayIdx]);
         grid.appendChild(cell);
       });
 
       getCalendarBookingsForProperty(prop.id, startDate, endDate, today).forEach(booking => {
         const start = parseLocalDate(booking.start_date);
         const end = parseLocalDate(booking.end_date);
-        const rawStartIdx = Math.round((start - startDate) / DAY_MS);
-        const rawEndBoundaryIdx = Math.round((end - startDate) / DAY_MS);
-        const startIdx = Math.max(0, rawStartIdx);
-        const endBoundaryIdx = Math.min(totalDays, rawEndBoundaryIdx);
-        if (endBoundaryIdx < 0 || startIdx >= totalDays) return;
-        const startIsVisible = rawStartIdx >= 0;
-        const endIsVisible = rawEndBoundaryIdx < totalDays;
-        const gridEndLine = endIsVisible ? endBoundaryIdx + 3 : endBoundaryIdx + 2;
-        const startColumnWidth = calendarDayWidths[startIdx] || baseDayWidth;
-        const endColumnWidth = calendarDayWidths[endBoundaryIdx] || baseDayWidth;
-        const startHalfDayOffset = Math.max(4, startColumnWidth / 2);
-        const endHalfDayOffset = Math.max(4, endColumnWidth / 2);
-        const visibleWidth = sumCalendarDayWidths(startIdx, endBoundaryIdx + (endIsVisible ? 1 : 0));
+        const visualRange = getCalendarHandoverRange(dayMetrics, start, end, startDate, endDate);
+        const visibleWidth = visualRange.width;
         if (visibleWidth <= 0) return;
 
         const isUnavailable = isUnavailableBooking(booking);
@@ -2844,9 +2854,9 @@ function renderCalendar({ preserveScroll = false, focusDate = null, behavior = '
         bar.type = 'button';
         bar.className = `booking-bar ${platformClass}${isBlocked ? ' not-available' : ''}${isCompleted ? ' completed' : ''}`;
         bar.style.gridRow = row;
-        bar.style.gridColumn = `${startIdx + 2} / ${gridEndLine}`;
-        bar.style.marginLeft = startIsVisible ? `${startHalfDayOffset}px` : '4px';
-        bar.style.marginRight = endIsVisible ? `${endHalfDayOffset}px` : '4px';
+        bar.style.gridColumn = `2 / ${totalDays + 2}`;
+        bar.style.marginLeft = formatCalendarPx(visualRange.left + 4);
+        bar.style.width = formatCalendarPx(Math.max(10, visibleWidth - 8));
         bar.innerHTML = `<span class="bar-label">${escapeHtml(shortLabel)}</span>`;
         bar.setAttribute('aria-label', `${propertyMeta(booking.property_id).name}: ${barText}`);
         bar.addEventListener('click', () => openBookingPanel(booking.id));
@@ -3630,9 +3640,12 @@ async function loadTaxData() {
   renderTaxSummary([]);
 
   try {
-    const res = await fetch(`${API}/bookings`);
-    if (!res.ok) throw new Error('Failed');
-    const all = await res.json();
+    let all = bookings;
+    if (!Array.isArray(all) || all.length === 0) {
+      const dashboard = await fetchJsonOrNull(`${API}/dashboard?full=1`);
+      all = Array.isArray(dashboard?.bookings) ? dashboard.bookings : null;
+    }
+    if (!Array.isArray(all)) throw new Error('Failed');
 
     // Filter to real bookings only, group by end_date
     allTaxBookings = all.filter(b => isTaxableBooking(b, all));
