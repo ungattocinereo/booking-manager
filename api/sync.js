@@ -6,6 +6,7 @@ const db = USE_POSTGRES
 
 const { syncCalendars, generateCleaningTasks } = require('../backend/src/sync-calendars');
 const { enrichFromExports } = require('../backend/src/enrich-from-exports');
+const { recordBookingStatsSnapshot } = require('../backend/src/stats-snapshots');
 
 module.exports = async (req, res) => {
   // Allow POST (manual) and GET (Vercel Cron)
@@ -30,6 +31,9 @@ module.exports = async (req, res) => {
     // Enrich bookings from Airbnb CSV exports
     const enrichResult = await enrichFromExports(db, !!USE_POSTGRES);
 
+    // Persist aggregate statistics for the history slider/trend charts.
+    const statsSnapshot = await recordBookingStatsSnapshot(db, { source: req.method === 'GET' ? 'cron' : 'manual' });
+
     res.status(200).json({
       success: true,
       message: 'Calendars synced successfully',
@@ -37,6 +41,12 @@ module.exports = async (req, res) => {
       stale_removed: syncResult.totalDeleted,
       tasks_created: tasksCount,
       enriched: enrichResult,
+      stats_snapshot: {
+        season_year: statsSnapshot.season_year,
+        booking_count: statsSnapshot.booking_count,
+        occupied_nights: statsSnapshot.occupied_nights,
+        occupancy_percent: statsSnapshot.occupancy_percent
+      },
       timestamp: new Date().toISOString()
     });
   } catch (error) {

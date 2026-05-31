@@ -14,14 +14,24 @@ module.exports = async (req, res) => {
     }
 
     const today = new Date().toISOString().split('T')[0];
+    const full = req.query.full === '1';
+    const seasonYear = req.query.season_year || new Date().getFullYear();
+    const snapshotsLimit = req.query.snapshots_limit || req.query.limit || 1000;
     
     // Fetch all data
-    const [properties, bookings, cleaningTasks, cleaners] = await Promise.all([
+    const [properties, bookings, cleaningTasks, cleaners, statsSnapshots] = await Promise.all([
       db.getProperties(),
-      db.getBookings(null, today),
+      db.getBookings(null, full ? null : today),
       db.getCleaningTasks(null, today),
-      db.getCleaners()
+      db.getCleaners(),
+      full && typeof db.getStatsSnapshots === 'function'
+        ? db.getStatsSnapshots({ seasonYear, limit: snapshotsLimit })
+        : Promise.resolve([])
     ]);
+
+    for (const cleaner of cleaners) {
+      cleaner.properties = await db.getCleanerProperties(cleaner.id);
+    }
 
     // Format dates to YYYY-MM-DD
     const formattedBookings = bookings.map(formatBooking);
@@ -51,7 +61,8 @@ module.exports = async (req, res) => {
       bookings: formattedBookings,
       bookings_by_property: byProperty,
       cleaning_tasks: formattedTasks,
-      cleaners
+      cleaners,
+      stats_snapshots: statsSnapshots
     });
   } catch (error) {
     console.error('Error fetching dashboard data:', error);

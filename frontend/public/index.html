@@ -518,7 +518,9 @@
       box-shadow: var(--shadow);
     }
     .calendar-scroll-wrapper {
-      --calendar-property-col-width: 190px;
+      --calendar-property-col-expanded-width: 190px;
+      --calendar-property-col-collapsed-width: 58px;
+      --calendar-property-col-width: var(--calendar-property-col-expanded-width);
       --calendar-day-width: 30px;
       --calendar-today-width: 48px;
       --calendar-grid-line: #e1e7ef;
@@ -556,6 +558,9 @@
       transition: width .18s ease, min-width .18s ease, padding .18s ease;
       box-shadow: 8px 0 16px rgba(15,23,42,.04);
     }
+    .calendar-scroll-wrapper.is-property-collapsed {
+      --calendar-property-col-width: var(--calendar-property-col-collapsed-width);
+    }
     .cal-property-header {
       position: sticky;
       top: 0;
@@ -577,6 +582,28 @@
       display: inline-flex;
       color: var(--text-secondary);
       line-height: 0;
+      flex-shrink: 0;
+    }
+    .cal-property-header-title,
+    .cal-property-title,
+    .cal-group-label {
+      transition: opacity .14s ease, max-width .18s ease;
+    }
+    .calendar-scroll-wrapper.is-property-collapsed .cal-property-header,
+    .calendar-scroll-wrapper.is-property-collapsed .cal-property-name,
+    .calendar-scroll-wrapper.is-property-collapsed .cal-group-header.cal-property-col {
+      justify-content: center;
+      gap: 0;
+      padding-left: 0;
+      padding-right: 0;
+    }
+    .calendar-scroll-wrapper.is-property-collapsed .cal-property-header-title,
+    .calendar-scroll-wrapper.is-property-collapsed .cal-property-title,
+    .calendar-scroll-wrapper.is-property-collapsed .cal-group-label {
+      max-width: 0;
+      opacity: 0;
+      overflow: hidden;
+      white-space: nowrap;
     }
     .cal-day-header {
       position: sticky;
@@ -726,10 +753,10 @@
       display: flex;
       align-items: center;
       min-width: 10px;
-      height: 32px;
-      margin: 7px 4px -32px;
+      height: 24px;
+      margin: 4px 4px -28px;
       border-radius: 999px;
-      padding: 0 10px;
+      padding: 0 9px;
       color: rgba(255,255,255,.95);
       font-family: inherit;
       font-size: 11px;
@@ -766,7 +793,13 @@
     }
     .booking-bar.completed .bar-label { color: #64748b; }
     .booking-bar.not-available {
-      opacity: .56;
+      height: 12px;
+      margin: 30px 4px -42px;
+      padding: 0 6px;
+      font-size: 9px;
+      letter-spacing: 0;
+      text-transform: uppercase;
+      opacity: .72;
       z-index: 1;
       background-image: repeating-linear-gradient(
         45deg, rgba(255,255,255,.25), rgba(255,255,255,.25) 3px, transparent 3px, transparent 6px
@@ -781,6 +814,9 @@
     .booking-bar .bar-label {
       overflow: hidden;
       text-overflow: ellipsis;
+    }
+    .booking-bar.not-available .bar-label {
+      line-height: 1;
     }
 
     /* ===== MOBILE AGENDA ===== */
@@ -1581,7 +1617,8 @@
         font-size: 12px;
       }
       .calendar-scroll-wrapper {
-        --calendar-property-col-width: 144px;
+        --calendar-property-col-expanded-width: 144px;
+        --calendar-property-col-collapsed-width: 54px;
         --calendar-day-width: 36px;
       }
 
@@ -2292,6 +2329,10 @@ function isUnavailableBooking(b) {
     type === 'unavailable';
 }
 
+function unavailableBookingLabel(b) {
+  return String(b.raw_summary || '').toLowerCase().includes('closed') ? 'Закрыто' : 'Недоступно';
+}
+
 function hasGuestDetails(b) {
   return Boolean((b.guest_name || '').trim()) || Number(b.guest_count) > 0;
 }
@@ -2388,10 +2429,10 @@ const COUNTRY_NAMES = {
 
 const DAY_MS = 86400000;
 const CALENDAR_VIEW_MODES = {
-  twoWeeks: { label: '14 дней', days: 14, dayWidth: 62 },
-  month: { label: '30 дней', days: 30, dayWidth: 46 },
-  quarter: { label: '90 дней', days: 90, dayWidth: 30 },
-  season: { label: 'Сезон', season: true, dayWidth: 24 }
+  twoWeeks: { label: '14 дней', days: 14, dayWidth: 93, fitToWidth: true },
+  month: { label: '30 дней', days: 30, dayWidth: 69 },
+  quarter: { label: '90 дней', days: 90, dayWidth: 45 },
+  season: { label: 'Сезон', season: true, dayWidth: 36 }
 };
 const CALENDAR_ARCHIVE_DAYS = 45;
 const CALENDAR_ARCHIVE_VIEWS = new Set(['quarter', 'season']);
@@ -2406,7 +2447,7 @@ let calendarState = {
   anchorDate: null,
   group: 'all',
   platform: 'all',
-  hideCompleted: false
+  hideCompleted: true
 };
 let calendarTodayScrollLeft = 0;
 let calendarHasAutoScrolledToday = false;
@@ -2414,6 +2455,8 @@ let calendarCurrentDayWidth = CALENDAR_VIEW_MODES.quarter.dayWidth;
 let calendarDayOffsets = [];
 let calendarDayWidths = [];
 let calendarCurrentStartDate = null;
+let calendarPropertyColumnCollapsed = false;
+let calendarScrollStateBound = false;
 let mobileAgendaRange = 'today';
 let mobileCalendarVisible = false;
 
@@ -2447,12 +2490,26 @@ function shouldShowCalendarArchive(view = calendarState.view) {
   return CALENDAR_ARCHIVE_VIEWS.has(view);
 }
 
-function getCalendarTodayWidth(mode) {
-  return Math.max(mode.dayWidth + 18, Math.round(mode.dayWidth * 1.6));
+function getCalendarPropertyColWidth(scroll) {
+  if (!scroll) return 0;
+  const styles = getComputedStyle(scroll);
+  return parseFloat(styles.getPropertyValue('--calendar-property-col-width')) || 0;
 }
 
-function getCalendarDayWidth(day, today, mode) {
-  return day.getTime() === today.getTime() ? getCalendarTodayWidth(mode) : mode.dayWidth;
+function getCalendarBaseDayWidth(mode, days, today, scroll) {
+  if (!mode.fitToWidth || !scroll) return mode.dayWidth;
+  const todayInRange = days.some(day => day.getTime() === today.getTime());
+  const widthUnits = days.length + (todayInRange ? 1 : 0);
+  const availableWidth = Math.max(0, scroll.clientWidth - getCalendarPropertyColWidth(scroll));
+  return Math.max(mode.dayWidth, availableWidth / Math.max(widthUnits, 1));
+}
+
+function getCalendarTodayWidth(dayWidth) {
+  return dayWidth * 2;
+}
+
+function getCalendarDayWidth(day, today, dayWidth) {
+  return day.getTime() === today.getTime() ? getCalendarTodayWidth(dayWidth) : dayWidth;
 }
 
 function sumCalendarDayWidths(startIndex, endIndex) {
@@ -2461,6 +2518,23 @@ function sumCalendarDayWidths(startIndex, endIndex) {
   let total = 0;
   for (let i = start; i < end; i++) total += calendarDayWidths[i] || calendarCurrentDayWidth;
   return total;
+}
+
+function syncCalendarPropertyColumnState() {
+  const scroll = document.getElementById('calendarScroll');
+  if (!scroll) return;
+  const shouldCollapse = scroll.scrollLeft > 12;
+  if (calendarPropertyColumnCollapsed === shouldCollapse && scroll.classList.contains('is-property-collapsed') === shouldCollapse) return;
+  calendarPropertyColumnCollapsed = shouldCollapse;
+  scroll.classList.toggle('is-property-collapsed', shouldCollapse);
+}
+
+function bindCalendarScrollState() {
+  const scroll = document.getElementById('calendarScroll');
+  if (!scroll || calendarScrollStateBound) return;
+  scroll.addEventListener('scroll', syncCalendarPropertyColumnState, { passive: true });
+  calendarScrollStateBound = true;
+  syncCalendarPropertyColumnState();
 }
 
 function formatBookingDate(iso, options = { day: 'numeric', month: 'short' }) {
@@ -2618,16 +2692,13 @@ function renderCalendar({ preserveScroll = false, focusDate = null, behavior = '
   const scroll = document.getElementById('calendarScroll');
   if (!grid || !scroll) return;
 
+  bindCalendarScrollState();
+  syncCalendarPropertyColumnState();
+
   const previousScrollLeft = scroll.scrollLeft || 0;
   const today = todayLocal();
   updateCalendarTodayDate(today);
   renderCalendarControls();
-
-  const mode = CALENDAR_VIEW_MODES[calendarState.view] || CALENDAR_VIEW_MODES.quarter;
-  calendarCurrentDayWidth = mode.dayWidth;
-  const todayWidth = getCalendarTodayWidth(mode);
-  scroll.style.setProperty('--calendar-day-width', `${mode.dayWidth}px`);
-  scroll.style.setProperty('--calendar-today-width', `${todayWidth}px`);
 
   const [startDate, endDate] = getCalendarRange();
   calendarCurrentStartDate = startDate;
@@ -2635,8 +2706,14 @@ function renderCalendar({ preserveScroll = false, focusDate = null, behavior = '
   const d = new Date(startDate);
   while (d <= endDate) { days.push(new Date(d)); d.setDate(d.getDate() + 1); }
   const totalDays = days.length;
+  const mode = CALENDAR_VIEW_MODES[calendarState.view] || CALENDAR_VIEW_MODES.quarter;
+  const baseDayWidth = getCalendarBaseDayWidth(mode, days, today, scroll);
+  calendarCurrentDayWidth = baseDayWidth;
+  const todayWidth = getCalendarTodayWidth(baseDayWidth);
+  scroll.style.setProperty('--calendar-day-width', `${baseDayWidth}px`);
+  scroll.style.setProperty('--calendar-today-width', `${todayWidth}px`);
   const calendarTodayIndex = days.findIndex(day => day.getTime() === today.getTime());
-  calendarDayWidths = days.map(day => getCalendarDayWidth(day, today, mode));
+  calendarDayWidths = days.map(day => getCalendarDayWidth(day, today, baseDayWidth));
   calendarDayOffsets = [];
   let dayOffset = 0;
   calendarDayWidths.forEach((width, index) => {
@@ -2646,6 +2723,7 @@ function renderCalendar({ preserveScroll = false, focusDate = null, behavior = '
 
   grid.style.display = 'grid';
   grid.style.gridTemplateColumns = `var(--calendar-property-col-width) ${calendarDayWidths.map(width => `${width}px`).join(' ')}`;
+  grid.style.width = `calc(var(--calendar-property-col-width) + ${dayOffset}px)`;
   grid.innerHTML = '';
   scroll.querySelectorAll('.cal-month-label').forEach(label => label.remove());
 
@@ -2748,18 +2826,18 @@ function renderCalendar({ preserveScroll = false, focusDate = null, behavior = '
         const startIsVisible = rawStartIdx >= 0;
         const endIsVisible = rawEndBoundaryIdx < totalDays;
         const gridEndLine = endIsVisible ? endBoundaryIdx + 3 : endBoundaryIdx + 2;
-        const startColumnWidth = calendarDayWidths[startIdx] || mode.dayWidth;
-        const endColumnWidth = calendarDayWidths[endBoundaryIdx] || mode.dayWidth;
+        const startColumnWidth = calendarDayWidths[startIdx] || baseDayWidth;
+        const endColumnWidth = calendarDayWidths[endBoundaryIdx] || baseDayWidth;
         const startHalfDayOffset = Math.max(4, startColumnWidth / 2);
         const endHalfDayOffset = Math.max(4, endColumnWidth / 2);
         const visibleWidth = sumCalendarDayWidths(startIdx, endBoundaryIdx + (endIsVisible ? 1 : 0));
         if (visibleWidth <= 0) return;
 
         const isUnavailable = isUnavailableBooking(booking);
-        const isBlocked = isUnavailable && !hasGuestDetails(booking) && (booking.platform !== 'booking' || isGroupedBookingClosure(booking, bookings));
+        const isBlocked = isUnavailable && !hasGuestDetails(booking);
         const isCompleted = end <= today;
         const platformClass = CALENDAR_PLATFORM_CLASS[booking.platform] || 'other';
-        const barText = booking.guest_name || (isBlocked ? 'Недоступно' : platformLabel(booking.platform));
+        const barText = booking.guest_name || (isBlocked ? unavailableBookingLabel(booking) : platformLabel(booking.platform));
         const shortLabel = visibleWidth > 104 ? barText : (visibleWidth > 52 ? String(barText).split(' ')[0] : '');
 
         const bar = document.createElement('button');
@@ -2791,11 +2869,13 @@ function renderCalendar({ preserveScroll = false, focusDate = null, behavior = '
       const focusIndex = days.findIndex(day => day.getTime() === targetDate.getTime());
       if (focusIndex >= 0) {
         scroll.scrollTo({ left: getCalendarCenteredScrollLeft(scroll, focusIndex), behavior });
+        requestAnimationFrame(syncCalendarPropertyColumnState);
         return;
       }
     }
     if (preserveScroll) {
       scroll.scrollLeft = Math.min(previousScrollLeft, Math.max(0, scroll.scrollWidth - scroll.clientWidth));
+      syncCalendarPropertyColumnState();
       return;
     }
     if (!calendarHasAutoScrolledToday && calendarTodayIndex >= 0) {
@@ -2803,6 +2883,7 @@ function renderCalendar({ preserveScroll = false, focusDate = null, behavior = '
       return;
     }
     scroll.scrollLeft = 0;
+    syncCalendarPropertyColumnState();
   });
 
   if (typeof lucide !== 'undefined') lucide.createIcons();
@@ -3491,14 +3572,16 @@ async function syncCalendars() {
   btn.innerHTML = '<i data-lucide="loader-2" style="width:14px;height:14px;animation:spin 1s linear infinite;"></i>Синхронизация...';
   if (typeof lucide !== 'undefined') lucide.createIcons();
   try {
-    await fetch(`${API}/sync`, { method: 'POST' });
-    setTimeout(async () => {
-      await loadData();
-      btn.disabled = false;
-      btn.innerHTML = '<i data-lucide="refresh-cw" style="width:14px;height:14px;"></i>Синхронизация';
-      if (typeof lucide !== 'undefined') lucide.createIcons();
-      toast('✅ Синхронизация завершена');
-    }, 3000);
+    const res = await fetch(`${API}/sync`, { method: 'POST' });
+    const result = await res.json().catch(() => null);
+    if (!res.ok || result?.success === false) {
+      throw new Error(result?.error || `HTTP ${res.status}`);
+    }
+    await loadData();
+    btn.disabled = false;
+    btn.innerHTML = '<i data-lucide="refresh-cw" style="width:14px;height:14px;"></i>Синхронизация';
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+    toast('✅ Синхронизация завершена');
   } catch (err) {
     toast('❌ Ошибка синхронизации: ' + err.message);
     btn.disabled = false;
@@ -3525,6 +3608,12 @@ if (typeof lucide !== 'undefined') lucide.createIcons();
 const TAB_ROUTE_MAP = { '/stats': 'stats', '/maid': 'cleaners', '/tax': 'tax' };
 const initTab = TAB_ROUTE_MAP[location.pathname] || 'calendar';
 if (initTab !== 'calendar') switchTab(initTab, false);
+
+let calendarResizeTimer = null;
+window.addEventListener('resize', () => {
+  clearTimeout(calendarResizeTimer);
+  calendarResizeTimer = setTimeout(() => renderCalendar({ preserveScroll: true }), 120);
+});
 
 // Init tax date to today
 

@@ -1,0 +1,207 @@
+const DAY_MS = 86400000;
+
+const STATS_MONTHS = [3, 4, 5, 6, 7, 8, 9, 10];
+
+function parseLocalDate(iso) {
+  const date = new Date(`${String(iso).slice(0, 10)}T00:00:00`);
+  date.setHours(0, 0, 0, 0);
+  return date;
+}
+
+function toLocalIso(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function daysBetween(start, end) {
+  return Math.max(0, Math.round((end - start) / DAY_MS));
+}
+
+function seasonRange(year = new Date().getFullYear()) {
+  const start = new Date(year, 3, 1);
+  const end = new Date(year, 11, 1);
+  start.setHours(0, 0, 0, 0);
+  end.setHours(0, 0, 0, 0);
+  return { year, start, end, days: daysBetween(start, end) };
+}
+
+function isUnavailableBooking(booking) {
+  const summary = String(booking.raw_summary || '').toLowerCase();
+  const type = String(booking.booking_type || '').toLowerCase();
+  return summary.includes('not available') ||
+    summary.includes('closed') ||
+    type === 'blocked' ||
+    type === 'unavailable';
+}
+
+function hasGuestDetails(booking) {
+  return Boolean((booking.guest_name || '').trim()) || Number(booking.guest_count) > 0;
+}
+
+function isGroupedBookingClosure(booking, allBookings) {
+  if (booking.platform !== 'booking' || !isUnavailableBooking(booking) || hasGuestDetails(booking)) return false;
+  return allBookings.some(other =>
+    other !== booking &&
+    other.platform === 'booking' &&
+    other.start_date === booking.start_date &&
+    other.end_date === booking.end_date &&
+    isUnavailableBooking(other) &&
+    !hasGuestDetails(other)
+  );
+}
+
+function isRealGuestBooking(booking, allBookings) {
+  if (isGroupedBookingClosure(booking, allBookings)) return false;
+  if (booking.platform === 'booking') return true;
+  if (isUnavailableBooking(booking)) return hasGuestDetails(booking);
+  return true;
+}
+
+function overlapsRange(booking, rangeStart, rangeEnd) {
+  const start = parseLocalDate(booking.start_date);
+  const end = parseLocalDate(booking.end_date);
+  return start < rangeEnd && end > rangeStart;
+}
+
+function clippedNights(booking, rangeStart, rangeEnd) {
+  const start = parseLocalDate(booking.start_date);
+  const end = parseLocalDate(booking.end_date);
+  const clippedStart = start > rangeStart ? start : rangeStart;
+  const clippedEnd = end < rangeEnd ? end : rangeEnd;
+  return daysBetween(clippedStart, clippedEnd);
+}
+
+function nightsBetween(startDate, endDate) {
+  return daysBetween(parseLocalDate(startDate), parseLocalDate(endDate));
+}
+
+function increment(map, key, amount = 1) {
+  if (!key) return;
+  map[key] = (map[key] || 0) + amount;
+}
+
+function stayBucket(nights) {
+  if (nights <= 1) return '1';
+  if (nights === 2) return '2';
+  if (nights === 3) return '3';
+  if (nights <= 6) return '4-6';
+  return '7+';
+}
+
+function computeBookingStatsSnapshot({ bookings, properties = [], source = 'sync', seasonYear, capturedAt } = {}) {
+  const season = seasonRange(seasonYear);
+  const realBookings = (bookings || [])
+    .filter(booking => isRealGuestBooking(booking, bookings || []))
+    .filter(booking => overlapsRange(booking, season.start, season.end));
+
+  const propertyCount = properties.length || new Set(realBookings.map(booking => booking.property_id).filter(Boolean)).size;
+  const potentialNights = season.days * Math.max(propertyCount, 1);
+  const monthlyNights = {};
+  const monthlyBookings = {};
+  const monthlyGuests = {};
+  const platformCounts = {};
+  const countryCounts = {};
+  const checkinDays = { mon: 0, tue: 0, wed: 0, thu: 0, fri: 0, sat: 0, sun: 0 };
+  const stayBuckets = { '1': 0, '2': 0, '3': 0, '4-6': 0, '7+': 0 };
+  let occupiedNights = 0;
+  let guestCount = 0;
+  let bookingsWithGuests = 0;
+  let stayTotal = 0;
+
+  for (const month of STATS_MONTHS) {
+    const key = `${season.year}-${String(month + 1).padStart(2, '0')}`;
+    monthlyNights[key] = 0;
+    monthlyBookings[key] = 0;
+    monthlyGuests[key] = 0;
+  }
+
+  for (const booking of realBookings) {
+    occupiedNights += clippedNights(booking, season.start, season.end);
+    increment(platformCounts, booking.platform || 'other');
+
+    const country = String(booking.guest_country || '').trim().toLowerCase();
+    if (country) increment(countryCounts, country);
+
+    const guests = Number(booking.guest_count) || 0;
+    if (guests > 0) {
+      guestCount += guests;
+      bookingsWithGuests++;
+    }
+
+    const stayNights = nightsBetween(booking.start_date, booking.end_date);
+    if (stayNights > 0) {
+      stayTotal += stayNights;
+      increment(stayBuckets, stayBucket(stayNights));
+    }
+
+    const start = parseLocalDate(booking.start_date);
+    const dayKeys = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+    increment(checkinDays, dayKeys[start.getDay()]);
+
+    for (const month of STATS_MONTHS) {
+      const key = `${season.year}-${String(month + 1).padStart(2, '0')}`;
+      const monthStart = new Date(season.year, month, 1);
+      const monthEnd = new Date(season.year, month + 1, 1);
+      const monthNights = clippedNights(booking, monthStart, monthEnd);
+      monthlyNights[key] += monthNights;
+      if (monthNights > 0) monthlyGuests[key] += guests;
+    }
+
+    const startMonthKey = `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, '0')}`;
+    if (monthlyBookings[startMonthKey] !== undefined) monthlyBookings[startMonthKey]++;
+  }
+
+  const occupancyPercent = potentialNights > 0
+    ? Number(((occupiedNights / potentialNights) * 100).toFixed(2))
+    : 0;
+  const avgStay = realBookings.length ? Number((stayTotal / realBookings.length).toFixed(2)) : 0;
+  const avgGuests = bookingsWithGuests ? Number((guestCount / bookingsWithGuests).toFixed(2)) : 0;
+
+  return {
+    captured_at: capturedAt || new Date().toISOString(),
+    source,
+    season_year: season.year,
+    booking_count: realBookings.length,
+    occupied_nights: occupiedNights,
+    guest_count: guestCount,
+    occupancy_percent: occupancyPercent,
+    avg_stay: avgStay,
+    monthly_nights: monthlyNights,
+    monthly_bookings: monthlyBookings,
+    platform_counts: platformCounts,
+    country_counts: countryCounts,
+    payload: {
+      season_start: toLocalIso(season.start),
+      season_end: toLocalIso(new Date(season.end.getTime() - DAY_MS)),
+      property_count: propertyCount,
+      potential_nights: potentialNights,
+      avg_guests: avgGuests,
+      checkin_days: checkinDays,
+      stay_buckets: stayBuckets,
+      monthly_guests: monthlyGuests
+    }
+  };
+}
+
+async function recordBookingStatsSnapshot(db, options = {}) {
+  const [bookings, properties] = await Promise.all([
+    db.getBookings(),
+    db.getProperties()
+  ]);
+  const snapshot = computeBookingStatsSnapshot({
+    bookings,
+    properties,
+    source: options.source || 'sync',
+    seasonYear: options.seasonYear,
+    capturedAt: options.capturedAt
+  });
+  await db.createStatsSnapshot(snapshot);
+  return snapshot;
+}
+
+module.exports = {
+  computeBookingStatsSnapshot,
+  recordBookingStatsSnapshot
+};

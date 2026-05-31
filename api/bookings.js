@@ -5,12 +5,25 @@ const db = USE_POSTGRES
   : require('../backend/src/database');
 
 const { formatBooking } = require('./_helpers');
+const { recordBookingStatsSnapshot } = require('../backend/src/stats-snapshots');
 
 module.exports = async (req, res) => {
   try {
     // Initialize database connection
     if (!db.pool && !db.db) {
       await db.init();
+    }
+
+    if (req.query.stats_snapshots === '1') {
+      if (req.method === 'POST') {
+        const snapshot = await recordBookingStatsSnapshot(db, { source: 'manual' });
+        return res.status(200).json({ success: true, snapshot });
+      }
+      const snapshots = await db.getStatsSnapshots({
+        seasonYear: req.query.season_year,
+        limit: req.query.limit
+      });
+      return res.status(200).json(snapshots);
     }
 
     const { property_id, from_date } = req.query;

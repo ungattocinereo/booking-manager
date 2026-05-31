@@ -22,7 +22,7 @@
 ## 📊 Текущий статус
 
 ```
-🏠 Апартаментов: 8
+🏠 Апартаментов: 10
 📅 Активных бронирований: 128
 🧹 Уборок запланировано: 127
 👥 Уборщиц: 2
@@ -33,6 +33,7 @@
 - Orange Room
 - Solo Room
 - Youth Room
+- Central Room
 - Awesome Apartments
 - Carina
 - Harmony

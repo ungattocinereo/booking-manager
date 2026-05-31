@@ -173,6 +173,19 @@ async function generateCleaningTasks() {
   let tasksSkipped = 0;
   
   for (const booking of bookings) {
+    const summary = String(booking.raw_summary || '').toLowerCase();
+    const bookingType = String(booking.booking_type || '').toLowerCase();
+    const isUnavailable = summary.includes('not available') ||
+      summary.includes('closed') ||
+      bookingType === 'blocked' ||
+      bookingType === 'unavailable';
+    const hasGuestDetails = Boolean((booking.guest_name || '').trim()) || Number(booking.guest_count) > 0;
+
+    if (isUnavailable && !hasGuestDetails) {
+      tasksSkipped++;
+      continue;
+    }
+
     // Create cleaning task for checkout day
     try {
       const result = await db.createCleaningTask(booking.property_id, booking.end_date, 'checkout_cleaning');
@@ -230,6 +243,11 @@ async function syncAll() {
     const { enrichFromExports } = require('./enrich-from-exports');
     const USE_POSTGRES = process.env.POSTGRES_URL || process.env.DATABASE_URL;
     await enrichFromExports(db, !!USE_POSTGRES);
+
+    // Store an aggregate statistics snapshot after the final booking state is known.
+    const { recordBookingStatsSnapshot } = require('./stats-snapshots');
+    const snapshot = await recordBookingStatsSnapshot(db, { source: 'sync' });
+    console.log(`\n📈 Stats snapshot saved: ${snapshot.booking_count} bookings, ${snapshot.occupied_nights} nights`);
 
     console.log('\n🎉 Sync completed successfully!');
     
