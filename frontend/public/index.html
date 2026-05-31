@@ -532,7 +532,7 @@
       --calendar-property-col-collapsed-width: 58px;
       --calendar-property-col-width: var(--calendar-property-col-expanded-width);
       --calendar-day-width: 30px;
-      --calendar-row-height: 58px;
+      --calendar-row-height: 46px;
       --calendar-grid-line: #e1e7ef;
       overflow: auto hidden;
       position: relative;
@@ -743,10 +743,10 @@
       display: flex;
       align-items: center;
       min-width: 10px;
-      height: 28px;
-      margin: 6px 4px -34px;
+      height: 24px;
+      margin: 4px 4px -28px;
       border-radius: 999px;
-      padding: 0 10px;
+      padding: 0 9px;
       color: rgba(255,255,255,.95);
       font-family: inherit;
       font-size: 11px;
@@ -780,9 +780,9 @@
     .booking-bar.completed:hover { opacity: .94; }
     .booking-bar.completed .bar-label { color: #475569; }
     .booking-bar.not-available {
-      height: 16px;
-      margin: 36px 4px -52px;
-      padding: 0 7px;
+      height: 12px;
+      margin: 30px 4px -42px;
+      padding: 0 6px;
       font-size: 9px;
       letter-spacing: 0;
       text-transform: uppercase;
@@ -801,6 +801,9 @@
     .booking-bar .bar-label {
       overflow: hidden;
       text-overflow: ellipsis;
+    }
+    .booking-bar.not-available .bar-label {
+      line-height: 1;
     }
 
     /* ===== MOBILE AGENDA ===== */
