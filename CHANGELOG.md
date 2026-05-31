@@ -1,9 +1,10 @@
 # 📝 Changelog
 
-## [Unreleased] - 2026-05-20
+## [Unreleased] - 2026-05-30
 
 ### ✨ Новое
 
+- Добавлен Central Room в группу Dragone с Booking.com iCal-фидом.
 - Добавлен апартамент Villa Susy с отдельным разделом Susy и Booking.com iCal-фидом.
 
 ## [2.0.0] - 2026-03-23 - Docker Edition

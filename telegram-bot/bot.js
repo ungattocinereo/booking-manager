@@ -107,6 +107,7 @@ const PROPERTY_NAMES = {
   youth: 'Youth Room',
   vingtage: 'Vingtage Room',
   awesome: 'Awesome Apartments',
+  central: 'Central Room',
   carina: 'Carina',
   harmony: 'Harmony',
   royal: 'Royal',
@@ -247,6 +248,7 @@ const PROPERTY_PATTERNS = {
   'royal': 'royal', 'роял': 'royal',
   'vingtage': 'vingtage', 'винтаж': 'vingtage',
   'youth': 'youth', 'юс': 'youth',
+  'central': 'central', 'централ': 'central', 'централь': 'central',
   'susy': 'susy', 'сюзи': 'susy', 'суси': 'susy'
 };
 
@@ -263,8 +265,8 @@ function isBookingQuery(text) {
   const keywords = [
     'бронирован', 'заезд', 'выезд', 'уборк', 'свободн', 'занят',
     'booking', 'check-in', 'check-out', 'clean', 'available',
-    'orange', 'solo', 'awesome', 'carina', 'harmony', 'royal', 'vingtage', 'youth', 'susy',
-    'оранж', 'офиген', 'карин', 'гармон', 'роял', 'винтаж', 'сюзи', 'суси',
+    'orange', 'solo', 'awesome', 'central', 'carina', 'harmony', 'royal', 'vingtage', 'youth', 'susy',
+    'оранж', 'офиген', 'централ', 'централь', 'карин', 'гармон', 'роял', 'винтаж', 'сюзи', 'суси',
     'когда', 'покажи', 'какие', 'кто', 'ближайш', 'следующ'
   ];
   return keywords.some(k => lower.includes(k));

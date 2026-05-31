@@ -106,6 +106,7 @@ async function fetchCleaningTasks(params = {}) {
 const PROPERTY_NAMES = {
   orange: 'Orange Room', solo: 'Solo Room', youth: 'Youth Room',
   vingtage: 'Vingtage Room', awesome: 'Awesome Apartments',
+  central: 'Central Room',
   carina: 'Carina', harmony: 'Harmony', royal: 'Royal',
   susy: 'Villa Susy'
 };
@@ -229,6 +230,7 @@ const PROPERTY_PATTERNS = {
   'royal': 'royal', 'роял': 'royal',
   'vingtage': 'vingtage', 'винтаж': 'vingtage',
   'youth': 'youth', 'юс': 'youth',
+  'central': 'central', 'централ': 'central', 'централь': 'central',
   'susy': 'susy', 'сюзи': 'susy', 'суси': 'susy'
 };
 
