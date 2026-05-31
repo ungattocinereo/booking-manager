@@ -88,15 +88,17 @@ async function fetchUpstream(propertyId) {
 
 async function fetchAllUpstream() {
   const all = [];
+  const failedProperties = [];
   for (const id of PROPERTY_IDS) {
     try {
       const rows = await fetchUpstream(id);
       all.push(...rows);
     } catch (err) {
+      failedProperties.push(id);
       console.error(`upstream fetch failed for ${id}:`, err.message);
     }
   }
-  return all;
+  return { rows: all, failedProperties };
 }
 
 function readExports() {
@@ -127,7 +129,7 @@ async function main() {
   const isBootstrap = state.events.length === 0;
 
   // --- (A) Snapshot-diff from upstream bookings API ---
-  const upstream = await fetchAllUpstream();
+  const { rows: upstream, failedProperties } = await fetchAllUpstream();
   const currentByKey = new Map(upstream.map(r => [r.bookingKey, r]));
 
   const activeLive = new Map();
@@ -139,55 +141,68 @@ async function main() {
   }
 
   let createdByApi = 0, cancelledByApi = 0;
-
-  for (const [key, cur] of currentByKey) {
-    if (!activeLive.has(key)) {
-      pushEvent(state.events, {
-        eventType: 'created',
-        bookingKey: key,
-        propertyId: cur.propertyId,
-        platform: cur.platform,
-        startDate: cur.startDate,
-        endDate: cur.endDate,
-        guestName: cur.guestName,
-        guestCount: cur.guestCount,
-        reservationUrl: cur.reservationUrl,
-        confirmationCode: null,
-        source: 'upstream_api',
-        sourceRef: isBootstrap ? 'bootstrap' : 'hourly_sync',
-        bookingCreatedAt: cur.bookingCreatedAt,
-        rawSummary: cur.rawSummary,
-        bookingType: cur.bookingType,
-        detectedAt: isBootstrap ? cur.bookingCreatedAt : nowIso()
-      });
-      createdByApi++;
-    }
+  const trackedActiveLive = [...activeLive.values()].filter(last =>
+    (last.source === 'upstream_api' || last.source === 'export_airbnb_csv') &&
+    last.platform === 'airbnb' &&
+    PROPERTY_IDS.includes(last.propertyId)
+  );
+  let upstreamUnavailable = false;
+  if (!isBootstrap && failedProperties.length === PROPERTY_IDS.length && trackedActiveLive.length > 0) {
+    upstreamUnavailable = true;
+    console.error(`all upstream property fetches failed; keeping ${trackedActiveLive.length} active bookings unchanged`);
   }
 
-  for (const [key, last] of activeLive) {
-    if (last.source !== 'upstream_api' && last.source !== 'export_airbnb_csv') continue;
-    if (last.platform !== 'airbnb') continue;
-    if (!PROPERTY_IDS.includes(last.propertyId)) continue;
-    if (currentByKey.has(key)) continue;
-    pushEvent(state.events, {
-      eventType: 'cancelled',
-      bookingKey: key,
-      propertyId: last.propertyId,
-      platform: last.platform,
-      startDate: last.startDate,
-      endDate: last.endDate,
-      guestName: last.guestName,
-      guestCount: last.guestCount,
-      reservationUrl: last.reservationUrl,
-      confirmationCode: last.confirmationCode,
-      source: 'upstream_api',
-      sourceRef: 'hourly_sync',
-      bookingCreatedAt: last.bookingCreatedAt,
-      rawSummary: last.rawSummary,
-      bookingType: last.bookingType,
-      detectedAt: nowIso()
-    });
-    cancelledByApi++;
+  if (!upstreamUnavailable) {
+    for (const [key, cur] of currentByKey) {
+      if (!activeLive.has(key)) {
+        pushEvent(state.events, {
+          eventType: 'created',
+          bookingKey: key,
+          propertyId: cur.propertyId,
+          platform: cur.platform,
+          startDate: cur.startDate,
+          endDate: cur.endDate,
+          guestName: cur.guestName,
+          guestCount: cur.guestCount,
+          reservationUrl: cur.reservationUrl,
+          confirmationCode: null,
+          source: 'upstream_api',
+          sourceRef: isBootstrap ? 'bootstrap' : 'hourly_sync',
+          bookingCreatedAt: cur.bookingCreatedAt,
+          rawSummary: cur.rawSummary,
+          bookingType: cur.bookingType,
+          detectedAt: isBootstrap ? cur.bookingCreatedAt : nowIso()
+        });
+        createdByApi++;
+      }
+    }
+
+    const missingActive = trackedActiveLive.filter(last => !currentByKey.has(last.bookingKey));
+    if (!isBootstrap && trackedActiveLive.length >= 10 && missingActive.length >= 10 && missingActive.length / trackedActiveLive.length > 0.5) {
+      console.error(`bulk cancellation guard: refusing ${missingActive.length}/${trackedActiveLive.length} upstream cancellations in one sync`);
+    } else {
+      for (const last of missingActive) {
+        pushEvent(state.events, {
+          eventType: 'cancelled',
+          bookingKey: last.bookingKey,
+          propertyId: last.propertyId,
+          platform: last.platform,
+          startDate: last.startDate,
+          endDate: last.endDate,
+          guestName: last.guestName,
+          guestCount: last.guestCount,
+          reservationUrl: last.reservationUrl,
+          confirmationCode: last.confirmationCode,
+          source: 'upstream_api',
+          sourceRef: 'hourly_sync',
+          bookingCreatedAt: last.bookingCreatedAt,
+          rawSummary: last.rawSummary,
+          bookingType: last.bookingType,
+          detectedAt: nowIso()
+        });
+        cancelledByApi++;
+      }
+    }
   }
 
   // --- (B) Ingest CSV exports ---
@@ -329,6 +344,7 @@ async function main() {
     } else {
       a.lastEvent = ev.eventType;
       if (ev.eventType === 'cancelled') a.cancelledAt = ev.detectedAt;
+      else a.cancelledAt = null;
       if (ev.eventType !== 'cancelled' && ev.guestName) a.guestName = ev.guestName;
       if (Number(ev.guestCount) > 0) a.guestCount = ev.guestCount;
       if (ev.reservationUrl) a.reservationUrl = ev.reservationUrl;
