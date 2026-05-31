@@ -5,6 +5,20 @@ const fs = require('fs');
 const DB_PATH = path.join(__dirname, '../database/bookings.db');
 const SCHEMA_PATH = path.join(__dirname, '../database/schema.sql');
 
+function stringifyJson(value) {
+  return JSON.stringify(value || {});
+}
+
+function parseJsonColumn(value) {
+  if (!value) return {};
+  if (typeof value === 'object') return value;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return {};
+  }
+}
+
 class Database {
   constructor() {
     this.db = null;
@@ -35,6 +49,8 @@ class Database {
             'CREATE UNIQUE INDEX IF NOT EXISTS idx_cleaners_slug ON cleaners(slug)',
             'ALTER TABLE bookings ADD COLUMN tax_paid INTEGER DEFAULT 0',
             'ALTER TABLE bookings ADD COLUMN tax_paid_at TEXT',
+            'ALTER TABLE bookings ADD COLUMN created_at TEXT',
+            'UPDATE bookings SET created_at = COALESCE(created_at, synced_at, CURRENT_TIMESTAMP) WHERE created_at IS NULL',
           ];
 
           const runMigration = (index = 0) => {
@@ -137,8 +153,8 @@ class Database {
     } else {
       // Insert
       return this.run(
-        `INSERT INTO bookings (property_id, platform, start_date, end_date, raw_summary, guest_name, guest_country, reservation_url, phone_last4, booking_type)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO bookings (property_id, platform, start_date, end_date, raw_summary, guest_name, guest_country, reservation_url, phone_last4, booking_type, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
         [
           propertyId,
           platform,
@@ -313,6 +329,77 @@ class Database {
       'UPDATE bookings SET tax_paid = ?, tax_paid_at = ? WHERE id = ?',
       [paid ? 1 : 0, paidAt, bookingId]
     );
+  }
+
+  // Statistics snapshot operations
+  normalizeStatsSnapshot(row) {
+    if (!row) return row;
+    return {
+      ...row,
+      season_year: Number(row.season_year),
+      booking_count: Number(row.booking_count) || 0,
+      occupied_nights: Number(row.occupied_nights) || 0,
+      guest_count: Number(row.guest_count) || 0,
+      occupancy_percent: Number(row.occupancy_percent) || 0,
+      avg_stay: Number(row.avg_stay) || 0,
+      monthly_nights: parseJsonColumn(row.monthly_nights),
+      monthly_bookings: parseJsonColumn(row.monthly_bookings),
+      platform_counts: parseJsonColumn(row.platform_counts),
+      country_counts: parseJsonColumn(row.country_counts),
+      payload: parseJsonColumn(row.payload)
+    };
+  }
+
+  async createStatsSnapshot(snapshot) {
+    return this.run(
+      `INSERT INTO booking_stats_snapshots (
+        captured_at, source, season_year, booking_count, occupied_nights, guest_count,
+        occupancy_percent, avg_stay, monthly_nights, monthly_bookings,
+        platform_counts, country_counts, payload
+      ) VALUES (
+        COALESCE(?, CURRENT_TIMESTAMP), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+      )`,
+      [
+        snapshot.captured_at || null,
+        snapshot.source || 'sync',
+        snapshot.season_year,
+        snapshot.booking_count || 0,
+        snapshot.occupied_nights || 0,
+        snapshot.guest_count || 0,
+        snapshot.occupancy_percent || 0,
+        snapshot.avg_stay || 0,
+        stringifyJson(snapshot.monthly_nights),
+        stringifyJson(snapshot.monthly_bookings),
+        stringifyJson(snapshot.platform_counts),
+        stringifyJson(snapshot.country_counts),
+        stringifyJson(snapshot.payload)
+      ]
+    );
+  }
+
+  async getStatsSnapshots(options = {}) {
+    const seasonYear = options.seasonYear || options.season_year;
+    const limit = Math.max(1, Math.min(Number(options.limit) || 500, 2000));
+    const params = [];
+    let where = '1=1';
+
+    if (seasonYear) {
+      where += ' AND season_year = ?';
+      params.push(Number(seasonYear));
+    }
+
+    params.push(limit);
+    const rows = await this.all(
+      `SELECT * FROM (
+        SELECT * FROM booking_stats_snapshots
+        WHERE ${where}
+        ORDER BY captured_at DESC
+        LIMIT ?
+      ) ORDER BY captured_at ASC`,
+      params
+    );
+
+    return rows.map(row => this.normalizeStatsSnapshot(row));
   }
 
   close() {

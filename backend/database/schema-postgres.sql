@@ -52,12 +52,32 @@ CREATE TABLE IF NOT EXISTS cleaning_tasks (
   UNIQUE (property_id, scheduled_date, task_type)
 );
 
+-- Historical aggregate snapshots for the statistics page
+CREATE TABLE IF NOT EXISTS booking_stats_snapshots (
+  id SERIAL PRIMARY KEY,
+  captured_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  source VARCHAR(50) DEFAULT 'sync',
+  season_year INTEGER NOT NULL,
+  booking_count INTEGER NOT NULL DEFAULT 0,
+  occupied_nights INTEGER NOT NULL DEFAULT 0,
+  guest_count INTEGER NOT NULL DEFAULT 0,
+  occupancy_percent NUMERIC(6,2) NOT NULL DEFAULT 0,
+  avg_stay NUMERIC(6,2) NOT NULL DEFAULT 0,
+  monthly_nights JSONB NOT NULL DEFAULT '{}'::jsonb,
+  monthly_bookings JSONB NOT NULL DEFAULT '{}'::jsonb,
+  platform_counts JSONB NOT NULL DEFAULT '{}'::jsonb,
+  country_counts JSONB NOT NULL DEFAULT '{}'::jsonb,
+  payload JSONB NOT NULL DEFAULT '{}'::jsonb
+);
+
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_bookings_property ON bookings(property_id);
 CREATE INDEX IF NOT EXISTS idx_bookings_dates ON bookings(start_date, end_date);
 CREATE INDEX IF NOT EXISTS idx_cleaning_tasks_property ON cleaning_tasks(property_id);
 CREATE INDEX IF NOT EXISTS idx_cleaning_tasks_cleaner ON cleaning_tasks(cleaner_id);
 CREATE INDEX IF NOT EXISTS idx_cleaning_tasks_date ON cleaning_tasks(scheduled_date);
+CREATE INDEX IF NOT EXISTS idx_stats_snapshots_captured ON booking_stats_snapshots(captured_at);
+CREATE INDEX IF NOT EXISTS idx_stats_snapshots_season ON booking_stats_snapshots(season_year, captured_at);
 
 -- Add guest_country column (migration)
 ALTER TABLE bookings ADD COLUMN IF NOT EXISTS guest_country VARCHAR(5);

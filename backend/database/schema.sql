@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS bookings (
   status TEXT DEFAULT 'confirmed',
   raw_summary TEXT,
   synced_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (property_id) REFERENCES properties(id)
 );
 
@@ -56,8 +57,28 @@ CREATE TABLE IF NOT EXISTS cleaning_tasks (
   FOREIGN KEY (cleaner_id) REFERENCES cleaners(id)
 );
 
+-- Historical aggregate snapshots for the statistics page
+CREATE TABLE IF NOT EXISTS booking_stats_snapshots (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  captured_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  source TEXT DEFAULT 'sync',
+  season_year INTEGER NOT NULL,
+  booking_count INTEGER NOT NULL DEFAULT 0,
+  occupied_nights INTEGER NOT NULL DEFAULT 0,
+  guest_count INTEGER NOT NULL DEFAULT 0,
+  occupancy_percent REAL NOT NULL DEFAULT 0,
+  avg_stay REAL NOT NULL DEFAULT 0,
+  monthly_nights TEXT NOT NULL DEFAULT '{}',
+  monthly_bookings TEXT NOT NULL DEFAULT '{}',
+  platform_counts TEXT NOT NULL DEFAULT '{}',
+  country_counts TEXT NOT NULL DEFAULT '{}',
+  payload TEXT NOT NULL DEFAULT '{}'
+);
+
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_bookings_property ON bookings(property_id);
 CREATE INDEX IF NOT EXISTS idx_bookings_dates ON bookings(start_date, end_date);
 CREATE INDEX IF NOT EXISTS idx_cleaning_tasks_date ON cleaning_tasks(scheduled_date);
 CREATE INDEX IF NOT EXISTS idx_cleaning_tasks_cleaner ON cleaning_tasks(cleaner_id);
+CREATE INDEX IF NOT EXISTS idx_stats_snapshots_captured ON booking_stats_snapshots(captured_at);
+CREATE INDEX IF NOT EXISTS idx_stats_snapshots_season ON booking_stats_snapshots(season_year, captured_at);

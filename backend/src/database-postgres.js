@@ -4,6 +4,20 @@ const path = require('path');
 
 const SCHEMA_PATH = path.join(__dirname, '../database/schema-postgres.sql');
 
+function stringifyJson(value) {
+  return JSON.stringify(value || {});
+}
+
+function parseJsonColumn(value) {
+  if (!value) return {};
+  if (typeof value === 'object') return value;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return {};
+  }
+}
+
 class Database {
   constructor() {
     this.pool = null;
@@ -252,6 +266,79 @@ class Database {
       'UPDATE bookings SET tax_paid = $1, tax_paid_at = CASE WHEN $1 THEN NOW() ELSE NULL END WHERE id = $2',
       [paid, bookingId]
     );
+  }
+
+  // Statistics snapshot operations
+  normalizeStatsSnapshot(row) {
+    if (!row) return row;
+    return {
+      ...row,
+      season_year: Number(row.season_year),
+      booking_count: Number(row.booking_count) || 0,
+      occupied_nights: Number(row.occupied_nights) || 0,
+      guest_count: Number(row.guest_count) || 0,
+      occupancy_percent: Number(row.occupancy_percent) || 0,
+      avg_stay: Number(row.avg_stay) || 0,
+      monthly_nights: parseJsonColumn(row.monthly_nights),
+      monthly_bookings: parseJsonColumn(row.monthly_bookings),
+      platform_counts: parseJsonColumn(row.platform_counts),
+      country_counts: parseJsonColumn(row.country_counts),
+      payload: parseJsonColumn(row.payload)
+    };
+  }
+
+  async createStatsSnapshot(snapshot) {
+    return this.execute(
+      `INSERT INTO booking_stats_snapshots (
+        captured_at, source, season_year, booking_count, occupied_nights, guest_count,
+        occupancy_percent, avg_stay, monthly_nights, monthly_bookings,
+        platform_counts, country_counts, payload
+      ) VALUES (
+        COALESCE($1::timestamp, NOW()), $2, $3, $4, $5, $6, $7, $8,
+        $9::jsonb, $10::jsonb, $11::jsonb, $12::jsonb, $13::jsonb
+      )`,
+      [
+        snapshot.captured_at || null,
+        snapshot.source || 'sync',
+        snapshot.season_year,
+        snapshot.booking_count || 0,
+        snapshot.occupied_nights || 0,
+        snapshot.guest_count || 0,
+        snapshot.occupancy_percent || 0,
+        snapshot.avg_stay || 0,
+        stringifyJson(snapshot.monthly_nights),
+        stringifyJson(snapshot.monthly_bookings),
+        stringifyJson(snapshot.platform_counts),
+        stringifyJson(snapshot.country_counts),
+        stringifyJson(snapshot.payload)
+      ]
+    );
+  }
+
+  async getStatsSnapshots(options = {}) {
+    const seasonYear = options.seasonYear || options.season_year;
+    const limit = Math.max(1, Math.min(Number(options.limit) || 500, 2000));
+    const params = [];
+    let where = '1=1';
+    let n = 1;
+
+    if (seasonYear) {
+      where += ` AND season_year = $${n++}`;
+      params.push(Number(seasonYear));
+    }
+
+    params.push(limit);
+    const rows = await this.query(
+      `SELECT * FROM (
+        SELECT * FROM booking_stats_snapshots
+        WHERE ${where}
+        ORDER BY captured_at DESC
+        LIMIT $${n}
+      ) s ORDER BY captured_at ASC`,
+      params
+    );
+
+    return rows.map(row => this.normalizeStatsSnapshot(row));
   }
 
   async close() {

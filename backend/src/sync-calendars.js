@@ -244,6 +244,11 @@ async function syncAll() {
     const USE_POSTGRES = process.env.POSTGRES_URL || process.env.DATABASE_URL;
     await enrichFromExports(db, !!USE_POSTGRES);
 
+    // Store an aggregate statistics snapshot after the final booking state is known.
+    const { recordBookingStatsSnapshot } = require('./stats-snapshots');
+    const snapshot = await recordBookingStatsSnapshot(db, { source: 'sync' });
+    console.log(`\n📈 Stats snapshot saved: ${snapshot.booking_count} bookings, ${snapshot.occupied_nights} nights`);
+
     console.log('\n🎉 Sync completed successfully!');
     
   } catch (error) {

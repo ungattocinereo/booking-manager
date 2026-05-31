@@ -38,9 +38,30 @@ app.get('/api/properties', async (req, res) => {
 
 app.get('/api/bookings', async (req, res) => {
   try {
+    if (req.query.stats_snapshots === '1') {
+      const snapshots = await db.getStatsSnapshots({
+        seasonYear: req.query.season_year,
+        limit: req.query.limit
+      });
+      return res.json(snapshots);
+    }
+
     const { property_id, from_date } = req.query;
     const bookings = await db.getBookings(property_id, from_date);
     res.json(bookings);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/bookings', async (req, res) => {
+  try {
+    if (req.query.stats_snapshots !== '1') {
+      return res.status(405).json({ error: 'Method not allowed' });
+    }
+    const { recordBookingStatsSnapshot } = require('./stats-snapshots');
+    const snapshot = await recordBookingStatsSnapshot(db, { source: 'manual' });
+    res.json({ success: true, snapshot });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -61,6 +82,30 @@ app.get('/api/bookings/summary', async (req, res) => {
     }
     
     res.json({ total: bookings.length, byProperty });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ===== STATISTICS SNAPSHOTS =====
+
+app.get('/api/stats-snapshots', async (req, res) => {
+  try {
+    const snapshots = await db.getStatsSnapshots({
+      seasonYear: req.query.season_year,
+      limit: req.query.limit
+    });
+    res.json(snapshots);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/stats-snapshots', async (req, res) => {
+  try {
+    const { recordBookingStatsSnapshot } = require('./stats-snapshots');
+    const snapshot = await recordBookingStatsSnapshot(db, { source: 'manual' });
+    res.json({ success: true, snapshot });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

@@ -110,12 +110,19 @@
     }
     .header-logo {
       width: 36px; height: 36px;
-      background: var(--accent);
-      border-radius: 10px;
+      background: transparent;
+      border-radius: 0;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #fff;
+      overflow: hidden;
+      flex: 0 0 auto;
+    }
+    .header-logo img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: contain;
     }
     .header h1 {
       font-size: 18px;
@@ -1170,58 +1177,540 @@
     .hidden { display: none !important; }
 
     /* ===== STATS TAB ===== */
-    .stats-section { padding: 20px 28px; }
-    .stats-summary-row {
-      display: flex;
-      gap: 12px;
-      margin-bottom: 20px;
-      overflow-x: auto;
-      scrollbar-width: none;
-      overscroll-behavior-x: contain;
-      -webkit-overflow-scrolling: touch;
+    .stats-section {
+      padding: 24px 28px 36px;
     }
-    .stats-summary-row::-webkit-scrollbar { display: none; }
-    .stats-summary-card {
-      background: var(--card);
+    .stats-shell {
+      width: 100%;
+      max-width: 1480px;
+      margin: 0 auto;
+    }
+    .stats-hero {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 24px;
+      align-items: end;
+      overflow: hidden;
+      background:
+        linear-gradient(135deg, rgba(15,118,110,.12), rgba(255,255,255,0) 36%),
+        repeating-linear-gradient(90deg, rgba(15,23,42,.035) 0 1px, transparent 1px 56px),
+        var(--card);
       border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 16px 20px;
-      min-width: 160px;
-      flex-shrink: 0;
+      border-radius: 8px;
+      padding: 24px;
+      box-shadow: var(--shadow-sm);
     }
-    .stats-summary-card .label {
-      font-size: 12px;
-      color: var(--text-secondary);
-      margin-bottom: 4px;
+    .stats-kicker {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 7px;
     }
-    .stats-summary-card .value {
-      font-size: 24px;
-      font-weight: 700;
+    .stats-hero h2 {
+      font-size: clamp(24px, 3vw, 38px);
+      line-height: 1.04;
+      font-weight: 800;
       letter-spacing: 0;
     }
-    .stats-summary-card .sub {
-      font-size: 12px;
+    .stats-hero h2 span {
       color: var(--text-secondary);
-      margin-top: 2px;
+      font-weight: 600;
     }
-    .stats-grid {
+    .stats-hero p {
+      max-width: 760px;
+      margin-top: 10px;
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+    .stats-filter-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+    }
+    .stats-select-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      height: 38px;
+      padding: 0 10px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: rgba(255,255,255,.86);
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-weight: 650;
+    }
+    .stats-select-wrap svg,
+    .stats-select-wrap i {
+      width: 15px;
+      height: 15px;
+      color: var(--accent);
+      flex: 0 0 auto;
+    }
+    .stats-select-wrap select {
+      min-width: 132px;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      color: var(--text);
+      font: inherit;
+      cursor: pointer;
+    }
+    .stats-readout {
+      color: var(--text);
+      white-space: nowrap;
+    }
+    .stats-readout span {
+      font-weight: 800;
+    }
+    .stats-time-panel {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: minmax(280px, 1fr) minmax(280px, 480px);
       gap: 16px;
+      align-items: stretch;
+      margin-top: 16px;
     }
-    .stats-chart-card {
+    .stats-snapshot,
+    .stats-delta-board {
       background: var(--card);
       border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 20px;
+      border-radius: 8px;
+      padding: 18px;
       box-shadow: var(--shadow-sm);
       min-width: 0;
     }
-    .stats-chart-card h3 {
-      font-size: 14px;
-      font-weight: 600;
-      margin-bottom: 16px;
+    .stats-snapshot {
+      background:
+        linear-gradient(180deg, rgba(15,118,110,.06), rgba(255,255,255,0) 64%),
+        var(--card);
+    }
+    .stats-panel-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+    .stats-panel-title h3 {
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+    .stats-panel-title p {
+      color: var(--text-secondary);
+      font-size: 12px;
+      margin-top: 2px;
+    }
+    .stats-date-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 34px;
+      padding: 7px 10px;
+      border: 1px solid rgba(15,118,110,.24);
+      border-radius: 8px;
+      background: var(--accent-light);
+      color: var(--accent);
+      font-weight: 800;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+    .stats-slider-row {
+      display: grid;
+      grid-template-columns: 40px minmax(0, 1fr) 40px;
+      gap: 12px;
+      align-items: center;
+    }
+    .stats-play-btn {
+      width: 40px;
+      height: 40px;
+      padding: 0;
+      justify-content: center;
+      border-radius: 8px;
+      background: var(--text);
+      color: #fff;
+      border-color: var(--text);
+    }
+    .stats-play-btn:hover { background: #0b1220; }
+    .stats-play-btn svg,
+    .stats-play-btn i {
+      width: 16px;
+      height: 16px;
+    }
+    .stats-jump-btn {
+      width: 40px;
+      height: 40px;
+      padding: 0;
+      justify-content: center;
+      border-radius: 8px;
+    }
+    .stats-jump-btn svg,
+    .stats-jump-btn i {
+      width: 16px;
+      height: 16px;
+    }
+    .stats-range-wrap {
+      min-width: 0;
+    }
+    .stats-range {
+      width: 100%;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+    .stats-range-labels {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--text-secondary);
+      font-size: 11px;
+      font-weight: 650;
+      margin-top: 8px;
+    }
+    .stats-delta-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .stats-delta-item {
+      min-width: 0;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      background: #fafafa;
+    }
+    .stats-delta-item .label {
+      font-size: 11px;
+      color: var(--text-secondary);
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .stats-delta-item .value {
+      font-size: 22px;
+      line-height: 1.1;
+      font-weight: 850;
+      letter-spacing: 0;
+    }
+    .stats-delta-item .sub {
+      color: var(--text-secondary);
+      font-size: 11px;
+      margin-top: 5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .stats-kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .stats-kpi {
+      position: relative;
+      overflow: hidden;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      box-shadow: var(--shadow-sm);
+      min-width: 0;
+    }
+    .stats-kpi::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      background: var(--kpi-color, var(--accent));
+    }
+    .stats-kpi .label {
+      font-size: 11px;
+      color: var(--text-secondary);
+      font-weight: 750;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+    .stats-kpi .value {
+      font-size: 30px;
+      line-height: 1.05;
+      font-weight: 850;
+      letter-spacing: 0;
+      margin-top: 8px;
+    }
+    .stats-kpi .sub {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-secondary);
+      font-size: 12px;
+      margin-top: 8px;
+      min-height: 18px;
+    }
+    .stats-kpi .sub.positive { color: var(--success); font-weight: 750; }
+    .stats-kpi .sub.warning { color: var(--warning); font-weight: 750; }
+    .stats-insights {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .stats-insight {
+      min-width: 0;
+      display: grid;
+      grid-template-columns: 32px minmax(0, 1fr);
+      gap: 10px;
+      align-items: start;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+      box-shadow: var(--shadow-sm);
+    }
+    .stats-insight-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--accent-light);
+      color: var(--accent);
+    }
+    .stats-insight-icon svg,
+    .stats-insight-icon i {
+      width: 16px;
+      height: 16px;
+    }
+    .stats-insight b {
+      display: block;
+      font-size: 12px;
+      margin-bottom: 3px;
+    }
+    .stats-insight span {
+      display: block;
+      color: var(--text-secondary);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    .stats-dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+    .stats-panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 18px;
+      box-shadow: var(--shadow-sm);
+      min-width: 0;
+    }
+    .stats-panel.wide { grid-column: span 8; }
+    .stats-panel.side { grid-column: span 4; }
+    .stats-panel.full { grid-column: 1 / -1; }
+    .stats-panel.half { grid-column: span 6; }
+    .stats-chart-box {
+      position: relative;
+      height: 300px;
+      min-height: 0;
+    }
+    .stats-chart-box.compact { height: 246px; }
+    .stats-chart-box canvas {
+      max-width: 100% !important;
+      max-height: 100% !important;
+    }
+    .stats-heatmap-scroll {
+      overflow-x: auto;
+      overscroll-behavior-x: contain;
+      scrollbar-width: thin;
+    }
+    .stats-month-scroll {
+      overflow-x: auto;
+      overscroll-behavior-x: contain;
+      scrollbar-width: thin;
+    }
+    .stats-month-table {
+      width: 100%;
+      min-width: 760px;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+    .stats-month-table th {
+      text-align: left;
+      color: var(--text-secondary);
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .03em;
+      padding: 0 10px 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .stats-month-table th:not(:first-child),
+    .stats-month-table td:not(:first-child) {
+      text-align: right;
+    }
+    .stats-month-table td {
+      padding: 12px 10px;
+      border-bottom: 1px solid #eef1f3;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .stats-month-name {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 850;
+    }
+    .stats-month-bar {
+      width: 88px;
+      height: 8px;
+      border-radius: 999px;
+      background: #eef1f3;
+      overflow: hidden;
+      margin-left: auto;
+    }
+    .stats-month-fill {
+      height: 100%;
+      border-radius: inherit;
+      background: var(--accent);
+    }
+    .stats-history-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--accent);
+      font-weight: 800;
+      font-size: 11px;
+    }
+    .stats-heatmap-table {
+      width: 100%;
+      min-width: 820px;
+      border-collapse: separate;
+      border-spacing: 6px;
+      table-layout: fixed;
+    }
+    .stats-heatmap-table th {
+      text-align: left;
+      color: var(--text-secondary);
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .03em;
+      padding: 0 4px 4px;
+    }
+    .stats-heatmap-table th:not(:first-child) {
+      text-align: center;
+    }
+    .stats-heatmap-table td {
+      padding: 0;
+    }
+    .stats-heatmap-name {
+      width: 190px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 800;
       color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      padding-right: 6px;
+    }
+    .stats-heatmap-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 7px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 auto;
+    }
+    .stats-heatmap-icon svg,
+    .stats-heatmap-icon i {
+      width: 13px;
+      height: 13px;
+    }
+    .stats-heat-cell {
+      position: relative;
+      min-height: 58px;
+      border: 1px solid rgba(15,23,42,.06);
+      border-radius: 8px;
+      padding: 8px;
+      color: #10201e;
+      overflow: hidden;
+    }
+    .stats-heat-cell strong {
+      display: block;
+      font-size: 16px;
+      line-height: 1;
+      letter-spacing: 0;
+    }
+    .stats-heat-cell span {
+      display: block;
+      margin-top: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      color: rgba(15,23,42,.62);
+      white-space: nowrap;
+    }
+    .stats-heat-delta {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.78);
+      color: var(--success);
+      font-size: 10px;
+      font-weight: 850;
+      padding: 2px 5px;
+    }
+    .stats-focus-list {
+      display: grid;
+      gap: 11px;
+    }
+    .stats-focus-row {
+      min-width: 0;
+    }
+    .stats-focus-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 5px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .stats-focus-head span {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .stats-focus-head b {
+      flex: 0 0 auto;
+    }
+    .stats-focus-track {
+      height: 8px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: #eef1f3;
+    }
+    .stats-focus-fill {
+      height: 100%;
+      border-radius: inherit;
+      background: var(--accent);
+    }
+    .stats-focus-meta {
+      color: var(--text-secondary);
+      font-size: 11px;
+      margin-top: 4px;
     }
     /* ===== TAX TAB ===== */
     .tax-section { padding: 24px; max-width: 1040px; margin: 0 auto; overflow: hidden; }
@@ -1438,6 +1927,7 @@
         gap: 10px;
       }
       .header-logo { width: 32px; height: 32px; border-radius: 9px; }
+      .header-logo { border-radius: 0; }
       .header h1 { font-size: 16px; max-width: 42vw; }
       .header h1 span { display: none; }
       .header-actions { gap: 6px; flex-shrink: 0; }
@@ -1625,14 +2115,61 @@
         gap: 8px;
       }
 
-      .stats-section { padding-top: 16px; }
-      .stats-grid { grid-template-columns: 1fr; }
-      .stats-chart-card {
-        padding: 14px;
-        border-radius: 10px;
+      .stats-section { padding-top: 16px; padding-bottom: 96px; }
+      .stats-hero {
+        grid-template-columns: 1fr;
+        gap: 16px;
+        padding: 18px;
       }
-      .stats-chart-card canvas {
-        max-width: 100% !important;
+      .stats-filter-row {
+        justify-content: flex-start;
+      }
+      .stats-select-wrap {
+        flex: 1 1 180px;
+      }
+      .stats-select-wrap select {
+        min-width: 0;
+        width: 100%;
+      }
+      .stats-time-panel,
+      .stats-kpi-grid,
+      .stats-insights,
+      .stats-dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+      .stats-panel.wide,
+      .stats-panel.side,
+      .stats-panel.full,
+      .stats-panel.half {
+        grid-column: auto;
+      }
+      .stats-snapshot,
+      .stats-delta-board,
+      .stats-panel,
+      .stats-kpi,
+      .stats-insight {
+        padding: 14px;
+      }
+      .stats-panel-title {
+        align-items: flex-start;
+      }
+      .stats-slider-row {
+        grid-template-columns: 38px minmax(0, 1fr) 38px;
+        gap: 8px;
+      }
+      .stats-play-btn,
+      .stats-jump-btn {
+        width: 38px;
+        height: 38px;
+      }
+      .stats-delta-grid {
+        grid-template-columns: 1fr;
+      }
+      .stats-chart-box {
+        height: 260px;
+      }
+      .stats-chart-box.compact {
+        height: 230px;
       }
 
       .tax-section {
@@ -1769,7 +2306,7 @@
   <div class="header">
     <div class="header-left">
       <div class="header-logo">
-        <img src="/favicon-32.png" alt="Atrani" style="width:20px;height:20px;">
+        <img src="/favicon-32.png" alt="Atrani">
       </div>
       <h1>Atrani <span>Бронирования</span></h1>
     </div>
@@ -1889,32 +2426,177 @@
 
   <!-- STATS TAB -->
   <div class="stats-section" id="statsTab" style="display:none">
-    <div class="stats-summary-row" id="statsSummary"></div>
-    <div class="stats-grid" id="statsGrid">
-      <div class="stats-chart-card">
-        <h3>Бронирования по месяцам</h3>
-        <canvas id="chartMonthly"></canvas>
-      </div>
-      <div class="stats-chart-card">
-        <h3>Заполняемость апартаментов</h3>
-        <canvas id="chartOccupancy"></canvas>
-      </div>
-      <div class="stats-chart-card">
-        <h3>Откуда гости</h3>
-        <canvas id="chartCountries"></canvas>
-      </div>
-      <div class="stats-chart-card">
-        <h3>Дни заезда (день недели)</h3>
-        <canvas id="chartCheckinDays"></canvas>
-      </div>
-      <div class="stats-chart-card">
-        <h3>Средний срок проживания (ночей)</h3>
-        <canvas id="chartDuration"></canvas>
-      </div>
-      <div class="stats-chart-card">
-        <h3>Гости по месяцам</h3>
-        <canvas id="chartGuests"></canvas>
-      </div>
+    <div class="stats-shell">
+      <section class="stats-hero">
+        <div>
+          <div class="stats-kicker">Сезонный пульт</div>
+          <h2>Статистика сезона <span id="statsSeasonLabel">—</span></h2>
+          <p id="statsHeroSub">Общая динамика всех бронирований: накопление, ночи, каналы, страны и длительность проживания.</p>
+        </div>
+        <div class="stats-filter-row">
+          <div class="stats-select-wrap stats-readout">
+            <i data-lucide="database"></i>
+            <span id="statsSnapshotCount">Снимки: —</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="stats-time-panel">
+        <div class="stats-snapshot">
+          <div class="stats-panel-title">
+            <div>
+              <h3>Снимок из базы</h3>
+              <p id="statsSnapshotSource">История появится после синхронизаций.</p>
+            </div>
+            <div class="stats-date-chip" id="statsSnapshotDate">
+              <i data-lucide="calendar-days"></i>
+              —
+            </div>
+          </div>
+          <div class="stats-slider-row">
+            <button class="btn btn-ghost stats-play-btn" id="statsPlayBtn" onclick="toggleStatsPlayback()" title="Проиграть сезон">
+              <i data-lucide="play"></i>
+            </button>
+            <div class="stats-range-wrap">
+              <input class="stats-range" id="statsTimeSlider" type="range" min="0" max="1" value="0" oninput="handleStatsSliderInput(this.value)">
+              <div class="stats-range-labels">
+                <span id="statsRangeStart">—</span>
+                <span id="statsRangeEnd">—</span>
+              </div>
+            </div>
+            <button class="btn btn-ghost stats-jump-btn" onclick="jumpStatsToToday()" title="К текущему состоянию">
+              <i data-lucide="skip-forward"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="stats-delta-board">
+          <div class="stats-panel-title">
+            <div>
+              <h3>Что изменилось</h3>
+              <p id="statsDeltaSubtitle">Сравнение выбранного среза с текущими данными.</p>
+            </div>
+          </div>
+          <div class="stats-delta-grid">
+            <div class="stats-delta-item">
+              <div class="label">Бронирования</div>
+              <div class="value" id="statsDeltaBookings">—</div>
+              <div class="sub" id="statsDeltaBookingsSub">—</div>
+            </div>
+            <div class="stats-delta-item">
+              <div class="label">Ночи</div>
+              <div class="value" id="statsDeltaNights">—</div>
+              <div class="sub" id="statsDeltaNightsSub">—</div>
+            </div>
+            <div class="stats-delta-item">
+              <div class="label">Заполняемость</div>
+              <div class="value" id="statsDeltaOccupancy">—</div>
+              <div class="sub" id="statsDeltaOccupancySub">—</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="stats-kpi-grid">
+        <div class="stats-kpi" style="--kpi-color:var(--accent);">
+          <div class="label">Бронирования</div>
+          <div class="value" id="statsMetricBookings">—</div>
+          <div class="sub" id="statsMetricBookingsSub">—</div>
+        </div>
+        <div class="stats-kpi" style="--kpi-color:#0ea5a4;">
+          <div class="label">Ночи сезона</div>
+          <div class="value" id="statsMetricNights">—</div>
+          <div class="sub" id="statsMetricNightsSub">—</div>
+        </div>
+        <div class="stats-kpi" style="--kpi-color:#e11d48;">
+          <div class="label">Заполняемость</div>
+          <div class="value" id="statsMetricOccupancy">—</div>
+          <div class="sub" id="statsMetricOccupancySub">—</div>
+        </div>
+        <div class="stats-kpi" style="--kpi-color:#d97706;">
+          <div class="label">Гости</div>
+          <div class="value" id="statsMetricGuests">—</div>
+          <div class="sub" id="statsMetricGuestsSub">—</div>
+        </div>
+      </section>
+
+      <section class="stats-insights" id="statsInsights"></section>
+
+      <section class="stats-dashboard-grid">
+        <div class="stats-panel wide">
+          <div class="stats-panel-title">
+            <div>
+              <h3>Темп бронирований</h3>
+              <p>Сохраненные снимки: бронирования и ночи по времени.</p>
+            </div>
+          </div>
+          <div class="stats-chart-box">
+            <canvas id="chartSalesPace"></canvas>
+          </div>
+        </div>
+        <div class="stats-panel side">
+          <div class="stats-panel-title">
+            <div>
+              <h3>История снимков</h3>
+              <p>Последние сохраненные состояния сезона.</p>
+            </div>
+          </div>
+          <div class="stats-focus-list" id="statsHistoryList"></div>
+        </div>
+        <div class="stats-panel full">
+          <div class="stats-panel-title">
+            <div>
+              <h3>Сезон по месяцам</h3>
+              <p>Все бронирования вместе, без разреза по комнатам.</p>
+            </div>
+          </div>
+          <div class="stats-month-scroll" id="statsMonthTable"></div>
+        </div>
+        <div class="stats-panel half">
+          <div class="stats-panel-title">
+            <div>
+              <h3>Ночи по месяцам</h3>
+              <p>Сравнение выбранного среза и текущего состояния.</p>
+            </div>
+          </div>
+          <div class="stats-chart-box compact">
+            <canvas id="chartMonthlyNights"></canvas>
+          </div>
+        </div>
+        <div class="stats-panel half">
+          <div class="stats-panel-title">
+            <div>
+              <h3>Каналы</h3>
+              <p>Доля Booking.com, Airbnb и прямых броней в выбранном срезе.</p>
+            </div>
+          </div>
+          <div class="stats-chart-box compact">
+            <canvas id="chartPlatforms"></canvas>
+          </div>
+        </div>
+        <div class="stats-panel half">
+          <div class="stats-panel-title">
+            <div>
+              <h3>Откуда гости</h3>
+              <p>Топ стран по бронированиям.</p>
+            </div>
+          </div>
+          <div class="stats-chart-box compact">
+            <canvas id="chartCountries"></canvas>
+          </div>
+        </div>
+        <div class="stats-panel half">
+          <div class="stats-panel-title">
+            <div>
+              <h3>Длительность проживания</h3>
+              <p>Распределение бронирований по числу ночей.</p>
+            </div>
+          </div>
+          <div class="stats-chart-box compact">
+            <canvas id="chartStayRhythm"></canvas>
+          </div>
+        </div>
+      </section>
     </div>
   </div>
 
@@ -1969,6 +2651,7 @@ const API = '/api';
 let properties = [];
 let bookings = [];
 let cleaners = [];
+let statsSnapshots = [];
 let allAssignments = {};
 
 const TAB_ROUTES = { '/stats': 'stats', '/maid': 'cleaners', '/tax': 'tax' };
@@ -2018,10 +2701,12 @@ async function loadData({ silent = false, attempt = 1 } = {}) {
   const lastSyncEl = document.getElementById('lastSync');
   if (!hasLoadedOnce && !silent) lastSyncEl.textContent = 'Загрузка…';
 
-  const [props, bks, cls] = await Promise.all([
+  const statsYear = new Date().getFullYear();
+  const [props, bks, cls, snapshots] = await Promise.all([
     fetchJsonOrNull(`${API}/properties`),
     fetchJsonOrNull(`${API}/bookings`),
-    fetchJsonOrNull(`${API}/cleaners`)
+    fetchJsonOrNull(`${API}/cleaners`),
+    fetchJsonOrNull(`${API}/bookings?stats_snapshots=1&season_year=${statsYear}&limit=1000`)
   ]);
 
   const allOk = props && bks && cls;
@@ -2043,6 +2728,7 @@ async function loadData({ silent = false, attempt = 1 } = {}) {
   properties = props;
   bookings = bks;
   cleaners = cls;
+  statsSnapshots = snapshots || [];
 
   allAssignments = {};
   properties.forEach(p => allAssignments[p.id] = []);
@@ -2062,6 +2748,9 @@ async function loadData({ silent = false, attempt = 1 } = {}) {
   if (document.getElementById('taxTab').style.display !== 'none') {
     allTaxBookings = bookings.filter(b => isTaxableBooking(b, bookings));
     renderTaxList();
+  }
+  if (document.getElementById('statsTab').style.display !== 'none') {
+    renderStats();
   }
   lastSyncEl.textContent = 'Обновлено ' + new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
   hasLoadedOnce = true;
@@ -3131,274 +3820,1226 @@ async function toggleAssignment(cleanerId, propertyId, checked) {
 
 // ===== STATISTICS =====
 let statsCharts = {};
+let statsState = {
+  dayIndex: null,
+  propertyId: 'all',
+  platform: 'all',
+  playTimer: null
+};
 
-function renderStats() {
-  const SEASON_START = 4; // April (0-indexed: 3)
-  const SEASON_END = 11; // November (0-indexed: 10)
-  const year = new Date().getFullYear();
-  const monthLabels = ['Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя'];
-  const monthIndices = [3,4,5,6,7,8,9,10]; // 0-indexed
+const STATS_MONTHS = [
+  { index: 3, short: 'Апр', long: 'Апрель' },
+  { index: 4, short: 'Май', long: 'Май' },
+  { index: 5, short: 'Июн', long: 'Июнь' },
+  { index: 6, short: 'Июл', long: 'Июль' },
+  { index: 7, short: 'Авг', long: 'Август' },
+  { index: 8, short: 'Сен', long: 'Сентябрь' },
+  { index: 9, short: 'Окт', long: 'Октябрь' },
+  { index: 10, short: 'Ноя', long: 'Ноябрь' }
+];
 
-  // Filter real bookings in season
-  const seasonBookings = bookings.filter(b => {
-    if (!isRealGuestBooking(b, bookings)) return false;
-    const start = new Date(b.start_date + 'T00:00:00');
-    const end = new Date(b.end_date + 'T00:00:00');
-    // Overlaps with April–November
-    const seasonStart = new Date(year, 3, 1);
-    const seasonEnd = new Date(year, 11, 1);
-    return start < seasonEnd && end > seasonStart;
-  });
+function statsSeasonInfo(year = new Date().getFullYear()) {
+  const start = new Date(year, 3, 1);
+  const end = new Date(year, 11, 1);
+  start.setHours(0, 0, 0, 0);
+  end.setHours(0, 0, 0, 0);
+  return {
+    year,
+    start,
+    end,
+    endVisible: addCalendarDays(end, -1),
+    days: Math.round((end - start) / DAY_MS)
+  };
+}
 
-  // Destroy old charts
-  Object.values(statsCharts).forEach(c => c.destroy());
-  statsCharts = {};
+function parseStatsDateTime(value) {
+  if (!value) return null;
+  if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
 
-  // ===== SUMMARY CARDS =====
-  const totalNightsSeason = monthIndices.reduce((sum, m) => {
-    const daysInMonth = new Date(year, m + 1, 0).getDate();
-    return sum + daysInMonth;
-  }, 0); // per property
+  const raw = String(value).trim();
+  if (!raw) return null;
 
-  let totalOccupiedNights = 0;
-  const propNights = {};
-  for (const b of seasonBookings) {
-    const s = new Date(Math.max(new Date(b.start_date + 'T00:00:00'), new Date(year, 3, 1)));
-    const e = new Date(Math.min(new Date(b.end_date + 'T00:00:00'), new Date(year, 11, 1)));
-    const nights = Math.max(0, (e - s) / 86400000);
-    totalOccupiedNights += nights;
-    propNights[b.property_id] = (propNights[b.property_id] || 0) + nights;
+  const normalized = raw.includes('T') ? raw : raw.replace(' ', 'T');
+  const parsed = new Date(normalized);
+  if (!Number.isNaN(parsed.getTime())) return parsed;
+
+  if (/^\d{4}-\d{2}-\d{2}/.test(raw)) return parseLocalDate(raw.slice(0, 10));
+  return null;
+}
+
+function bookingSignalDate(booking, fallbackDate = null) {
+  return parseStatsDateTime(booking.created_at) ||
+    parseStatsDateTime(booking.synced_at) ||
+    fallbackDate ||
+    parseLocalDate(booking.start_date);
+}
+
+function endOfDay(date) {
+  const d = new Date(date);
+  d.setHours(23, 59, 59, 999);
+  return d;
+}
+
+function clampDate(date, min, max) {
+  if (date < min) return new Date(min);
+  if (date > max) return new Date(max);
+  return new Date(date);
+}
+
+function formatStatsDate(date, options = { day: 'numeric', month: 'long' }) {
+  return date.toLocaleDateString('ru-RU', options);
+}
+
+function pluralRu(value, one, few, many) {
+  const n = Math.abs(Number(value)) % 100;
+  const n1 = n % 10;
+  if (n > 10 && n < 20) return many;
+  if (n1 > 1 && n1 < 5) return few;
+  if (n1 === 1) return one;
+  return many;
+}
+
+function signedNumber(value, suffix = '') {
+  const n = Number(value) || 0;
+  if (n > 0) return `+${n}${suffix}`;
+  return `${n}${suffix}`;
+}
+
+function setStatsText(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = value;
+}
+
+function setStatsHtml(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.innerHTML = value;
+}
+
+function statsBookingOverlapsSeason(booking, season) {
+  if (!booking.start_date || !booking.end_date) return false;
+  const start = parseLocalDate(booking.start_date);
+  const end = parseLocalDate(booking.end_date);
+  return start < season.end && end > season.start;
+}
+
+function statsFilteredBookings(season) {
+  return bookings
+    .filter(b => isRealGuestBooking(b, bookings))
+    .filter(b => statsBookingOverlapsSeason(b, season))
+    .filter(b => statsState.propertyId === 'all' || b.property_id === statsState.propertyId)
+    .filter(b => statsState.platform === 'all' || b.platform === statsState.platform);
+}
+
+function statsSelectableProperties() {
+  if (properties.length) return properties;
+
+  const ids = [...new Set(bookings.map(b => b.property_id).filter(Boolean))].sort();
+  return ids.map(id => ({ id, name: propertyNameFallback[id] || id }));
+}
+
+function statsActiveProperties() {
+  const selectable = statsSelectableProperties();
+  if (statsState.propertyId !== 'all') {
+    const prop = selectable.find(p => p.id === statsState.propertyId);
+    return prop ? [prop] : [{ id: statsState.propertyId, name: propertyNameFallback[statsState.propertyId] || statsState.propertyId }];
   }
-  const avgOccupancy = properties.length > 0
-    ? Math.round((totalOccupiedNights / (totalNightsSeason * properties.length)) * 100)
-    : 0;
+  return selectable;
+}
 
-  // Top country
+function statsRangeEnd(filteredBookings, season) {
+  const today = todayLocal();
+  let maxDate = clampDate(today, season.start, season.endVisible);
+
+  for (const booking of filteredBookings) {
+    const signal = bookingSignalDate(booking, season.start);
+    if (signal > maxDate && signal < season.end) maxDate = signal;
+  }
+
+  return clampDate(maxDate, season.start, season.endVisible);
+}
+
+function bookingVisibleBySnapshot(booking, snapshotDate, season) {
+  return bookingSignalDate(booking, season.start) <= endOfDay(snapshotDate);
+}
+
+function clippedNights(booking, rangeStart, rangeEnd) {
+  const start = parseLocalDate(booking.start_date);
+  const end = parseLocalDate(booking.end_date);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return 0;
+  const clippedStart = start > rangeStart ? start : rangeStart;
+  const clippedEnd = end < rangeEnd ? end : rangeEnd;
+  return Math.max(0, Math.round((clippedEnd - clippedStart) / DAY_MS));
+}
+
+function propertyMonthNights(sourceBookings, propertyId, monthStart, monthEnd) {
+  return sourceBookings
+    .filter(b => b.property_id === propertyId)
+    .reduce((sum, booking) => sum + clippedNights(booking, monthStart, monthEnd), 0);
+}
+
+function statsMonthlyNights(sourceBookings, season) {
+  return STATS_MONTHS.map(month => {
+    const monthStart = new Date(season.year, month.index, 1);
+    const monthEnd = new Date(season.year, month.index + 1, 1);
+    return sourceBookings.reduce((sum, booking) => sum + clippedNights(booking, monthStart, monthEnd), 0);
+  });
+}
+
+function computeStatsMetrics(sourceBookings, season, activeProperties) {
+  const propCount = Math.max(activeProperties.length, 1);
+  const potentialNights = season.days * propCount;
+  const occupiedNights = sourceBookings.reduce((sum, booking) => sum + clippedNights(booking, season.start, season.end), 0);
+  const occupancy = potentialNights > 0 ? Math.round((occupiedNights / potentialNights) * 100) : 0;
+  const totalGuests = sourceBookings.reduce((sum, booking) => sum + (Number(booking.guest_count) || 0), 0);
+  const withGuests = sourceBookings.filter(booking => Number(booking.guest_count) > 0);
+  const stayDurations = sourceBookings.map(booking => nightsBetween(booking.start_date, booking.end_date)).filter(Boolean);
+  const avgStay = stayDurations.length
+    ? stayDurations.reduce((sum, nights) => sum + nights, 0) / stayDurations.length
+    : 0;
+  const platformCounts = {};
   const countryCounts = {};
-  for (const b of seasonBookings) {
-    if (b.guest_country) {
-      const c = b.guest_country.toLowerCase();
-      countryCounts[c] = (countryCounts[c] || 0) + 1;
+  const checkinCounts = new Array(7).fill(0);
+  const stayByDayTotals = new Array(7).fill(0);
+  const stayByDayCounts = new Array(7).fill(0);
+
+  for (const booking of sourceBookings) {
+    platformCounts[booking.platform || 'other'] = (platformCounts[booking.platform || 'other'] || 0) + 1;
+    const country = String(booking.guest_country || '').trim().toLowerCase();
+    if (country) countryCounts[country] = (countryCounts[country] || 0) + 1;
+
+    const dow = parseLocalDate(booking.start_date).getDay();
+    const nights = nightsBetween(booking.start_date, booking.end_date);
+    checkinCounts[dow]++;
+    if (nights) {
+      stayByDayTotals[dow] += nights;
+      stayByDayCounts[dow]++;
     }
   }
-  const topCountry = Object.entries(countryCounts).sort((a,b) => b[1] - a[1])[0];
-  const topCountryText = topCountry
-    ? `${countryToFlag(topCountry[0])} ${COUNTRY_NAMES[topCountry[0]] || topCountry[0].toUpperCase()}`
-    : '—';
 
-  // Average guests
-  const withGuests = seasonBookings.filter(b => b.guest_count > 0);
-  const avgGuests = withGuests.length > 0
-    ? (withGuests.reduce((s, b) => s + b.guest_count, 0) / withGuests.length).toFixed(1)
-    : '—';
+  return {
+    bookings: sourceBookings,
+    bookingCount: sourceBookings.length,
+    occupiedNights,
+    potentialNights,
+    occupancy,
+    totalGuests,
+    avgGuests: withGuests.length ? totalGuests / withGuests.length : 0,
+    avgStay,
+    platformCounts,
+    countryCounts,
+    checkinCounts,
+    avgStayByDay: stayByDayTotals.map((total, index) => stayByDayCounts[index] ? total / stayByDayCounts[index] : 0),
+    monthlyNights: statsMonthlyNights(sourceBookings, season)
+  };
+}
 
-  document.getElementById('statsSummary').innerHTML = `
-    <div class="stats-summary-card">
-      <div class="label">Бронирования (сезон)</div>
-      <div class="value">${seasonBookings.length}</div>
-      <div class="sub">Апрель — Ноябрь ${year}</div>
+function statsCountryLabel(countryCode) {
+  const code = String(countryCode || '').toLowerCase();
+  if (/^[a-z]{2}$/.test(code)) return `${countryToFlag(code)} ${COUNTRY_NAMES[code] || code.toUpperCase()}`;
+  return code.toUpperCase();
+}
+
+function refreshStatsControls(activeProperties) {
+  const propertySelect = document.getElementById('statsPropertyFilter');
+  const platformSelect = document.getElementById('statsPlatformFilter');
+  if (propertySelect) {
+    const selectedExists = statsState.propertyId === 'all' || activeProperties.some(p => p.id === statsState.propertyId);
+    if (!selectedExists) statsState.propertyId = 'all';
+    propertySelect.innerHTML = [
+      '<option value="all">Все апартаменты</option>',
+      ...activeProperties.map(p => `<option value="${escapeHtml(p.id)}">${escapeHtml(p.name || p.id)}</option>`)
+    ].join('');
+    propertySelect.value = statsState.propertyId;
+  }
+  if (platformSelect) platformSelect.value = statsState.platform;
+}
+
+function renderStatsSummary(snapshotMetrics, currentMetrics, snapshotDate, activeProperties, filteredBookings, season) {
+  const dateLabel = formatStatsDate(snapshotDate);
+  const bookingsDelta = currentMetrics.bookingCount - snapshotMetrics.bookingCount;
+  const nightsDelta = currentMetrics.occupiedNights - snapshotMetrics.occupiedNights;
+  const occupancyDelta = currentMetrics.occupancy - snapshotMetrics.occupancy;
+  const createdCount = filteredBookings.filter(b => b.created_at).length;
+  const dataSource = filteredBookings.length && createdCount < filteredBookings.length
+    ? `История частично восстановлена по синхронизации: ${createdCount}/${filteredBookings.length} с created_at.`
+    : 'История строится по дате появления бронирования в системе.';
+
+  setStatsText('statsSeasonLabel', season.year);
+  setStatsText('statsHeroSub', `${formatStatsDate(season.start)} — ${formatStatsDate(season.endVisible)}. ${dataSource}`);
+  setStatsHtml('statsSnapshotDate', `<i data-lucide="calendar-days"></i>${dateLabel}`);
+  setStatsText('statsDeltaSubtitle', `После ${dateLabel}: ${signedNumber(bookingsDelta)} ${pluralRu(bookingsDelta, 'бронь', 'брони', 'броней')}, ${signedNumber(nightsDelta)} ${pluralRu(nightsDelta, 'ночь', 'ночи', 'ночей')}.`);
+
+  setStatsText('statsDeltaBookings', signedNumber(bookingsDelta));
+  setStatsText('statsDeltaBookingsSub', `${snapshotMetrics.bookingCount} тогда → ${currentMetrics.bookingCount} сейчас`);
+  setStatsText('statsDeltaNights', signedNumber(nightsDelta));
+  setStatsText('statsDeltaNightsSub', `${snapshotMetrics.occupiedNights} тогда → ${currentMetrics.occupiedNights} сейчас`);
+  setStatsText('statsDeltaOccupancy', signedNumber(occupancyDelta, ' п.п.'));
+  setStatsText('statsDeltaOccupancySub', `${snapshotMetrics.occupancy}% тогда → ${currentMetrics.occupancy}% сейчас`);
+
+  setStatsText('statsMetricBookings', snapshotMetrics.bookingCount);
+  setStatsText('statsMetricBookingsSub', `${signedNumber(bookingsDelta)} к текущему состоянию`);
+  setStatsText('statsMetricNights', snapshotMetrics.occupiedNights);
+  setStatsText('statsMetricNightsSub', `${Math.round(snapshotMetrics.potentialNights)} возможных ночей · ${activeProperties.length} ап.`);
+  setStatsText('statsMetricOccupancy', `${snapshotMetrics.occupancy}%`);
+  setStatsText('statsMetricOccupancySub', `${signedNumber(occupancyDelta, ' п.п.')} после среза`);
+  setStatsText('statsMetricGuests', snapshotMetrics.totalGuests || '—');
+  setStatsText('statsMetricGuestsSub', snapshotMetrics.avgGuests ? `${snapshotMetrics.avgGuests.toFixed(1)} чел. в среднем` : 'Нет данных по гостям');
+}
+
+function statsLowestOccupancyCell(currentBookings, activeProperties, season) {
+  let lowest = null;
+  for (const property of activeProperties) {
+    for (const month of STATS_MONTHS) {
+      const monthStart = new Date(season.year, month.index, 1);
+      const monthEnd = new Date(season.year, month.index + 1, 1);
+      const days = Math.round((monthEnd - monthStart) / DAY_MS);
+      const nights = propertyMonthNights(currentBookings, property.id, monthStart, monthEnd);
+      const pct = Math.round((nights / days) * 100);
+      if (!lowest || pct < lowest.pct) {
+        lowest = { property, month, pct, nights, days };
+      }
+    }
+  }
+  return lowest;
+}
+
+function renderStatsInsights(snapshotMetrics, currentMetrics, snapshotDate, filteredBookings, activeProperties, season) {
+  const afterBookings = filteredBookings.filter(booking => bookingSignalDate(booking, season.start) > endOfDay(snapshotDate));
+  const platformAfter = {};
+  afterBookings.forEach(booking => {
+    platformAfter[booking.platform || 'other'] = (platformAfter[booking.platform || 'other'] || 0) + 1;
+  });
+  const topAfterPlatform = Object.entries(platformAfter).sort((a, b) => b[1] - a[1])[0];
+  const topCountry = Object.entries(currentMetrics.countryCounts).sort((a, b) => b[1] - a[1])[0];
+  const lowest = statsLowestOccupancyCell(currentMetrics.bookings, activeProperties, season);
+  const avgStayText = currentMetrics.avgStay ? `${currentMetrics.avgStay.toFixed(1)} ночи` : 'нет данных';
+
+  const insights = [
+    {
+      icon: 'trending-up',
+      title: 'Прирост после среза',
+      text: afterBookings.length
+        ? `Добавилось ${afterBookings.length} ${pluralRu(afterBookings.length, 'бронирование', 'бронирования', 'бронирований')} и ${currentMetrics.occupiedNights - snapshotMetrics.occupiedNights} ${pluralRu(currentMetrics.occupiedNights - snapshotMetrics.occupiedNights, 'ночь', 'ночи', 'ночей')}.`
+        : 'Выбранный срез уже совпадает с текущим состоянием.'
+    },
+    {
+      icon: 'store',
+      title: 'Канал роста',
+      text: topAfterPlatform
+        ? `${platformLabel(topAfterPlatform[0])}: ${topAfterPlatform[1]} ${pluralRu(topAfterPlatform[1], 'новая бронь', 'новые брони', 'новых броней')} после среза.`
+        : 'После выбранной даты новых броней по фильтру нет.'
+    },
+    {
+      icon: 'alert-triangle',
+      title: 'Свободная зона',
+      text: lowest
+        ? `${lowest.property.name || lowest.property.id}, ${lowest.month.long.toLowerCase()}: ${lowest.pct}% занято (${lowest.nights}/${lowest.days} ночей).`
+        : 'Недостаточно данных для поиска свободных зон.'
+    },
+    {
+      icon: 'users',
+      title: 'Портрет гостей',
+      text: topCountry
+        ? `${statsCountryLabel(topCountry[0])}: ${topCountry[1]} ${pluralRu(topCountry[1], 'бронь', 'брони', 'броней')}; среднее проживание ${avgStayText}.`
+        : `Страны пока не заполнены; среднее проживание ${avgStayText}.`
+    }
+  ];
+
+  setStatsHtml('statsInsights', insights.map(item => `
+    <div class="stats-insight">
+      <div class="stats-insight-icon"><i data-lucide="${item.icon}"></i></div>
+      <div>
+        <b>${escapeHtml(item.title)}</b>
+        <span>${escapeHtml(item.text)}</span>
+      </div>
     </div>
-    <div class="stats-summary-card">
-      <div class="label">Средняя заполняемость</div>
-      <div class="value">${avgOccupancy}%</div>
-      <div class="sub">${properties.length} апартаментов</div>
-    </div>
-    <div class="stats-summary-card">
-      <div class="label">Топ страна</div>
-      <div class="value" style="font-size:20px;">${topCountryText}</div>
-      <div class="sub">${topCountry ? topCountry[1] + ' бронирований' : ''}</div>
-    </div>
-    <div class="stats-summary-card">
-      <div class="label">Среднее гостей</div>
-      <div class="value">${avgGuests}</div>
-      <div class="sub">человек на бронирование</div>
-    </div>
-  `;
+  `).join(''));
+}
+
+function statsHeatColor(percent) {
+  const alpha = Math.min(.78, .06 + (Math.max(0, Math.min(percent, 100)) / 100) * .72);
+  return `rgba(15, 118, 110, ${alpha.toFixed(2)})`;
+}
+
+function renderStatsHeatmap(snapshotBookings, currentBookings, activeProperties, season) {
+  if (!activeProperties.length) {
+    setStatsHtml('statsHeatmap', '<div class="agenda-empty">Нет апартаментов для отображения.</div>');
+    return;
+  }
+
+  let html = `<table class="stats-heatmap-table"><thead><tr><th>Апартамент</th>${STATS_MONTHS.map(m => `<th>${m.short}</th>`).join('')}</tr></thead><tbody>`;
+  for (const property of activeProperties) {
+    const meta = propertyMeta(property.id);
+    html += `<tr><td><div class="stats-heatmap-name"><span class="stats-heatmap-icon" style="background:${meta.bg};color:${meta.color};"><i data-lucide="${meta.icon}"></i></span>${escapeHtml(property.name || meta.name)}</div></td>`;
+    for (const month of STATS_MONTHS) {
+      const monthStart = new Date(season.year, month.index, 1);
+      const monthEnd = new Date(season.year, month.index + 1, 1);
+      const days = Math.round((monthEnd - monthStart) / DAY_MS);
+      const snapshotNights = propertyMonthNights(snapshotBookings, property.id, monthStart, monthEnd);
+      const currentNights = propertyMonthNights(currentBookings, property.id, monthStart, monthEnd);
+      const snapshotPct = Math.round((snapshotNights / days) * 100);
+      const currentPct = Math.round((currentNights / days) * 100);
+      const delta = Math.max(0, currentPct - snapshotPct);
+      html += `<td><div class="stats-heat-cell" style="background:${statsHeatColor(snapshotPct)}">
+        ${delta ? `<em class="stats-heat-delta">+${delta}</em>` : ''}
+        <strong>${snapshotPct}%</strong>
+        <span>${snapshotNights}/${days} ночей</span>
+      </div></td>`;
+    }
+    html += '</tr>';
+  }
+  html += '</tbody></table>';
+  setStatsHtml('statsHeatmap', html);
+}
+
+function renderStatsFocusList(snapshotBookings, currentBookings, activeProperties, season) {
+  const rows = activeProperties.map(property => {
+    const snapshotNights = propertyMonthNights(snapshotBookings, property.id, season.start, season.end);
+    const currentNights = propertyMonthNights(currentBookings, property.id, season.start, season.end);
+    const snapshotPct = Math.round((snapshotNights / season.days) * 100);
+    const currentPct = Math.round((currentNights / season.days) * 100);
+    return { property, snapshotNights, currentNights, snapshotPct, currentPct, delta: currentPct - snapshotPct };
+  }).sort((a, b) => b.delta - a.delta || b.currentPct - a.currentPct);
+
+  if (!rows.length) {
+    setStatsHtml('statsFocusList', '<div class="agenda-empty">Нет данных.</div>');
+    return;
+  }
+
+  setStatsHtml('statsFocusList', rows.slice(0, 8).map(row => {
+    const meta = propertyMeta(row.property.id);
+    return `<div class="stats-focus-row">
+      <div class="stats-focus-head">
+        <span>${escapeHtml(row.property.name || meta.name)}</span>
+        <b>${row.currentPct}%</b>
+      </div>
+      <div class="stats-focus-track"><div class="stats-focus-fill" style="width:${Math.min(100, row.currentPct)}%;background:${meta.color};"></div></div>
+      <div class="stats-focus-meta">${row.currentNights} ${pluralRu(row.currentNights, 'ночь', 'ночи', 'ночей')} · ${signedNumber(row.delta, ' п.п.')} после среза</div>
+    </div>`;
+  }).join(''));
+}
+
+function destroyStatsCharts() {
+  Object.values(statsCharts).forEach(chart => chart.destroy());
+  statsCharts = {};
+}
+
+function buildStatsPaceSeries(filteredBookings, season, rangeEnd, snapshotDate) {
+  const totalDays = Math.max(1, Math.round((rangeEnd - season.start) / DAY_MS) + 1);
+  const labels = [];
+  const current = [];
+  const selected = [];
+  const signalTimes = filteredBookings
+    .map(booking => bookingSignalDate(booking, season.start).getTime())
+    .sort((a, b) => a - b);
+
+  let cursor = 0;
+  for (let i = 0; i < totalDays; i++) {
+    const day = addCalendarDays(season.start, i);
+    const dayEnd = endOfDay(day).getTime();
+    while (cursor < signalTimes.length && signalTimes[cursor] <= dayEnd) cursor++;
+    labels.push(formatStatsDate(day, { day: 'numeric', month: 'short' }));
+    current.push(cursor);
+    selected.push(day <= snapshotDate ? cursor : null);
+  }
+
+  return { labels, current, selected };
+}
+
+function renderStatsCharts(snapshotMetrics, currentMetrics, filteredBookings, season, rangeEnd, snapshotDate) {
+  destroyStatsCharts();
+  if (typeof Chart === 'undefined') return;
 
   const chartFont = { family: "'Manrope', sans-serif" };
-  const defaultOpts = {
+  const gridColor = '#eef1f3';
+  const basePlugins = {
+    legend: { labels: { font: { ...chartFont, size: 12 }, usePointStyle: true, boxWidth: 8 } },
+    tooltip: { titleFont: chartFont, bodyFont: chartFont }
+  };
+  const baseOptions = {
     responsive: true,
-    maintainAspectRatio: true,
-    plugins: { legend: { labels: { font: { ...chartFont, size: 12 } } } },
-    scales: {}
+    maintainAspectRatio: false,
+    animation: { duration: 180 },
+    plugins: basePlugins
   };
 
-  // ===== 1. MONTHLY BOOKINGS (stacked bar) =====
-  const monthlyAirbnb = new Array(8).fill(0);
-  const monthlyBooking = new Array(8).fill(0);
-  for (const b of seasonBookings) {
-    const m = new Date(b.start_date + 'T00:00:00').getMonth();
-    const idx = m - 3;
-    if (idx >= 0 && idx < 8) {
-      if (b.platform === 'airbnb') monthlyAirbnb[idx]++;
-      else monthlyBooking[idx]++;
-    }
-  }
-  statsCharts.monthly = new Chart(document.getElementById('chartMonthly'), {
-    type: 'bar',
+  const pace = buildStatsPaceSeries(filteredBookings, season, rangeEnd, snapshotDate);
+  statsCharts.salesPace = new Chart(document.getElementById('chartSalesPace'), {
+    type: 'line',
     data: {
-      labels: monthLabels,
+      labels: pace.labels,
       datasets: [
-        { label: 'Airbnb', data: monthlyAirbnb, backgroundColor: '#D8304E', borderRadius: 4 },
-        { label: 'Booking.com', data: monthlyBooking, backgroundColor: '#003b95', borderRadius: 4 }
+        {
+          label: 'Сейчас',
+          data: pace.current,
+          borderColor: 'rgba(17,24,39,.34)',
+          backgroundColor: 'rgba(17,24,39,.05)',
+          pointRadius: 0,
+          tension: .32,
+          fill: true
+        },
+        {
+          label: 'Выбранный срез',
+          data: pace.selected,
+          borderColor: '#0f766e',
+          backgroundColor: 'rgba(15,118,110,.12)',
+          pointRadius: 0,
+          tension: .32,
+          spanGaps: false,
+          fill: true
+        }
       ]
     },
     options: {
-      ...defaultOpts,
-      plugins: { ...defaultOpts.plugins, legend: { ...defaultOpts.plugins.legend, position: 'top' } },
+      ...baseOptions,
       scales: {
-        x: { stacked: true, grid: { display: false }, ticks: { font: chartFont } },
-        y: { stacked: true, beginAtZero: true, ticks: { font: chartFont, stepSize: 1 } }
+        x: {
+          grid: { display: false },
+          ticks: { font: chartFont, maxTicksLimit: 9 }
+        },
+        y: {
+          beginAtZero: true,
+          grid: { color: gridColor },
+          ticks: { font: chartFont, stepSize: 1 }
+        }
       }
     }
   });
 
-  // ===== 2. OCCUPANCY BY PROPERTY (horizontal bar) =====
-  const propLabels = properties.map(p => p.name);
-  const propOccupancy = properties.map(p => {
-    const nights = propNights[p.id] || 0;
-    return Math.round((nights / totalNightsSeason) * 100);
-  });
-  const propColors = properties.map(p => (propertyConfig[p.id] || {}).color || '#6b7280');
-
-  statsCharts.occupancy = new Chart(document.getElementById('chartOccupancy'), {
-    type: 'bar',
+  statsCharts.monthlyNights = new Chart(document.getElementById('chartMonthlyNights'), {
     data: {
-      labels: propLabels,
-      datasets: [{
-        data: propOccupancy,
-        backgroundColor: propColors,
-        borderRadius: 4
-      }]
+      labels: STATS_MONTHS.map(m => m.short),
+      datasets: [
+        {
+          type: 'bar',
+          label: 'На дату',
+          data: snapshotMetrics.monthlyNights,
+          backgroundColor: 'rgba(15,118,110,.72)',
+          borderRadius: 6
+        },
+        {
+          type: 'line',
+          label: 'Сейчас',
+          data: currentMetrics.monthlyNights,
+          borderColor: '#e11d48',
+          backgroundColor: 'rgba(225,29,72,.1)',
+          tension: .32,
+          pointRadius: 4
+        }
+      ]
     },
     options: {
-      ...defaultOpts,
-      indexAxis: 'y',
-      plugins: { ...defaultOpts.plugins, legend: { display: false } },
-      scales: {
-        x: { beginAtZero: true, max: 100, ticks: { font: chartFont, callback: v => v + '%' }, grid: { color: '#f0f0f0' } },
-        y: { ticks: { font: { ...chartFont, size: 12 } }, grid: { display: false } }
-      }
-    }
-  });
-
-  // ===== 3. GUEST COUNTRIES (doughnut) =====
-  const sortedCountries = Object.entries(countryCounts).sort((a,b) => b[1] - a[1]);
-  const top8 = sortedCountries.slice(0, 8);
-  const othersCount = sortedCountries.slice(8).reduce((s, [, c]) => s + c, 0);
-  const countryLabels = top8.map(([c]) => `${countryToFlag(c)} ${COUNTRY_NAMES[c] || c.toUpperCase()}`);
-  const countryData = top8.map(([, c]) => c);
-  if (othersCount > 0) { countryLabels.push('Другие'); countryData.push(othersCount); }
-  const countryColors = ['#4f46e5','#ea580c','#059669','#D8304E','#ca8a04','#0891b2','#be185d','#8b5cf6','#9ca3af'];
-
-  statsCharts.countries = new Chart(document.getElementById('chartCountries'), {
-    type: 'doughnut',
-    data: {
-      labels: countryLabels,
-      datasets: [{ data: countryData, backgroundColor: countryColors.slice(0, countryData.length), borderWidth: 2, borderColor: '#fff' }]
-    },
-    options: {
-      ...defaultOpts,
-      plugins: {
-        ...defaultOpts.plugins,
-        legend: { position: 'right', labels: { font: { ...chartFont, size: 11 }, padding: 8, boxWidth: 12 } }
-      }
-    }
-  });
-
-  // ===== 4. CHECK-IN DAY OF WEEK (bar) =====
-  const dayNamesRu = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
-  const checkinByDay = new Array(7).fill(0);
-  for (const b of seasonBookings) {
-    const dow = new Date(b.start_date + 'T00:00:00').getDay();
-    checkinByDay[dow]++;
-  }
-  // Reorder: Mon-Sun
-  const reordered = [...checkinByDay.slice(1), checkinByDay[0]];
-  const reorderedLabels = [...dayNamesRu.slice(1), dayNamesRu[0]];
-  const dayColors = reordered.map((_, i) => i >= 5 ? '#e0e7ff' : '#4f46e5'); // weekend lighter
-
-  statsCharts.checkinDays = new Chart(document.getElementById('chartCheckinDays'), {
-    type: 'bar',
-    data: {
-      labels: reorderedLabels,
-      datasets: [{ data: reordered, backgroundColor: dayColors, borderRadius: 6 }]
-    },
-    options: {
-      ...defaultOpts,
-      plugins: { ...defaultOpts.plugins, legend: { display: false } },
-      scales: {
-        x: { grid: { display: false }, ticks: { font: { ...chartFont, size: 13 } } },
-        y: { beginAtZero: true, ticks: { font: chartFont, stepSize: 1 } }
-      }
-    }
-  });
-
-  // ===== 5. AVERAGE STAY DURATION (bar by property) =====
-  const propDuration = {};
-  const propBookingCount = {};
-  for (const b of seasonBookings) {
-    const nights = (new Date(b.end_date + 'T00:00:00') - new Date(b.start_date + 'T00:00:00')) / 86400000;
-    propDuration[b.property_id] = (propDuration[b.property_id] || 0) + nights;
-    propBookingCount[b.property_id] = (propBookingCount[b.property_id] || 0) + 1;
-  }
-  const avgDuration = properties.map(p => {
-    const total = propDuration[p.id] || 0;
-    const count = propBookingCount[p.id] || 0;
-    return count > 0 ? +(total / count).toFixed(1) : 0;
-  });
-
-  statsCharts.duration = new Chart(document.getElementById('chartDuration'), {
-    type: 'bar',
-    data: {
-      labels: propLabels,
-      datasets: [{ data: avgDuration, backgroundColor: propColors, borderRadius: 4 }]
-    },
-    options: {
-      ...defaultOpts,
-      plugins: { ...defaultOpts.plugins, legend: { display: false } },
-      scales: {
-        x: { grid: { display: false }, ticks: { font: { ...chartFont, size: 11 } } },
-        y: { beginAtZero: true, ticks: { font: chartFont } }
-      }
-    }
-  });
-
-  // ===== 6. GUESTS BY MONTH (line) =====
-  const monthlyGuests = new Array(8).fill(0);
-  for (const b of seasonBookings) {
-    if (b.guest_count > 0) {
-      const m = new Date(b.start_date + 'T00:00:00').getMonth();
-      const idx = m - 3;
-      if (idx >= 0 && idx < 8) monthlyGuests[idx] += b.guest_count;
-    }
-  }
-
-  statsCharts.guests = new Chart(document.getElementById('chartGuests'), {
-    type: 'line',
-    data: {
-      labels: monthLabels,
-      datasets: [{
-        label: 'Гости',
-        data: monthlyGuests,
-        borderColor: '#4f46e5',
-        backgroundColor: 'rgba(79,70,229,.1)',
-        fill: true,
-        tension: 0.35,
-        pointBackgroundColor: '#4f46e5',
-        pointRadius: 5,
-        pointHoverRadius: 7
-      }]
-    },
-    options: {
-      ...defaultOpts,
-      plugins: { ...defaultOpts.plugins, legend: { display: false } },
+      ...baseOptions,
       scales: {
         x: { grid: { display: false }, ticks: { font: chartFont } },
-        y: { beginAtZero: true, ticks: { font: chartFont, stepSize: 5 } }
+        y: { beginAtZero: true, grid: { color: gridColor }, ticks: { font: chartFont } }
       }
     }
   });
+
+  const platformEntries = Object.entries(snapshotMetrics.platformCounts).filter(([, count]) => count > 0);
+  const platformLabels = platformEntries.length ? platformEntries.map(([platform]) => platformLabel(platform)) : ['Нет данных'];
+  const platformData = platformEntries.length ? platformEntries.map(([, count]) => count) : [1];
+  const platformColors = platformEntries.length
+    ? platformEntries.map(([platform]) => platform === 'airbnb' ? '#D8304E' : platform === 'booking' ? '#003b95' : platform === 'direct' ? '#047857' : '#6b7280')
+    : ['#e5e7eb'];
+  statsCharts.platforms = new Chart(document.getElementById('chartPlatforms'), {
+    type: 'doughnut',
+    data: {
+      labels: platformLabels,
+      datasets: [{ data: platformData, backgroundColor: platformColors, borderColor: '#fff', borderWidth: 3 }]
+    },
+    options: {
+      ...baseOptions,
+      cutout: '62%',
+      plugins: { ...basePlugins, legend: { ...basePlugins.legend, position: 'bottom' } }
+    }
+  });
+
+  const countryEntries = Object.entries(snapshotMetrics.countryCounts).sort((a, b) => b[1] - a[1]).slice(0, 7);
+  statsCharts.countries = new Chart(document.getElementById('chartCountries'), {
+    type: 'bar',
+    data: {
+      labels: countryEntries.length ? countryEntries.map(([country]) => statsCountryLabel(country)) : ['Нет данных'],
+      datasets: [{
+        data: countryEntries.length ? countryEntries.map(([, count]) => count) : [0],
+        backgroundColor: '#0f766e',
+        borderRadius: 6
+      }]
+    },
+    options: {
+      ...baseOptions,
+      indexAxis: 'y',
+      plugins: { ...basePlugins, legend: { display: false } },
+      scales: {
+        x: { beginAtZero: true, grid: { color: gridColor }, ticks: { font: chartFont, stepSize: 1 } },
+        y: { grid: { display: false }, ticks: { font: { ...chartFont, size: 11 } } }
+      }
+    }
+  });
+
+  const dayLabels = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+  const checkins = [...snapshotMetrics.checkinCounts.slice(1), snapshotMetrics.checkinCounts[0]];
+  const avgStayByDay = [...snapshotMetrics.avgStayByDay.slice(1), snapshotMetrics.avgStayByDay[0]].map(v => Number(v.toFixed(1)));
+  statsCharts.stayRhythm = new Chart(document.getElementById('chartStayRhythm'), {
+    data: {
+      labels: dayLabels,
+      datasets: [
+        {
+          type: 'bar',
+          label: 'Заезды',
+          data: checkins,
+          backgroundColor: dayLabels.map((_, index) => index >= 5 ? 'rgba(217,119,6,.32)' : 'rgba(15,118,110,.72)'),
+          borderRadius: 6,
+          yAxisID: 'y'
+        },
+        {
+          type: 'line',
+          label: 'Ночей в среднем',
+          data: avgStayByDay,
+          borderColor: '#d97706',
+          backgroundColor: 'rgba(217,119,6,.08)',
+          tension: .32,
+          pointRadius: 4,
+          yAxisID: 'y1'
+        }
+      ]
+    },
+    options: {
+      ...baseOptions,
+      scales: {
+        x: { grid: { display: false }, ticks: { font: chartFont } },
+        y: { beginAtZero: true, grid: { color: gridColor }, ticks: { font: chartFont, stepSize: 1 } },
+        y1: { beginAtZero: true, position: 'right', grid: { display: false }, ticks: { font: chartFont } }
+      }
+    }
+  });
+}
+
+function renderStats() {
+  const statsTab = document.getElementById('statsTab');
+  if (!statsTab) return;
+
+  const season = statsSeasonInfo();
+  refreshStatsControls(statsSelectableProperties());
+  const activeProperties = statsActiveProperties();
+
+  const filteredBookings = statsFilteredBookings(season);
+  const rangeEnd = statsRangeEnd(filteredBookings, season);
+  const sliderMax = Math.max(0, Math.round((rangeEnd - season.start) / DAY_MS));
+  if (statsState.dayIndex == null || statsState.dayIndex > sliderMax) statsState.dayIndex = sliderMax;
+  if (statsState.dayIndex < 0) statsState.dayIndex = 0;
+
+  const snapshotDate = addCalendarDays(season.start, statsState.dayIndex);
+  const snapshotBookings = filteredBookings.filter(booking => bookingVisibleBySnapshot(booking, snapshotDate, season));
+  const snapshotMetrics = computeStatsMetrics(snapshotBookings, season, activeProperties);
+  const currentMetrics = computeStatsMetrics(filteredBookings, season, activeProperties);
+
+  const slider = document.getElementById('statsTimeSlider');
+  if (slider) {
+    slider.min = '0';
+    slider.max = String(sliderMax);
+    slider.value = String(statsState.dayIndex);
+  }
+  setStatsText('statsRangeStart', formatStatsDate(season.start, { day: 'numeric', month: 'short' }));
+  setStatsText('statsRangeEnd', formatStatsDate(rangeEnd, { day: 'numeric', month: 'short' }));
+
+  renderStatsSummary(snapshotMetrics, currentMetrics, snapshotDate, activeProperties, filteredBookings, season);
+  renderStatsInsights(snapshotMetrics, currentMetrics, snapshotDate, filteredBookings, activeProperties, season);
+  renderStatsFocusList(snapshotBookings, filteredBookings, activeProperties, season);
+  renderStatsHeatmap(snapshotBookings, filteredBookings, activeProperties, season);
+  renderStatsCharts(snapshotMetrics, currentMetrics, filteredBookings, season, rangeEnd, snapshotDate);
+
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+function handleStatsSliderInput(value) {
+  statsState.dayIndex = Number(value) || 0;
+  renderStats();
+}
+
+function handleStatsFilterChange() {
+  const propertySelect = document.getElementById('statsPropertyFilter');
+  const platformSelect = document.getElementById('statsPlatformFilter');
+  statsState.propertyId = propertySelect?.value || 'all';
+  statsState.platform = platformSelect?.value || 'all';
+  renderStats();
+}
+
+function jumpStatsToToday() {
+  const season = statsSeasonInfo();
+  const filteredBookings = statsFilteredBookings(season);
+  const rangeEnd = statsRangeEnd(filteredBookings, season);
+  statsState.dayIndex = Math.max(0, Math.round((rangeEnd - season.start) / DAY_MS));
+  renderStats();
+}
+
+function setStatsPlaybackIcon(isPlaying) {
+  const btn = document.getElementById('statsPlayBtn');
+  if (!btn) return;
+  btn.innerHTML = `<i data-lucide="${isPlaying ? 'pause' : 'play'}"></i>`;
+  btn.title = isPlaying ? 'Пауза' : 'Проиграть сезон';
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+function toggleStatsPlayback() {
+  if (statsState.playTimer) {
+    clearInterval(statsState.playTimer);
+    statsState.playTimer = null;
+    setStatsPlaybackIcon(false);
+    return;
+  }
+
+  const slider = document.getElementById('statsTimeSlider');
+  const max = Number(slider?.max || 0);
+  if (!max) return;
+  if (statsState.dayIndex >= max) statsState.dayIndex = 0;
+  setStatsPlaybackIcon(true);
+  renderStats();
+
+  statsState.playTimer = setInterval(() => {
+    statsState.dayIndex += Math.max(1, Math.ceil(max / 70));
+    if (statsState.dayIndex >= max) {
+      statsState.dayIndex = max;
+      clearInterval(statsState.playTimer);
+      statsState.playTimer = null;
+      setStatsPlaybackIcon(false);
+    }
+    renderStats();
+  }, 260);
+}
+
+function statsObject(value) {
+  if (!value) return {};
+  if (typeof value === 'object') return value;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return {};
+  }
+}
+
+function statsMonthKey(season, month) {
+  return `${season.year}-${String(month.index + 1).padStart(2, '0')}`;
+}
+
+function statsFormatNumber(value, digits = 0) {
+  const n = Number(value) || 0;
+  return new Intl.NumberFormat('ru-RU', {
+    maximumFractionDigits: digits,
+    minimumFractionDigits: digits
+  }).format(n);
+}
+
+function statsFormatPercent(value) {
+  const n = Number(value) || 0;
+  return `${Number.isInteger(n) ? n : n.toFixed(1)}%`;
+}
+
+function statsFormatSnapshotTime(value) {
+  const date = parseStatsDateTime(value);
+  if (!date) return '—';
+  return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }) +
+    ' ' + date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+}
+
+function statsGlobalBookings(season) {
+  return bookings
+    .filter(b => isRealGuestBooking(b, bookings))
+    .filter(b => statsBookingOverlapsSeason(b, season));
+}
+
+function statsStayBucket(nights) {
+  if (nights <= 1) return '1';
+  if (nights === 2) return '2';
+  if (nights === 3) return '3';
+  if (nights <= 6) return '4-6';
+  return '7+';
+}
+
+function computeGlobalStatsMetrics(sourceBookings, season, activeProperties) {
+  const propCount = Math.max(activeProperties.length || new Set(sourceBookings.map(b => b.property_id).filter(Boolean)).size, 1);
+  const potentialNights = season.days * propCount;
+  const monthlyNights = new Array(STATS_MONTHS.length).fill(0);
+  const monthlyBookings = new Array(STATS_MONTHS.length).fill(0);
+  const monthlyGuests = new Array(STATS_MONTHS.length).fill(0);
+  const platformCounts = {};
+  const countryCounts = {};
+  const stayBuckets = { '1': 0, '2': 0, '3': 0, '4-6': 0, '7+': 0 };
+  let occupiedNights = 0;
+  let totalGuests = 0;
+  let bookingsWithGuests = 0;
+  let stayTotal = 0;
+
+  for (const booking of sourceBookings) {
+    occupiedNights += clippedNights(booking, season.start, season.end);
+    platformCounts[booking.platform || 'other'] = (platformCounts[booking.platform || 'other'] || 0) + 1;
+
+    const country = String(booking.guest_country || '').trim().toLowerCase();
+    if (country) countryCounts[country] = (countryCounts[country] || 0) + 1;
+
+    const guests = Number(booking.guest_count) || 0;
+    if (guests > 0) {
+      totalGuests += guests;
+      bookingsWithGuests++;
+    }
+
+    const stay = nightsBetween(booking.start_date, booking.end_date);
+    if (stay) {
+      stayTotal += stay;
+      stayBuckets[statsStayBucket(stay)]++;
+    }
+
+    STATS_MONTHS.forEach((month, index) => {
+      const monthStart = new Date(season.year, month.index, 1);
+      const monthEnd = new Date(season.year, month.index + 1, 1);
+      const nights = clippedNights(booking, monthStart, monthEnd);
+      monthlyNights[index] += nights;
+      if (nights > 0) monthlyGuests[index] += guests;
+    });
+
+    const start = parseLocalDate(booking.start_date);
+    const startIndex = STATS_MONTHS.findIndex(month => month.index === start.getMonth() && start.getFullYear() === season.year);
+    if (startIndex >= 0) monthlyBookings[startIndex]++;
+  }
+
+  return {
+    bookingCount: sourceBookings.length,
+    occupiedNights,
+    potentialNights,
+    occupancy: potentialNights > 0 ? Number(((occupiedNights / potentialNights) * 100).toFixed(1)) : 0,
+    totalGuests,
+    avgGuests: bookingsWithGuests ? totalGuests / bookingsWithGuests : 0,
+    avgStay: sourceBookings.length ? stayTotal / sourceBookings.length : 0,
+    platformCounts,
+    countryCounts,
+    monthlyNights,
+    monthlyBookings,
+    monthlyGuests,
+    stayBuckets
+  };
+}
+
+function normalizeStatsSnapshot(snapshot) {
+  const payload = statsObject(snapshot.payload);
+  return {
+    ...snapshot,
+    captured_at: snapshot.captured_at,
+    season_year: Number(snapshot.season_year),
+    booking_count: Number(snapshot.booking_count) || 0,
+    occupied_nights: Number(snapshot.occupied_nights) || 0,
+    guest_count: Number(snapshot.guest_count) || 0,
+    occupancy_percent: Number(snapshot.occupancy_percent) || 0,
+    avg_stay: Number(snapshot.avg_stay) || 0,
+    monthly_nights: statsObject(snapshot.monthly_nights),
+    monthly_bookings: statsObject(snapshot.monthly_bookings),
+    platform_counts: statsObject(snapshot.platform_counts),
+    country_counts: statsObject(snapshot.country_counts),
+    payload
+  };
+}
+
+function metricsFromStoredSnapshot(snapshot, season) {
+  const row = normalizeStatsSnapshot(snapshot);
+  const payload = row.payload || {};
+  const monthlyGuests = statsObject(payload.monthly_guests);
+  return {
+    bookingCount: row.booking_count,
+    occupiedNights: row.occupied_nights,
+    potentialNights: Number(payload.potential_nights) || 0,
+    occupancy: row.occupancy_percent,
+    totalGuests: row.guest_count,
+    avgGuests: Number(payload.avg_guests) || 0,
+    avgStay: row.avg_stay,
+    platformCounts: row.platform_counts,
+    countryCounts: row.country_counts,
+    monthlyNights: STATS_MONTHS.map(month => Number(row.monthly_nights[statsMonthKey(season, month)]) || 0),
+    monthlyBookings: STATS_MONTHS.map(month => Number(row.monthly_bookings[statsMonthKey(season, month)]) || 0),
+    monthlyGuests: STATS_MONTHS.map(month => Number(monthlyGuests[statsMonthKey(season, month)]) || 0),
+    stayBuckets: statsObject(payload.stay_buckets)
+  };
+}
+
+function statsStoredSnapshots(season) {
+  return (statsSnapshots || [])
+    .map(normalizeStatsSnapshot)
+    .filter(snapshot => snapshot.season_year === season.year)
+    .sort((a, b) => String(a.captured_at).localeCompare(String(b.captured_at)));
+}
+
+function buildFallbackStatsTimeline(filteredBookings, season, activeProperties) {
+  const rangeEnd = statsRangeEnd(filteredBookings, season);
+  const dayCount = Math.max(1, Math.round((rangeEnd - season.start) / DAY_MS) + 1);
+  const points = [];
+  for (let i = 0; i < dayCount; i++) {
+    const date = addCalendarDays(season.start, i);
+    const visibleBookings = filteredBookings.filter(booking => bookingVisibleBySnapshot(booking, date, season));
+    points.push({
+      captured_at: date.toISOString(),
+      label: formatStatsDate(date, { day: 'numeric', month: 'short' }),
+      metrics: computeGlobalStatsMetrics(visibleBookings, season, activeProperties)
+    });
+  }
+  return { mode: 'live', points };
+}
+
+function buildStoredStatsTimeline(storedSnapshots, season) {
+  return {
+    mode: 'database',
+    points: storedSnapshots.map(snapshot => ({
+      captured_at: snapshot.captured_at,
+      label: statsFormatSnapshotTime(snapshot.captured_at),
+      metrics: metricsFromStoredSnapshot(snapshot, season),
+      raw: snapshot
+    }))
+  };
+}
+
+function renderStatsSummary(snapshotMetrics, currentMetrics, snapshotDate, activeProperties, filteredBookings, season, timeline) {
+  const isDatabase = timeline.mode === 'database';
+  const dateLabel = isDatabase ? statsFormatSnapshotTime(snapshotDate) : formatStatsDate(parseStatsDateTime(snapshotDate));
+  const bookingsDelta = currentMetrics.bookingCount - snapshotMetrics.bookingCount;
+  const nightsDelta = currentMetrics.occupiedNights - snapshotMetrics.occupiedNights;
+  const occupancyDelta = currentMetrics.occupancy - snapshotMetrics.occupancy;
+  const snapshotWord = pluralRu(timeline.points.length, 'снимок', 'снимка', 'снимков');
+
+  setStatsText('statsSeasonLabel', season.year);
+  setStatsText('statsSnapshotCount', isDatabase ? `Снимки: ${timeline.points.length}` : 'Снимки: 0');
+  setStatsText('statsSnapshotSource', isDatabase
+    ? `${timeline.points.length} ${snapshotWord} в базе. Последний: ${timeline.points.at(-1)?.label || '—'}.`
+    : 'Пока нет снимков в базе; используется временный live-расчет.');
+  setStatsText('statsHeroSub', `${formatStatsDate(season.start)} — ${formatStatsDate(season.endVisible)}. Общая статистика по всем бронированиям, без разреза по комнатам.`);
+  setStatsHtml('statsSnapshotDate', `<i data-lucide="${isDatabase ? 'database' : 'calendar-days'}"></i>${dateLabel}`);
+  setStatsText('statsDeltaSubtitle', `После ${dateLabel}: ${signedNumber(bookingsDelta)} ${pluralRu(bookingsDelta, 'бронь', 'брони', 'броней')}, ${signedNumber(nightsDelta)} ${pluralRu(nightsDelta, 'ночь', 'ночи', 'ночей')}.`);
+
+  setStatsText('statsDeltaBookings', signedNumber(bookingsDelta));
+  setStatsText('statsDeltaBookingsSub', `${snapshotMetrics.bookingCount} в срезе → ${currentMetrics.bookingCount} сейчас`);
+  setStatsText('statsDeltaNights', signedNumber(nightsDelta));
+  setStatsText('statsDeltaNightsSub', `${snapshotMetrics.occupiedNights} в срезе → ${currentMetrics.occupiedNights} сейчас`);
+  setStatsText('statsDeltaOccupancy', signedNumber(occupancyDelta.toFixed(1), ' п.п.'));
+  setStatsText('statsDeltaOccupancySub', `${statsFormatPercent(snapshotMetrics.occupancy)} в срезе → ${statsFormatPercent(currentMetrics.occupancy)} сейчас`);
+
+  setStatsText('statsMetricBookings', statsFormatNumber(snapshotMetrics.bookingCount));
+  setStatsText('statsMetricBookingsSub', `${signedNumber(bookingsDelta)} к текущему состоянию`);
+  setStatsText('statsMetricNights', statsFormatNumber(snapshotMetrics.occupiedNights));
+  setStatsText('statsMetricNightsSub', `${statsFormatNumber(snapshotMetrics.potentialNights)} возможных ночей · ${activeProperties.length} ап.`);
+  setStatsText('statsMetricOccupancy', statsFormatPercent(snapshotMetrics.occupancy));
+  setStatsText('statsMetricOccupancySub', `${signedNumber(occupancyDelta.toFixed(1), ' п.п.')} после среза`);
+  setStatsText('statsMetricGuests', snapshotMetrics.totalGuests ? statsFormatNumber(snapshotMetrics.totalGuests) : '—');
+  setStatsText('statsMetricGuestsSub', snapshotMetrics.avgGuests ? `${snapshotMetrics.avgGuests.toFixed(1)} чел. в среднем` : 'Нет данных по гостям');
+}
+
+function renderStatsInsights(snapshotMetrics, currentMetrics, snapshotDate, filteredBookings, activeProperties, season, timeline) {
+  const topPlatform = Object.entries(currentMetrics.platformCounts).sort((a, b) => b[1] - a[1])[0];
+  const topCountry = Object.entries(currentMetrics.countryCounts).sort((a, b) => b[1] - a[1])[0];
+  const monthRows = STATS_MONTHS.map((month, index) => ({
+    month,
+    nights: currentMetrics.monthlyNights[index],
+    bookings: currentMetrics.monthlyBookings[index]
+  }));
+  const topMonth = monthRows.sort((a, b) => b.nights - a.nights)[0];
+  const lastSnapshot = timeline.points.at(-1);
+  const avgStayText = currentMetrics.avgStay ? `${currentMetrics.avgStay.toFixed(1)} ночи` : 'нет данных';
+
+  const insights = [
+    {
+      icon: timeline.mode === 'database' ? 'database' : 'clock',
+      title: 'История',
+      text: timeline.mode === 'database'
+        ? `В базе ${timeline.points.length} ${pluralRu(timeline.points.length, 'снимок', 'снимка', 'снимков')}; последний ${lastSnapshot?.label || '—'}.`
+        : 'Снимки начнут копиться после следующей синхронизации.'
+    },
+    {
+      icon: 'store',
+      title: 'Канал',
+      text: topPlatform
+        ? `${platformLabel(topPlatform[0])}: ${topPlatform[1]} ${pluralRu(topPlatform[1], 'бронь', 'брони', 'броней')} в текущем сезоне.`
+        : 'Каналы пока не заполнены.'
+    },
+    {
+      icon: 'calendar-range',
+      title: 'Пик месяца',
+      text: topMonth
+        ? `${topMonth.month.long}: ${topMonth.nights} ${pluralRu(topMonth.nights, 'ночь', 'ночи', 'ночей')} и ${topMonth.bookings} ${pluralRu(topMonth.bookings, 'бронь', 'брони', 'броней')}.`
+        : 'Месячной статистики пока нет.'
+    },
+    {
+      icon: 'users',
+      title: 'Портрет гостей',
+      text: topCountry
+        ? `${statsCountryLabel(topCountry[0])}: ${topCountry[1]} ${pluralRu(topCountry[1], 'бронь', 'брони', 'броней')}; среднее проживание ${avgStayText}.`
+        : `Страны пока не заполнены; среднее проживание ${avgStayText}.`
+    }
+  ];
+
+  setStatsHtml('statsInsights', insights.map(item => `
+    <div class="stats-insight">
+      <div class="stats-insight-icon"><i data-lucide="${item.icon}"></i></div>
+      <div>
+        <b>${escapeHtml(item.title)}</b>
+        <span>${escapeHtml(item.text)}</span>
+      </div>
+    </div>
+  `).join(''));
+}
+
+function renderStatsHistoryList(timeline, currentMetrics) {
+  if (timeline.mode !== 'database' || !timeline.points.length) {
+    setStatsHtml('statsHistoryList', '<div class="agenda-empty">Снимков в базе пока нет. Следующая синхронизация сохранит первый срез.</div>');
+    return;
+  }
+
+  const latest = timeline.points.at(-1)?.metrics || currentMetrics;
+  setStatsHtml('statsHistoryList', timeline.points.slice(-8).reverse().map(point => {
+    const bookingsDelta = latest.bookingCount - point.metrics.bookingCount;
+    const nightsDelta = latest.occupiedNights - point.metrics.occupiedNights;
+    return `<div class="stats-focus-row">
+      <div class="stats-focus-head">
+        <span>${escapeHtml(point.label)}</span>
+        <b>${statsFormatNumber(point.metrics.bookingCount)}</b>
+      </div>
+      <div class="stats-focus-track"><div class="stats-focus-fill" style="width:${Math.min(100, point.metrics.occupancy)}%;"></div></div>
+      <div class="stats-focus-meta">${point.metrics.occupiedNights} ${pluralRu(point.metrics.occupiedNights, 'ночь', 'ночи', 'ночей')} · ${statsFormatPercent(point.metrics.occupancy)} · ${signedNumber(bookingsDelta)} броней / ${signedNumber(nightsDelta)} ночей до последнего</div>
+    </div>`;
+  }).join(''));
+}
+
+function renderStatsMonthTable(snapshotMetrics, currentMetrics) {
+  const maxNights = Math.max(1, ...currentMetrics.monthlyNights);
+  let html = `<table class="stats-month-table">
+    <thead><tr><th>Месяц</th><th>Брони</th><th>Ночи</th><th>Гости</th><th>Сейчас</th></tr></thead><tbody>`;
+
+  STATS_MONTHS.forEach((month, index) => {
+    const selectedBookings = snapshotMetrics.monthlyBookings[index] || 0;
+    const currentBookings = currentMetrics.monthlyBookings[index] || 0;
+    const selectedNights = snapshotMetrics.monthlyNights[index] || 0;
+    const currentNights = currentMetrics.monthlyNights[index] || 0;
+    const selectedGuests = snapshotMetrics.monthlyGuests[index] || 0;
+    const currentGuests = currentMetrics.monthlyGuests[index] || 0;
+    const fill = Math.round((currentNights / maxNights) * 100);
+    html += `<tr>
+      <td><div class="stats-month-name">${month.long}<div class="stats-month-bar"><div class="stats-month-fill" style="width:${fill}%"></div></div></div></td>
+      <td>${selectedBookings}<br><span class="stats-history-pill">${signedNumber(currentBookings - selectedBookings)}</span></td>
+      <td>${selectedNights}<br><span class="stats-history-pill">${signedNumber(currentNights - selectedNights)}</span></td>
+      <td>${selectedGuests || '—'}<br><span class="stats-history-pill">${signedNumber(currentGuests - selectedGuests)}</span></td>
+      <td>${currentBookings} броней · ${currentNights} ночей</td>
+    </tr>`;
+  });
+
+  html += '</tbody></table>';
+  setStatsHtml('statsMonthTable', html);
+}
+
+function destroyStatsCharts() {
+  Object.values(statsCharts).forEach(chart => chart.destroy());
+  statsCharts = {};
+}
+
+function renderStatsCharts(snapshotMetrics, currentMetrics, timeline) {
+  destroyStatsCharts();
+  if (typeof Chart === 'undefined') return;
+
+  const chartFont = { family: "'Manrope', sans-serif" };
+  const gridColor = '#eef1f3';
+  const basePlugins = {
+    legend: { labels: { font: { ...chartFont, size: 12 }, usePointStyle: true, boxWidth: 8 } },
+    tooltip: { titleFont: chartFont, bodyFont: chartFont }
+  };
+  const baseOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: { duration: 180 },
+    plugins: basePlugins
+  };
+
+  const labels = timeline.points.map(point => point.label);
+  const selectedIndex = Math.max(0, Math.min(statsState.dayIndex || 0, timeline.points.length - 1));
+  const selectedPointData = timeline.points.map((point, index) => index === selectedIndex ? point.metrics.bookingCount : null);
+  statsCharts.salesPace = new Chart(document.getElementById('chartSalesPace'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Брони',
+          data: timeline.points.map(point => point.metrics.bookingCount),
+          borderColor: '#0f766e',
+          backgroundColor: 'rgba(15,118,110,.12)',
+          pointRadius: timeline.points.length <= 12 ? 3 : 0,
+          tension: .28,
+          fill: true
+        },
+        {
+          label: 'Ночи',
+          data: timeline.points.map(point => point.metrics.occupiedNights),
+          borderColor: 'rgba(225,29,72,.75)',
+          backgroundColor: 'rgba(225,29,72,.06)',
+          pointRadius: 0,
+          tension: .28,
+          yAxisID: 'y1'
+        },
+        {
+          label: 'Выбранный',
+          data: selectedPointData,
+          borderColor: '#111827',
+          backgroundColor: '#111827',
+          pointRadius: 6,
+          pointHoverRadius: 7,
+          showLine: false
+        }
+      ]
+    },
+    options: {
+      ...baseOptions,
+      scales: {
+        x: { grid: { display: false }, ticks: { font: chartFont, maxTicksLimit: 8 } },
+        y: { beginAtZero: true, grid: { color: gridColor }, ticks: { font: chartFont, stepSize: 1 } },
+        y1: { beginAtZero: true, position: 'right', grid: { display: false }, ticks: { font: chartFont } }
+      }
+    }
+  });
+
+  statsCharts.monthlyNights = new Chart(document.getElementById('chartMonthlyNights'), {
+    data: {
+      labels: STATS_MONTHS.map(m => m.short),
+      datasets: [
+        { type: 'bar', label: 'Срез', data: snapshotMetrics.monthlyNights, backgroundColor: 'rgba(15,118,110,.72)', borderRadius: 6 },
+        { type: 'line', label: 'Сейчас', data: currentMetrics.monthlyNights, borderColor: '#e11d48', backgroundColor: 'rgba(225,29,72,.1)', tension: .32, pointRadius: 4 }
+      ]
+    },
+    options: {
+      ...baseOptions,
+      scales: {
+        x: { grid: { display: false }, ticks: { font: chartFont } },
+        y: { beginAtZero: true, grid: { color: gridColor }, ticks: { font: chartFont } }
+      }
+    }
+  });
+
+  const platformEntries = Object.entries(snapshotMetrics.platformCounts).filter(([, count]) => count > 0);
+  const platformLabels = platformEntries.length ? platformEntries.map(([platform]) => platformLabel(platform)) : ['Нет данных'];
+  const platformData = platformEntries.length ? platformEntries.map(([, count]) => count) : [1];
+  const platformColors = platformEntries.length
+    ? platformEntries.map(([platform]) => platform === 'airbnb' ? '#D8304E' : platform === 'booking' ? '#003b95' : platform === 'direct' ? '#047857' : '#6b7280')
+    : ['#e5e7eb'];
+  statsCharts.platforms = new Chart(document.getElementById('chartPlatforms'), {
+    type: 'doughnut',
+    data: { labels: platformLabels, datasets: [{ data: platformData, backgroundColor: platformColors, borderColor: '#fff', borderWidth: 3 }] },
+    options: { ...baseOptions, cutout: '62%', plugins: { ...basePlugins, legend: { ...basePlugins.legend, position: 'bottom' } } }
+  });
+
+  const countryEntries = Object.entries(snapshotMetrics.countryCounts).sort((a, b) => b[1] - a[1]).slice(0, 7);
+  statsCharts.countries = new Chart(document.getElementById('chartCountries'), {
+    type: 'bar',
+    data: {
+      labels: countryEntries.length ? countryEntries.map(([country]) => statsCountryLabel(country)) : ['Нет данных'],
+      datasets: [{ data: countryEntries.length ? countryEntries.map(([, count]) => count) : [0], backgroundColor: '#0f766e', borderRadius: 6 }]
+    },
+    options: {
+      ...baseOptions,
+      indexAxis: 'y',
+      plugins: { ...basePlugins, legend: { display: false } },
+      scales: {
+        x: { beginAtZero: true, grid: { color: gridColor }, ticks: { font: chartFont, stepSize: 1 } },
+        y: { grid: { display: false }, ticks: { font: { ...chartFont, size: 11 } } }
+      }
+    }
+  });
+
+  const stayLabels = ['1 ночь', '2 ночи', '3 ночи', '4-6', '7+'];
+  const stayKeys = ['1', '2', '3', '4-6', '7+'];
+  statsCharts.stayRhythm = new Chart(document.getElementById('chartStayRhythm'), {
+    type: 'bar',
+    data: {
+      labels: stayLabels,
+      datasets: [{ data: stayKeys.map(key => Number(snapshotMetrics.stayBuckets[key]) || 0), backgroundColor: ['#0f766e','#0ea5a4','#d97706','#e11d48','#003b95'], borderRadius: 6 }]
+    },
+    options: {
+      ...baseOptions,
+      plugins: { ...basePlugins, legend: { display: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: chartFont } },
+        y: { beginAtZero: true, grid: { color: gridColor }, ticks: { font: chartFont, stepSize: 1 } }
+      }
+    }
+  });
+}
+
+function renderStats() {
+  const statsTab = document.getElementById('statsTab');
+  if (!statsTab) return;
+
+  const season = statsSeasonInfo();
+  const activeProperties = statsSelectableProperties();
+  const filteredBookings = statsGlobalBookings(season);
+  const currentMetrics = computeGlobalStatsMetrics(filteredBookings, season, activeProperties);
+  const storedSnapshots = statsStoredSnapshots(season);
+  const timeline = storedSnapshots.length
+    ? buildStoredStatsTimeline(storedSnapshots, season)
+    : buildFallbackStatsTimeline(filteredBookings, season, activeProperties);
+
+  const sliderMax = Math.max(0, timeline.points.length - 1);
+  if (statsState.dayIndex == null || statsState.dayIndex > sliderMax) statsState.dayIndex = sliderMax;
+  if (statsState.dayIndex < 0) statsState.dayIndex = 0;
+
+  const selectedPoint = timeline.points[statsState.dayIndex] || timeline.points.at(-1);
+  const snapshotMetrics = selectedPoint?.metrics || currentMetrics;
+  const snapshotDate = selectedPoint?.captured_at || new Date().toISOString();
+
+  const slider = document.getElementById('statsTimeSlider');
+  if (slider) {
+    slider.min = '0';
+    slider.max = String(sliderMax);
+    slider.value = String(statsState.dayIndex);
+  }
+  setStatsText('statsRangeStart', timeline.points[0]?.label || '—');
+  setStatsText('statsRangeEnd', timeline.points.at(-1)?.label || '—');
+
+  renderStatsSummary(snapshotMetrics, currentMetrics, snapshotDate, activeProperties, filteredBookings, season, timeline);
+  renderStatsInsights(snapshotMetrics, currentMetrics, snapshotDate, filteredBookings, activeProperties, season, timeline);
+  renderStatsHistoryList(timeline, currentMetrics);
+  renderStatsMonthTable(snapshotMetrics, currentMetrics);
+  renderStatsCharts(snapshotMetrics, currentMetrics, timeline);
+
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+function handleStatsSliderInput(value) {
+  statsState.dayIndex = Number(value) || 0;
+  renderStats();
+}
+
+function jumpStatsToToday() {
+  const slider = document.getElementById('statsTimeSlider');
+  statsState.dayIndex = Number(slider?.max || 0);
+  renderStats();
+}
+
+function toggleStatsPlayback() {
+  if (statsState.playTimer) {
+    clearInterval(statsState.playTimer);
+    statsState.playTimer = null;
+    setStatsPlaybackIcon(false);
+    return;
+  }
+
+  const slider = document.getElementById('statsTimeSlider');
+  const max = Number(slider?.max || 0);
+  if (!max) return;
+  if (statsState.dayIndex >= max) statsState.dayIndex = 0;
+  setStatsPlaybackIcon(true);
+  renderStats();
+
+  statsState.playTimer = setInterval(() => {
+    statsState.dayIndex += 1;
+    if (statsState.dayIndex >= max) {
+      statsState.dayIndex = max;
+      clearInterval(statsState.playTimer);
+      statsState.playTimer = null;
+      setStatsPlaybackIcon(false);
+    }
+    renderStats();
+  }, 360);
 }
 
 async function syncCalendars() {
