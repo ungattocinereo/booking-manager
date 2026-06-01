@@ -52,6 +52,8 @@
       --airbnb-light: #fff1f2;
       --booking: #003b95;
       --booking-light: #eff6ff;
+      --direct: #059669;
+      --direct-light: #ecfdf5;
       --success: #059669;
       --success-light: #ecfdf5;
       --warning: #d97706;
@@ -355,6 +357,7 @@
     }
     .legend-dot.airbnb { background: var(--airbnb); }
     .legend-dot.booking { background: var(--booking); }
+    .legend-dot.direct { background: var(--direct); }
     .legend-dot.completed {
       background: #fff;
       border: 1px solid #6b7280;
@@ -1927,6 +1930,7 @@
   <div class="legend" id="legend">
     <div class="legend-item"><div class="legend-dot airbnb"></div>Airbnb</div>
     <div class="legend-item"><div class="legend-dot booking"></div>Booking.com</div>
+    <div class="legend-item"><div class="legend-dot direct"></div>Прямые</div>
     <div class="legend-item"><div class="legend-dot completed"></div>Завершено</div>
     <div class="legend-item"><div class="legend-dot unavailable"></div>Недоступно</div>
   </div>
@@ -1958,7 +1962,7 @@
               <option value="all">Все платформы</option>
               <option value="airbnb">Airbnb</option>
               <option value="booking">Booking.com</option>
-              <option value="direct">Direct</option>
+              <option value="direct">Прямые</option>
             </select>
           </div>
           <label class="toggle-pill">
@@ -2333,6 +2337,7 @@ function propertyMeta(propertyId) {
 function platformLabel(platform) {
   if (platform === 'booking') return 'BOOKING';
   if (platform === 'airbnb') return 'AIRBNB';
+  if (platform === 'direct') return 'ПРЯМОЕ';
   return String(platform || 'OTHER').toUpperCase();
 }
 
@@ -2357,6 +2362,25 @@ function unavailableBookingLabel(b) {
 
 function hasGuestDetails(b) {
   return Boolean((b.guest_name || '').trim()) || Number(b.guest_count) > 0;
+}
+
+function isDirectBooking(b) {
+  return String(b.platform || '').toLowerCase() === 'direct';
+}
+
+function dateRangesOverlap(startA, endA, startB, endB) {
+  return startA < endB && startB < endA;
+}
+
+function isBlockedByDirectBooking(booking, directBookings) {
+  if (!isUnavailableBooking(booking) || hasGuestDetails(booking)) return false;
+  const start = parseLocalDate(booking.start_date);
+  const end = parseLocalDate(booking.end_date);
+  return directBookings.some(direct => {
+    const directStart = parseLocalDate(direct.start_date);
+    const directEnd = parseLocalDate(direct.end_date);
+    return dateRangesOverlap(start, end, directStart, directEnd);
+  });
 }
 
 function isGroupedBookingClosure(b, allBookings = bookings) {
@@ -2646,6 +2670,14 @@ function getCalendarGroupsForRender() {
 
 function getCalendarBookingsForProperty(propId, startDate, endDate, today) {
   const seen = new Set();
+  const directBookings = bookings.filter(b => {
+    if (b.property_id !== propId || !isDirectBooking(b)) return false;
+    if (isUnavailableBooking(b) && !hasGuestDetails(b)) return false;
+    const start = parseLocalDate(b.start_date);
+    const end = parseLocalDate(b.end_date);
+    return end > startDate && start < endDate;
+  });
+
   return bookings.filter(b => {
     if (b.property_id !== propId) return false;
     if (calendarState.platform !== 'all' && b.platform !== calendarState.platform) return false;
@@ -2653,6 +2685,7 @@ function getCalendarBookingsForProperty(propId, startDate, endDate, today) {
     const end = parseLocalDate(b.end_date);
     if (calendarState.hideCompleted && end <= today) return false;
     if (end < startDate || start > endDate) return false;
+    if (isBlockedByDirectBooking(b, directBookings)) return false;
     const key = `${b.platform}_${b.start_date}_${b.end_date}_${b.guest_name || ''}_${b.reservation_url || ''}`;
     if (seen.has(key)) return false;
     seen.add(key);
