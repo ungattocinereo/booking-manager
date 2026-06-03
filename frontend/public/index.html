@@ -109,26 +109,39 @@
       min-width: 0;
     }
     .header-logo {
-      width: 36px; height: 36px;
-      background: var(--accent);
-      border-radius: 10px;
+      width: 40px;
+      height: 40px;
+      border-radius: 11px;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #fff;
+      overflow: hidden;
+      flex: 0 0 40px;
+      box-shadow: 0 1px 2px rgba(15,23,42,.08);
+    }
+    .header-logo img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
     }
     .header h1 {
-      font-size: 18px;
-      font-weight: 700;
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      font-size: 17px;
+      line-height: 1.08;
+      font-weight: 800;
       letter-spacing: 0;
-      white-space: nowrap;
       overflow: hidden;
-      text-overflow: ellipsis;
     }
     .header h1 span {
       color: var(--text-secondary);
-      font-weight: 400;
-      margin-left: 4px;
+      font-size: 11px;
+      line-height: 1;
+      font-weight: 750;
+      letter-spacing: .02em;
+      text-transform: uppercase;
     }
     .header-actions { display: flex; gap: 10px; align-items: center; }
     .last-sync { font-size: 12px; color: var(--text-secondary); }
@@ -1591,9 +1604,14 @@
         padding: 0 12px;
         gap: 10px;
       }
-      .header-logo { width: 32px; height: 32px; border-radius: 9px; }
-      .header h1 { font-size: 16px; max-width: 42vw; }
-      .header h1 span { display: none; }
+      .header-logo {
+        width: 36px;
+        height: 36px;
+        flex-basis: 36px;
+        border-radius: 9px;
+      }
+      .header h1 { font-size: 15px; max-width: 42vw; }
+      .header h1 span { font-size: 9.5px; }
       .header-actions { gap: 6px; flex-shrink: 0; }
       .last-sync { display: none; }
       .header-actions .btn {
@@ -1924,7 +1942,7 @@
   <div class="header">
     <div class="header-left">
       <div class="header-logo">
-        <img src="/favicon-32.png" alt="Atrani" style="width:20px;height:20px;">
+        <img src="/icon-192.png" alt="Atrani">
       </div>
       <h1>Atrani <span>Бронирования</span></h1>
     </div>
