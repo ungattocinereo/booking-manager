@@ -1511,6 +1511,35 @@
       align-items: center;
       gap: 10px;
     }
+    .tax-platform-logo-wrap {
+      position: relative;
+      width: 42px;
+      height: 42px;
+      flex: 0 0 42px;
+    }
+    .tax-platform-logo-img {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      display: block;
+      object-fit: cover;
+      box-shadow: 0 1px 2px rgba(15,23,42,.08), 0 0 0 1px rgba(15,23,42,.08);
+    }
+    .tax-platform-property-badge {
+      position: absolute;
+      right: -4px;
+      bottom: -4px;
+      width: 19px;
+      height: 19px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #fff;
+      border: 1px solid var(--border);
+      box-shadow: 0 2px 5px rgba(15,23,42,.16);
+      color: var(--property-color);
+    }
     .tax-property-icon {
       width: 34px;
       height: 34px;
@@ -1946,6 +1975,15 @@
         width: 30px;
         height: 30px;
       }
+      .tax-platform-logo-wrap {
+        width: 40px;
+        height: 40px;
+        flex-basis: 40px;
+      }
+      .tax-platform-logo-img {
+        width: 40px;
+        height: 40px;
+      }
       .tax-property-name,
       .tax-guest-name {
         font-size: 13px;
@@ -2203,6 +2241,8 @@ let bookings = [];
 let cleaners = [];
 let statsSnapshots = [];
 let allAssignments = {};
+let allTaxBookings = [];
+let taxFocusTodayOnNextRender = false;
 
 const TAB_ROUTES = { '/stats': 'stats', '/maid': 'cleaners', '/tax': 'tax' };
 const ROUTE_TABS = { stats: '/stats', cleaners: '/maid', tax: '/tax' };
@@ -2222,7 +2262,10 @@ function switchTab(tab, pushState = true) {
     });
   }
   if (tab === 'stats') renderStats();
-  if (tab === 'tax') loadTaxData();
+  if (tab === 'tax') {
+    taxFocusTodayOnNextRender = true;
+    loadTaxData();
+  }
   if (pushState) {
     const url = ROUTE_TABS[tab] || '/';
     history.pushState({ tab }, '', url);
@@ -2296,7 +2339,9 @@ async function loadData({ silent = false, attempt = 1 } = {}) {
   // Update tax data if tax tab is visible
   if (document.getElementById('taxTab').style.display !== 'none') {
     allTaxBookings = bookings.filter(b => isTaxableBooking(b, bookings));
-    renderTaxList();
+    const shouldFocusToday = taxFocusTodayOnNextRender;
+    renderTaxList({ preserveScroll: !shouldFocusToday, focusToday: shouldFocusToday });
+    taxFocusTodayOnNextRender = false;
   }
   if (document.getElementById('statsTab').style.display !== 'none') {
     renderStats();
@@ -3842,15 +3887,10 @@ window.addEventListener('resize', () => {
   calendarResizeTimer = setTimeout(() => renderCalendar({ preserveScroll: true }), 120);
 });
 
-// Init tax date to today
-
-
 loadData();
 setInterval(loadData, 5 * 60 * 1000);
 
 // ===== TAX (Tassa di Soggiorno) =====
-let allTaxBookings = [];
-
 async function loadTaxData() {
   const listEl = document.getElementById('taxList');
   listEl.innerHTML = '<div class="tax-empty"><div class="tax-empty-icon">⏳</div>Загрузка...</div>';
@@ -3867,8 +3907,10 @@ async function loadTaxData() {
     // Filter to real bookings only, group by end_date
     allTaxBookings = all.filter(b => isTaxableBooking(b, all));
 
-    renderTaxList();
+    renderTaxList({ focusToday: taxFocusTodayOnNextRender });
+    taxFocusTodayOnNextRender = false;
   } catch (e) {
+    taxFocusTodayOnNextRender = false;
     listEl.innerHTML = '<div class="tax-empty"><div class="tax-empty-icon">❌</div>Ошибка загрузки</div>';
   }
 }
@@ -3894,7 +3936,7 @@ function renderTaxSummary(source = allTaxBookings) {
   `;
 }
 
-function renderTaxList({ preserveScroll = false } = {}) {
+function renderTaxList({ preserveScroll = false, focusToday = false } = {}) {
   const listEl = document.getElementById('taxList');
   const showUnpaidOnly = document.getElementById('taxShowUnpaidOnly').checked;
   const previousScrollTop = preserveScroll ? listEl.scrollTop : null;
@@ -3944,11 +3986,15 @@ function renderTaxList({ preserveScroll = false } = {}) {
       const statusIcon = r.tax_paid ? 'check' : 'circle';
       const statusLabel = r.tax_paid ? 'Оплачено' : 'Отметить оплату';
       const statusMeta = r.tax_paid && r.tax_paid_at ? `<span class="tax-status-meta">${formatTaxTime(r.tax_paid_at)}</span>` : '';
+      const platformLogo = platformLogoHtml(r.platform, 'tax-platform-logo-img', { decorative: true });
+      const bookingIdentity = platformLogo
+        ? `<span class="tax-platform-logo-wrap">${platformLogo}<span class="tax-platform-property-badge"><i data-lucide="${meta.icon}" style="width:11px;height:11px;"></i></span></span>`
+        : `<span class="tax-property-icon"><i data-lucide="${meta.icon}" style="width:16px;height:16px;"></i></span>`;
       const guest = escapeHtml(r.guest_name || '—');
       const flag = r.guest_country ? ' ' + flagEmoji(r.guest_country) : '';
 
       html += `<div class="tax-row ${paidClass}" id="tax-row-${r.id}" style="--property-color:${meta.color};--property-bg:${meta.bg}">`;
-      html += `<div class="tax-row-property"><span class="tax-property-icon"><i data-lucide="${meta.icon}" style="width:16px;height:16px;"></i></span><span class="tax-property-copy"><span class="tax-property-name">${escapeHtml(meta.name)}</span><sup class="tax-platform">${escapeHtml(platformLabel(r.platform))}</sup></span></div>`;
+      html += `<div class="tax-row-property">${bookingIdentity}<span class="tax-property-copy"><span class="tax-property-name">${escapeHtml(meta.name)}</span><sup class="tax-platform">${escapeHtml(platformLabel(r.platform))}</sup></span></div>`;
       html += `<div class="tax-row-guest"><div class="tax-guest-name">${guest}${flag}</div><div class="tax-stay">${escapeHtml(taxStayLabel(r))}</div></div>`;
       html += `<span class="tax-row-nights">${taxAmount}</span>`;
       html += `<button class="tax-row-check ${statusClass}" type="button" onclick="toggleTaxPaid(${r.id}, ${!r.tax_paid})" aria-pressed="${r.tax_paid ? 'true' : 'false'}" aria-label="${r.tax_paid ? 'Снять отметку налога' : 'Отметить налог оплачен'}">`;
@@ -3962,6 +4008,7 @@ function renderTaxList({ preserveScroll = false } = {}) {
   listEl.innerHTML = html;
   if (typeof lucide !== 'undefined') lucide.createIcons();
   if (previousScrollTop != null) listEl.scrollTop = previousScrollTop;
+  else if (focusToday) requestAnimationFrame(() => taxScrollToToday({ behavior: 'auto', fallback: true }));
 }
 
 async function toggleTaxPaid(bookingId, paid) {
@@ -3973,7 +4020,7 @@ async function toggleTaxPaid(bookingId, paid) {
     });
     if (!res.ok) throw new Error('Failed');
     // Update local data
-    const b = allTaxBookings.find(x => x.id === bookingId);
+    const b = allTaxBookings.find(x => String(x.id) === String(bookingId));
     if (b) {
       b.tax_paid = paid;
       b.tax_paid_at = paid ? new Date().toISOString() : null;
@@ -3984,10 +4031,20 @@ async function toggleTaxPaid(bookingId, paid) {
   }
 }
 
-function taxScrollToToday() {
+function taxScrollToToday({ behavior = 'smooth', fallback = false } = {}) {
   const today = new Date().toISOString().split('T')[0];
-  const el = document.getElementById(`tax-date-${today}`);
-  if (el) el.scrollIntoView({ block: 'start', behavior: 'smooth' });
+  const listEl = document.getElementById('taxList');
+  if (!listEl) return;
+
+  let target = document.getElementById(`tax-date-${today}`);
+  if (!target && fallback) {
+    const groups = Array.from(listEl.querySelectorAll('.tax-date-group'));
+    target = groups.find(group => String(group.id || '').replace('tax-date-', '') >= today) || groups[0] || null;
+  }
+  if (!target) return;
+
+  const top = Math.max(0, target.offsetTop - listEl.offsetTop - 4);
+  listEl.scrollTo({ top, behavior });
 }
 
 function formatTaxTime(iso) {
