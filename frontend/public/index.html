@@ -1580,16 +1580,77 @@
       font-weight: 750;
       white-space: nowrap;
     }
-    .tax-row-check { display: flex; align-items: center; justify-content: flex-end; gap: 7px; cursor: pointer; user-select: none; }
-    .tax-checkbox {
-      width: 20px; height: 20px; border-radius: 5px; border: 2px solid var(--border);
-      display: flex; align-items: center; justify-content: center; transition: all .15s;
-      background: var(--card); cursor: pointer; font-size: 12px;
+    .tax-row-check {
+      justify-self: end;
+      min-height: 36px;
+      min-width: 138px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 5px 10px 5px 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 7px;
+      cursor: pointer;
+      user-select: none;
+      font: inherit;
+      background: #fff;
+      color: var(--text-secondary);
+      transition: background .15s ease, border-color .15s ease, transform .15s ease, box-shadow .15s ease;
     }
-    .tax-checkbox.checked { background: var(--success); border-color: var(--success); color: #fff; }
-    .tax-paid-label { font-size: 12px; color: var(--success); }
-    .tax-unpaid-label { font-size: 12px; color: var(--warning); }
-    .tax-paid-time { font-size: 11px; color: var(--text-secondary); }
+    .tax-row-check:hover,
+    .tax-row-check:focus-visible {
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-sm);
+      outline: none;
+    }
+    .tax-row-check.is-paid {
+      border-color: #bbf7d0;
+      background: #f0fdf4;
+      color: #047857;
+    }
+    .tax-row-check.is-unpaid {
+      border-color: #fed7aa;
+      background: #fff7ed;
+      color: #9a3412;
+    }
+    .tax-status-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 999px;
+      flex: 0 0 24px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,.78);
+      color: currentColor;
+    }
+    .tax-row-check.is-paid .tax-status-icon {
+      background: var(--success);
+      color: #fff;
+    }
+    .tax-row-check.is-unpaid .tax-status-icon {
+      box-shadow: inset 0 0 0 1px #fed7aa;
+    }
+    .tax-status-copy {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      line-height: 1.05;
+    }
+    .tax-status-label {
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    .tax-status-meta {
+      margin-top: 2px;
+      font-size: 10.5px;
+      font-weight: 650;
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
     .tax-empty { text-align: center; padding: 48px 20px; color: var(--text-secondary); font-size: 15px; }
     .tax-empty-icon { font-size: 40px; margin-bottom: 12px; }
     .btn-secondary { background: var(--card); border: 1px solid var(--border); color: var(--text); border-radius: var(--radius-sm); cursor: pointer; font-family: inherit; }
@@ -1879,7 +1940,7 @@
         grid-row: 3;
         justify-self: end;
         max-width: 100%;
-        gap: 5px;
+        min-height: 38px;
       }
       .tax-property-icon {
         width: 30px;
@@ -1892,9 +1953,7 @@
       .tax-stay {
         font-size: 11px;
       }
-      .tax-paid-time {
-        display: none;
-      }
+      .tax-status-meta { font-size: 10px; }
     }
 
     @media (max-width: 420px) {
@@ -1927,11 +1986,11 @@
       .tax-row-check {
         grid-row: auto;
         justify-self: stretch;
-        justify-content: space-between;
+        width: 100%;
+        justify-content: center;
       }
-      .tax-paid-label,
-      .tax-unpaid-label {
-        font-size: 12px;
+      .tax-status-copy {
+        align-items: center;
       }
     }
   </style>
@@ -3835,9 +3894,10 @@ function renderTaxSummary(source = allTaxBookings) {
   `;
 }
 
-function renderTaxList() {
+function renderTaxList({ preserveScroll = false } = {}) {
   const listEl = document.getElementById('taxList');
   const showUnpaidOnly = document.getElementById('taxShowUnpaidOnly').checked;
+  const previousScrollTop = preserveScroll ? listEl.scrollTop : null;
 
   let filtered = allTaxBookings;
   if (showUnpaidOnly) {
@@ -3880,11 +3940,10 @@ function renderTaxList() {
       const meta = propertyMeta(r.property_id);
       const taxAmount = taxAmountLabel(r);
       const paidClass = r.tax_paid ? 'tax-paid' : 'tax-unpaid';
-      const checkClass = r.tax_paid ? 'checked' : '';
-      const checkIcon = r.tax_paid ? '✓' : '';
-      const paidLabel = r.tax_paid
-        ? `<span class="tax-paid-label">✓</span>${r.tax_paid_at ? `<span class="tax-paid-time">${formatTaxTime(r.tax_paid_at)}</span>` : ''}`
-        : '<span class="tax-unpaid-label">не оплачено</span>';
+      const statusClass = r.tax_paid ? 'is-paid' : 'is-unpaid';
+      const statusIcon = r.tax_paid ? 'check' : 'circle';
+      const statusLabel = r.tax_paid ? 'Оплачено' : 'Отметить оплату';
+      const statusMeta = r.tax_paid && r.tax_paid_at ? `<span class="tax-status-meta">${formatTaxTime(r.tax_paid_at)}</span>` : '';
       const guest = escapeHtml(r.guest_name || '—');
       const flag = r.guest_country ? ' ' + flagEmoji(r.guest_country) : '';
 
@@ -3892,22 +3951,17 @@ function renderTaxList() {
       html += `<div class="tax-row-property"><span class="tax-property-icon"><i data-lucide="${meta.icon}" style="width:16px;height:16px;"></i></span><span class="tax-property-copy"><span class="tax-property-name">${escapeHtml(meta.name)}</span><sup class="tax-platform">${escapeHtml(platformLabel(r.platform))}</sup></span></div>`;
       html += `<div class="tax-row-guest"><div class="tax-guest-name">${guest}${flag}</div><div class="tax-stay">${escapeHtml(taxStayLabel(r))}</div></div>`;
       html += `<span class="tax-row-nights">${taxAmount}</span>`;
-      html += `<div class="tax-row-check" onclick="toggleTaxPaid(${r.id}, ${!r.tax_paid})">`;
-      html += `<div class="tax-checkbox ${checkClass}">${checkIcon}</div>`;
-      html += paidLabel;
-      html += `</div></div>`;
+      html += `<button class="tax-row-check ${statusClass}" type="button" onclick="toggleTaxPaid(${r.id}, ${!r.tax_paid})" aria-pressed="${r.tax_paid ? 'true' : 'false'}" aria-label="${r.tax_paid ? 'Снять отметку налога' : 'Отметить налог оплачен'}">`;
+      html += `<span class="tax-status-icon" aria-hidden="true"><i data-lucide="${statusIcon}" style="width:14px;height:14px;"></i></span>`;
+      html += `<span class="tax-status-copy"><span class="tax-status-label">${statusLabel}</span>${statusMeta}</span>`;
+      html += `</button></div>`;
     }
     html += `</div>`;
   }
 
   listEl.innerHTML = html;
   if (typeof lucide !== 'undefined') lucide.createIcons();
-
-  // Scroll to today if exists
-  setTimeout(() => {
-    const todayEl = document.getElementById(`tax-date-${today}`);
-    if (todayEl) todayEl.scrollIntoView({ block: 'center', behavior: 'smooth' });
-  }, 100);
+  if (previousScrollTop != null) listEl.scrollTop = previousScrollTop;
 }
 
 async function toggleTaxPaid(bookingId, paid) {
@@ -3924,7 +3978,7 @@ async function toggleTaxPaid(bookingId, paid) {
       b.tax_paid = paid;
       b.tax_paid_at = paid ? new Date().toISOString() : null;
     }
-    renderTaxList();
+    renderTaxList({ preserveScroll: true });
   } catch (e) {
     toast('Ошибка обновления');
   }
