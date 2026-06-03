@@ -9,6 +9,8 @@ const PUBLIC_ASSET_PATHS = new Set([
   '/apple-touch-icon.png',
   '/icon-192.png',
   '/icon-512.png',
+  '/airbnb.png',
+  '/booking.png',
   '/manifest.json',
 ]);
 
