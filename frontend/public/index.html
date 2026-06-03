@@ -763,6 +763,7 @@
       align-items: center;
       align-self: center;
       justify-self: start;
+      gap: 5px;
       min-width: 10px;
       height: var(--calendar-booking-height);
       margin: 0 4px;
@@ -792,6 +793,14 @@
     .booking-bar.booking { background: var(--booking); }
     .booking-bar.direct { background: var(--direct); z-index: 12; }
     .booking-bar.other { background: #64748b; }
+    .booking-bar.has-platform-logo {
+      padding-left: 5px;
+      padding-right: 9px;
+    }
+    .booking-bar.icon-only {
+      justify-content: center;
+      padding: 0;
+    }
     .booking-bar.completed {
       background: rgba(255,255,255,.82) !important;
       border: 1px solid #94a3b8;
@@ -833,6 +842,20 @@
       min-width: 0;
       overflow: hidden;
       text-overflow: ellipsis;
+    }
+    .bar-platform-logo {
+      width: 16px;
+      height: 16px;
+      border-radius: 999px;
+      flex: 0 0 16px;
+      object-fit: cover;
+      box-shadow: 0 0 0 1px rgba(255,255,255,.72), 0 1px 3px rgba(15,23,42,.22);
+      background: #fff;
+    }
+    .booking-bar.icon-only .bar-platform-logo {
+      width: 14px;
+      height: 14px;
+      flex-basis: 14px;
     }
     .booking-bar.not-available .bar-label {
       line-height: 1;
@@ -935,6 +958,36 @@
       background: var(--property-bg, var(--accent-light));
       color: var(--property-color, var(--accent));
     }
+    .agenda-platform-wrap {
+      position: relative;
+      width: 40px;
+      height: 40px;
+      flex: 0 0 40px;
+    }
+    .agenda-platform-logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 11px;
+      display: block;
+      object-fit: cover;
+      box-shadow: 0 1px 2px rgba(15,23,42,.08), 0 0 0 1px rgba(15,23,42,.08);
+    }
+    .agenda-platform-action {
+      position: absolute;
+      right: -4px;
+      bottom: -4px;
+      width: 19px;
+      height: 19px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #fff;
+      border: 1px solid var(--border);
+      box-shadow: 0 2px 5px rgba(15,23,42,.16);
+      color: var(--accent);
+    }
+    .agenda-platform-action.checkout { color: var(--warning); }
     .agenda-item-title {
       min-width: 0;
       overflow: hidden;
@@ -1120,14 +1173,24 @@
     .booking-platform-pill {
       display: inline-flex;
       align-items: center;
+      gap: 6px;
       min-height: 28px;
       border-radius: 999px;
-      padding: 0 10px;
+      padding: 0 10px 0 6px;
       color: #fff;
       font-size: 11px;
       font-weight: 800;
       letter-spacing: .04em;
       text-transform: uppercase;
+    }
+    .booking-platform-logo {
+      width: 18px;
+      height: 18px;
+      border-radius: 999px;
+      flex: 0 0 18px;
+      object-fit: cover;
+      box-shadow: 0 0 0 1px rgba(255,255,255,.72), 0 1px 3px rgba(15,23,42,.18);
+      background: #fff;
     }
     .booking-platform-pill.airbnb { background: var(--airbnb); }
     .booking-platform-pill.booking { background: var(--booking); }
@@ -2334,6 +2397,22 @@ function propertyMeta(propertyId) {
   };
 }
 
+const PLATFORM_BRANDS = {
+  airbnb: { label: 'Airbnb', logo: '/airbnb.png' },
+  booking: { label: 'Booking.com', logo: '/booking.png' }
+};
+
+function platformBrand(platform) {
+  return PLATFORM_BRANDS[String(platform || '').toLowerCase()] || null;
+}
+
+function platformLogoHtml(platform, className, { decorative = false } = {}) {
+  const brand = platformBrand(platform);
+  if (!brand) return '';
+  const hiddenAttr = decorative ? ' aria-hidden="true"' : '';
+  return `<img class="${className} ${String(platform || '').toLowerCase()}" src="${brand.logo}" alt="${decorative ? '' : brand.label}" loading="lazy" decoding="async"${hiddenAttr}>`;
+}
+
 function platformLabel(platform) {
   if (platform === 'booking') return 'BOOKING';
   if (platform === 'airbnb') return 'AIRBNB';
@@ -2896,18 +2975,23 @@ function renderCalendar({ preserveScroll = false, focusDate = null, behavior = '
         const isBlocked = isUnavailable && !hasGuestDetails(booking);
         const isCompleted = end <= today;
         const platformClass = CALENDAR_PLATFORM_CLASS[booking.platform] || 'other';
+        const hasPlatformLogo = Boolean(platformBrand(booking.platform)) && !isBlocked;
         const barText = booking.guest_name || (isBlocked ? unavailableBookingLabel(booking) : platformLabel(booking.platform));
-        const shortLabel = visibleWidth > 104 ? barText : (visibleWidth > 52 ? String(barText).split(' ')[0] : '');
+        const fullLabelThreshold = hasPlatformLogo ? 124 : 104;
+        const shortLabelThreshold = hasPlatformLogo ? 58 : 52;
+        const shortLabel = visibleWidth > fullLabelThreshold ? barText : (visibleWidth > shortLabelThreshold ? String(barText).split(' ')[0] : '');
+        const platformAria = platformBrand(booking.platform)?.label || platformLabel(booking.platform);
+        const bookingAria = booking.guest_name ? `${platformAria} ${barText}` : platformAria;
 
         const bar = document.createElement('button');
         bar.type = 'button';
-        bar.className = `booking-bar ${platformClass}${isBlocked ? ' not-available' : ''}${isCompleted ? ' completed' : ''}`;
+        bar.className = `booking-bar ${platformClass}${hasPlatformLogo ? ' has-platform-logo' : ''}${hasPlatformLogo && !shortLabel ? ' icon-only' : ''}${isBlocked ? ' not-available' : ''}${isCompleted ? ' completed' : ''}`;
         bar.style.gridRow = row;
         bar.style.gridColumn = `2 / ${totalDays + 2}`;
         bar.style.marginLeft = formatCalendarPx(visualRange.left + 4);
-        bar.style.width = formatCalendarPx(Math.max(10, visibleWidth - 8));
-        bar.innerHTML = `<span class="bar-label">${escapeHtml(shortLabel)}</span>`;
-        bar.setAttribute('aria-label', `${propertyMeta(booking.property_id).name}: ${barText}`);
+        bar.style.width = formatCalendarPx(Math.max(hasPlatformLogo ? 22 : 10, visibleWidth - 8));
+        bar.innerHTML = `${hasPlatformLogo ? platformLogoHtml(booking.platform, 'bar-platform-logo', { decorative: true }) : ''}${shortLabel ? `<span class="bar-label">${escapeHtml(shortLabel)}</span>` : ''}`;
+        bar.setAttribute('aria-label', `${propertyMeta(booking.property_id).name}: ${bookingAria}`);
         bar.addEventListener('click', () => openBookingPanel(booking.id));
         grid.appendChild(bar);
       });
@@ -2979,7 +3063,10 @@ function setMobileAgendaRange(range) {
 function toggleMobileCalendar() {
   mobileCalendarVisible = !mobileCalendarVisible;
   renderMobileAgenda();
-  if (mobileCalendarVisible) requestAnimationFrame(() => scrollCalendarToToday({ behavior: 'auto' }));
+  if (mobileCalendarVisible) {
+    calendarHasAutoScrolledToday = false;
+    requestAnimationFrame(() => renderCalendar({ focusDate: todayLocal(), behavior: 'auto' }));
+  }
 }
 
 function agendaWindow() {
@@ -3077,8 +3164,12 @@ function renderMobileAgenda() {
         const guest = booking.guest_name || platformLabel(booking.platform);
         const flag = booking.guest_country ? ` ${countryToFlag(booking.guest_country)}` : '';
         const taxNote = isCheckout && isTaxableBooking(booking, bookings) && !booking.tax_paid ? ' · налог не отмечен' : '';
+        const platformLogo = platformLogoHtml(booking.platform, 'agenda-platform-logo');
+        const agendaIcon = platformLogo
+          ? `<div class="agenda-platform-wrap">${platformLogo}<span class="agenda-platform-action ${isCheckout ? 'checkout' : 'checkin'}"><i data-lucide="${isCheckout ? 'sparkles' : 'log-in'}" style="width:11px;height:11px;"></i></span></div>`
+          : `<div class="agenda-item-icon"><i data-lucide="${isCheckout ? 'sparkles' : 'log-in'}" style="width:18px;height:18px;"></i></div>`;
         html += `<div class="agenda-item" style="--property-color:${meta.color};--property-bg:${meta.bg}" onclick="openBookingPanel(${booking.id})">
-          <div class="agenda-item-icon"><i data-lucide="${isCheckout ? 'sparkles' : 'log-in'}" style="width:18px;height:18px;"></i></div>
+          ${agendaIcon}
           <div>
             <div class="agenda-item-title">${escapeHtml(meta.name)}</div>
             <div class="agenda-item-meta">${escapeHtml(guest)}${flag}${taxNote}</div>
@@ -3136,7 +3227,7 @@ function openBookingPanel(bookingId) {
     <div class="booking-detail-grid">
       <div class="booking-detail-card">
         <div class="booking-detail-label">Платформа</div>
-        <div class="booking-detail-value"><span class="booking-platform-pill ${platformClass}">${escapeHtml(platformLabel(booking.platform))}</span></div>
+        <div class="booking-detail-value"><span class="booking-platform-pill ${platformClass}">${platformLogoHtml(booking.platform, 'booking-platform-logo', { decorative: true })}${escapeHtml(platformLabel(booking.platform))}</span></div>
       </div>
       <div class="booking-detail-card">
         <div class="booking-detail-label">Гости</div>
