@@ -1337,9 +1337,244 @@
     .hidden { display: none !important; }
 
     /* ===== STATS TAB ===== */
-    .stats-section { padding: 20px 28px; }
-    .stats-summary-row {
+    .stats-section {
+      padding: 24px 28px 32px;
+      max-width: 1320px;
+      margin: 0 auto;
+    }
+    .stats-dynamics-card {
+      background:
+        linear-gradient(135deg, rgba(15,118,110,.08), rgba(255,255,255,0) 44%),
+        linear-gradient(180deg, #ffffff, #fbfcfd);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 20px;
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+    .stats-dynamics-top {
       display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .stats-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--accent);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .stats-dynamics-title {
+      margin-top: 3px;
+      font-size: 22px;
+      line-height: 1.15;
+      letter-spacing: 0;
+      font-weight: 800;
+      color: var(--text);
+    }
+    .stats-snapshot-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      flex: 0 0 auto;
+      min-height: 34px;
+      padding: 7px 11px;
+      border: 1px solid #ccfbf1;
+      border-radius: 999px;
+      background: #f0fdfa;
+      color: #115e59;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .stats-dynamics-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.6fr) minmax(260px, .8fr);
+      gap: 16px;
+      align-items: stretch;
+    }
+    .stats-dynamics-chart {
+      min-width: 0;
+      min-height: 270px;
+      padding: 8px 4px 0 0;
+    }
+    .stats-dynamics-chart canvas {
+      width: 100% !important;
+      height: 270px !important;
+    }
+    .stats-dynamics-aside {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-width: 0;
+    }
+    .stats-primary-metric {
+      border: 1px solid #d1fae5;
+      background: linear-gradient(180deg, #f0fdfa, #ffffff);
+      border-radius: 8px;
+      padding: 14px;
+    }
+    .stats-primary-metric .label,
+    .stats-mini-metric .label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-weight: 650;
+    }
+    .stats-primary-metric .value {
+      margin-top: 2px;
+      font-size: 34px;
+      line-height: 1;
+      font-weight: 800;
+      letter-spacing: 0;
+      color: #134e4a;
+    }
+    .stats-delta {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 8px;
+      min-height: 24px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: #f3f4f6;
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-weight: 750;
+    }
+    .stats-delta.positive { background: #ecfdf5; color: #047857; }
+    .stats-delta.negative { background: #fff1f2; color: #be123c; }
+    .stats-delta.neutral { background: #f3f4f6; color: var(--text-secondary); }
+    .stats-mini-metrics {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .stats-mini-metric {
+      min-width: 0;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: rgba(255,255,255,.86);
+      padding: 11px;
+    }
+    .stats-mini-metric .value {
+      margin-top: 3px;
+      font-size: 19px;
+      line-height: 1.05;
+      font-weight: 800;
+      letter-spacing: 0;
+      color: var(--text);
+    }
+    .stats-timeline-control {
+      display: grid;
+      grid-template-columns: 34px minmax(0, 1fr) 34px;
+      gap: 10px;
+      align-items: center;
+      margin-top: 16px;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: rgba(255,255,255,.72);
+    }
+    .stats-step-btn {
+      width: 34px;
+      height: 34px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--text);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .stats-step-btn:hover:not(:disabled) {
+      border-color: #99f6e4;
+      color: var(--accent);
+      box-shadow: var(--shadow-sm);
+    }
+    .stats-step-btn:disabled {
+      opacity: .38;
+      cursor: default;
+    }
+    .stats-range-wrap {
+      min-width: 0;
+      display: grid;
+      gap: 6px;
+    }
+    .stats-range-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--text-secondary);
+      font-size: 11px;
+      font-weight: 650;
+    }
+    .stats-range {
+      width: 100%;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+    .stats-month-rail {
+      display: grid;
+      grid-template-columns: repeat(8, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .stats-month-tile {
+      position: relative;
+      isolation: isolate;
+      min-width: 0;
+      min-height: 92px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #fff;
+      overflow: hidden;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .stats-month-tile::before {
+      content: '';
+      position: absolute;
+      inset: auto 0 0 0;
+      height: var(--month-fill, 0%);
+      background: linear-gradient(180deg, rgba(15,118,110,.08), rgba(15,118,110,.2));
+      z-index: -1;
+      transition: height .28s ease;
+    }
+    .stats-month-tile .month {
+      font-size: 11px;
+      color: var(--text-secondary);
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+    .stats-month-tile strong {
+      font-size: 24px;
+      line-height: 1;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: 0;
+    }
+    .stats-month-tile small {
+      font-size: 11px;
+      color: var(--text-secondary);
+      font-weight: 650;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .stats-summary-row {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(150px, 1fr));
       gap: 12px;
       margin-bottom: 20px;
       overflow-x: auto;
@@ -1349,22 +1584,35 @@
     }
     .stats-summary-row::-webkit-scrollbar { display: none; }
     .stats-summary-card {
-      background: var(--card);
+      position: relative;
+      background: linear-gradient(180deg, #ffffff, #fbfcfd);
       border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 16px 20px;
-      min-width: 160px;
-      flex-shrink: 0;
+      border-radius: 8px;
+      padding: 15px 16px;
+      min-width: 0;
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+    .stats-summary-card::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: var(--accent);
     }
     .stats-summary-card .label {
       font-size: 12px;
       color: var(--text-secondary);
       margin-bottom: 4px;
+      font-weight: 650;
     }
     .stats-summary-card .value {
       font-size: 24px;
-      font-weight: 700;
+      font-weight: 800;
       letter-spacing: 0;
+      line-height: 1.1;
     }
     .stats-summary-card .sub {
       font-size: 12px;
@@ -1377,18 +1625,35 @@
       gap: 16px;
     }
     .stats-chart-card {
-      background: var(--card);
+      background: linear-gradient(180deg, #ffffff, #fbfcfd);
       border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 20px;
+      border-radius: 8px;
+      padding: 18px;
       box-shadow: var(--shadow-sm);
       min-width: 0;
     }
+    .stats-chart-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
     .stats-chart-card h3 {
       font-size: 14px;
-      font-weight: 600;
-      margin-bottom: 16px;
+      line-height: 1.25;
+      font-weight: 800;
+      margin-bottom: 0;
       color: var(--text);
+    }
+    .stats-chart-sub {
+      margin-top: 2px;
+      color: var(--text-secondary);
+      font-size: 11px;
+      font-weight: 650;
+    }
+    .stats-chart-card canvas {
+      max-height: 330px;
     }
     /* ===== TAX TAB ===== */
     .tax-section { padding: 24px; max-width: 1040px; margin: 0 auto; overflow: hidden; }
@@ -1889,10 +2154,80 @@
       }
 
       .stats-section { padding-top: 16px; }
+      .stats-dynamics-card {
+        padding: 14px;
+        margin-bottom: 12px;
+      }
+      .stats-dynamics-top {
+        display: block;
+        margin-bottom: 12px;
+      }
+      .stats-dynamics-title {
+        font-size: 20px;
+      }
+      .stats-snapshot-pill {
+        margin-top: 10px;
+        max-width: 100%;
+        white-space: normal;
+      }
+      .stats-dynamics-layout {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+      .stats-dynamics-chart {
+        min-height: 230px;
+        padding: 0;
+      }
+      .stats-dynamics-chart canvas {
+        height: 230px !important;
+      }
+      .stats-primary-metric .value {
+        font-size: 30px;
+      }
+      .stats-mini-metrics {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+      .stats-mini-metric {
+        padding: 9px;
+      }
+      .stats-mini-metric .value {
+        font-size: 17px;
+      }
+      .stats-timeline-control {
+        grid-template-columns: 32px minmax(0, 1fr) 32px;
+        gap: 8px;
+        padding: 10px;
+      }
+      .stats-step-btn {
+        width: 32px;
+        height: 32px;
+      }
+      .stats-month-rail {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 7px;
+      }
+      .stats-month-tile {
+        min-height: 78px;
+        padding: 8px;
+      }
+      .stats-month-tile strong {
+        font-size: 21px;
+      }
+      .stats-summary-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+      .stats-summary-card {
+        padding: 12px;
+      }
+      .stats-summary-card .value {
+        font-size: 21px;
+      }
       .stats-grid { grid-template-columns: 1fr; }
       .stats-chart-card {
         padding: 14px;
-        border-radius: 10px;
+        border-radius: 8px;
       }
       .stats-chart-card canvas {
         max-width: 100% !important;
@@ -2159,30 +2494,122 @@
 
   <!-- STATS TAB -->
   <div class="stats-section" id="statsTab" style="display:none">
+    <div class="stats-dynamics-card" id="statsDynamicsCard">
+      <div class="stats-dynamics-top">
+        <div>
+          <div class="stats-kicker"><i data-lucide="activity" style="width:13px;height:13px;"></i>Динамика сезона</div>
+          <h2 class="stats-dynamics-title">Как менялись бронирования</h2>
+        </div>
+        <div class="stats-snapshot-pill" id="statsSnapshotBadge">
+          <i data-lucide="clock-3" style="width:14px;height:14px;"></i>
+          <span>—</span>
+        </div>
+      </div>
+
+      <div class="stats-dynamics-layout">
+        <div class="stats-dynamics-chart">
+          <canvas id="chartBookingDynamics"></canvas>
+        </div>
+        <div class="stats-dynamics-aside">
+          <div class="stats-primary-metric">
+            <div class="label">Бронирования на выбранную дату</div>
+            <div class="value" id="statsDynamicBookings">0</div>
+            <div class="stats-delta neutral" id="statsDynamicBookingDelta">
+              <i data-lucide="minus" style="width:13px;height:13px;"></i>
+              <span>без изменений</span>
+            </div>
+          </div>
+          <div class="stats-mini-metrics">
+            <div class="stats-mini-metric">
+              <div class="label">Ночи</div>
+              <div class="value" id="statsDynamicNights">0</div>
+            </div>
+            <div class="stats-mini-metric">
+              <div class="label">Занятость</div>
+              <div class="value" id="statsDynamicOccupancy">0%</div>
+            </div>
+            <div class="stats-mini-metric">
+              <div class="label">Гости</div>
+              <div class="value" id="statsDynamicGuests">0</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="stats-timeline-control">
+        <button class="stats-step-btn" type="button" onclick="stepStatsSnapshot(-1)" aria-label="Предыдущий снимок" title="Предыдущий снимок">
+          <i data-lucide="chevron-left" style="width:17px;height:17px;"></i>
+        </button>
+        <div class="stats-range-wrap">
+          <input class="stats-range" id="statsSnapshotSlider" type="range" min="0" max="0" value="0" oninput="setStatsSnapshotIndex(Number(this.value))" aria-label="Дата снимка статистики">
+          <div class="stats-range-meta">
+            <span id="statsRangeStart">—</span>
+            <span id="statsRangeCurrent">—</span>
+            <span id="statsRangeEnd">—</span>
+          </div>
+        </div>
+        <button class="stats-step-btn" type="button" onclick="stepStatsSnapshot(1)" aria-label="Следующий снимок" title="Следующий снимок">
+          <i data-lucide="chevron-right" style="width:17px;height:17px;"></i>
+        </button>
+      </div>
+
+      <div class="stats-month-rail" id="statsMonthRail"></div>
+    </div>
+
     <div class="stats-summary-row" id="statsSummary"></div>
     <div class="stats-grid" id="statsGrid">
       <div class="stats-chart-card">
-        <h3>Бронирования по месяцам</h3>
+        <div class="stats-chart-header">
+          <div>
+            <h3>Бронирования по месяцам</h3>
+            <div class="stats-chart-sub">Airbnb и Booking.com по датам заезда</div>
+          </div>
+        </div>
         <canvas id="chartMonthly"></canvas>
       </div>
       <div class="stats-chart-card">
-        <h3>Заполняемость апартаментов</h3>
+        <div class="stats-chart-header">
+          <div>
+            <h3>Заполняемость апартаментов</h3>
+            <div class="stats-chart-sub">Доля занятых ночей в сезоне</div>
+          </div>
+        </div>
         <canvas id="chartOccupancy"></canvas>
       </div>
       <div class="stats-chart-card">
-        <h3>Откуда гости</h3>
+        <div class="stats-chart-header">
+          <div>
+            <h3>Откуда гости</h3>
+            <div class="stats-chart-sub">Топ стран по бронированиям</div>
+          </div>
+        </div>
         <canvas id="chartCountries"></canvas>
       </div>
       <div class="stats-chart-card">
-        <h3>Дни заезда (день недели)</h3>
+        <div class="stats-chart-header">
+          <div>
+            <h3>Дни заезда</h3>
+            <div class="stats-chart-sub">Распределение по дням недели</div>
+          </div>
+        </div>
         <canvas id="chartCheckinDays"></canvas>
       </div>
       <div class="stats-chart-card">
-        <h3>Средний срок проживания (ночей)</h3>
+        <div class="stats-chart-header">
+          <div>
+            <h3>Средний срок проживания</h3>
+            <div class="stats-chart-sub">Ночи на одно бронирование</div>
+          </div>
+        </div>
         <canvas id="chartDuration"></canvas>
       </div>
       <div class="stats-chart-card">
-        <h3>Гости по месяцам</h3>
+        <div class="stats-chart-header">
+          <div>
+            <h3>Гости по месяцам</h3>
+            <div class="stats-chart-sub">Гости с заполненным количеством человек</div>
+          </div>
+        </div>
         <canvas id="chartGuests"></canvas>
       </div>
     </div>
@@ -2255,6 +2682,7 @@ function switchTab(tab, pushState = true) {
   document.getElementById('taxTab').style.display = tab === 'tax' ? 'block' : 'none';
   document.getElementById('statsBar').style.display = tab === 'calendar' ? 'flex' : 'none';
   document.getElementById('legend').style.display = tab === 'calendar' ? 'flex' : 'none';
+  if (tab !== 'calendar') closeBookingPanel();
   if (tab === 'calendar') {
     renderMobileAgenda();
     requestAnimationFrame(() => {
@@ -3568,47 +3996,442 @@ async function toggleAssignment(cleanerId, propertyId, checked) {
 
 // ===== STATISTICS =====
 let statsCharts = {};
+let statsDynamicsState = { year: null, snapshots: [], monthLabels: [], monthKeys: [] };
+let statsSnapshotIndex = null;
+
+const STATS_MONTH_INDICES = [3, 4, 5, 6, 7, 8, 9, 10];
+const STATS_MONTH_LABELS = ['Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя'];
+
+function statsMonthKey(year, monthIndex) {
+  return `${year}-${String(monthIndex + 1).padStart(2, '0')}`;
+}
+
+function statsSeasonRange(year) {
+  return {
+    start: new Date(year, 3, 1),
+    end: new Date(year, 11, 1)
+  };
+}
+
+function statsTimestampDate(value) {
+  if (!value) return null;
+  const normalized = String(value).includes('T') ? String(value) : String(value).replace(' ', 'T');
+  const date = new Date(normalized);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function formatStatsSnapshotDate(value, mode = 'long') {
+  const date = statsTimestampDate(value);
+  if (!date) return 'Текущие данные';
+  const options = mode === 'short'
+    ? { day: 'numeric', month: 'short' }
+    : { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' };
+  return date.toLocaleDateString('ru-RU', options).replace('.', '');
+}
+
+function statsSourceLabel(source) {
+  if (source === 'cron') return 'автосинк';
+  if (source === 'manual') return 'ручной синк';
+  if (source === 'current') return 'сейчас';
+  return 'синк';
+}
+
+function formatStatsNumber(value) {
+  return new Intl.NumberFormat('ru-RU').format(Math.round(Number(value) || 0));
+}
+
+function formatStatsPercent(value) {
+  const number = Number(value) || 0;
+  const formatted = Math.abs(number - Math.round(number)) < 0.05
+    ? String(Math.round(number))
+    : number.toFixed(1);
+  return `${formatted}%`;
+}
+
+function pluralRu(count, one, few, many) {
+  const n = Math.abs(Number(count) || 0);
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  if (mod10 === 1 && mod100 !== 11) return one;
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return few;
+  return many;
+}
+
+function statsClippedNights(booking, rangeStart, rangeEnd) {
+  const start = parseLocalDate(booking.start_date);
+  const end = parseLocalDate(booking.end_date);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return 0;
+  const clippedStart = new Date(Math.max(start.getTime(), rangeStart.getTime()));
+  const clippedEnd = new Date(Math.min(end.getTime(), rangeEnd.getTime()));
+  return Math.max(0, Math.round((clippedEnd - clippedStart) / 86400000));
+}
+
+function getSeasonBookings(year) {
+  const season = statsSeasonRange(year);
+  return bookings.filter(b => {
+    if (!isRealGuestBooking(b, bookings)) return false;
+    const start = parseLocalDate(b.start_date);
+    const end = parseLocalDate(b.end_date);
+    return start < season.end && end > season.start;
+  });
+}
+
+function buildCurrentStatsSnapshot(year, seasonBookings, totalOccupiedNights, avgOccupancy) {
+  const monthlyNights = {};
+  const monthlyBookings = {};
+  const monthlyGuests = {};
+  const platformCounts = {};
+  const countryCounts = {};
+  let guestCount = 0;
+
+  for (const monthIndex of STATS_MONTH_INDICES) {
+    const key = statsMonthKey(year, monthIndex);
+    monthlyNights[key] = 0;
+    monthlyBookings[key] = 0;
+    monthlyGuests[key] = 0;
+  }
+
+  for (const booking of seasonBookings) {
+    const platform = String(booking.platform || 'other').toLowerCase();
+    platformCounts[platform] = (platformCounts[platform] || 0) + 1;
+
+    const country = String(booking.guest_country || '').trim().toLowerCase();
+    if (country) countryCounts[country] = (countryCounts[country] || 0) + 1;
+
+    const guests = Number(booking.guest_count) || 0;
+    if (guests > 0) guestCount += guests;
+
+    const start = parseLocalDate(booking.start_date);
+    const startKey = statsMonthKey(start.getFullYear(), start.getMonth());
+    if (monthlyBookings[startKey] !== undefined) monthlyBookings[startKey]++;
+
+    for (const monthIndex of STATS_MONTH_INDICES) {
+      const key = statsMonthKey(year, monthIndex);
+      const monthStart = new Date(year, monthIndex, 1);
+      const monthEnd = new Date(year, monthIndex + 1, 1);
+      const nights = statsClippedNights(booking, monthStart, monthEnd);
+      monthlyNights[key] += nights;
+      if (nights > 0) monthlyGuests[key] += guests;
+    }
+  }
+
+  return {
+    captured_at: new Date().toISOString(),
+    source: 'current',
+    season_year: year,
+    booking_count: seasonBookings.length,
+    occupied_nights: totalOccupiedNights,
+    guest_count: guestCount,
+    occupancy_percent: avgOccupancy,
+    avg_stay: 0,
+    monthly_nights: monthlyNights,
+    monthly_bookings: monthlyBookings,
+    platform_counts: platformCounts,
+    country_counts: countryCounts,
+    payload: { monthly_guests: monthlyGuests }
+  };
+}
+
+function normalizeStatsSnapshot(snapshot, year) {
+  const monthlyNights = { ...(snapshot.monthly_nights || {}) };
+  const monthlyBookings = { ...(snapshot.monthly_bookings || {}) };
+  const payload = { ...(snapshot.payload || {}) };
+  const monthlyGuests = { ...(payload.monthly_guests || {}) };
+
+  for (const monthIndex of STATS_MONTH_INDICES) {
+    const key = statsMonthKey(year, monthIndex);
+    monthlyNights[key] = Number(monthlyNights[key]) || 0;
+    monthlyBookings[key] = Number(monthlyBookings[key]) || 0;
+    monthlyGuests[key] = Number(monthlyGuests[key]) || 0;
+  }
+
+  return {
+    ...snapshot,
+    captured_at: snapshot.captured_at || new Date().toISOString(),
+    source: snapshot.source || 'sync',
+    season_year: Number(snapshot.season_year) || year,
+    booking_count: Number(snapshot.booking_count) || 0,
+    occupied_nights: Number(snapshot.occupied_nights) || 0,
+    guest_count: Number(snapshot.guest_count) || 0,
+    occupancy_percent: Number(snapshot.occupancy_percent) || 0,
+    avg_stay: Number(snapshot.avg_stay) || 0,
+    monthly_nights: monthlyNights,
+    monthly_bookings: monthlyBookings,
+    platform_counts: snapshot.platform_counts || {},
+    country_counts: snapshot.country_counts || {},
+    payload: { ...payload, monthly_guests: monthlyGuests }
+  };
+}
+
+function buildStatsTimeline(year, fallbackSnapshot) {
+  const snapshots = (statsSnapshots || [])
+    .filter(snapshot => Number(snapshot.season_year) === year)
+    .map(snapshot => normalizeStatsSnapshot(snapshot, year))
+    .sort((a, b) => {
+      const da = statsTimestampDate(a.captured_at)?.getTime() || 0;
+      const db = statsTimestampDate(b.captured_at)?.getTime() || 0;
+      return da - db;
+    });
+
+  if (snapshots.length === 0) {
+    snapshots.push(normalizeStatsSnapshot(fallbackSnapshot, year));
+  }
+
+  return snapshots;
+}
+
+function statsChartDefaults() {
+  const chartFont = { family: "'Manrope', sans-serif" };
+  return {
+    font: chartFont,
+    plugins: {
+      legend: {
+        labels: {
+          color: '#344054',
+          usePointStyle: true,
+          pointStyle: 'circle',
+          boxWidth: 7,
+          boxHeight: 7,
+          padding: 14,
+          font: { ...chartFont, size: 11, weight: 700 }
+        }
+      },
+      tooltip: {
+        backgroundColor: '#111827',
+        titleColor: '#fff',
+        bodyColor: '#e5e7eb',
+        borderColor: 'rgba(255,255,255,.12)',
+        borderWidth: 1,
+        cornerRadius: 8,
+        padding: 11,
+        displayColors: true,
+        titleFont: { ...chartFont, size: 12, weight: 800 },
+        bodyFont: { ...chartFont, size: 12, weight: 600 }
+      }
+    },
+    scales: {
+      x: {
+        grid: { display: false },
+        border: { display: false },
+        ticks: { color: '#667085', font: { ...chartFont, size: 11, weight: 650 } }
+      },
+      y: {
+        beginAtZero: true,
+        border: { display: false },
+        grid: { color: '#edf1f5' },
+        ticks: { color: '#667085', precision: 0, font: { ...chartFont, size: 11, weight: 650 } }
+      }
+    }
+  };
+}
+
+function setStatsSnapshotIndex(index) {
+  const max = Math.max(0, statsDynamicsState.snapshots.length - 1);
+  statsSnapshotIndex = Math.max(0, Math.min(Number(index) || 0, max));
+  renderStatsDynamicSnapshot();
+}
+
+function stepStatsSnapshot(delta) {
+  setStatsSnapshotIndex((statsSnapshotIndex || 0) + delta);
+}
+
+function renderStatsDelta(current, previous) {
+  const el = document.getElementById('statsDynamicBookingDelta');
+  if (!el) return;
+
+  if (!previous) {
+    el.className = 'stats-delta neutral';
+    el.innerHTML = '<i data-lucide="minus" style="width:13px;height:13px;"></i><span>первый снимок</span>';
+    return;
+  }
+
+  const delta = current.booking_count - previous.booking_count;
+  const className = delta > 0 ? 'positive' : delta < 0 ? 'negative' : 'neutral';
+  const icon = delta > 0 ? 'trending-up' : delta < 0 ? 'trending-down' : 'minus';
+  const sign = delta > 0 ? '+' : '';
+  const label = delta === 0
+    ? 'без изменений'
+    : `${sign}${delta} ${pluralRu(delta, 'бронь', 'брони', 'броней')}`;
+
+  el.className = `stats-delta ${className}`;
+  el.innerHTML = `<i data-lucide="${icon}" style="width:13px;height:13px;"></i><span>${label}</span>`;
+}
+
+function renderStatsMonthRail(snapshot) {
+  const rail = document.getElementById('statsMonthRail');
+  if (!rail) return;
+
+  const monthData = statsDynamicsState.monthKeys.map((key, index) => ({
+    key,
+    label: statsDynamicsState.monthLabels[index],
+    bookings: Number(snapshot.monthly_bookings?.[key]) || 0,
+    nights: Number(snapshot.monthly_nights?.[key]) || 0
+  }));
+  const maxBookings = Math.max(1, ...monthData.map(month => month.bookings));
+
+  rail.innerHTML = monthData.map(month => {
+    const fill = month.bookings > 0 ? Math.max(10, Math.round((month.bookings / maxBookings) * 100)) : 0;
+    return `
+      <div class="stats-month-tile" style="--month-fill:${fill}%">
+        <span class="month">${month.label}</span>
+        <strong>${formatStatsNumber(month.bookings)}</strong>
+        <small>${formatStatsNumber(month.nights)} ${pluralRu(month.nights, 'ночь', 'ночи', 'ночей')}</small>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderStatsDynamicSnapshot() {
+  const { snapshots, monthKeys } = statsDynamicsState;
+  if (!snapshots.length) return;
+
+  const index = Math.max(0, Math.min(statsSnapshotIndex ?? snapshots.length - 1, snapshots.length - 1));
+  statsSnapshotIndex = index;
+  const snapshot = snapshots[index];
+  const previous = snapshots[index - 1];
+
+  const slider = document.getElementById('statsSnapshotSlider');
+  if (slider) {
+    slider.min = '0';
+    slider.max = String(Math.max(0, snapshots.length - 1));
+    slider.value = String(index);
+    slider.disabled = snapshots.length < 2;
+  }
+
+  const buttons = document.querySelectorAll('.stats-step-btn');
+  if (buttons[0]) buttons[0].disabled = index <= 0;
+  if (buttons[1]) buttons[1].disabled = index >= snapshots.length - 1;
+
+  const badgeText = document.querySelector('#statsSnapshotBadge span');
+  if (badgeText) {
+    badgeText.textContent = `${formatStatsSnapshotDate(snapshot.captured_at)} · ${statsSourceLabel(snapshot.source)}`;
+  }
+
+  const startEl = document.getElementById('statsRangeStart');
+  const currentEl = document.getElementById('statsRangeCurrent');
+  const endEl = document.getElementById('statsRangeEnd');
+  if (startEl) startEl.textContent = formatStatsSnapshotDate(snapshots[0].captured_at, 'short');
+  if (currentEl) currentEl.textContent = `${index + 1} / ${snapshots.length}`;
+  if (endEl) endEl.textContent = formatStatsSnapshotDate(snapshots[snapshots.length - 1].captured_at, 'short');
+
+  document.getElementById('statsDynamicBookings').textContent = formatStatsNumber(snapshot.booking_count);
+  document.getElementById('statsDynamicNights').textContent = formatStatsNumber(snapshot.occupied_nights);
+  document.getElementById('statsDynamicOccupancy').textContent = formatStatsPercent(snapshot.occupancy_percent);
+  document.getElementById('statsDynamicGuests').textContent = formatStatsNumber(snapshot.guest_count);
+  renderStatsDelta(snapshot, previous);
+  renderStatsMonthRail(snapshot);
+
+  const chart = statsCharts.bookingDynamics;
+  if (chart) {
+    chart.data.datasets[0].data = monthKeys.map(key => Number(snapshot.monthly_bookings?.[key]) || 0);
+    chart.data.datasets[1].data = monthKeys.map(key => Number(snapshot.monthly_nights?.[key]) || 0);
+    chart.update();
+  }
+
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+function createStatsDynamicsChart() {
+  const defaults = statsChartDefaults();
+  const canvas = document.getElementById('chartBookingDynamics');
+  if (!canvas) return;
+
+  statsCharts.bookingDynamics = new Chart(canvas, {
+    data: {
+      labels: statsDynamicsState.monthLabels,
+      datasets: [
+        {
+          type: 'bar',
+          label: 'Бронирования',
+          data: [],
+          backgroundColor: 'rgba(15,118,110,.82)',
+          hoverBackgroundColor: '#0f766e',
+          borderColor: '#0f766e',
+          borderWidth: 1,
+          borderRadius: 7,
+          maxBarThickness: 44,
+          yAxisID: 'y'
+        },
+        {
+          type: 'line',
+          label: 'Занятые ночи',
+          data: [],
+          borderColor: '#d97706',
+          backgroundColor: 'rgba(217,119,6,.12)',
+          pointBackgroundColor: '#d97706',
+          pointBorderColor: '#fff',
+          pointBorderWidth: 2,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          fill: false,
+          tension: .36,
+          yAxisID: 'y1'
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 260 },
+      interaction: { mode: 'index', intersect: false },
+      plugins: defaults.plugins,
+      scales: {
+        x: defaults.scales.x,
+        y: {
+          ...defaults.scales.y,
+          title: { display: false }
+        },
+        y1: {
+          beginAtZero: true,
+          position: 'right',
+          border: { display: false },
+          grid: { drawOnChartArea: false },
+          ticks: { color: '#9a3412', precision: 0, font: { ...defaults.font, size: 11, weight: 650 } }
+        }
+      }
+    }
+  });
+}
 
 function renderStats() {
-  const SEASON_START = 4; // April (0-indexed: 3)
-  const SEASON_END = 11; // November (0-indexed: 10)
   const year = new Date().getFullYear();
-  const monthLabels = ['Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя'];
-  const monthIndices = [3,4,5,6,7,8,9,10]; // 0-indexed
+  const monthLabels = STATS_MONTH_LABELS;
+  const monthIndices = STATS_MONTH_INDICES;
+  const monthKeys = monthIndices.map(monthIndex => statsMonthKey(year, monthIndex));
+  const seasonRange = statsSeasonRange(year);
 
   // Filter real bookings in season
-  const seasonBookings = bookings.filter(b => {
-    if (!isRealGuestBooking(b, bookings)) return false;
-    const start = new Date(b.start_date + 'T00:00:00');
-    const end = new Date(b.end_date + 'T00:00:00');
-    // Overlaps with April–November
-    const seasonStart = new Date(year, 3, 1);
-    const seasonEnd = new Date(year, 11, 1);
-    return start < seasonEnd && end > seasonStart;
-  });
+  const seasonBookings = getSeasonBookings(year);
 
   // Destroy old charts
   Object.values(statsCharts).forEach(c => c.destroy());
   statsCharts = {};
 
   // ===== SUMMARY CARDS =====
-  const totalNightsSeason = monthIndices.reduce((sum, m) => {
-    const daysInMonth = new Date(year, m + 1, 0).getDate();
+  const totalNightsSeason = monthIndices.reduce((sum, monthIndex) => {
+    const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
     return sum + daysInMonth;
   }, 0); // per property
 
   let totalOccupiedNights = 0;
   const propNights = {};
   for (const b of seasonBookings) {
-    const s = new Date(Math.max(new Date(b.start_date + 'T00:00:00'), new Date(year, 3, 1)));
-    const e = new Date(Math.min(new Date(b.end_date + 'T00:00:00'), new Date(year, 11, 1)));
-    const nights = Math.max(0, (e - s) / 86400000);
+    const nights = statsClippedNights(b, seasonRange.start, seasonRange.end);
     totalOccupiedNights += nights;
     propNights[b.property_id] = (propNights[b.property_id] || 0) + nights;
   }
   const avgOccupancy = properties.length > 0
-    ? Math.round((totalOccupiedNights / (totalNightsSeason * properties.length)) * 100)
+    ? Number(((totalOccupiedNights / (totalNightsSeason * properties.length)) * 100).toFixed(1))
     : 0;
+
+  const fallbackSnapshot = buildCurrentStatsSnapshot(year, seasonBookings, totalOccupiedNights, avgOccupancy);
+  const timelineSnapshots = buildStatsTimeline(year, fallbackSnapshot);
+  if (statsDynamicsState.year !== year || statsSnapshotIndex == null || statsSnapshotIndex >= timelineSnapshots.length) {
+    statsSnapshotIndex = timelineSnapshots.length - 1;
+  }
+  statsDynamicsState = { year, snapshots: timelineSnapshots, monthLabels, monthKeys };
+  createStatsDynamicsChart();
+  renderStatsDynamicSnapshot();
 
   // Top country
   const countryCounts = {};
@@ -3632,12 +4455,12 @@ function renderStats() {
   document.getElementById('statsSummary').innerHTML = `
     <div class="stats-summary-card">
       <div class="label">Бронирования (сезон)</div>
-      <div class="value">${seasonBookings.length}</div>
+      <div class="value">${formatStatsNumber(seasonBookings.length)}</div>
       <div class="sub">Апрель — Ноябрь ${year}</div>
     </div>
     <div class="stats-summary-card">
       <div class="label">Средняя заполняемость</div>
-      <div class="value">${avgOccupancy}%</div>
+      <div class="value">${formatStatsPercent(avgOccupancy)}</div>
       <div class="sub">${properties.length} апартаментов</div>
     </div>
     <div class="stats-summary-card">
@@ -3652,22 +4475,27 @@ function renderStats() {
     </div>
   `;
 
-  const chartFont = { family: "'Manrope', sans-serif" };
+  const chartDefaults = statsChartDefaults();
+  const chartFont = chartDefaults.font;
   const defaultOpts = {
     responsive: true,
     maintainAspectRatio: true,
-    plugins: { legend: { labels: { font: { ...chartFont, size: 12 } } } },
-    scales: {}
+    animation: { duration: 420 },
+    interaction: { mode: 'index', intersect: false },
+    plugins: chartDefaults.plugins,
+    scales: chartDefaults.scales
   };
 
   // ===== 1. MONTHLY BOOKINGS (stacked bar) =====
   const monthlyAirbnb = new Array(8).fill(0);
   const monthlyBooking = new Array(8).fill(0);
+  const monthlyDirect = new Array(8).fill(0);
   for (const b of seasonBookings) {
-    const m = new Date(b.start_date + 'T00:00:00').getMonth();
+    const m = parseLocalDate(b.start_date).getMonth();
     const idx = m - 3;
     if (idx >= 0 && idx < 8) {
       if (b.platform === 'airbnb') monthlyAirbnb[idx]++;
+      else if (b.platform === 'direct') monthlyDirect[idx]++;
       else monthlyBooking[idx]++;
     }
   }
@@ -3676,27 +4504,34 @@ function renderStats() {
     data: {
       labels: monthLabels,
       datasets: [
-        { label: 'Airbnb', data: monthlyAirbnb, backgroundColor: '#D8304E', borderRadius: 4 },
-        { label: 'Booking.com', data: monthlyBooking, backgroundColor: '#003b95', borderRadius: 4 }
+        { label: 'Airbnb', data: monthlyAirbnb, backgroundColor: '#D8304E', borderRadius: 7, maxBarThickness: 42 },
+        { label: 'Booking.com', data: monthlyBooking, backgroundColor: '#003b95', borderRadius: 7, maxBarThickness: 42 },
+        { label: 'Прямые', data: monthlyDirect, backgroundColor: '#059669', borderRadius: 7, maxBarThickness: 42 }
       ]
     },
     options: {
       ...defaultOpts,
       plugins: { ...defaultOpts.plugins, legend: { ...defaultOpts.plugins.legend, position: 'top' } },
       scales: {
-        x: { stacked: true, grid: { display: false }, ticks: { font: chartFont } },
-        y: { stacked: true, beginAtZero: true, ticks: { font: chartFont, stepSize: 1 } }
+        x: { ...chartDefaults.scales.x, stacked: true },
+        y: { ...chartDefaults.scales.y, stacked: true, ticks: { ...chartDefaults.scales.y.ticks, stepSize: 1 } }
       }
     }
   });
 
   // ===== 2. OCCUPANCY BY PROPERTY (horizontal bar) =====
-  const propLabels = properties.map(p => p.name);
-  const propOccupancy = properties.map(p => {
+  const occupancyRows = properties.map(p => {
     const nights = propNights[p.id] || 0;
-    return Math.round((nights / totalNightsSeason) * 100);
-  });
-  const propColors = properties.map(p => (propertyConfig[p.id] || {}).color || '#6b7280');
+    return {
+      id: p.id,
+      label: p.name,
+      occupancy: Math.round((nights / totalNightsSeason) * 100),
+      color: (propertyConfig[p.id] || {}).color || '#6b7280'
+    };
+  }).sort((a, b) => b.occupancy - a.occupancy);
+  const propLabels = occupancyRows.map(row => row.label);
+  const propOccupancy = occupancyRows.map(row => row.occupancy);
+  const propColors = occupancyRows.map(row => row.color);
 
   statsCharts.occupancy = new Chart(document.getElementById('chartOccupancy'), {
     type: 'bar',
@@ -3705,7 +4540,8 @@ function renderStats() {
       datasets: [{
         data: propOccupancy,
         backgroundColor: propColors,
-        borderRadius: 4
+        borderRadius: 7,
+        maxBarThickness: 18
       }]
     },
     options: {
@@ -3713,8 +4549,8 @@ function renderStats() {
       indexAxis: 'y',
       plugins: { ...defaultOpts.plugins, legend: { display: false } },
       scales: {
-        x: { beginAtZero: true, max: 100, ticks: { font: chartFont, callback: v => v + '%' }, grid: { color: '#f0f0f0' } },
-        y: { ticks: { font: { ...chartFont, size: 12 } }, grid: { display: false } }
+        x: { ...chartDefaults.scales.y, beginAtZero: true, max: 100, ticks: { ...chartDefaults.scales.y.ticks, callback: v => v + '%' } },
+        y: { ...chartDefaults.scales.x, ticks: { ...chartDefaults.scales.x.ticks, font: { ...chartFont, size: 11, weight: 700 } } }
       }
     }
   });
@@ -3726,19 +4562,29 @@ function renderStats() {
   const countryLabels = top8.map(([c]) => `${countryToFlag(c)} ${COUNTRY_NAMES[c] || c.toUpperCase()}`);
   const countryData = top8.map(([, c]) => c);
   if (othersCount > 0) { countryLabels.push('Другие'); countryData.push(othersCount); }
-  const countryColors = ['#4f46e5','#ea580c','#059669','#D8304E','#ca8a04','#0891b2','#be185d','#8b5cf6','#9ca3af'];
+  const countryColors = ['#0f766e','#D8304E','#003b95','#d97706','#0891b2','#be185d','#7c3aed','#475467','#98a2b3'];
 
   statsCharts.countries = new Chart(document.getElementById('chartCountries'), {
     type: 'doughnut',
     data: {
       labels: countryLabels,
-      datasets: [{ data: countryData, backgroundColor: countryColors.slice(0, countryData.length), borderWidth: 2, borderColor: '#fff' }]
+      datasets: [{
+        data: countryData,
+        backgroundColor: countryColors.slice(0, countryData.length),
+        borderWidth: 4,
+        borderColor: '#fff',
+        hoverOffset: 5
+      }]
     },
     options: {
       ...defaultOpts,
+      cutout: '64%',
       plugins: {
         ...defaultOpts.plugins,
-        legend: { position: 'right', labels: { font: { ...chartFont, size: 11 }, padding: 8, boxWidth: 12 } }
+        legend: {
+          position: 'right',
+          labels: { ...defaultOpts.plugins.legend.labels, padding: 10, boxWidth: 8 }
+        }
       }
     }
   });
@@ -3747,26 +4593,26 @@ function renderStats() {
   const dayNamesRu = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
   const checkinByDay = new Array(7).fill(0);
   for (const b of seasonBookings) {
-    const dow = new Date(b.start_date + 'T00:00:00').getDay();
+    const dow = parseLocalDate(b.start_date).getDay();
     checkinByDay[dow]++;
   }
   // Reorder: Mon-Sun
   const reordered = [...checkinByDay.slice(1), checkinByDay[0]];
   const reorderedLabels = [...dayNamesRu.slice(1), dayNamesRu[0]];
-  const dayColors = reordered.map((_, i) => i >= 5 ? '#e0e7ff' : '#4f46e5'); // weekend lighter
+  const dayColors = reordered.map((_, i) => i >= 5 ? '#f59e0b' : '#0f766e'); // weekend accent
 
   statsCharts.checkinDays = new Chart(document.getElementById('chartCheckinDays'), {
     type: 'bar',
     data: {
       labels: reorderedLabels,
-      datasets: [{ data: reordered, backgroundColor: dayColors, borderRadius: 6 }]
+      datasets: [{ data: reordered, backgroundColor: dayColors, borderRadius: 7, maxBarThickness: 36 }]
     },
     options: {
       ...defaultOpts,
       plugins: { ...defaultOpts.plugins, legend: { display: false } },
       scales: {
-        x: { grid: { display: false }, ticks: { font: { ...chartFont, size: 13 } } },
-        y: { beginAtZero: true, ticks: { font: chartFont, stepSize: 1 } }
+        x: chartDefaults.scales.x,
+        y: { ...chartDefaults.scales.y, ticks: { ...chartDefaults.scales.y.ticks, stepSize: 1 } }
       }
     }
   });
@@ -3775,28 +4621,37 @@ function renderStats() {
   const propDuration = {};
   const propBookingCount = {};
   for (const b of seasonBookings) {
-    const nights = (new Date(b.end_date + 'T00:00:00') - new Date(b.start_date + 'T00:00:00')) / 86400000;
+    const nights = nightsBetween(b.start_date, b.end_date) || 0;
     propDuration[b.property_id] = (propDuration[b.property_id] || 0) + nights;
     propBookingCount[b.property_id] = (propBookingCount[b.property_id] || 0) + 1;
   }
-  const avgDuration = properties.map(p => {
+  const durationRows = properties.map(p => {
     const total = propDuration[p.id] || 0;
     const count = propBookingCount[p.id] || 0;
-    return count > 0 ? +(total / count).toFixed(1) : 0;
-  });
+    return {
+      label: p.name,
+      value: count > 0 ? +(total / count).toFixed(1) : 0,
+      color: (propertyConfig[p.id] || {}).color || '#6b7280'
+    };
+  }).sort((a, b) => b.value - a.value);
 
   statsCharts.duration = new Chart(document.getElementById('chartDuration'), {
     type: 'bar',
     data: {
-      labels: propLabels,
-      datasets: [{ data: avgDuration, backgroundColor: propColors, borderRadius: 4 }]
+      labels: durationRows.map(row => row.label),
+      datasets: [{
+        data: durationRows.map(row => row.value),
+        backgroundColor: durationRows.map(row => row.color),
+        borderRadius: 7,
+        maxBarThickness: 34
+      }]
     },
     options: {
       ...defaultOpts,
       plugins: { ...defaultOpts.plugins, legend: { display: false } },
       scales: {
-        x: { grid: { display: false }, ticks: { font: { ...chartFont, size: 11 } } },
-        y: { beginAtZero: true, ticks: { font: chartFont } }
+        x: { ...chartDefaults.scales.x, ticks: { ...chartDefaults.scales.x.ticks, maxRotation: 35, minRotation: 0 } },
+        y: chartDefaults.scales.y
       }
     }
   });
@@ -3805,7 +4660,7 @@ function renderStats() {
   const monthlyGuests = new Array(8).fill(0);
   for (const b of seasonBookings) {
     if (b.guest_count > 0) {
-      const m = new Date(b.start_date + 'T00:00:00').getMonth();
+      const m = parseLocalDate(b.start_date).getMonth();
       const idx = m - 3;
       if (idx >= 0 && idx < 8) monthlyGuests[idx] += b.guest_count;
     }
@@ -3818,12 +4673,14 @@ function renderStats() {
       datasets: [{
         label: 'Гости',
         data: monthlyGuests,
-        borderColor: '#4f46e5',
-        backgroundColor: 'rgba(79,70,229,.1)',
+        borderColor: '#0f766e',
+        backgroundColor: 'rgba(15,118,110,.12)',
         fill: true,
         tension: 0.35,
-        pointBackgroundColor: '#4f46e5',
-        pointRadius: 5,
+        pointBackgroundColor: '#0f766e',
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2,
+        pointRadius: 4,
         pointHoverRadius: 7
       }]
     },
@@ -3831,8 +4688,8 @@ function renderStats() {
       ...defaultOpts,
       plugins: { ...defaultOpts.plugins, legend: { display: false } },
       scales: {
-        x: { grid: { display: false }, ticks: { font: chartFont } },
-        y: { beginAtZero: true, ticks: { font: chartFont, stepSize: 5 } }
+        x: chartDefaults.scales.x,
+        y: { ...chartDefaults.scales.y, ticks: { ...chartDefaults.scales.y.ticks, stepSize: 5 } }
       }
     }
   });
