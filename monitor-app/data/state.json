@@ -2690,6 +2690,39 @@
       "sourceRef": "hourly_sync",
       "bookingCreatedAt": "2026-05-09T06:50:22.277Z",
       "detectedAt": "2026-06-03T10:20:34.026Z"
+    },
+    {
+      "eventType": "created",
+      "bookingKey": "harmony|airbnb|2026-06-13|2026-06-17",
+      "propertyId": "harmony",
+      "platform": "airbnb",
+      "startDate": "2026-06-13",
+      "endDate": "2026-06-17",
+      "guestName": null,
+      "guestCount": null,
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HMDWMCQ2M9",
+      "confirmationCode": null,
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync",
+      "bookingCreatedAt": "2026-06-04T06:09:58.280Z",
+      "rawSummary": "Reserved",
+      "bookingType": "reservation",
+      "detectedAt": "2026-06-04T09:11:03.488Z"
+    },
+    {
+      "eventType": "cancelled",
+      "bookingKey": "harmony|airbnb|2026-06-13|2026-06-18",
+      "propertyId": "harmony",
+      "platform": "airbnb",
+      "startDate": "2026-06-13",
+      "endDate": "2026-06-18",
+      "guestName": "Marina Fileva",
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HMDWMCQ2M9",
+      "confirmationCode": "HMDWMCQ2M9",
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync",
+      "bookingCreatedAt": "2026-03-28T19:32:10.502Z",
+      "detectedAt": "2026-06-04T09:11:03.488Z"
     }
   ],
   "imports": [
