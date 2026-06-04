@@ -3998,6 +3998,7 @@ async function toggleAssignment(cleanerId, propertyId, checked) {
 let statsCharts = {};
 let statsDynamicsState = { year: null, snapshots: [], monthLabels: [], monthKeys: [] };
 let statsSnapshotIndex = null;
+let statsSnapshotUserSelected = false;
 
 const STATS_MONTH_INDICES = [3, 4, 5, 6, 7, 8, 9, 10];
 const STATS_MONTH_LABELS = ['Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя'];
@@ -4244,9 +4245,10 @@ function statsChartDefaults() {
   };
 }
 
-function setStatsSnapshotIndex(index) {
+function setStatsSnapshotIndex(index, { userSelected = true } = {}) {
   const max = Math.max(0, statsDynamicsState.snapshots.length - 1);
   statsSnapshotIndex = Math.max(0, Math.min(Number(index) || 0, max));
+  if (userSelected) statsSnapshotUserSelected = true;
   renderStatsDynamicSnapshot();
 }
 
@@ -4445,7 +4447,14 @@ function renderStats() {
 
   const fallbackSnapshot = buildCurrentStatsSnapshot(year, seasonBookings, totalOccupiedNights, avgOccupancy);
   const timelineSnapshots = buildStatsTimeline(year, fallbackSnapshot);
-  if (statsDynamicsState.year !== year || statsSnapshotIndex == null || statsSnapshotIndex >= timelineSnapshots.length) {
+  const statsYearChanged = statsDynamicsState.year !== year;
+  if (statsYearChanged) statsSnapshotUserSelected = false;
+  if (
+    statsYearChanged ||
+    statsSnapshotIndex == null ||
+    statsSnapshotIndex >= timelineSnapshots.length ||
+    !statsSnapshotUserSelected
+  ) {
     statsSnapshotIndex = timelineSnapshots.length - 1;
   }
   statsDynamicsState = { year, snapshots: timelineSnapshots, monthLabels, monthKeys };
