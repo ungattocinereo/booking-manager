@@ -4163,7 +4163,25 @@ function normalizeStatsSnapshot(snapshot, year) {
   };
 }
 
+function statsSnapshotsEquivalent(a, b, monthKeys) {
+  if (!a || !b) return false;
+  const sameTotals =
+    Number(a.booking_count) === Number(b.booking_count) &&
+    Number(a.occupied_nights) === Number(b.occupied_nights) &&
+    Number(a.guest_count) === Number(b.guest_count) &&
+    Number(a.occupancy_percent).toFixed(1) === Number(b.occupancy_percent).toFixed(1);
+
+  if (!sameTotals) return false;
+
+  return monthKeys.every(key =>
+    Number(a.monthly_bookings?.[key] || 0) === Number(b.monthly_bookings?.[key] || 0) &&
+    Number(a.monthly_nights?.[key] || 0) === Number(b.monthly_nights?.[key] || 0)
+  );
+}
+
 function buildStatsTimeline(year, fallbackSnapshot) {
+  const monthKeys = STATS_MONTH_INDICES.map(monthIndex => statsMonthKey(year, monthIndex));
+  const currentSnapshot = normalizeStatsSnapshot(fallbackSnapshot, year);
   const snapshots = (statsSnapshots || [])
     .filter(snapshot => Number(snapshot.season_year) === year)
     .map(snapshot => normalizeStatsSnapshot(snapshot, year))
@@ -4173,8 +4191,9 @@ function buildStatsTimeline(year, fallbackSnapshot) {
       return da - db;
     });
 
-  if (snapshots.length === 0) {
-    snapshots.push(normalizeStatsSnapshot(fallbackSnapshot, year));
+  const latestSaved = snapshots[snapshots.length - 1];
+  if (!latestSaved || !statsSnapshotsEquivalent(latestSaved, currentSnapshot, monthKeys)) {
+    snapshots.push(currentSnapshot);
   }
 
   return snapshots;
