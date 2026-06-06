@@ -1,6 +1,6 @@
 {
   "since": "2026-04-17",
-  "generated_at": "2026-06-05T22:42:19.471Z",
+  "generated_at": "2026-06-06T00:06:16.948Z",
   "available_dates": [
     "2026-06-04",
     "2026-06-03",
@@ -1467,23 +1467,6 @@
           "status": "active",
           "cancelledAt": null,
           "link": "https://www.airbnb.com/hosting/reservations/details/HMRF8JWQY8",
-          "sources": [
-            "upstream_api",
-            "export_airbnb_csv"
-          ]
-        },
-        {
-          "bookingKey": "carina|airbnb|2026-06-01|2026-06-05",
-          "propertyId": "carina",
-          "platform": "airbnb",
-          "startDate": "2026-06-01",
-          "endDate": "2026-06-05",
-          "guestName": "Ryann Haburchak",
-          "confirmationCode": "HMTBSD4DNR",
-          "firstSeenAt": "2026-03-28T19:32:10.091Z",
-          "status": "active",
-          "cancelledAt": null,
-          "link": "https://www.airbnb.com/hosting/reservations/details/HMTBSD4DNR",
           "sources": [
             "upstream_api",
             "export_airbnb_csv"
