@@ -16,6 +16,8 @@
     { "source": "/icon-512.png", "destination": "/frontend/public/icon-512.png" },
     { "source": "/airbnb.png", "destination": "/frontend/public/airbnb.png" },
     { "source": "/booking.png", "destination": "/frontend/public/booking.png" },
+    { "source": "/airbnb-badge.png", "destination": "/frontend/public/airbnb-badge.png" },
+    { "source": "/booking-badge.png", "destination": "/frontend/public/booking-badge.png" },
     { "source": "/manifest.json", "destination": "/frontend/public/manifest.json" },
     { "source": "/maid/:slug", "destination": "/frontend/public/maid.html" },
     { "source": "/stats", "destination": "/frontend/public/index.html" },
