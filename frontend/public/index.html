@@ -3106,6 +3106,20 @@ function platformLogoHtml(platform, className, { decorative = false } = {}) {
   return `<img class="${className} ${String(platform || '').toLowerCase()}" src="${brand.logo}" alt="${decorative ? '' : brand.label}" loading="eager" decoding="async" fetchpriority="high" data-platform-logo onload="this.dataset.loaded='true'" onerror="this.dataset.loaded='true'"${hiddenAttr}>`;
 }
 
+function refreshPlatformLogos(root = document) {
+  if (!root?.querySelectorAll) return;
+  root.querySelectorAll('[data-platform-logo]').forEach(img => {
+    if (img.dataset.loaded === 'true') return;
+    const markLoaded = () => { img.dataset.loaded = 'true'; };
+    if (img.complete) {
+      markLoaded();
+      return;
+    }
+    img.addEventListener('load', markLoaded, { once: true });
+    img.addEventListener('error', markLoaded, { once: true });
+  });
+}
+
 function platformLabel(platform) {
   if (platform === 'booking') return 'BOOKING';
   if (platform === 'airbnb') return 'AIRBNB';
@@ -3723,6 +3737,7 @@ function renderCalendar({ preserveScroll = false, focusDate = null, behavior = '
   });
 
   if (typeof lucide !== 'undefined') lucide.createIcons();
+  refreshPlatformLogos(grid);
 }
 
 function detectBookingConflicts(source = bookings) {
@@ -3877,6 +3892,7 @@ function renderMobileAgenda() {
   html += '</div></div>';
   el.innerHTML = html;
   if (typeof lucide !== 'undefined') lucide.createIcons();
+  refreshPlatformLogos(el);
 }
 
 function openBookingPanel(bookingId) {
@@ -3954,6 +3970,7 @@ function openBookingPanel(bookingId) {
   backdrop.classList.add('show');
   document.body.style.overflow = 'hidden';
   if (typeof lucide !== 'undefined') lucide.createIcons();
+  refreshPlatformLogos(bodyEl);
 }
 
 function closeBookingPanel() {
@@ -4904,6 +4921,7 @@ document.head.appendChild(style);
 
 function refreshLucideIcons() {
   if (typeof lucide !== 'undefined') lucide.createIcons();
+  refreshPlatformLogos(document);
 }
 
 refreshLucideIcons();
@@ -5066,6 +5084,7 @@ function renderTaxList({ preserveScroll = false, focusToday = false } = {}) {
 
   listEl.innerHTML = html;
   if (typeof lucide !== 'undefined') lucide.createIcons();
+  refreshPlatformLogos(listEl);
   if (previousScrollTop != null) listEl.scrollTop = previousScrollTop;
   else if (focusToday) requestAnimationFrame(() => taxScrollToToday({ behavior: 'auto', fallback: true }));
 }
