@@ -870,13 +870,18 @@
       height: 16px;
       border-radius: 999px;
       flex: 0 0 16px;
-      object-fit: cover;
-      box-shadow: none;
-      background: transparent;
-    }
-    .bar-platform-logo[data-loaded="true"] {
+      display: inline-block;
       box-shadow: 0 0 0 1px rgba(255,255,255,.72), 0 1px 3px rgba(15,23,42,.22);
-      background: #fff;
+      background-color: #fff;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-size: cover;
+    }
+    .bar-platform-logo.airbnb {
+      background-image: url('/airbnb-badge.png');
+    }
+    .bar-platform-logo.booking {
+      background-image: url('/booking-badge.png');
     }
     .booking-bar.icon-only .bar-platform-logo {
       width: 14px;
@@ -3106,6 +3111,15 @@ function platformLogoHtml(platform, className, { decorative = false } = {}) {
   return `<img class="${className} ${String(platform || '').toLowerCase()}" src="${brand.logo}" alt="${decorative ? '' : brand.label}" loading="eager" decoding="async" fetchpriority="high" data-platform-logo onload="this.dataset.loaded='true'" onerror="this.dataset.loaded='true'"${hiddenAttr}>`;
 }
 
+function platformTimelineLogoHtml(platform, className, { decorative = false } = {}) {
+  const brand = platformBrand(platform);
+  if (!brand) return '';
+  const platformClass = String(platform || '').toLowerCase();
+  const hiddenAttr = decorative ? ' aria-hidden="true"' : '';
+  const labelAttr = decorative ? '' : ` role="img" aria-label="${escapeHtml(brand.label)}"`;
+  return `<span class="${className} ${platformClass}"${labelAttr}${hiddenAttr}></span>`;
+}
+
 function refreshPlatformLogos(root = document) {
   if (!root?.querySelectorAll) return;
   root.querySelectorAll('[data-platform-logo]').forEach(img => {
@@ -3697,7 +3711,7 @@ function renderCalendar({ preserveScroll = false, focusDate = null, behavior = '
         bar.style.gridColumn = `2 / ${totalDays + 2}`;
         bar.style.marginLeft = formatCalendarPx(visualRange.left + 4);
         bar.style.width = formatCalendarPx(Math.max(hasPlatformLogo ? 22 : 10, visibleWidth - 8));
-        bar.innerHTML = `${hasPlatformLogo ? platformLogoHtml(booking.platform, 'bar-platform-logo', { decorative: true }) : ''}${shortLabel ? `<span class="bar-label">${escapeHtml(shortLabel)}</span>` : ''}`;
+        bar.innerHTML = `${hasPlatformLogo ? platformTimelineLogoHtml(booking.platform, 'bar-platform-logo', { decorative: true }) : ''}${shortLabel ? `<span class="bar-label">${escapeHtml(shortLabel)}</span>` : ''}`;
         bar.setAttribute('aria-label', `${propertyMeta(booking.property_id).name}: ${bookingAria}`);
         bar.addEventListener('click', () => openBookingPanel(booking.id));
         grid.appendChild(bar);
