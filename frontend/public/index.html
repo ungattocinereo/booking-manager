@@ -11,6 +11,8 @@
   <link rel="icon" href="/favicon-16.png" type="image/png" sizes="16x16">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="manifest" href="/manifest.json">
+  <link rel="preload" href="/airbnb.png" as="image">
+  <link rel="preload" href="/booking.png" as="image">
   <meta name="theme-color" content="#4f46e5">
 
   <!-- Apple Web App -->
@@ -34,7 +36,7 @@
   <meta name="twitter:description" content="Booking and cleaning calendar for vacation rentals in Atrani, Italy">
   <meta name="twitter:image" content="/icon-512.png">
 
-  <script src="https://unpkg.com/lucide@latest"></script>
+  <script defer src="https://unpkg.com/lucide@1.17.0/dist/umd/lucide.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;750;800&display=swap" rel="stylesheet">
@@ -2675,6 +2677,8 @@ const DASHBOARD_CACHE_KEY = 'atrani-dashboard-cache-v1';
 const DASHBOARD_VISIBLE_REFRESH_MIN_MS = 30 * 1000;
 
 let dashboardLoadSeq = 0;
+let dashboardLoadInFlight = false;
+let currentDashboardSignature = null;
 let lastDashboardLoadAt = 0;
 let lastDashboardRefreshRequestedAt = 0;
 let calendarResizeTimer = null;
@@ -2737,6 +2741,15 @@ function dashboardPayloadFromResponse(dashboard) {
   return { properties: props, bookings: bks, cleaners: cls, statsSnapshots: snapshots };
 }
 
+function dashboardPayloadSignature(payload) {
+  return JSON.stringify({
+    properties: payload.properties,
+    bookings: payload.bookings,
+    cleaners: payload.cleaners,
+    statsSnapshots: payload.statsSnapshots || []
+  });
+}
+
 function readCachedDashboard() {
   try {
     const raw = localStorage.getItem(DASHBOARD_CACHE_KEY);
@@ -2779,6 +2792,13 @@ function shouldPreserveExistingDashboard(payload) {
   return wouldClearBookings || wouldClearProperties;
 }
 
+function markNetworkDashboardFresh(payload) {
+  const lastSyncEl = document.getElementById('lastSync');
+  lastSyncEl.textContent = 'Обновлено ' + new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+  lastDashboardLoadAt = Date.now();
+  writeCachedDashboard(payload);
+}
+
 function renderCalendarWhenVisible(options = {}) {
   if (document.hidden || document.visibilityState === 'hidden') {
     calendarNeedsVisibleRender = true;
@@ -2801,8 +2821,10 @@ function rebuildAssignments() {
 function applyDashboardPayload(payload, {
   source = 'network',
   preserveCalendarScroll = false,
-  savedAt = null
+  savedAt = null,
+  signature = null
 } = {}) {
+  currentDashboardSignature = signature || dashboardPayloadSignature(payload);
   properties = payload.properties;
   bookings = payload.bookings;
   cleaners = payload.cleaners;
@@ -2829,9 +2851,7 @@ function applyDashboardPayload(payload, {
   if (source === 'cache') {
     lastSyncEl.textContent = cachedDashboardLabel(savedAt);
   } else {
-    lastSyncEl.textContent = 'Обновлено ' + new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-    lastDashboardLoadAt = Date.now();
-    writeCachedDashboard(payload);
+    markNetworkDashboardFresh(payload);
   }
 
   hasLoadedOnce = true;
@@ -2846,37 +2866,50 @@ function hydrateDashboardFromCache() {
 }
 
 async function loadData({ silent = false, attempt = 1, preserveCalendarScroll = false } = {}) {
+  if (dashboardLoadInFlight) return;
+  dashboardLoadInFlight = true;
+  lastDashboardRefreshRequestedAt = Date.now();
   const loadSeq = ++dashboardLoadSeq;
   const lastSyncEl = document.getElementById('lastSync');
   if (!hasLoadedOnce && !silent) lastSyncEl.textContent = 'Загрузка…';
 
-  const statsYear = new Date().getFullYear();
-  const dashboard = await fetchJsonOrNull(`${API}/dashboard?full=1&season_year=${statsYear}&snapshots_limit=1000`);
-  if (loadSeq !== dashboardLoadSeq) return;
+  try {
+    const statsYear = new Date().getFullYear();
+    const dashboard = await fetchJsonOrNull(`${API}/dashboard?full=1&season_year=${statsYear}&snapshots_limit=1000`);
+    if (loadSeq !== dashboardLoadSeq) return;
 
-  const payload = dashboardPayloadFromResponse(dashboard);
+    const payload = dashboardPayloadFromResponse(dashboard);
 
-  if (!payload) {
-    if (attempt < 3) {
-      const delay = attempt * 1500;
-      if (!hasLoadedOnce) lastSyncEl.textContent = 'Загрузка…';
-      setTimeout(() => loadData({ silent: true, attempt: attempt + 1, preserveCalendarScroll }), delay);
+    if (!payload) {
+      if (attempt < 3) {
+        const delay = attempt * 1500;
+        if (!hasLoadedOnce) lastSyncEl.textContent = 'Загрузка…';
+        setTimeout(() => loadData({ silent: true, attempt: attempt + 1, preserveCalendarScroll }), delay);
+        return;
+      }
+      if (!hasLoadedOnce) {
+        lastSyncEl.textContent = 'Ошибка загрузки';
+        toast('Ошибка загрузки. Нажмите «Синхронизация».');
+      }
       return;
     }
-    if (!hasLoadedOnce) {
-      lastSyncEl.textContent = 'Ошибка загрузки';
-      toast('Ошибка загрузки. Нажмите «Синхронизация».');
+
+    if (shouldPreserveExistingDashboard(payload)) {
+      console.warn('Ignored suspicious empty dashboard refresh; keeping the last rendered calendar.');
+      if (!silent) toast('Получен пустой ответ. Календарь оставлен без изменений.');
+      return;
     }
-    return;
-  }
 
-  if (shouldPreserveExistingDashboard(payload)) {
-    console.warn('Ignored suspicious empty dashboard refresh; keeping the last rendered calendar.');
-    if (!silent) toast('Получен пустой ответ. Календарь оставлен без изменений.');
-    return;
-  }
+    const payloadSignature = dashboardPayloadSignature(payload);
+    if (currentDashboardSignature && payloadSignature === currentDashboardSignature) {
+      markNetworkDashboardFresh(payload);
+      return;
+    }
 
-  applyDashboardPayload(payload, { source: 'network', preserveCalendarScroll });
+    applyDashboardPayload(payload, { source: 'network', preserveCalendarScroll, signature: payloadSignature });
+  } finally {
+    if (loadSeq === dashboardLoadSeq) dashboardLoadInFlight = false;
+  }
 }
 
 function updateStats() {
@@ -3059,7 +3092,7 @@ function platformLogoHtml(platform, className, { decorative = false } = {}) {
   const brand = platformBrand(platform);
   if (!brand) return '';
   const hiddenAttr = decorative ? ' aria-hidden="true"' : '';
-  return `<img class="${className} ${String(platform || '').toLowerCase()}" src="${brand.logo}" alt="${decorative ? '' : brand.label}" loading="lazy" decoding="async"${hiddenAttr}>`;
+  return `<img class="${className} ${String(platform || '').toLowerCase()}" src="${brand.logo}" alt="${decorative ? '' : brand.label}" loading="eager" decoding="async" fetchpriority="low"${hiddenAttr}>`;
 }
 
 function platformLabel(platform) {
@@ -4858,7 +4891,13 @@ const style = document.createElement('style');
 style.textContent = '@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }';
 document.head.appendChild(style);
 
-if (typeof lucide !== 'undefined') lucide.createIcons();
+function refreshLucideIcons() {
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+refreshLucideIcons();
+document.addEventListener('DOMContentLoaded', refreshLucideIcons);
+window.addEventListener('load', refreshLucideIcons);
 
 const bootstrappedFromCache = hydrateDashboardFromCache();
 
@@ -4878,7 +4917,9 @@ window.addEventListener('resize', () => {
 
 function refreshDashboardAfterReturn() {
   const now = Date.now();
-  if (calendarNeedsVisibleRender || (properties.length && bookings.length)) {
+  const calendarTabVisible = document.getElementById('calendarTab')?.style.display !== 'none';
+  const calendarLostBookings = calendarTabVisible && bookings.length > 0 && document.querySelectorAll('#calendarGrid .booking-bar').length === 0;
+  if (calendarNeedsVisibleRender || calendarLostBookings) {
     calendarNeedsVisibleRender = false;
     requestAnimationFrame(() => renderCalendar({ preserveScroll: true }));
   }
