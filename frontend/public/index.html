@@ -2671,6 +2671,15 @@ let allAssignments = {};
 let allTaxBookings = [];
 let taxFocusTodayOnNextRender = false;
 
+const DASHBOARD_CACHE_KEY = 'atrani-dashboard-cache-v1';
+const DASHBOARD_VISIBLE_REFRESH_MIN_MS = 30 * 1000;
+
+let dashboardLoadSeq = 0;
+let lastDashboardLoadAt = 0;
+let lastDashboardRefreshRequestedAt = 0;
+let calendarResizeTimer = null;
+let calendarNeedsVisibleRender = false;
+
 const TAB_ROUTES = { '/stats': 'stats', '/maid': 'cleaners', '/tax': 'tax' };
 const ROUTE_TABS = { stats: '/stats', cleaners: '/maid', tax: '/tax' };
 
@@ -2705,9 +2714,9 @@ window.addEventListener('popstate', (e) => {
   switchTab(tab, false);
 });
 
-async function fetchJsonOrNull(url) {
+async function fetchJsonOrNull(url, options = {}) {
   try {
-    const res = await fetch(url);
+    const res = await fetch(url, { cache: 'no-store', ...options });
     if (!res.ok) return null;
     const data = await res.json();
     return data || null;
@@ -2718,38 +2727,67 @@ async function fetchJsonOrNull(url) {
 
 let hasLoadedOnce = false;
 
-async function loadData({ silent = false, attempt = 1 } = {}) {
-  const lastSyncEl = document.getElementById('lastSync');
-  if (!hasLoadedOnce && !silent) lastSyncEl.textContent = 'Загрузка…';
-
-  const statsYear = new Date().getFullYear();
-  const dashboard = await fetchJsonOrNull(`${API}/dashboard?full=1&season_year=${statsYear}&snapshots_limit=1000`);
+function dashboardPayloadFromResponse(dashboard) {
   const props = Array.isArray(dashboard?.properties) ? dashboard.properties : null;
   const bks = Array.isArray(dashboard?.bookings) ? dashboard.bookings : null;
   const cls = Array.isArray(dashboard?.cleaners) ? dashboard.cleaners : null;
   const snapshots = Array.isArray(dashboard?.stats_snapshots) ? dashboard.stats_snapshots : [];
 
-  const allOk = props && bks && cls;
+  if (!props || !bks || !cls) return null;
+  return { properties: props, bookings: bks, cleaners: cls, statsSnapshots: snapshots };
+}
 
-  if (!allOk) {
-    if (attempt < 3) {
-      const delay = attempt * 1500;
-      if (!hasLoadedOnce) lastSyncEl.textContent = 'Загрузка…';
-      setTimeout(() => loadData({ silent: true, attempt: attempt + 1 }), delay);
-      return;
-    }
-    if (!hasLoadedOnce) {
-      lastSyncEl.textContent = 'Ошибка загрузки';
-      toast('Ошибка загрузки. Нажмите «Синхронизация».');
-    }
+function readCachedDashboard() {
+  try {
+    const raw = localStorage.getItem(DASHBOARD_CACHE_KEY);
+    if (!raw) return null;
+    const cached = JSON.parse(raw);
+    const payload = dashboardPayloadFromResponse(cached?.dashboard);
+    if (!payload) return null;
+    return { ...payload, savedAt: Number(cached.savedAt) || 0 };
+  } catch {
+    return null;
+  }
+}
+
+function writeCachedDashboard(payload) {
+  try {
+    localStorage.setItem(DASHBOARD_CACHE_KEY, JSON.stringify({
+      savedAt: Date.now(),
+      dashboard: {
+        properties: payload.properties,
+        bookings: payload.bookings,
+        cleaners: payload.cleaners,
+        stats_snapshots: payload.statsSnapshots
+      }
+    }));
+  } catch {
+    // Storage can be unavailable in private mode; live data still works.
+  }
+}
+
+function cachedDashboardLabel(savedAt) {
+  if (!savedAt) return 'Показаны сохранённые данные';
+  const time = new Date(savedAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+  return `Показаны сохранённые данные ${time}`;
+}
+
+function shouldPreserveExistingDashboard(payload) {
+  if (!hasLoadedOnce) return false;
+  const wouldClearBookings = bookings.length > 0 && payload.bookings.length === 0;
+  const wouldClearProperties = properties.length > 0 && payload.properties.length === 0;
+  return wouldClearBookings || wouldClearProperties;
+}
+
+function renderCalendarWhenVisible(options = {}) {
+  if (document.hidden || document.visibilityState === 'hidden') {
+    calendarNeedsVisibleRender = true;
     return;
   }
+  renderCalendar(options);
+}
 
-  properties = props;
-  bookings = bks;
-  cleaners = cls;
-  statsSnapshots = snapshots || [];
-
+function rebuildAssignments() {
   allAssignments = {};
   properties.forEach(p => allAssignments[p.id] = []);
   cleaners.forEach(c => {
@@ -2758,13 +2796,25 @@ async function loadData({ silent = false, attempt = 1 } = {}) {
       allAssignments[p.id].push(c.id);
     });
   });
+}
+
+function applyDashboardPayload(payload, {
+  source = 'network',
+  preserveCalendarScroll = false,
+  savedAt = null
+} = {}) {
+  properties = payload.properties;
+  bookings = payload.bookings;
+  cleaners = payload.cleaners;
+  statsSnapshots = payload.statsSnapshots || [];
+
+  rebuildAssignments();
 
   updateStats();
-  renderCalendar();
+  renderCalendarWhenVisible({ preserveScroll: preserveCalendarScroll });
   renderMobileAgenda();
   renderCleaners();
 
-  // Update tax data if tax tab is visible
   if (document.getElementById('taxTab').style.display !== 'none') {
     allTaxBookings = bookings.filter(b => isTaxableBooking(b, bookings));
     const shouldFocusToday = taxFocusTodayOnNextRender;
@@ -2774,10 +2824,59 @@ async function loadData({ silent = false, attempt = 1 } = {}) {
   if (document.getElementById('statsTab').style.display !== 'none') {
     renderStats();
   }
-  lastSyncEl.textContent = 'Обновлено ' + new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-  hasLoadedOnce = true;
 
+  const lastSyncEl = document.getElementById('lastSync');
+  if (source === 'cache') {
+    lastSyncEl.textContent = cachedDashboardLabel(savedAt);
+  } else {
+    lastSyncEl.textContent = 'Обновлено ' + new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+    lastDashboardLoadAt = Date.now();
+    writeCachedDashboard(payload);
+  }
+
+  hasLoadedOnce = true;
   if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+function hydrateDashboardFromCache() {
+  const cached = readCachedDashboard();
+  if (!cached) return false;
+  applyDashboardPayload(cached, { source: 'cache', savedAt: cached.savedAt });
+  return true;
+}
+
+async function loadData({ silent = false, attempt = 1, preserveCalendarScroll = false } = {}) {
+  const loadSeq = ++dashboardLoadSeq;
+  const lastSyncEl = document.getElementById('lastSync');
+  if (!hasLoadedOnce && !silent) lastSyncEl.textContent = 'Загрузка…';
+
+  const statsYear = new Date().getFullYear();
+  const dashboard = await fetchJsonOrNull(`${API}/dashboard?full=1&season_year=${statsYear}&snapshots_limit=1000`);
+  if (loadSeq !== dashboardLoadSeq) return;
+
+  const payload = dashboardPayloadFromResponse(dashboard);
+
+  if (!payload) {
+    if (attempt < 3) {
+      const delay = attempt * 1500;
+      if (!hasLoadedOnce) lastSyncEl.textContent = 'Загрузка…';
+      setTimeout(() => loadData({ silent: true, attempt: attempt + 1, preserveCalendarScroll }), delay);
+      return;
+    }
+    if (!hasLoadedOnce) {
+      lastSyncEl.textContent = 'Ошибка загрузки';
+      toast('Ошибка загрузки. Нажмите «Синхронизация».');
+    }
+    return;
+  }
+
+  if (shouldPreserveExistingDashboard(payload)) {
+    console.warn('Ignored suspicious empty dashboard refresh; keeping the last rendered calendar.');
+    if (!silent) toast('Получен пустой ответ. Календарь оставлен без изменений.');
+    return;
+  }
+
+  applyDashboardPayload(payload, { source: 'network', preserveCalendarScroll });
 }
 
 function updateStats() {
@@ -4761,19 +4860,42 @@ document.head.appendChild(style);
 
 if (typeof lucide !== 'undefined') lucide.createIcons();
 
+const bootstrappedFromCache = hydrateDashboardFromCache();
+
 // Route-based tab on page load
 const TAB_ROUTE_MAP = { '/stats': 'stats', '/maid': 'cleaners', '/tax': 'tax' };
 const initTab = TAB_ROUTE_MAP[location.pathname] || 'calendar';
 if (initTab !== 'calendar') switchTab(initTab, false);
 
-let calendarResizeTimer = null;
 window.addEventListener('resize', () => {
+  if (document.hidden || document.visibilityState === 'hidden') {
+    calendarNeedsVisibleRender = true;
+    return;
+  }
   clearTimeout(calendarResizeTimer);
-  calendarResizeTimer = setTimeout(() => renderCalendar({ preserveScroll: true }), 120);
+  calendarResizeTimer = setTimeout(() => renderCalendarWhenVisible({ preserveScroll: true }), 120);
 });
 
-loadData();
-setInterval(loadData, 5 * 60 * 1000);
+function refreshDashboardAfterReturn() {
+  const now = Date.now();
+  if (calendarNeedsVisibleRender || (properties.length && bookings.length)) {
+    calendarNeedsVisibleRender = false;
+    requestAnimationFrame(() => renderCalendar({ preserveScroll: true }));
+  }
+  if (now - lastDashboardRefreshRequestedAt < DASHBOARD_VISIBLE_REFRESH_MIN_MS) return;
+  if (lastDashboardLoadAt && now - lastDashboardLoadAt < DASHBOARD_VISIBLE_REFRESH_MIN_MS) return;
+  lastDashboardRefreshRequestedAt = now;
+  loadData({ silent: true, preserveCalendarScroll: true });
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && document.visibilityState === 'visible') refreshDashboardAfterReturn();
+});
+window.addEventListener('focus', refreshDashboardAfterReturn);
+window.addEventListener('pageshow', refreshDashboardAfterReturn);
+
+loadData({ silent: bootstrappedFromCache, preserveCalendarScroll: bootstrappedFromCache });
+setInterval(() => loadData({ silent: true, preserveCalendarScroll: true }), 5 * 60 * 1000);
 
 // ===== TAX (Tassa di Soggiorno) =====
 async function loadTaxData() {

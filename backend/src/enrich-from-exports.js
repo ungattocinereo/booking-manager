@@ -23,6 +23,7 @@ const BOOKING_ROOM_MAP = {
   'Youth room': 'youth',
   'Solo Traveller room': 'solo',
   'Central Room': 'central',
+  'Villa with Sea View': 'susy',
 };
 
 // Phone prefix -> country code
