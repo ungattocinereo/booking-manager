@@ -11,8 +11,8 @@
   <link rel="icon" href="/favicon-16.png" type="image/png" sizes="16x16">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="manifest" href="/manifest.json">
-  <link rel="preload" href="/airbnb.png" as="image">
-  <link rel="preload" href="/booking.png" as="image">
+  <link rel="preload" href="/airbnb-badge.png" as="image">
+  <link rel="preload" href="/booking-badge.png" as="image">
   <meta name="theme-color" content="#4f46e5">
 
   <!-- Apple Web App -->
@@ -858,12 +858,23 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
+    [data-platform-logo] {
+      opacity: 0;
+      transition: opacity .08s ease;
+    }
+    [data-platform-logo][data-loaded="true"] {
+      opacity: 1;
+    }
     .bar-platform-logo {
       width: 16px;
       height: 16px;
       border-radius: 999px;
       flex: 0 0 16px;
       object-fit: cover;
+      box-shadow: none;
+      background: transparent;
+    }
+    .bar-platform-logo[data-loaded="true"] {
       box-shadow: 0 0 0 1px rgba(255,255,255,.72), 0 1px 3px rgba(15,23,42,.22);
       background: #fff;
     }
@@ -3080,8 +3091,8 @@ function propertyMeta(propertyId) {
 }
 
 const PLATFORM_BRANDS = {
-  airbnb: { label: 'Airbnb', logo: '/airbnb.png' },
-  booking: { label: 'Booking.com', logo: '/booking.png' }
+  airbnb: { label: 'Airbnb', logo: '/airbnb-badge.png' },
+  booking: { label: 'Booking.com', logo: '/booking-badge.png' }
 };
 
 function platformBrand(platform) {
@@ -3092,7 +3103,7 @@ function platformLogoHtml(platform, className, { decorative = false } = {}) {
   const brand = platformBrand(platform);
   if (!brand) return '';
   const hiddenAttr = decorative ? ' aria-hidden="true"' : '';
-  return `<img class="${className} ${String(platform || '').toLowerCase()}" src="${brand.logo}" alt="${decorative ? '' : brand.label}" loading="eager" decoding="async" fetchpriority="low"${hiddenAttr}>`;
+  return `<img class="${className} ${String(platform || '').toLowerCase()}" src="${brand.logo}" alt="${decorative ? '' : brand.label}" loading="eager" decoding="async" fetchpriority="high" data-platform-logo onload="this.dataset.loaded='true'" onerror="this.dataset.loaded='true'"${hiddenAttr}>`;
 }
 
 function platformLabel(platform) {
