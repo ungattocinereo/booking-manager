@@ -1,6 +1,6 @@
 {
   "since": "2026-04-17",
-  "generated_at": "2026-06-09T22:58:01.091Z",
+  "generated_at": "2026-06-10T00:20:42.161Z",
   "available_dates": [
     "2026-06-09",
     "2026-06-08",
@@ -502,23 +502,6 @@
           "sources": [
             "export_airbnb_csv",
             "upstream_api"
-          ]
-        },
-        {
-          "bookingKey": "harmony|airbnb|2026-06-06|2026-06-09",
-          "propertyId": "harmony",
-          "platform": "airbnb",
-          "startDate": "2026-06-06",
-          "endDate": "2026-06-09",
-          "guestName": "Julie Rempel",
-          "confirmationCode": "HM2KNAT5TS",
-          "firstSeenAt": "2026-04-01T06:36:55.942Z",
-          "status": "active",
-          "cancelledAt": null,
-          "link": "https://www.airbnb.com/hosting/reservations/details/HM2KNAT5TS",
-          "sources": [
-            "upstream_api",
-            "export_airbnb_csv"
           ]
         },
         {
@@ -1024,23 +1007,6 @@
           "status": "active",
           "cancelledAt": null,
           "link": "https://www.airbnb.com/hosting/reservations/details/HMH39DWE8F",
-          "sources": [
-            "upstream_api",
-            "export_airbnb_csv"
-          ]
-        },
-        {
-          "bookingKey": "royal|airbnb|2026-06-05|2026-06-09",
-          "propertyId": "royal",
-          "platform": "airbnb",
-          "startDate": "2026-06-05",
-          "endDate": "2026-06-09",
-          "guestName": "Maria Matilde De Sousa Neves",
-          "confirmationCode": "HMMESFCTMX",
-          "firstSeenAt": "2026-03-28T19:32:10.957Z",
-          "status": "active",
-          "cancelledAt": null,
-          "link": "https://www.airbnb.com/hosting/reservations/details/HMMESFCTMX",
           "sources": [
             "upstream_api",
             "export_airbnb_csv"
