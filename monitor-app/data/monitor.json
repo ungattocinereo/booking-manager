@@ -1,7 +1,8 @@
 {
   "since": "2026-04-17",
-  "generated_at": "2026-06-10T04:57:19.611Z",
+  "generated_at": "2026-06-10T08:54:26.498Z",
   "available_dates": [
+    "2026-06-10",
     "2026-06-09",
     "2026-06-08",
     "2026-06-07",
@@ -1021,6 +1022,44 @@
       "icon": "heart",
       "events": [
         {
+          "bookingKey": "carina|airbnb|2026-09-29|2026-10-03",
+          "propertyId": "carina",
+          "platform": "airbnb",
+          "startDate": "2026-09-29",
+          "endDate": "2026-10-03",
+          "guestName": null,
+          "guestCount": null,
+          "confirmationCode": null,
+          "firstSeenAt": "2026-06-10T06:03:15.963Z",
+          "status": "active",
+          "cancelledAt": null,
+          "link": "https://www.airbnb.com/hosting/reservations/details/HMT4XW9PN8",
+          "rawSummary": "Reserved",
+          "bookingType": "reservation",
+          "sources": [
+            "upstream_api"
+          ]
+        },
+        {
+          "bookingKey": "carina|airbnb|2026-09-22|2026-09-25",
+          "propertyId": "carina",
+          "platform": "airbnb",
+          "startDate": "2026-09-22",
+          "endDate": "2026-09-25",
+          "guestName": null,
+          "guestCount": null,
+          "confirmationCode": null,
+          "firstSeenAt": "2026-06-10T06:03:15.959Z",
+          "status": "active",
+          "cancelledAt": null,
+          "link": "https://www.airbnb.com/hosting/reservations/details/HMKCA8X95J",
+          "rawSummary": "Reserved",
+          "bookingType": "reservation",
+          "sources": [
+            "upstream_api"
+          ]
+        },
+        {
           "bookingKey": "carina|airbnb|2026-10-07|2026-10-10",
           "propertyId": "carina",
           "platform": "airbnb",
@@ -1277,8 +1316,8 @@
           "guestName": null,
           "confirmationCode": null,
           "firstSeenAt": "2026-05-02T06:50:23.686Z",
-          "status": "active",
-          "cancelledAt": null,
+          "status": "cancelled",
+          "cancelledAt": "2026-06-10T08:54:26.495Z",
           "link": "https://www.airbnb.com/hosting/reservations/details/HMT4XW9PN8",
           "sources": [
             "upstream_api"
@@ -4353,6 +4392,57 @@
       "rawSummary": "Reserved",
       "bookingType": "reservation",
       "detectedAt": "2026-06-09T07:50:07.009Z"
+    },
+    {
+      "eventType": "created",
+      "bookingKey": "carina|airbnb|2026-09-22|2026-09-25",
+      "propertyId": "carina",
+      "platform": "airbnb",
+      "startDate": "2026-09-22",
+      "endDate": "2026-09-25",
+      "guestName": null,
+      "guestCount": null,
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HMKCA8X95J",
+      "confirmationCode": null,
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync",
+      "bookingCreatedAt": "2026-06-10T06:03:15.959Z",
+      "rawSummary": "Reserved",
+      "bookingType": "reservation",
+      "detectedAt": "2026-06-10T08:54:26.495Z"
+    },
+    {
+      "eventType": "created",
+      "bookingKey": "carina|airbnb|2026-09-29|2026-10-03",
+      "propertyId": "carina",
+      "platform": "airbnb",
+      "startDate": "2026-09-29",
+      "endDate": "2026-10-03",
+      "guestName": null,
+      "guestCount": null,
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HMT4XW9PN8",
+      "confirmationCode": null,
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync",
+      "bookingCreatedAt": "2026-06-10T06:03:15.963Z",
+      "rawSummary": "Reserved",
+      "bookingType": "reservation",
+      "detectedAt": "2026-06-10T08:54:26.495Z"
+    },
+    {
+      "eventType": "cancelled",
+      "bookingKey": "carina|airbnb|2026-09-08|2026-09-12",
+      "propertyId": "carina",
+      "platform": "airbnb",
+      "startDate": "2026-09-08",
+      "endDate": "2026-09-12",
+      "guestName": null,
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HMT4XW9PN8",
+      "confirmationCode": null,
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync",
+      "bookingCreatedAt": "2026-05-02T06:50:23.686Z",
+      "detectedAt": "2026-06-10T08:54:26.495Z"
     }
   ],
   "imports_log": [
