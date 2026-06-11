@@ -2864,6 +2864,42 @@
       "sourceRef": "hourly_sync",
       "bookingCreatedAt": "2026-05-02T06:50:23.686Z",
       "detectedAt": "2026-06-10T08:54:26.495Z"
+    },
+    {
+      "eventType": "created",
+      "bookingKey": "harmony|airbnb|2026-09-22|2026-09-25",
+      "propertyId": "harmony",
+      "platform": "airbnb",
+      "startDate": "2026-09-22",
+      "endDate": "2026-09-25",
+      "guestName": null,
+      "guestCount": null,
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HM953BJHKX",
+      "confirmationCode": null,
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync",
+      "bookingCreatedAt": "2026-06-11T06:03:20.984Z",
+      "rawSummary": "Reserved",
+      "bookingType": "reservation",
+      "detectedAt": "2026-06-11T07:14:04.751Z"
+    },
+    {
+      "eventType": "created",
+      "bookingKey": "carina|airbnb|2026-08-28|2026-08-31",
+      "propertyId": "carina",
+      "platform": "airbnb",
+      "startDate": "2026-08-28",
+      "endDate": "2026-08-31",
+      "guestName": null,
+      "guestCount": null,
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HMWDBTTBAW",
+      "confirmationCode": null,
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync",
+      "bookingCreatedAt": "2026-06-11T06:03:20.206Z",
+      "rawSummary": "Reserved",
+      "bookingType": "reservation",
+      "detectedAt": "2026-06-11T07:14:04.751Z"
     }
   ],
   "imports": [
