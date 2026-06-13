@@ -1,6 +1,6 @@
 {
   "since": "2026-04-17",
-  "generated_at": "2026-06-12T22:56:54.520Z",
+  "generated_at": "2026-06-13T00:22:09.551Z",
   "available_dates": [
     "2026-06-12",
     "2026-06-11",
@@ -1631,23 +1631,6 @@
           "status": "active",
           "cancelledAt": null,
           "link": "https://www.airbnb.com/hosting/reservations/details/HM5T9RJ83J",
-          "sources": [
-            "upstream_api",
-            "export_airbnb_csv"
-          ]
-        },
-        {
-          "bookingKey": "carina|airbnb|2026-06-05|2026-06-12",
-          "propertyId": "carina",
-          "platform": "airbnb",
-          "startDate": "2026-06-05",
-          "endDate": "2026-06-12",
-          "guestName": "Iben Bergholt Laursen",
-          "confirmationCode": "HMRF8JWQY8",
-          "firstSeenAt": "2026-03-28T19:32:10.094Z",
-          "status": "active",
-          "cancelledAt": null,
-          "link": "https://www.airbnb.com/hosting/reservations/details/HMRF8JWQY8",
           "sources": [
             "upstream_api",
             "export_airbnb_csv"
