@@ -1,7 +1,8 @@
 {
   "since": "2026-04-17",
-  "generated_at": "2026-06-14T16:22:03.161Z",
+  "generated_at": "2026-06-14T17:57:11.844Z",
   "available_dates": [
+    "2026-06-14",
     "2026-06-13",
     "2026-06-12",
     "2026-06-11",
@@ -658,6 +659,25 @@
       "accent": "#1f3d8a",
       "icon": "crown",
       "events": [
+        {
+          "bookingKey": "royal|airbnb|2026-07-17|2026-07-20",
+          "propertyId": "royal",
+          "platform": "airbnb",
+          "startDate": "2026-07-17",
+          "endDate": "2026-07-20",
+          "guestName": null,
+          "guestCount": null,
+          "confirmationCode": null,
+          "firstSeenAt": "2026-06-14T16:32:22.621Z",
+          "status": "active",
+          "cancelledAt": null,
+          "link": "https://www.airbnb.com/hosting/reservations/details/HMK83P54XR",
+          "rawSummary": "Reserved",
+          "bookingType": "reservation",
+          "sources": [
+            "upstream_api"
+          ]
+        },
         {
           "bookingKey": "royal|airbnb|2026-07-24|2026-07-27",
           "propertyId": "royal",
@@ -1495,8 +1515,8 @@
           "guestName": "Sophie Brownfield",
           "confirmationCode": "HMQQ5M5WMT",
           "firstSeenAt": "2026-04-20T06:54:32.275Z",
-          "status": "active",
-          "cancelledAt": null,
+          "status": "cancelled",
+          "cancelledAt": "2026-06-14T17:57:11.840Z",
           "link": "https://www.airbnb.com/hosting/reservations/details/HMQQ5M5WMT",
           "sources": [
             "upstream_api",
@@ -4614,6 +4634,39 @@
       "rawSummary": "Reserved",
       "bookingType": "reservation",
       "detectedAt": "2026-06-13T08:36:36.363Z"
+    },
+    {
+      "eventType": "created",
+      "bookingKey": "royal|airbnb|2026-07-17|2026-07-20",
+      "propertyId": "royal",
+      "platform": "airbnb",
+      "startDate": "2026-07-17",
+      "endDate": "2026-07-20",
+      "guestName": null,
+      "guestCount": null,
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HMK83P54XR",
+      "confirmationCode": null,
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync",
+      "bookingCreatedAt": "2026-06-14T16:32:22.621Z",
+      "rawSummary": "Reserved",
+      "bookingType": "reservation",
+      "detectedAt": "2026-06-14T17:57:11.840Z"
+    },
+    {
+      "eventType": "cancelled",
+      "bookingKey": "carina|airbnb|2026-08-31|2026-09-04",
+      "propertyId": "carina",
+      "platform": "airbnb",
+      "startDate": "2026-08-31",
+      "endDate": "2026-09-04",
+      "guestName": "Sophie Brownfield",
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HMQQ5M5WMT",
+      "confirmationCode": "HMQQ5M5WMT",
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync",
+      "bookingCreatedAt": "2026-04-20T06:54:32.275Z",
+      "detectedAt": "2026-06-14T17:57:11.840Z"
     }
   ],
   "imports_log": [
