@@ -1,6 +1,6 @@
 {
   "since": "2026-04-17",
-  "generated_at": "2026-06-17T22:57:30.455Z",
+  "generated_at": "2026-06-18T00:20:37.668Z",
   "available_dates": [
     "2026-06-14",
     "2026-06-13",
@@ -1090,23 +1090,6 @@
           "status": "active",
           "cancelledAt": null,
           "link": "https://www.airbnb.com/hosting/reservations/details/HMKPZQPBQJ",
-          "sources": [
-            "upstream_api",
-            "export_airbnb_csv"
-          ]
-        },
-        {
-          "bookingKey": "royal|airbnb|2026-06-10|2026-06-17",
-          "propertyId": "royal",
-          "platform": "airbnb",
-          "startDate": "2026-06-10",
-          "endDate": "2026-06-17",
-          "guestName": "Martine Mjørud",
-          "confirmationCode": "HMH39DWE8F",
-          "firstSeenAt": "2026-03-28T19:32:10.961Z",
-          "status": "active",
-          "cancelledAt": null,
-          "link": "https://www.airbnb.com/hosting/reservations/details/HMH39DWE8F",
           "sources": [
             "upstream_api",
             "export_airbnb_csv"
