@@ -1,6 +1,6 @@
 {
   "since": "2026-04-17",
-  "generated_at": "2026-06-18T23:45:47.201Z",
+  "generated_at": "2026-06-19T04:20:53.193Z",
   "available_dates": [
     "2026-06-14",
     "2026-06-13",
@@ -1518,23 +1518,6 @@
           "status": "cancelled",
           "cancelledAt": "2026-05-14T07:28:29.713Z",
           "link": "https://www.airbnb.com/hosting/reservations/details/HMKWE9W5PN",
-          "sources": [
-            "upstream_api",
-            "export_airbnb_csv"
-          ]
-        },
-        {
-          "bookingKey": "carina|airbnb|2026-06-14|2026-06-18",
-          "propertyId": "carina",
-          "platform": "airbnb",
-          "startDate": "2026-06-14",
-          "endDate": "2026-06-18",
-          "guestName": "Alejandra Cifuentes",
-          "confirmationCode": "HMR45RPMPH",
-          "firstSeenAt": "2026-04-12T06:28:06.966Z",
-          "status": "active",
-          "cancelledAt": null,
-          "link": "https://www.airbnb.com/hosting/reservations/details/HMR45RPMPH",
           "sources": [
             "upstream_api",
             "export_airbnb_csv"
