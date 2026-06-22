@@ -1,6 +1,6 @@
 {
   "since": "2026-04-17",
-  "generated_at": "2026-06-21T23:51:13.975Z",
+  "generated_at": "2026-06-22T04:17:36.960Z",
   "available_dates": [
     "2026-06-14",
     "2026-06-13",
@@ -1073,23 +1073,6 @@
           "status": "active",
           "cancelledAt": null,
           "link": "https://www.airbnb.com/hosting/reservations/details/HMRC2FFWBP",
-          "sources": [
-            "upstream_api",
-            "export_airbnb_csv"
-          ]
-        },
-        {
-          "bookingKey": "royal|airbnb|2026-06-17|2026-06-21",
-          "propertyId": "royal",
-          "platform": "airbnb",
-          "startDate": "2026-06-17",
-          "endDate": "2026-06-21",
-          "guestName": "Jason Wilding",
-          "confirmationCode": "HMKPZQPBQJ",
-          "firstSeenAt": "2026-03-28T19:32:10.965Z",
-          "status": "active",
-          "cancelledAt": null,
-          "link": "https://www.airbnb.com/hosting/reservations/details/HMKPZQPBQJ",
           "sources": [
             "upstream_api",
             "export_airbnb_csv"
