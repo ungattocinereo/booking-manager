@@ -236,13 +236,14 @@ async function syncAll() {
 
     console.log(`\n✅ Total events synced: ${totalEvents}, stale removed: ${totalDeleted}`);
 
-    // Generate cleaning tasks
-    await generateCleaningTasks();
-
     // Enrich bookings from Airbnb CSV exports
     const { enrichFromExports } = require('./enrich-from-exports');
     const USE_POSTGRES = process.env.POSTGRES_URL || process.env.DATABASE_URL;
     await enrichFromExports(db, !!USE_POSTGRES);
+
+    // Generate cleaning tasks after enrichment so bookings inserted from manual
+    // exports receive checkout tasks too.
+    await generateCleaningTasks();
 
     // Store an aggregate statistics snapshot after the final booking state is known.
     const { recordBookingStatsSnapshot } = require('./stats-snapshots');

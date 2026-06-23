@@ -167,6 +167,27 @@ async function updateBooking(db, isPostgres, propertyId, platform, startDate, en
   return changes;
 }
 
+async function upsertBookingFromExport(db, isPostgres, propertyId, platform, startDate, endDate, guestName, country, guestCount) {
+  const changes = await updateBooking(db, isPostgres, propertyId, platform, startDate, endDate, guestName, country, guestCount);
+  if (changes > 0) return changes;
+
+  if (isPostgres) {
+    const result = await db.execute(
+      `INSERT INTO bookings (property_id, platform, start_date, end_date, raw_summary, guest_name, guest_country, guest_count, booking_type, synced_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'reservation', NOW())`,
+      [propertyId, platform, startDate, endDate, guestName, guestName, country, guestCount || null]
+    );
+    return result.rowCount || 0;
+  }
+
+  const result = await db.run(
+    `INSERT INTO bookings (property_id, platform, start_date, end_date, raw_summary, guest_name, guest_country, guest_count, booking_type, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'reservation', CURRENT_TIMESTAMP)`,
+    [propertyId, platform, startDate, endDate, guestName, guestName, country, guestCount || null]
+  );
+  return result.changes || 0;
+}
+
 async function deleteBooking(db, isPostgres, propertyId, platform, startDate, endDate) {
   let changes = 0;
   if (isPostgres) {
@@ -354,7 +375,7 @@ async function enrichFromExports(db, isPostgres) {
         const country = bookerCountry ? bookerCountry.toUpperCase() : null;
 
         try {
-          const changes = await updateBooking(db, isPostgres, propertyId, 'booking', checkIn, checkOut, guestName, country, guestCount);
+          const changes = await upsertBookingFromExport(db, isPostgres, propertyId, 'booking', checkIn, checkOut, guestName, country, guestCount);
           if (changes > 0) updated++;
         } catch (err) {
           console.error(`Enrich: error updating ${guestName}: ${err.message}`);

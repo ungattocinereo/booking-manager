@@ -3,9 +3,19 @@ const DAY_MS = 86400000;
 const STATS_MONTHS = [3, 4, 5, 6, 7, 8, 9, 10];
 
 function parseLocalDate(iso) {
+  if (iso instanceof Date) {
+    const date = new Date(iso.getFullYear(), iso.getMonth(), iso.getDate());
+    date.setHours(0, 0, 0, 0);
+    return date;
+  }
+
   const date = new Date(`${String(iso).slice(0, 10)}T00:00:00`);
   date.setHours(0, 0, 0, 0);
   return date;
+}
+
+function dateKey(value) {
+  return toLocalIso(parseLocalDate(value));
 }
 
 function toLocalIso(date) {
@@ -45,8 +55,8 @@ function isGroupedBookingClosure(booking, allBookings) {
   return allBookings.some(other =>
     other !== booking &&
     other.platform === 'booking' &&
-    other.start_date === booking.start_date &&
-    other.end_date === booking.end_date &&
+    dateKey(other.start_date) === dateKey(booking.start_date) &&
+    dateKey(other.end_date) === dateKey(booking.end_date) &&
     isUnavailableBooking(other) &&
     !hasGuestDetails(other)
   );

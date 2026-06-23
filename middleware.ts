@@ -26,6 +26,12 @@ function isPublicMaidApiPath(pathname: string) {
   return pathname.startsWith('/api/maid/');
 }
 
+function isPublicWidgetApiRequest(pathname: string, request: Request) {
+  if (pathname !== '/api/bookings') return false;
+  const url = new URL(request.url);
+  return url.searchParams.get('widget') === 'today';
+}
+
 function hasBearerSecret(request: Request, secret: string) {
   const authorization = request.headers.get('authorization') || '';
   return Boolean(secret && authorization === `Bearer ${secret}`);
@@ -66,6 +72,7 @@ export default function middleware(request: Request) {
   if (PUBLIC_ASSET_PATHS.has(url.pathname)) return;
   if (isPublicMaidPath(url.pathname)) return;
   if (isPublicMaidApiPath(url.pathname)) return;
+  if (isPublicWidgetApiRequest(url.pathname, request)) return;
   if (isAllowedMachinePath(url.pathname, request)) return;
 
   return blockedResponse();

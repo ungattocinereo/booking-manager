@@ -6,12 +6,27 @@ const db = USE_POSTGRES
 
 const { formatBooking } = require('./_helpers');
 const { recordBookingStatsSnapshot } = require('../backend/src/stats-snapshots');
+const { buildTodayWidgetPayload } = require('../lib/widget-today');
 
 module.exports = async (req, res) => {
   try {
     // Initialize database connection
     if (!db.pool && !db.db) {
       await db.init();
+    }
+
+    if (req.query.widget === 'today') {
+      const expectedToken = process.env.WIDGET_TOKEN || '';
+      const providedToken = req.query.token || req.headers['x-widget-token'] || '';
+      if (!expectedToken) {
+        return res.status(503).json({ error: 'Widget token is not configured' });
+      }
+      if (providedToken !== expectedToken) {
+        return res.status(404).json({ error: 'Not found' });
+      }
+      const payload = await buildTodayWidgetPayload(db, req.query.date);
+      res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=300');
+      return res.status(200).json(payload);
     }
 
     if (req.query.stats_snapshots === '1') {
