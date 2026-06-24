@@ -1,7 +1,8 @@
 {
   "since": "2026-04-17",
-  "generated_at": "2026-06-24T03:37:10.515Z",
+  "generated_at": "2026-06-24T07:41:04.746Z",
   "available_dates": [
+    "2026-06-24",
     "2026-06-14",
     "2026-06-13",
     "2026-06-12",
@@ -59,6 +60,25 @@
       "accent": "#c9512e",
       "icon": "home",
       "events": [
+        {
+          "bookingKey": "harmony|airbnb|2026-10-09|2026-10-12",
+          "propertyId": "harmony",
+          "platform": "airbnb",
+          "startDate": "2026-10-09",
+          "endDate": "2026-10-12",
+          "guestName": "Isabella Mills",
+          "guestCount": 2,
+          "confirmationCode": null,
+          "firstSeenAt": "2026-06-24T05:57:46.442Z",
+          "status": "active",
+          "cancelledAt": null,
+          "link": "https://www.airbnb.com/hosting/reservations/details/HMKBFMF8AN",
+          "rawSummary": "Reserved",
+          "bookingType": "reservation",
+          "sources": [
+            "upstream_api"
+          ]
+        },
         {
           "bookingKey": "harmony|airbnb|2026-09-07|2026-09-10",
           "propertyId": "harmony",
@@ -4616,6 +4636,24 @@
       "sourceRef": "hourly_sync",
       "bookingCreatedAt": "2026-04-20T06:54:32.275Z",
       "detectedAt": "2026-06-14T17:57:11.840Z"
+    },
+    {
+      "eventType": "created",
+      "bookingKey": "harmony|airbnb|2026-10-09|2026-10-12",
+      "propertyId": "harmony",
+      "platform": "airbnb",
+      "startDate": "2026-10-09",
+      "endDate": "2026-10-12",
+      "guestName": "Isabella Mills",
+      "guestCount": 2,
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HMKBFMF8AN",
+      "confirmationCode": null,
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync",
+      "bookingCreatedAt": "2026-06-24T05:57:46.442Z",
+      "rawSummary": "Reserved",
+      "bookingType": "reservation",
+      "detectedAt": "2026-06-24T07:41:04.742Z"
     }
   ],
   "imports_log": [
