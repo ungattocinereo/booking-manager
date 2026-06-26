@@ -1,7 +1,8 @@
 {
   "since": "2026-04-17",
-  "generated_at": "2026-06-26T03:43:18.365Z",
+  "generated_at": "2026-06-26T07:53:31.843Z",
   "available_dates": [
+    "2026-06-26",
     "2026-06-25",
     "2026-06-24",
     "2026-06-14",
@@ -630,8 +631,8 @@
           "guestName": "Eunjoo 신",
           "confirmationCode": "HMHQ25YSZK",
           "firstSeenAt": "2026-03-28T19:32:10.510Z",
-          "status": "active",
-          "cancelledAt": null,
+          "status": "cancelled",
+          "cancelledAt": "2026-06-26T07:53:31.840Z",
           "link": "https://www.airbnb.com/hosting/reservations/details/HMHQ25YSZK",
           "sources": [
             "upstream_api",
@@ -680,6 +681,25 @@
       "accent": "#1f3d8a",
       "icon": "crown",
       "events": [
+        {
+          "bookingKey": "royal|airbnb|2026-09-06|2026-09-11",
+          "propertyId": "royal",
+          "platform": "airbnb",
+          "startDate": "2026-09-06",
+          "endDate": "2026-09-11",
+          "guestName": null,
+          "guestCount": null,
+          "confirmationCode": null,
+          "firstSeenAt": "2026-06-26T06:01:31.612Z",
+          "status": "active",
+          "cancelledAt": null,
+          "link": "https://www.airbnb.com/hosting/reservations/details/HMZ3MK5HDB",
+          "rawSummary": "Reserved",
+          "bookingType": "reservation",
+          "sources": [
+            "upstream_api"
+          ]
+        },
         {
           "bookingKey": "royal|airbnb|2026-08-07|2026-08-12",
           "propertyId": "royal",
@@ -4692,6 +4712,39 @@
       "rawSummary": "Reserved",
       "bookingType": "reservation",
       "detectedAt": "2026-06-25T08:22:54.359Z"
+    },
+    {
+      "eventType": "created",
+      "bookingKey": "royal|airbnb|2026-09-06|2026-09-11",
+      "propertyId": "royal",
+      "platform": "airbnb",
+      "startDate": "2026-09-06",
+      "endDate": "2026-09-11",
+      "guestName": null,
+      "guestCount": null,
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HMZ3MK5HDB",
+      "confirmationCode": null,
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync",
+      "bookingCreatedAt": "2026-06-26T06:01:31.612Z",
+      "rawSummary": "Reserved",
+      "bookingType": "reservation",
+      "detectedAt": "2026-06-26T07:53:31.840Z"
+    },
+    {
+      "eventType": "cancelled",
+      "bookingKey": "harmony|airbnb|2026-07-04|2026-07-08",
+      "propertyId": "harmony",
+      "platform": "airbnb",
+      "startDate": "2026-07-04",
+      "endDate": "2026-07-08",
+      "guestName": "Eunjoo 신",
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HMHQ25YSZK",
+      "confirmationCode": "HMHQ25YSZK",
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync",
+      "bookingCreatedAt": "2026-03-28T19:32:10.510Z",
+      "detectedAt": "2026-06-26T07:53:31.840Z"
     }
   ],
   "imports_log": [
