@@ -1,6 +1,6 @@
 {
   "since": "2026-04-17",
-  "generated_at": "2026-06-28T23:38:08.908Z",
+  "generated_at": "2026-06-29T03:58:15.275Z",
   "available_dates": [
     "2026-06-26",
     "2026-06-25",
@@ -980,23 +980,6 @@
           "status": "cancelled",
           "cancelledAt": "2026-04-26T08:01:51.939Z",
           "link": "https://www.airbnb.com/hosting/reservations/details/HM58F3DNTN",
-          "sources": [
-            "upstream_api",
-            "export_airbnb_csv"
-          ]
-        },
-        {
-          "bookingKey": "royal|airbnb|2026-06-21|2026-06-28",
-          "propertyId": "royal",
-          "platform": "airbnb",
-          "startDate": "2026-06-21",
-          "endDate": "2026-06-28",
-          "guestName": "Laura De Keyser",
-          "confirmationCode": "HM8R9N3PJ9",
-          "firstSeenAt": "2026-03-30T20:26:15.905Z",
-          "status": "active",
-          "cancelledAt": null,
-          "link": "https://www.airbnb.com/hosting/reservations/details/HM8R9N3PJ9",
           "sources": [
             "upstream_api",
             "export_airbnb_csv"
