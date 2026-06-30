@@ -1,6 +1,6 @@
 {
   "since": "2026-04-17",
-  "generated_at": "2026-06-29T22:36:37.573Z",
+  "generated_at": "2026-06-30T00:04:20.188Z",
   "available_dates": [
     "2026-06-29",
     "2026-06-26",
@@ -1666,23 +1666,6 @@
           "status": "active",
           "cancelledAt": null,
           "link": "https://www.airbnb.com/hosting/reservations/details/HM9SJH33W8",
-          "sources": [
-            "upstream_api",
-            "export_airbnb_csv"
-          ]
-        },
-        {
-          "bookingKey": "carina|airbnb|2026-06-25|2026-06-29",
-          "propertyId": "carina",
-          "platform": "airbnb",
-          "startDate": "2026-06-25",
-          "endDate": "2026-06-29",
-          "guestName": "Piper Worsley",
-          "confirmationCode": "HM5T9RJ83J",
-          "firstSeenAt": "2026-03-28T19:32:10.102Z",
-          "status": "active",
-          "cancelledAt": null,
-          "link": "https://www.airbnb.com/hosting/reservations/details/HM5T9RJ83J",
           "sources": [
             "upstream_api",
             "export_airbnb_csv"
