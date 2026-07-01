@@ -1,6 +1,6 @@
 {
   "since": "2026-04-17",
-  "generated_at": "2026-06-30T23:44:04.458Z",
+  "generated_at": "2026-07-01T03:56:23.610Z",
   "available_dates": [
     "2026-06-30",
     "2026-06-29",
@@ -674,23 +674,6 @@
           "status": "cancelled",
           "cancelledAt": "2026-06-26T07:53:31.840Z",
           "link": "https://www.airbnb.com/hosting/reservations/details/HMHQ25YSZK",
-          "sources": [
-            "upstream_api",
-            "export_airbnb_csv"
-          ]
-        },
-        {
-          "bookingKey": "harmony|airbnb|2026-06-23|2026-06-30",
-          "propertyId": "harmony",
-          "platform": "airbnb",
-          "startDate": "2026-06-23",
-          "endDate": "2026-06-30",
-          "guestName": "Maria Lundgren",
-          "confirmationCode": "HMPCRTPH24",
-          "firstSeenAt": "2026-03-28T19:32:10.506Z",
-          "status": "active",
-          "cancelledAt": null,
-          "link": "https://www.airbnb.com/hosting/reservations/details/HMPCRTPH24",
           "sources": [
             "upstream_api",
             "export_airbnb_csv"
