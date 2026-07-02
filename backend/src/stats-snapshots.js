@@ -1,4 +1,5 @@
 const DAY_MS = 86400000;
+const { isRealGuestBooking } = require('../../lib/booking-normalization');
 
 const STATS_MONTHS = [3, 4, 5, 6, 7, 8, 9, 10];
 
@@ -12,10 +13,6 @@ function parseLocalDate(iso) {
   const date = new Date(`${String(iso).slice(0, 10)}T00:00:00`);
   date.setHours(0, 0, 0, 0);
   return date;
-}
-
-function dateKey(value) {
-  return toLocalIso(parseLocalDate(value));
 }
 
 function toLocalIso(date) {
@@ -35,38 +32,6 @@ function seasonRange(year = new Date().getFullYear()) {
   start.setHours(0, 0, 0, 0);
   end.setHours(0, 0, 0, 0);
   return { year, start, end, days: daysBetween(start, end) };
-}
-
-function isUnavailableBooking(booking) {
-  const summary = String(booking.raw_summary || '').toLowerCase();
-  const type = String(booking.booking_type || '').toLowerCase();
-  return summary.includes('not available') ||
-    summary.includes('closed') ||
-    type === 'blocked' ||
-    type === 'unavailable';
-}
-
-function hasGuestDetails(booking) {
-  return Boolean((booking.guest_name || '').trim()) || Number(booking.guest_count) > 0;
-}
-
-function isGroupedBookingClosure(booking, allBookings) {
-  if (booking.platform !== 'booking' || !isUnavailableBooking(booking) || hasGuestDetails(booking)) return false;
-  return allBookings.some(other =>
-    other !== booking &&
-    other.platform === 'booking' &&
-    dateKey(other.start_date) === dateKey(booking.start_date) &&
-    dateKey(other.end_date) === dateKey(booking.end_date) &&
-    isUnavailableBooking(other) &&
-    !hasGuestDetails(other)
-  );
-}
-
-function isRealGuestBooking(booking, allBookings) {
-  if (isGroupedBookingClosure(booking, allBookings)) return false;
-  if (booking.platform === 'booking') return true;
-  if (isUnavailableBooking(booking)) return hasGuestDetails(booking);
-  return true;
 }
 
 function overlapsRange(booking, rangeStart, rangeEnd) {

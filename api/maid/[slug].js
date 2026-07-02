@@ -4,6 +4,7 @@ const db = USE_POSTGRES
   ? require('../../backend/src/database-postgres')
   : require('../../backend/src/database');
 const { formatBooking, todayInRome } = require('../_helpers');
+const { normalizeBookingsForDisplay } = require('../../lib/booking-normalization');
 
 module.exports = async (req, res) => {
   try {
@@ -23,13 +24,10 @@ module.exports = async (req, res) => {
     const propertyIds = assignedProperties.map(p => p.id);
 
     const today = todayInRome();
-    const allBookings = await db.getBookings(null, today);
+    const allBookings = normalizeBookingsForDisplay(await db.getBookings(null, today));
 
     const maidBookings = allBookings.filter(b => {
       if (!propertyIds.includes(b.property_id)) return false;
-      const summary = b.raw_summary || '';
-      const isUnavailable = summary.includes('Not available') || summary.includes('CLOSED') || b.booking_type === 'blocked';
-      if (isUnavailable && !b.guest_name) return false;
       return true;
     }).map(formatBooking);
 

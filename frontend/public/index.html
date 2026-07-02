@@ -3058,7 +3058,8 @@ const propertyConfig = {
   'carina':   { icon: 'heart',    color: '#e11d48', bg: '#fff1f2' },
   'royal':    { icon: 'crown',    color: '#ca8a04', bg: '#fefce8' },
   'harmony':  { icon: 'music',    color: '#059669', bg: '#ecfdf5' },
-  'susy':     { icon: 'building-2', color: '#0f766e', bg: '#f0fdfa' }
+  'susy':     { icon: 'building-2', color: '#0f766e', bg: '#f0fdfa' },
+  'carmela':  { icon: 'leaf',     color: '#65a30d', bg: '#f7fee7' }
 };
 
 const propertyNameFallback = {
@@ -3071,7 +3072,8 @@ const propertyNameFallback = {
   carina: 'Carina',
   royal: 'Royal',
   harmony: 'Harmony',
-  susy: 'Villa Susy'
+  susy: 'Villa Susy',
+  carmela: 'Carmela'
 };
 
 function escapeHtml(value) {
@@ -3164,6 +3166,10 @@ function hasGuestDetails(b) {
   return Boolean((b.guest_name || '').trim()) || Number(b.guest_count) > 0;
 }
 
+function isUnavailableMarker(b) {
+  return isUnavailableBooking(b) && !hasGuestDetails(b);
+}
+
 function isDirectBooking(b) {
   return String(b.platform || '').toLowerCase() === 'direct';
 }
@@ -3184,28 +3190,47 @@ function isBlockedByDirectBooking(booking, directBookings) {
 }
 
 function isGroupedBookingClosure(b, allBookings = bookings) {
-  if (b.platform !== 'booking' || !isUnavailableBooking(b) || hasGuestDetails(b)) return false;
+  if (b.platform !== 'booking' || !isUnavailableMarker(b)) return false;
   const sameClosedRange = allBookings.filter(other =>
     other !== b &&
     other.platform === 'booking' &&
     other.start_date === b.start_date &&
     other.end_date === b.end_date &&
-    isUnavailableBooking(other) &&
-    !hasGuestDetails(other)
+    isUnavailableMarker(other)
   );
   return sameClosedRange.length > 0;
 }
 
-function isRealGuestBooking(b, allBookings = bookings) {
+function isRealReservationCandidate(b, allBookings = bookings) {
   if (isGroupedBookingClosure(b, allBookings)) return false;
-  if (b.platform === 'booking') return true;
-  if (isUnavailableBooking(b)) return hasGuestDetails(b);
+  if (isUnavailableMarker(b)) return false;
+  return true;
+}
+
+function hasOverlappingRealBooking(booking, allBookings = bookings) {
+  if (!isUnavailableMarker(booking)) return false;
+  const start = parseLocalDate(booking.start_date);
+  const end = parseLocalDate(booking.end_date);
+  return allBookings.some(other => {
+    if (other === booking || other.property_id !== booking.property_id) return false;
+    if (!isRealReservationCandidate(other, allBookings)) return false;
+    return dateRangesOverlap(start, end, parseLocalDate(other.start_date), parseLocalDate(other.end_date));
+  });
+}
+
+function shouldHideBookingForDisplay(b, allBookings = bookings) {
+  if (!isUnavailableMarker(b)) return false;
+  return isGroupedBookingClosure(b, allBookings) || hasOverlappingRealBooking(b, allBookings);
+}
+
+function isRealGuestBooking(b, allBookings = bookings) {
+  if (shouldHideBookingForDisplay(b, allBookings)) return false;
+  if (isUnavailableMarker(b)) return false;
   return true;
 }
 
 function isTaxableBooking(b, allBookings = bookings) {
   if (!isRealGuestBooking(b, allBookings)) return false;
-  if (isUnavailableBooking(b) && !hasGuestDetails(b)) return false;
   return true;
 }
 
@@ -3285,7 +3310,8 @@ const CALENDAR_ARCHIVE_VIEWS = new Set(['quarter', 'season']);
 const CALENDAR_GROUPS = [
   { id: 'dragone', name: 'Dragone', properties: ['awesome', 'central', 'orange', 'vingtage', 'youth', 'solo'] },
   { id: 'dipino', name: 'Dipino', properties: ['carina', 'royal', 'harmony'] },
-  { id: 'susy', name: 'Susy', properties: ['susy'] }
+  { id: 'susy', name: 'Susy', properties: ['susy'] },
+  { id: 'oliva', name: 'Oliva', properties: ['carmela'] }
 ];
 const CALENDAR_PLATFORM_CLASS = { airbnb: 'airbnb', booking: 'booking', direct: 'direct' };
 let calendarState = {
@@ -3485,6 +3511,7 @@ function getCalendarBookingsForProperty(propId, startDate, endDate, today) {
     const end = parseLocalDate(b.end_date);
     if (calendarState.hideCompleted && end <= today) return false;
     if (end < startDate || start > endDate) return false;
+    if (shouldHideBookingForDisplay(b, bookings)) return false;
     if (isBlockedByDirectBooking(b, directBookings)) return false;
     const key = `${b.platform}_${b.start_date}_${b.end_date}_${b.guest_name || ''}_${b.reservation_url || ''}`;
     if (seen.has(key)) return false;

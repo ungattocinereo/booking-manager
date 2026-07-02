@@ -12,6 +12,7 @@ const LISTING_MAP = {
   'Vintage Townhouse Chamber': 'vingtage',
   '2 Story Suite "Carina" Excellent Central Location': 'carina',
   '2 Story Suite Carina Excellent Central Location': 'carina',
+  'Carmela': 'carmela',
   'The Adventure bunkbed room': 'youth',
   'Room for solo travelers': 'solo',
 };
@@ -167,49 +168,10 @@ async function updateBooking(db, isPostgres, propertyId, platform, startDate, en
   return changes;
 }
 
-async function upsertBookingFromExport(db, isPostgres, propertyId, platform, startDate, endDate, guestName, country, guestCount) {
-  const changes = await updateBooking(db, isPostgres, propertyId, platform, startDate, endDate, guestName, country, guestCount);
-  if (changes > 0) return changes;
-
-  if (isPostgres) {
-    const result = await db.execute(
-      `INSERT INTO bookings (property_id, platform, start_date, end_date, raw_summary, guest_name, guest_country, guest_count, booking_type, synced_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'reservation', NOW())`,
-      [propertyId, platform, startDate, endDate, guestName, guestName, country, guestCount || null]
-    );
-    return result.rowCount || 0;
-  }
-
-  const result = await db.run(
-    `INSERT INTO bookings (property_id, platform, start_date, end_date, raw_summary, guest_name, guest_country, guest_count, booking_type, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'reservation', CURRENT_TIMESTAMP)`,
-    [propertyId, platform, startDate, endDate, guestName, guestName, country, guestCount || null]
-  );
-  return result.changes || 0;
-}
-
-async function deleteBooking(db, isPostgres, propertyId, platform, startDate, endDate) {
-  let changes = 0;
-  if (isPostgres) {
-    const result = await db.execute(
-      `DELETE FROM bookings
-       WHERE property_id = $1 AND platform = $2 AND start_date = $3 AND end_date = $4`,
-      [propertyId, platform, startDate, endDate]
-    );
-    changes = result.rowCount || 0;
-  } else {
-    const result = await db.run(
-      `DELETE FROM bookings
-       WHERE property_id = ? AND platform = ? AND start_date = ? AND end_date = ?`,
-      [propertyId, platform, startDate, endDate]
-    );
-    changes = result.changes || 0;
-  }
-  return changes;
-}
-
 /**
  * Enrich bookings from Airbnb CSV and Booking.com XLS exports.
+ * Exports are manual snapshots: they may update matching iCal bookings, but
+ * cron must not insert or delete bookings from them.
  * @param {object} db - The database module (already initialized)
  * @param {boolean} isPostgres - Whether using Postgres (vs SQLite)
  * @returns {{ parsed: number, updated: number, skipped: number, deleted: number }}
@@ -337,17 +299,6 @@ async function enrichFromExports(db, isPostgres) {
 
         const status = getField(row, 'Status') || '';
         if (String(status).toLowerCase().includes('cancelled')) {
-          const roomType = getField(row, 'Unit type');
-          const checkIn = getField(row, 'Check-in');
-          const checkOut = getField(row, 'Check-out');
-          const propertyId = BOOKING_ROOM_MAP[roomType];
-          if (propertyId && checkIn && checkOut) {
-            try {
-              deleted += await deleteBooking(db, isPostgres, propertyId, 'booking', checkIn, checkOut);
-            } catch (err) {
-              console.error(`Enrich: error deleting cancelled Booking.com row: ${err.message}`);
-            }
-          }
           skipped++;
           continue;
         }
@@ -375,8 +326,9 @@ async function enrichFromExports(db, isPostgres) {
         const country = bookerCountry ? bookerCountry.toUpperCase() : null;
 
         try {
-          const changes = await upsertBookingFromExport(db, isPostgres, propertyId, 'booking', checkIn, checkOut, guestName, country, guestCount);
+          const changes = await updateBooking(db, isPostgres, propertyId, 'booking', checkIn, checkOut, guestName, country, guestCount);
           if (changes > 0) updated++;
+          else skipped++;
         } catch (err) {
           console.error(`Enrich: error updating ${guestName}: ${err.message}`);
         }

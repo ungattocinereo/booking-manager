@@ -8,6 +8,7 @@ const db = USE_POSTGRES
   ? require('./database-postgres')
   : require('./database');
 const { formatBooking, formatCleaningTask, todayInRome } = require('../../api/_helpers');
+const { normalizeBookingsForDisplay } = require('../../lib/booking-normalization');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -56,12 +57,17 @@ app.get('/api/dashboard', async (req, res) => {
       cleaner.properties = await db.getCleanerProperties(cleaner.id);
     }
 
-    const formattedBookings = bookings.map(formatBooking);
+    const normalizedBookings = normalizeBookingsForDisplay(bookings);
+    const visibleBookings = req.query.include_markers === '1'
+      ? bookings
+      : normalizedBookings;
+    const formattedBookings = visibleBookings.map(formatBooking);
     const formattedTasks = cleaningTasks.map(formatCleaningTask);
 
     const stats = {
       total_properties: properties.length,
       total_bookings: formattedBookings.length,
+      hidden_booking_markers: bookings.length - normalizedBookings.length,
       total_cleaning_tasks: formattedTasks.length,
       pending_cleaning_tasks: formattedTasks.filter(t => t.status === 'pending').length,
       total_cleaners: cleaners.length
@@ -101,7 +107,10 @@ app.get('/api/bookings', async (req, res) => {
 
     const { property_id, from_date } = req.query;
     const bookings = await db.getBookings(property_id, from_date);
-    res.json(bookings);
+    const visibleBookings = req.query.include_markers === '1'
+      ? bookings
+      : normalizeBookingsForDisplay(bookings);
+    res.json(visibleBookings.map(formatBooking));
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -313,21 +322,18 @@ app.get('/api/maid/:slug', async (req, res) => {
     const propertyIds = assignedProperties.map(p => p.id);
 
     const today = todayInRome();
-    const allBookings = await db.getBookings(null, today);
+    const allBookings = normalizeBookingsForDisplay(await db.getBookings(null, today));
 
-    // Filter to assigned properties only, exclude blocked/unavailable without guest
+    // Filter to assigned properties only.
     const maidBookings = allBookings.filter(b => {
       if (!propertyIds.includes(b.property_id)) return false;
-      const summary = b.raw_summary || '';
-      const isUnavailable = summary.includes('Not available') || summary.includes('CLOSED') || b.booking_type === 'blocked';
-      if (isUnavailable && !b.guest_name) return false;
       return true;
     });
 
     res.json({
       cleaner: { id: cleaner.id, name: cleaner.name, slug: cleaner.slug },
       properties: assignedProperties,
-      bookings: maidBookings
+      bookings: maidBookings.map(formatBooking)
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -394,40 +400,6 @@ app.post('/api/sync', async (req, res) => {
   }
 });
 
-// ===== DASHBOARD DATA =====
-
-app.get('/api/dashboard', async (req, res) => {
-  try {
-    const today = todayInRome();
-    
-    // Get upcoming bookings
-    const bookings = await db.getBookings(null, today);
-    
-    // Get cleaning tasks for next 7 days
-    const cleaningTasks = await db.getCleaningTasks(null, today);
-    
-    // Get properties
-    const properties = await db.getProperties();
-    
-    // Get cleaners
-    const cleaners = await db.getCleaners();
-    
-    res.json({
-      stats: {
-        totalProperties: properties.length,
-        upcomingBookings: bookings.length,
-        pendingTasks: cleaningTasks.filter(t => t.status === 'pending').length,
-        totalCleaners: cleaners.length
-      },
-      bookings: bookings.slice(0, 10), // Next 10 bookings
-      cleaningTasks: cleaningTasks.slice(0, 20), // Next 20 tasks
-      properties,
-      cleaners
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
 
 // ===== HEALTH CHECK =====
 

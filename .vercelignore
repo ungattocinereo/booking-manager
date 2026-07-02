@@ -1,0 +1,11 @@
+.env
+.env*.local
+exports/*
+!exports/README.md
+scraper/*.json
+scraper/*.png
+scraper/*.sql
+scriptable-widgets/*.local.js
+scriptable-widgets/*.private.js
+*.local.js
+*.private.js

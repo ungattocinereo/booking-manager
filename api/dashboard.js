@@ -5,6 +5,7 @@ const db = USE_POSTGRES
   : require('../backend/src/database');
 
 const { formatBooking, formatCleaningTask, todayInRome } = require('./_helpers');
+const { normalizeBookingsForDisplay } = require('../lib/booking-normalization');
 
 module.exports = async (req, res) => {
   try {
@@ -34,13 +35,18 @@ module.exports = async (req, res) => {
     }
 
     // Format dates to YYYY-MM-DD
-    const formattedBookings = bookings.map(formatBooking);
+    const normalizedBookings = normalizeBookingsForDisplay(bookings);
+    const visibleBookings = req.query.include_markers === '1'
+      ? bookings
+      : normalizedBookings;
+    const formattedBookings = visibleBookings.map(formatBooking);
     const formattedTasks = cleaningTasks.map(formatCleaningTask);
 
     // Calculate stats
     const stats = {
       total_properties: properties.length,
       total_bookings: formattedBookings.length,
+      hidden_booking_markers: bookings.length - normalizedBookings.length,
       total_cleaning_tasks: formattedTasks.length,
       pending_cleaning_tasks: formattedTasks.filter(t => t.status === 'pending').length,
       total_cleaners: cleaners.length

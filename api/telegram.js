@@ -106,7 +106,7 @@ const PROPERTY_NAMES = {
   vingtage: 'Vingtage Room', awesome: 'Awesome Apartments',
   central: 'Central Room',
   carina: 'Carina', harmony: 'Harmony', royal: 'Royal',
-  susy: 'Villa Susy'
+  susy: 'Villa Susy', carmela: 'Carmela'
 };
 
 // ── Formatters ───────────────────────────────────────────
@@ -229,7 +229,8 @@ const PROPERTY_PATTERNS = {
   'vingtage': 'vingtage', 'винтаж': 'vingtage',
   'youth': 'youth', 'юс': 'youth',
   'central': 'central', 'централ': 'central', 'централь': 'central',
-  'susy': 'susy', 'сюзи': 'susy', 'суси': 'susy'
+  'susy': 'susy', 'сюзи': 'susy', 'суси': 'susy',
+  'carmela': 'carmela', 'кармел': 'carmela', 'oliva': 'carmela', 'олива': 'carmela'
 };
 
 function detectProperty(text) {

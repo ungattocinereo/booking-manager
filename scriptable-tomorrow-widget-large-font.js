@@ -1,4 +1,4 @@
-// Scriptable widget: today's guest status from Booking Manager.
+// Scriptable widget: tomorrow's guest status from Booking Manager.
 // Paste into Scriptable on iPhone, then add a Scriptable Large widget and select this script.
 
 // Replace placeholders before pasting into Scriptable.
@@ -12,8 +12,12 @@ const CONTENT_WIDTH = 340;
 const CARD_GAP = 8;
 const METRIC_WIDTH = 108;
 const BOTTOM_CARD_WIDTH = 166;
-const ARRIVAL_SECTION_HEIGHT = 110;
-const BOTTOM_SECTION_HEIGHT = 120;
+const HEADER_HEIGHT = 43;
+const METRIC_HEIGHT = 54;
+const ARRIVAL_SECTION_HEIGHT = 112;
+const BOTTOM_SECTION_HEIGHT = 126;
+const ARRIVAL_ROW_HEIGHT = 24;
+const COMPACT_ROW_HEIGHT = 18;
 
 const colors = {
   bgTop: Color.dynamic(new Color('#F7F8F3'), new Color('#07100D')),
@@ -63,14 +67,6 @@ function addText(stack, text, size, color, weight = 'regular', scale = 0.72, lin
   return t;
 }
 
-function addEmoji(stack, text, size, scale = 0.88) {
-  const t = stack.addText(String(text == null ? '' : text));
-  t.font = Font.systemFont(size);
-  t.lineLimit = 1;
-  t.minimumScaleFactor = scale;
-  return t;
-}
-
 function centerText(text) {
   if (typeof text.centerAlignText === 'function') text.centerAlignText();
   return text;
@@ -84,6 +80,15 @@ function rightText(text) {
 function topAlign(stack) {
   if (typeof stack.topAlignContent === 'function') stack.topAlignContent();
   return stack;
+}
+
+function targetDate() {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 function dateMs(value) {
@@ -103,13 +108,13 @@ function daysBetween(start, end) {
 function dateTitle(value) {
   const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
   const parts = String(value || '').split('-').map(Number);
-  if (parts.length !== 3 || !Number.isFinite(parts[1])) return 'Сегодня';
+  if (parts.length !== 3 || !Number.isFinite(parts[1])) return 'завтра';
   const month = months[Math.max(0, Math.min(11, parts[1] - 1))];
   return `${parts[2]} ${month}`;
 }
 
-function todayLabel(value) {
-  return `Сегодня, ${dateTitle(value)}`;
+function tomorrowLabel(value) {
+  return `Завтра, ${dateTitle(value)}`;
 }
 
 function shortTime(value) {
@@ -133,14 +138,6 @@ function propertyName(item) {
 function guestName(item) {
   if (!item || !item.guest || item.guest === '—') return 'без имени';
   return String(item.guest);
-}
-
-function platformColor(item) {
-  const platform = String((item && item.platform) || '').toLowerCase();
-  if (platform.includes('booking')) return colors.booking;
-  if (platform.includes('airbnb')) return colors.airbnb;
-  if (platform.includes('direct')) return colors.direct;
-  return colors.faint;
 }
 
 function platformSymbol(item) {
@@ -168,7 +165,7 @@ function compareByProperty(a, b) {
 }
 
 async function loadData() {
-  const req = new Request(`${API_URL}&_=${Date.now()}`);
+  const req = new Request(`${API_URL}&date=${targetDate()}&_=${Date.now()}`);
   req.headers = { 'x-vercel-protection-bypass': VERCEL_BYPASS };
   req.timeoutInterval = 10;
   return await req.loadJSON();
@@ -204,29 +201,29 @@ function addHeader(widget, data) {
   const row = widget.addStack();
   row.layoutHorizontally();
   row.centerAlignContent();
-  row.size = new Size(CONTENT_WIDTH, 39);
+  row.size = new Size(CONTENT_WIDTH, HEADER_HEIGHT);
 
   const left = row.addStack();
   left.layoutVertically();
-  left.size = new Size(214, 39);
-  addText(left, 'Что сегодня', 21, colors.ink, 'bold', 0.78);
+  left.size = new Size(214, HEADER_HEIGHT);
+  addText(left, 'Что завтра', 24, colors.ink, 'bold', 0.76);
   left.addSpacer(1);
-  addText(left, todayLabel(data.date), 11, colors.muted, 'medium', 0.72);
+  addText(left, tomorrowLabel(data.date), 13, colors.muted, 'medium', 0.7);
 
   row.addSpacer(CARD_GAP);
 
   const right = row.addStack();
   right.layoutVertically();
-  right.size = new Size(118, 39);
+  right.size = new Size(118, HEADER_HEIGHT);
   right.addSpacer(4);
   const labelRow = right.addStack();
   labelRow.layoutHorizontally();
   labelRow.addSpacer();
-  rightText(addText(labelRow, 'обновлено', 8, colors.faint, 'bold', 0.78));
+  rightText(addText(labelRow, 'обновлено', 9, colors.faint, 'bold', 0.72));
   const timeRow = right.addStack();
   timeRow.layoutHorizontally();
   timeRow.addSpacer();
-  rightText(addText(timeRow, shortTime(data.updated_at), 13, colors.muted, 'semibold', 0.78));
+  rightText(addText(timeRow, shortTime(data.updated_at), 14, colors.muted, 'semibold', 0.76));
 }
 
 function addMetric(parent, label, value, tintColor) {
@@ -236,14 +233,14 @@ function addMetric(parent, label, value, tintColor) {
   box.cornerRadius = 12;
   box.borderWidth = 1;
   box.borderColor = colors.line;
-  box.size = new Size(METRIC_WIDTH, 50);
+  box.size = new Size(METRIC_WIDTH, METRIC_HEIGHT);
   box.setPadding(6, 6, 6, 6);
 
   const labelRow = box.addStack();
   labelRow.layoutHorizontally();
   labelRow.centerAlignContent();
   labelRow.addSpacer();
-  centerText(addText(labelRow, label, 9, colors.muted, 'bold', 0.62));
+  centerText(addText(labelRow, label, 10, colors.muted, 'bold', 0.58));
   labelRow.addSpacer();
 
   box.addSpacer(2);
@@ -252,7 +249,7 @@ function addMetric(parent, label, value, tintColor) {
   valueRow.layoutHorizontally();
   valueRow.centerAlignContent();
   valueRow.addSpacer();
-  centerText(addText(valueRow, String(value), 25, tintColor, 'bold', 0.82));
+  centerText(addText(valueRow, String(value), 30, tintColor, 'bold', 0.78));
   valueRow.addSpacer();
 }
 
@@ -260,7 +257,7 @@ function addMetrics(widget, checkIns, checkOuts, occupied) {
   const row = widget.addStack();
   row.layoutHorizontally();
   row.centerAlignContent();
-  row.size = new Size(CONTENT_WIDTH, 50);
+  row.size = new Size(CONTENT_WIDTH, METRIC_HEIGHT);
   addMetric(row, 'Заезды', checkIns.length, colors.arrival);
   row.addSpacer(CARD_GAP);
   addMetric(row, 'Выезды', checkOuts.length, colors.checkout);
@@ -282,9 +279,9 @@ function addSectionShell(parent, title, count) {
   const head = section.addStack();
   head.layoutHorizontally();
   head.centerAlignContent();
-  addText(head, title, 13, colors.ink, 'bold', 0.72);
+  addText(head, title, 15, colors.ink, 'bold', 0.68);
   head.addSpacer();
-  rightText(addText(head, String(count), 13, colors.muted, 'bold', 0.82));
+  rightText(addText(head, String(count), 15, colors.muted, 'bold', 0.78));
 
   return section;
 }
@@ -293,55 +290,55 @@ function addEmptyLine(parent, text, width) {
   const row = parent.addStack();
   row.layoutHorizontally();
   row.centerAlignContent();
-  row.size = new Size(width, 17);
-  addText(row, text, 10, colors.faint, 'medium', 0.7);
+  row.size = new Size(width, 18);
+  addText(row, text, 11, colors.faint, 'medium', 0.68);
 }
 
 function addMoreLine(parent, count, width) {
   const row = parent.addStack();
   row.layoutHorizontally();
   row.centerAlignContent();
-  row.size = new Size(width, 14);
+  row.size = new Size(width, 15);
   row.addSpacer();
-  addText(row, `+${count}`, 9, colors.faint, 'semibold', 0.8);
+  addText(row, `+${count}`, 10, colors.faint, 'semibold', 0.76);
 }
 
 function addArrivalRow(parent, item) {
   const row = parent.addStack();
   row.layoutHorizontally();
   row.centerAlignContent();
-  row.size = new Size(CONTENT_WIDTH - 16, 22);
+  row.size = new Size(CONTENT_WIDTH - 16, ARRIVAL_ROW_HEIGHT);
 
-  addPlatformMark(row, item, 22, 20, 14);
+  addPlatformMark(row, item, 22, ARRIVAL_ROW_HEIGHT, 15);
   row.addSpacer(8);
 
   const roomBox = row.addStack();
   roomBox.layoutHorizontally();
   roomBox.centerAlignContent();
-  roomBox.size = new Size(88, 22);
-  addText(roomBox, propertyName(item), 11, colors.ink, 'semibold', 0.5);
+  roomBox.size = new Size(88, ARRIVAL_ROW_HEIGHT);
+  addText(roomBox, propertyName(item), 13, colors.ink, 'semibold', 0.44);
 
   row.addSpacer(CARD_GAP);
 
   const guestBox = row.addStack();
   guestBox.layoutHorizontally();
   guestBox.centerAlignContent();
-  guestBox.size = new Size(158, 22);
-  addText(guestBox, guestName(item), 11, colors.ink, 'medium', 0.38);
+  guestBox.size = new Size(158, ARRIVAL_ROW_HEIGHT);
+  addText(guestBox, guestName(item), 13, colors.ink, 'medium', 0.32);
 
   row.addSpacer(CARD_GAP);
 
   const daysBox = row.addStack();
   daysBox.layoutHorizontally();
   daysBox.centerAlignContent();
-  daysBox.size = new Size(32, 22);
+  daysBox.size = new Size(32, ARRIVAL_ROW_HEIGHT);
   daysBox.addSpacer();
-  rightText(addText(daysBox, stayLength(item), 10, colors.muted, 'semibold', 0.78));
+  rightText(addText(daysBox, stayLength(item), 11, colors.muted, 'semibold', 0.72));
 }
 
 function addArrivalsSection(widget, items) {
-  const section = addSectionShell(widget, 'Заезды сегодня', items.length);
-  section.addSpacer(5);
+  const section = addSectionShell(widget, 'Заезды завтра', items.length);
+  section.addSpacer(4);
 
   if (!items.length) {
     addEmptyLine(section, 'Заездов нет', CONTENT_WIDTH - 16);
@@ -364,14 +361,14 @@ function addCompactGuestRow(parent, item) {
   const row = parent.addStack();
   row.layoutHorizontally();
   row.centerAlignContent();
-  row.size = new Size(BOTTOM_CARD_WIDTH - 14, 17);
-  addPlatformMark(row, item, 20, 17, 12);
+  row.size = new Size(BOTTOM_CARD_WIDTH - 14, COMPACT_ROW_HEIGHT);
+  addPlatformMark(row, item, 20, COMPACT_ROW_HEIGHT, 13);
   row.addSpacer(8);
   const nameBox = row.addStack();
   nameBox.layoutHorizontally();
   nameBox.centerAlignContent();
-  nameBox.size = new Size(BOTTOM_CARD_WIDTH - 42, 17);
-  addText(nameBox, propertyName(item), 10, colors.ink, 'medium', 0.52);
+  nameBox.size = new Size(BOTTOM_CARD_WIDTH - 42, COMPACT_ROW_HEIGHT);
+  addText(nameBox, propertyName(item), 11, colors.ink, 'medium', 0.48);
 }
 
 function addCompactSection(parent, title, items, maxRows) {
@@ -388,11 +385,11 @@ function addCompactSection(parent, title, items, maxRows) {
   const head = section.addStack();
   head.layoutHorizontally();
   head.centerAlignContent();
-  addText(head, title, 11, colors.ink, 'bold', 0.62);
+  addText(head, title, 13, colors.ink, 'bold', 0.58);
   head.addSpacer();
-  rightText(addText(head, String(items.length), 11, colors.muted, 'bold', 0.82));
+  rightText(addText(head, String(items.length), 13, colors.muted, 'bold', 0.78));
 
-  section.addSpacer(4);
+  section.addSpacer(3);
 
   if (!items.length) {
     addEmptyLine(section, 'нет', BOTTOM_CARD_WIDTH - 14);
@@ -425,7 +422,7 @@ function addBottomSections(widget, occupied, checkOuts) {
 
 function renderError(message) {
   const widget = makeBaseWidget();
-  addHeader(widget, { date: new Date().toISOString().slice(0, 10) });
+  addHeader(widget, { date: targetDate() });
   widget.addSpacer(10);
   const section = addSectionShell(widget, 'Не загрузилось', '!');
   section.addSpacer(7);

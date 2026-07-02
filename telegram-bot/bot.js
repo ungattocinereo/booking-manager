@@ -118,7 +118,8 @@ const PROPERTY_NAMES = {
   carina: 'Carina',
   harmony: 'Harmony',
   royal: 'Royal',
-  susy: 'Villa Susy'
+  susy: 'Villa Susy',
+  carmela: 'Carmela'
 };
 
 // ── Formatters ───────────────────────────────────────────
@@ -256,7 +257,8 @@ const PROPERTY_PATTERNS = {
   'vingtage': 'vingtage', 'винтаж': 'vingtage',
   'youth': 'youth', 'юс': 'youth',
   'central': 'central', 'централ': 'central', 'централь': 'central',
-  'susy': 'susy', 'сюзи': 'susy', 'суси': 'susy'
+  'susy': 'susy', 'сюзи': 'susy', 'суси': 'susy',
+  'carmela': 'carmela', 'кармел': 'carmela', 'oliva': 'carmela', 'олива': 'carmela'
 };
 
 function detectProperty(text) {
@@ -272,8 +274,8 @@ function isBookingQuery(text) {
   const keywords = [
     'бронирован', 'заезд', 'выезд', 'уборк', 'свободн', 'занят',
     'booking', 'check-in', 'check-out', 'clean', 'available',
-    'orange', 'solo', 'awesome', 'central', 'carina', 'harmony', 'royal', 'vingtage', 'youth', 'susy',
-    'оранж', 'офиген', 'централ', 'централь', 'карин', 'гармон', 'роял', 'винтаж', 'сюзи', 'суси',
+    'orange', 'solo', 'awesome', 'central', 'carina', 'harmony', 'royal', 'vingtage', 'youth', 'susy', 'carmela', 'oliva',
+    'оранж', 'офиген', 'централ', 'централь', 'карин', 'гармон', 'роял', 'винтаж', 'сюзи', 'суси', 'кармел', 'олива',
     'когда', 'покажи', 'какие', 'кто', 'ближайш', 'следующ'
   ];
   return keywords.some(k => lower.includes(k));

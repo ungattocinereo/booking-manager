@@ -7,6 +7,7 @@ const db = USE_POSTGRES
 const { formatBooking } = require('./_helpers');
 const { recordBookingStatsSnapshot } = require('../backend/src/stats-snapshots');
 const { buildTodayWidgetPayload } = require('../lib/widget-today');
+const { normalizeBookingsForDisplay } = require('../lib/booking-normalization');
 
 module.exports = async (req, res) => {
   try {
@@ -43,9 +44,12 @@ module.exports = async (req, res) => {
 
     const { property_id, from_date } = req.query;
     const bookings = await db.getBookings(property_id, from_date);
+    const visibleBookings = req.query.include_markers === '1'
+      ? bookings
+      : normalizeBookingsForDisplay(bookings);
     
     // Format dates to YYYY-MM-DD
-    const formattedBookings = bookings.map(formatBooking);
+    const formattedBookings = visibleBookings.map(formatBooking);
     
     res.status(200).json(formattedBookings);
   } catch (error) {

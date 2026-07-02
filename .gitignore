@@ -24,6 +24,10 @@ Dockerfile
 backend/config/calendars.json
 scraper/.booking-credentials.json
 scraper/.booking-session.json
+*.local.js
+*.private.js
+scriptable-widgets/*.local.js
+scriptable-widgets/*.private.js
 
 # Guest data exports (contain PII)
 exports/*.csv

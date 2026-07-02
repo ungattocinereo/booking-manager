@@ -13,6 +13,7 @@ const db = USE_POSTGRES
   : require('../backend/src/database');
 
 const EXPORTS_DIR = path.join(__dirname, '..', 'exports');
+const APPLY_DELETES = process.argv.includes('--apply-deletes');
 
 // Airbnb listing name -> property_id
 const LISTING_MAP = {
@@ -23,6 +24,7 @@ const LISTING_MAP = {
   'Vintage Townhouse Chamber': 'vingtage',
   '2 Story Suite "Carina" Excellent Central Location': 'carina',
   '2 Story Suite Carina Excellent Central Location': 'carina',
+  'Carmela': 'carmela',
   'The Adventure bunkbed room': 'youth',
   'Room for solo travelers': 'solo',
 };
@@ -185,6 +187,8 @@ async function updateBooking(propertyId, platform, startDate, endDate, guestName
 }
 
 async function deleteBooking(propertyId, platform, startDate, endDate) {
+  if (!APPLY_DELETES) return 0;
+
   let changes = 0;
   if (USE_POSTGRES) {
     const result = await db.execute(
@@ -440,6 +444,9 @@ async function processBookingXLS() {
 
 async function main() {
   console.log('Initializing database...');
+  if (!APPLY_DELETES) {
+    console.log('Delete mode is off. Pass --apply-deletes to remove rows from exports.');
+  }
   await db.init();
 
   const airbnb = await processAirbnbCSVs();
