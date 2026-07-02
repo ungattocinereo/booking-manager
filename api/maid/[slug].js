@@ -3,7 +3,7 @@ const USE_POSTGRES = process.env.POSTGRES_URL || process.env.DATABASE_URL;
 const db = USE_POSTGRES
   ? require('../../backend/src/database-postgres')
   : require('../../backend/src/database');
-const { formatBooking } = require('../_helpers');
+const { formatBooking, todayInRome } = require('../_helpers');
 
 module.exports = async (req, res) => {
   try {
@@ -22,7 +22,7 @@ module.exports = async (req, res) => {
     const assignedProperties = await db.getCleanerProperties(cleaner.id);
     const propertyIds = assignedProperties.map(p => p.id);
 
-    const today = new Date().toISOString().split('T')[0];
+    const today = todayInRome();
     const allBookings = await db.getBookings(null, today);
 
     const maidBookings = allBookings.filter(b => {

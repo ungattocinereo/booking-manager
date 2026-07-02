@@ -7,7 +7,7 @@ const USE_POSTGRES = process.env.POSTGRES_URL || process.env.DATABASE_URL;
 const db = USE_POSTGRES 
   ? require('./database-postgres')
   : require('./database');
-const { formatBooking, formatCleaningTask } = require('../../api/_helpers');
+const { formatBooking, formatCleaningTask, todayInRome } = require('../../api/_helpers');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -37,7 +37,7 @@ app.get('/api/properties', async (req, res) => {
 
 app.get('/api/dashboard', async (req, res) => {
   try {
-    const today = new Date().toISOString().split('T')[0];
+    const today = todayInRome();
     const full = req.query.full === '1';
     const seasonYear = req.query.season_year || new Date().getFullYear();
     const snapshotsLimit = req.query.snapshots_limit || req.query.limit || 1000;
@@ -122,7 +122,7 @@ app.post('/api/bookings', async (req, res) => {
 
 app.get('/api/bookings/summary', async (req, res) => {
   try {
-    const today = new Date().toISOString().split('T')[0];
+    const today = todayInRome();
     const bookings = await db.getBookings(null, today);
     
     // Group by property
@@ -312,7 +312,7 @@ app.get('/api/maid/:slug', async (req, res) => {
     const assignedProperties = await db.getCleanerProperties(cleaner.id);
     const propertyIds = assignedProperties.map(p => p.id);
 
-    const today = new Date().toISOString().split('T')[0];
+    const today = todayInRome();
     const allBookings = await db.getBookings(null, today);
 
     // Filter to assigned properties only, exclude blocked/unavailable without guest
@@ -398,7 +398,7 @@ app.post('/api/sync', async (req, res) => {
 
 app.get('/api/dashboard', async (req, res) => {
   try {
-    const today = new Date().toISOString().split('T')[0];
+    const today = todayInRome();
     
     // Get upcoming bookings
     const bookings = await db.getBookings(null, today);

@@ -2,6 +2,7 @@ const fetch = require('node-fetch');
 const ICAL = require('ical.js');
 const fs = require('fs');
 const path = require('path');
+const { todayInRome } = require('../../api/_helpers');
 
 // Use Postgres on Vercel, SQLite locally
 const USE_POSTGRES = process.env.POSTGRES_URL || process.env.DATABASE_URL;
@@ -97,7 +98,7 @@ function parseICalData(icalData) {
 async function syncPropertyCalendars(property) {
   console.log(`\n🏠 Syncing property: ${property.name}`);
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = todayInRome();
   let totalEvents = 0;
   let totalDeleted = 0;
 
@@ -164,7 +165,7 @@ async function generateCleaningTasks() {
   }
   
   // Get all upcoming bookings
-  const today = new Date().toISOString().split('T')[0];
+  const today = todayInRome();
   const bookings = await db.getBookings(null, today);
   
   console.log(`  Found ${bookings.length} bookings to process`);

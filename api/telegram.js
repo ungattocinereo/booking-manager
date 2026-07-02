@@ -4,7 +4,7 @@ const USE_POSTGRES = process.env.POSTGRES_URL || process.env.DATABASE_URL;
 const db = USE_POSTGRES
   ? require('../backend/src/database-postgres')
   : require('../backend/src/database');
-const { formatBooking, formatCleaningTask } = require('./_helpers');
+const { formatBooking, formatCleaningTask, formatDate, todayInRome } = require('./_helpers');
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const FAMILY_CHAT_ID = process.env.FAMILY_CHAT_ID;
@@ -31,9 +31,9 @@ async function sendChatAction(chatId, action = 'typing') {
 // ── Helpers ──────────────────────────────────────────────
 
 function getDate(daysOffset = 0) {
-  const d = new Date();
+  const d = new Date(`${todayInRome()}T12:00:00`);
   d.setDate(d.getDate() + daysOffset);
-  return d.toISOString().split('T')[0];
+  return formatDate(d);
 }
 
 function nightsBetween(start, end) {

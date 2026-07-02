@@ -105,21 +105,27 @@ class Database {
   }
 
   async getBookings(propertyId = null, fromDate = null) {
-    let sql = 'SELECT * FROM bookings WHERE 1=1';
+    let sql = `
+      SELECT b.*,
+             to_char(b.start_date, 'YYYY-MM-DD') AS start_date,
+             to_char(b.end_date, 'YYYY-MM-DD') AS end_date
+      FROM bookings b
+      WHERE 1=1
+    `;
     const params = [];
     let paramCount = 1;
 
     if (propertyId) {
-      sql += ` AND property_id = $${paramCount++}`;
+      sql += ` AND b.property_id = $${paramCount++}`;
       params.push(propertyId);
     }
 
     if (fromDate) {
-      sql += ` AND end_date >= $${paramCount++}`;
+      sql += ` AND b.end_date >= $${paramCount++}`;
       params.push(fromDate);
     }
 
-    sql += ' ORDER BY start_date ASC';
+    sql += ' ORDER BY b.start_date ASC';
     return this.query(sql, params);
   }
 
@@ -197,7 +203,10 @@ class Database {
 
   async getCleaningTasks(cleanerId = null, fromDate = null) {
     let sql = `
-      SELECT ct.*, p.name as property_name, c.name as cleaner_name
+      SELECT ct.*,
+             to_char(ct.scheduled_date, 'YYYY-MM-DD') AS scheduled_date,
+             p.name as property_name,
+             c.name as cleaner_name
       FROM cleaning_tasks ct
       JOIN properties p ON ct.property_id = p.id
       LEFT JOIN cleaners c ON ct.cleaner_id = c.id
@@ -230,7 +239,10 @@ class Database {
   // City tax (tassa di soggiorno) operations
   async getTaxPending(date) {
     return this.query(
-      `SELECT b.*, p.name as property_name,
+      `SELECT b.*,
+              to_char(b.start_date, 'YYYY-MM-DD') AS start_date,
+              to_char(b.end_date, 'YYYY-MM-DD') AS end_date,
+              p.name as property_name,
               (b.end_date - b.start_date) as nights
        FROM bookings b
        JOIN properties p ON b.property_id = p.id
@@ -247,7 +259,10 @@ class Database {
 
   async getTaxByDate(date) {
     return this.query(
-      `SELECT b.*, p.name as property_name,
+      `SELECT b.*,
+              to_char(b.start_date, 'YYYY-MM-DD') AS start_date,
+              to_char(b.end_date, 'YYYY-MM-DD') AS end_date,
+              p.name as property_name,
               (b.end_date - b.start_date) as nights
        FROM bookings b
        JOIN properties p ON b.property_id = p.id

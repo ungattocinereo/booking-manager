@@ -4,7 +4,7 @@ const db = USE_POSTGRES
   ? require('../backend/src/database-postgres')
   : require('../backend/src/database');
 
-const { formatBooking, formatCleaningTask } = require('./_helpers');
+const { formatBooking, formatCleaningTask, todayInRome } = require('./_helpers');
 
 module.exports = async (req, res) => {
   try {
@@ -13,7 +13,7 @@ module.exports = async (req, res) => {
       await db.init();
     }
 
-    const today = new Date().toISOString().split('T')[0];
+    const today = todayInRome();
     const full = req.query.full === '1';
     const seasonYear = req.query.season_year || new Date().getFullYear();
     const snapshotsLimit = req.query.snapshots_limit || req.query.limit || 1000;

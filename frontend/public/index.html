@@ -2937,7 +2937,7 @@ function updateStats() {
   document.getElementById('statBookingCount').innerHTML = `<span style="display:inline-flex;align-items:center;gap:3px;"><span style="width:8px;height:8px;border-radius:50%;background:var(--booking);display:inline-block;"></span>${bookingComCount} Booking</span>`;
   document.getElementById('statAirbnbCount').innerHTML = `<span style="display:inline-flex;align-items:center;gap:3px;"><span style="width:8px;height:8px;border-radius:50%;background:var(--airbnb);display:inline-block;"></span>${airbnbCount} Airbnb</span>`;
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = toLocalIso(todayLocal());
   const upcoming = realBookings.filter(b => b.start_date >= today).sort((a,b) => a.start_date.localeCompare(b.start_date));
   const dayNamesRu = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
 
@@ -5047,7 +5047,7 @@ function renderTaxList({ preserveScroll = false, focusToday = false } = {}) {
   }
 
   const dates = Object.keys(groups).sort();
-  const today = new Date().toISOString().split('T')[0];
+  const today = toLocalIso(todayLocal());
 
   if (!dates.length) {
     listEl.innerHTML = '<div class="tax-empty"><div class="tax-empty-icon">📭</div>Нет данных</div>';
@@ -5124,7 +5124,7 @@ async function toggleTaxPaid(bookingId, paid) {
 }
 
 function taxScrollToToday({ behavior = 'smooth', fallback = false } = {}) {
-  const today = new Date().toISOString().split('T')[0];
+  const today = toLocalIso(todayLocal());
   const listEl = document.getElementById('taxList');
   if (!listEl) return;
 
