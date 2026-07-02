@@ -9,6 +9,7 @@
 - Синхронизация календарей больше не удаляет stale future bookings физически: строки мягко архивируются через `active = false` и `missing_since`, чтобы прошлые и будущие брони оставались в production DB.
 - Производные future cleaning tasks без активного реального checkout теперь тоже мягко архивируются, чтобы старые задачи не создавали лишние выезды в календарях уборки.
 - Booking.com Excel/XLS экспорт теперь создает и реактивирует реальные Booking-брони как `reservation`, а технические `CLOSED/Not available` iCal-маркеры скрываются из обычного календаря.
+- Airbnb export enrichment распознает листинг Carmela как `The Sunrise Balcony • Amalfi Coast View` и новые телефонные страны BG/RO/UY/TN.
 - Создана точка отката перед закрытием админки: `rollback/pre-cloudflare-access-2026-05-30` на `820a27a9e6e94f0ac8eec76590e287df0201cbc5`.
 - Добавлена кодовая страховка для Vercel: прямые `*.vercel.app` URL больше не открывают админку, публичные `/maid/:slug` и `/api/maid/:slug` остаются доступными без пароля.
 - Подготовлены машинные клиенты к Cloudflare Access service token для мониторинга и Telegram-бота.

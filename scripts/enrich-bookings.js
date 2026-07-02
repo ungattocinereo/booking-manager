@@ -25,6 +25,7 @@ const LISTING_MAP = {
   '2 Story Suite "Carina" Excellent Central Location': 'carina',
   '2 Story Suite Carina Excellent Central Location': 'carina',
   'Carmela': 'carmela',
+  'The Sunrise Balcony • Amalfi Coast View': 'carmela',
   'The Adventure bunkbed room': 'youth',
   'Room for solo travelers': 'solo',
 };
@@ -41,16 +42,16 @@ const BOOKING_ROOM_MAP = {
 
 // Phone prefix -> country code
 const PHONE_PREFIX_MAP = {
-  '+1': 'US', '+7': 'RU', '+20': 'EG', '+31': 'NL', '+33': 'FR',
+  '+1': 'US', '+7': 'RU', '+20': 'EG', '+216': 'TN', '+31': 'NL', '+33': 'FR',
   '+34': 'ES', '+36': 'HU', '+39': 'IT', '+44': 'GB', '+45': 'DK',
   '+46': 'SE', '+49': 'DE', '+56': 'CL', '+61': 'AU', '+82': 'KR',
   '+972': 'IL', '+55': 'BR', '+81': 'JP', '+86': 'CN', '+91': 'IN',
   '+47': 'NO', '+48': 'PL', '+351': 'PT', '+352': 'LU', '+353': 'IE',
-  '+354': 'IS', '+358': 'FI', '+30': 'GR', '+32': 'BE', '+41': 'CH',
-  '+43': 'AT', '+90': 'TR', '+380': 'UA', '+52': 'MX', '+54': 'AR',
+  '+354': 'IS', '+358': 'FI', '+359': 'BG', '+30': 'GR', '+32': 'BE', '+41': 'CH',
+  '+40': 'RO', '+43': 'AT', '+90': 'TR', '+380': 'UA', '+52': 'MX', '+54': 'AR',
   '+57': 'CO', '+65': 'SG', '+66': 'TH', '+84': 'VN', '+62': 'ID',
   '+60': 'MY', '+63': 'PH', '+64': 'NZ',
-  '+51': 'PE', '+389': 'MK',
+  '+51': 'PE', '+598': 'UY', '+389': 'MK',
 };
 
 function parseCSV(content) {
