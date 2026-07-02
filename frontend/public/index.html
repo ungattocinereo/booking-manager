@@ -3219,8 +3219,7 @@ function hasOverlappingRealBooking(booking, allBookings = bookings) {
 }
 
 function shouldHideBookingForDisplay(b, allBookings = bookings) {
-  if (!isUnavailableMarker(b)) return false;
-  return isGroupedBookingClosure(b, allBookings) || hasOverlappingRealBooking(b, allBookings);
+  return isUnavailableMarker(b);
 }
 
 function isRealGuestBooking(b, allBookings = bookings) {
