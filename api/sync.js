@@ -25,11 +25,11 @@ module.exports = async (req, res) => {
     // Sync calendars (doesn't close connection)
     const syncResult = await syncCalendars();
 
-    // Generate cleaning tasks
-    const tasksCount = await generateCleaningTasks();
-
     // Enrich bookings from Airbnb CSV exports
     const enrichResult = await enrichFromExports(db, !!USE_POSTGRES);
+
+    // Generate cleaning tasks after enrichment so marker rows with real guests are handled correctly.
+    const tasksCount = await generateCleaningTasks();
 
     // Persist aggregate statistics for the history slider/trend charts.
     const statsSnapshot = await recordBookingStatsSnapshot(db, { source: req.method === 'GET' ? 'cron' : 'manual' });

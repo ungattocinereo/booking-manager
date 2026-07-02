@@ -11,8 +11,10 @@ module.exports = async (req, res) => {
     }
 
     if (req.method === 'GET') {
-      const { cleaner_id, from_date } = req.query;
-      const tasks = await db.getCleaningTasks(cleaner_id, from_date);
+      const { cleaner_id, from_date, include_inactive } = req.query;
+      const tasks = await db.getCleaningTasks(cleaner_id, from_date, {
+        includeInactive: include_inactive === '1' || include_inactive === 'true',
+      });
       return res.status(200).json(tasks);
     }
 

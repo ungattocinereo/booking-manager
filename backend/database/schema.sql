@@ -53,6 +53,8 @@ CREATE TABLE IF NOT EXISTS cleaning_tasks (
   task_type TEXT DEFAULT 'checkout_cleaning',
   status TEXT DEFAULT 'pending',
   notes TEXT,
+  active INTEGER DEFAULT 1,
+  missing_since DATETIME,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   completed_at DATETIME,
   FOREIGN KEY (property_id) REFERENCES properties(id),

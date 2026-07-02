@@ -18,9 +18,11 @@ const pool = new Pool({
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
 });
 
-function buildQueries({ hasActiveColumn }) {
+function buildQueries({ hasActiveColumn, hasCleaningTaskActiveColumn }) {
   const activeExpr = hasActiveColumn ? 'coalesce(active, true)' : 'true';
   const activePredicate = hasActiveColumn ? 'coalesce(active, true) = true' : 'true';
+  const cleaningTaskActivePredicate = hasCleaningTaskActiveColumn ? 'coalesce(ct.active, true) = true' : 'true';
+  const cleaningTaskActiveExpr = hasCleaningTaskActiveColumn ? 'coalesce(active, true) = true' : 'true';
 
   const normalizedBookingsCte = `
   WITH normalized_bookings AS (
@@ -130,6 +132,13 @@ function buildQueries({ hasActiveColumn }) {
     GROUP BY property_id, platform, booking_type, active
     ORDER BY count DESC, property_id
   `,
+    cleaning_task_totals: `
+    SELECT
+      COUNT(*)::int AS cleaning_tasks,
+      COUNT(*) FILTER (WHERE ${cleaningTaskActiveExpr})::int AS active_cleaning_tasks,
+      COUNT(*) FILTER (WHERE NOT (${cleaningTaskActiveExpr}))::int AS inactive_cleaning_tasks
+    FROM cleaning_tasks
+  `,
     cleaning_tasks_without_real_checkout: `
     ${normalizedBookingsCte}
     SELECT
@@ -142,6 +151,7 @@ function buildQueries({ hasActiveColumn }) {
       AND NOT (b.is_unavailable = true AND b.has_guest = false)
       AND b.active = true
     WHERE ct.scheduled_date >= CURRENT_DATE
+      AND ${cleaningTaskActivePredicate}
       AND b.id IS NULL
     GROUP BY ct.property_id
     ORDER BY task_count DESC, ct.property_id
@@ -165,7 +175,20 @@ async function main() {
       ) AS exists
     `);
     report.schema = { bookings_active_column: Boolean(activeColumn.rows[0]?.exists) };
-    const queries = buildQueries({ hasActiveColumn: report.schema.bookings_active_column });
+    const cleaningTaskActiveColumn = await client.query(`
+      SELECT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = 'cleaning_tasks'
+          AND column_name = 'active'
+      ) AS exists
+    `);
+    report.schema.cleaning_tasks_active_column = Boolean(cleaningTaskActiveColumn.rows[0]?.exists);
+    const queries = buildQueries({
+      hasActiveColumn: report.schema.bookings_active_column,
+      hasCleaningTaskActiveColumn: report.schema.cleaning_tasks_active_column,
+    });
     for (const [name, sql] of Object.entries(queries)) {
       const result = await client.query(sql);
       report[name] = result.rows;

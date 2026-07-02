@@ -207,13 +207,19 @@ class Database {
     return this.execute(
       `INSERT INTO cleaning_tasks (property_id, cleaner_id, scheduled_date, task_type)
        VALUES ($1, $2, $3, $4)
-       ON CONFLICT (property_id, scheduled_date, task_type) DO NOTHING
+       ON CONFLICT (property_id, scheduled_date, task_type)
+       DO UPDATE SET
+         cleaner_id = COALESCE(cleaning_tasks.cleaner_id, EXCLUDED.cleaner_id),
+         active = TRUE,
+         missing_since = NULL
+       WHERE cleaning_tasks.status <> 'completed'
+         AND cleaning_tasks.active IS FALSE
        RETURNING id`,
       [propertyId, cleaner?.cleaner_id || null, scheduledDate, taskType]
     );
   }
 
-  async getCleaningTasks(cleanerId = null, fromDate = null) {
+  async getCleaningTasks(cleanerId = null, fromDate = null, options = {}) {
     let sql = `
       SELECT ct.*,
              to_char(ct.scheduled_date, 'YYYY-MM-DD') AS scheduled_date,
@@ -237,8 +243,41 @@ class Database {
       params.push(fromDate);
     }
 
+    if (!options.includeInactive) {
+      sql += ' AND ct.active IS NOT FALSE';
+    }
+
     sql += ' ORDER BY ct.scheduled_date ASC';
     return this.query(sql, params);
+  }
+
+  async archiveStaleCleaningTasks(today) {
+    return this.execute(
+      `UPDATE cleaning_tasks ct
+       SET active = FALSE,
+           missing_since = COALESCE(ct.missing_since, NOW())
+       WHERE ct.scheduled_date >= $1::date
+         AND ct.task_type = 'checkout_cleaning'
+         AND ct.status NOT IN ('completed', 'cancelled')
+         AND ct.active IS NOT FALSE
+         AND NOT EXISTS (
+           SELECT 1
+           FROM bookings b
+           WHERE b.property_id = ct.property_id
+             AND b.end_date = ct.scheduled_date
+             AND b.active IS NOT FALSE
+             AND NOT (
+               (
+                 lower(coalesce(b.raw_summary, '')) LIKE '%not available%' OR
+                 lower(coalesce(b.raw_summary, '')) LIKE '%closed%' OR
+                 b.booking_type IN ('blocked', 'unavailable')
+               )
+               AND coalesce(nullif(trim(b.guest_name), ''), '') = ''
+               AND coalesce(b.guest_count, 0) <= 0
+             )
+         )`,
+      [today]
+    );
   }
 
   async updateTaskStatus(taskId, status, completedAt = null) {

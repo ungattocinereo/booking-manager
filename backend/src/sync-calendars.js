@@ -205,6 +205,15 @@ async function generateCleaningTasks() {
   }
   
   console.log(`  ✅ Created ${tasksCreated} new tasks, skipped ${tasksSkipped} existing`);
+
+  if (typeof db.archiveStaleCleaningTasks === 'function') {
+    const archived = await db.archiveStaleCleaningTasks(today);
+    const archivedCount = archived.rowCount || archived.changes || 0;
+    if (archivedCount > 0) {
+      console.log(`  📦 Archived ${archivedCount} stale cleaning tasks`);
+    }
+  }
+
   return tasksCreated;
 }
 

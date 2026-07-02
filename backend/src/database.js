@@ -52,9 +52,13 @@ class Database {
             'ALTER TABLE bookings ADD COLUMN created_at TEXT',
             'ALTER TABLE bookings ADD COLUMN active INTEGER DEFAULT 1',
             'ALTER TABLE bookings ADD COLUMN missing_since TEXT',
+            'ALTER TABLE cleaning_tasks ADD COLUMN active INTEGER DEFAULT 1',
+            'ALTER TABLE cleaning_tasks ADD COLUMN missing_since TEXT',
             'UPDATE bookings SET created_at = COALESCE(created_at, synced_at, CURRENT_TIMESTAMP) WHERE created_at IS NULL',
             'UPDATE bookings SET active = COALESCE(active, 1) WHERE active IS NULL',
+            'UPDATE cleaning_tasks SET active = COALESCE(active, 1) WHERE active IS NULL',
             'CREATE INDEX IF NOT EXISTS idx_bookings_active ON bookings(active)',
+            'CREATE INDEX IF NOT EXISTS idx_cleaning_tasks_active ON cleaning_tasks(active)',
           ];
 
           const runMigration = (index = 0) => {
@@ -269,7 +273,7 @@ class Database {
     );
   }
 
-  async getCleaningTasks(cleanerId = null, fromDate = null) {
+  async getCleaningTasks(cleanerId = null, fromDate = null, options = {}) {
     let sql = `
       SELECT ct.*, p.name as property_name, c.name as cleaner_name
       FROM cleaning_tasks ct
@@ -289,8 +293,41 @@ class Database {
       params.push(fromDate);
     }
 
+    if (!options.includeInactive) {
+      sql += ' AND COALESCE(ct.active, 1) != 0';
+    }
+
     sql += ' ORDER BY ct.scheduled_date ASC';
     return this.all(sql, params);
+  }
+
+  async archiveStaleCleaningTasks(today) {
+    return this.run(
+      `UPDATE cleaning_tasks
+       SET active = 0,
+           missing_since = COALESCE(missing_since, CURRENT_TIMESTAMP)
+       WHERE scheduled_date >= ?
+         AND task_type = 'checkout_cleaning'
+         AND status NOT IN ('completed', 'cancelled')
+         AND COALESCE(active, 1) != 0
+         AND NOT EXISTS (
+           SELECT 1
+           FROM bookings b
+           WHERE b.property_id = cleaning_tasks.property_id
+             AND b.end_date = cleaning_tasks.scheduled_date
+             AND COALESCE(b.active, 1) != 0
+             AND NOT (
+               (
+                 lower(coalesce(b.raw_summary, '')) LIKE '%not available%' OR
+                 lower(coalesce(b.raw_summary, '')) LIKE '%closed%' OR
+                 b.booking_type IN ('blocked', 'unavailable')
+               )
+               AND coalesce(nullif(trim(b.guest_name), ''), '') = ''
+               AND coalesce(b.guest_count, 0) <= 0
+             )
+         )`,
+      [today]
+    );
   }
 
   async updateTaskStatus(taskId, status, completedAt = null) {

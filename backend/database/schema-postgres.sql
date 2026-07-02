@@ -50,6 +50,8 @@ CREATE TABLE IF NOT EXISTS cleaning_tasks (
   status VARCHAR(50) DEFAULT 'pending' CHECK (status IN ('pending', 'in_progress', 'completed', 'cancelled')),
   notes TEXT,
   completed_at TIMESTAMP,
+  active BOOLEAN DEFAULT TRUE,
+  missing_since TIMESTAMP,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   UNIQUE (property_id, scheduled_date, task_type)
 );
@@ -88,6 +90,12 @@ ALTER TABLE bookings ADD COLUMN IF NOT EXISTS active BOOLEAN DEFAULT TRUE;
 ALTER TABLE bookings ADD COLUMN IF NOT EXISTS missing_since TIMESTAMP;
 UPDATE bookings SET active = TRUE WHERE active IS NULL;
 CREATE INDEX IF NOT EXISTS idx_bookings_active ON bookings(active);
+
+-- Soft archive generated cleaning tasks when their source checkout disappears.
+ALTER TABLE cleaning_tasks ADD COLUMN IF NOT EXISTS active BOOLEAN DEFAULT TRUE;
+ALTER TABLE cleaning_tasks ADD COLUMN IF NOT EXISTS missing_since TIMESTAMP;
+UPDATE cleaning_tasks SET active = TRUE WHERE active IS NULL;
+CREATE INDEX IF NOT EXISTS idx_cleaning_tasks_active ON cleaning_tasks(active);
 
 -- Add slug column to cleaners (migration)
 ALTER TABLE cleaners ADD COLUMN IF NOT EXISTS slug VARCHAR(100) UNIQUE;
