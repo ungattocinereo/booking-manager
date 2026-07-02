@@ -16,13 +16,14 @@ module.exports = async (req, res) => {
 
     const today = todayInRome();
     const full = req.query.full === '1';
+    const includeInactive = req.query.include_inactive === '1';
     const seasonYear = req.query.season_year || new Date().getFullYear();
     const snapshotsLimit = req.query.snapshots_limit || req.query.limit || 1000;
     
     // Fetch all data
     const [properties, bookings, cleaningTasks, cleaners, statsSnapshots] = await Promise.all([
       db.getProperties(),
-      db.getBookings(null, full ? null : today),
+      db.getBookings(null, full ? null : today, { includeInactive }),
       db.getCleaningTasks(null, today),
       db.getCleaners(),
       full && typeof db.getStatsSnapshots === 'function'

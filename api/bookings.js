@@ -43,7 +43,8 @@ module.exports = async (req, res) => {
     }
 
     const { property_id, from_date } = req.query;
-    const bookings = await db.getBookings(property_id, from_date);
+    const includeInactive = req.query.include_inactive === '1';
+    const bookings = await db.getBookings(property_id, from_date, { includeInactive });
     const visibleBookings = req.query.include_markers === '1'
       ? bookings
       : normalizeBookingsForDisplay(bookings);

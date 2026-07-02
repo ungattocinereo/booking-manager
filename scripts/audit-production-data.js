@@ -18,7 +18,11 @@ const pool = new Pool({
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
 });
 
-const normalizedBookingsCte = `
+function buildQueries({ hasActiveColumn }) {
+  const activeExpr = hasActiveColumn ? 'coalesce(active, true)' : 'true';
+  const activePredicate = hasActiveColumn ? 'coalesce(active, true) = true' : 'true';
+
+  const normalizedBookingsCte = `
   WITH normalized_bookings AS (
     SELECT
       id,
@@ -27,6 +31,7 @@ const normalizedBookingsCte = `
       start_date,
       end_date,
       booking_type,
+      ${activeExpr} AS active,
       (
         lower(coalesce(raw_summary, '')) LIKE '%not available%' OR
         lower(coalesce(raw_summary, '')) LIKE '%closed%' OR
@@ -40,21 +45,23 @@ const normalizedBookingsCte = `
   )
 `;
 
-const queries = {
-  totals: `
+  return {
+    totals: `
     SELECT
       COUNT(*)::int AS bookings,
       COUNT(*) FILTER (WHERE end_date >= CURRENT_DATE)::int AS upcoming,
+      COUNT(*) FILTER (WHERE ${activePredicate})::int AS active_bookings,
+      COUNT(*) FILTER (WHERE NOT (${activePredicate}))::int AS inactive_bookings,
       COUNT(DISTINCT property_id)::int AS properties
     FROM bookings
   `,
-  by_platform_type: `
-    SELECT platform, booking_type, COUNT(*)::int AS count
+    by_platform_type: `
+    SELECT platform, booking_type, ${activeExpr} AS active, COUNT(*)::int AS count
     FROM bookings
-    GROUP BY platform, booking_type
-    ORDER BY platform, booking_type
+    GROUP BY platform, booking_type, active
+    ORDER BY platform, booking_type, active DESC
   `,
-  exact_duplicates: `
+    exact_duplicates: `
     SELECT
       property_id,
       platform,
@@ -66,7 +73,7 @@ const queries = {
     HAVING COUNT(*) > 1
     ORDER BY count DESC, property_id, start_date
   `,
-  blocked_over_real_summary: `
+    blocked_over_real_summary: `
     ${normalizedBookingsCte}
     SELECT
       marker.property_id,
@@ -82,11 +89,13 @@ const queries = {
     WHERE marker.end_date >= CURRENT_DATE
       AND marker.is_unavailable = true
       AND marker.has_guest = false
+      AND marker.active = true
+      AND real.active = true
       AND NOT (real.is_unavailable = true AND real.has_guest = false)
     GROUP BY marker.property_id, marker.platform, real.platform
     ORDER BY overlap_count DESC, marker.property_id
   `,
-  blocked_over_real_samples: `
+    blocked_over_real_samples: `
     ${normalizedBookingsCte}
     SELECT
       marker.property_id,
@@ -105,21 +114,23 @@ const queries = {
     WHERE marker.end_date >= CURRENT_DATE
       AND marker.is_unavailable = true
       AND marker.has_guest = false
+      AND marker.active = true
+      AND real.active = true
       AND NOT (real.is_unavailable = true AND real.has_guest = false)
     ORDER BY marker.start_date, marker.property_id
     LIMIT 40
   `,
-  unavailable_markers: `
+    unavailable_markers: `
     ${normalizedBookingsCte}
-    SELECT property_id, platform, booking_type, COUNT(*)::int AS count
+    SELECT property_id, platform, booking_type, active, COUNT(*)::int AS count
     FROM normalized_bookings
     WHERE end_date >= CURRENT_DATE
       AND is_unavailable = true
       AND has_guest = false
-    GROUP BY property_id, platform, booking_type
+    GROUP BY property_id, platform, booking_type, active
     ORDER BY count DESC, property_id
   `,
-  cleaning_tasks_without_real_checkout: `
+    cleaning_tasks_without_real_checkout: `
     ${normalizedBookingsCte}
     SELECT
       ct.property_id,
@@ -129,12 +140,14 @@ const queries = {
       ON b.property_id = ct.property_id
       AND b.end_date = ct.scheduled_date
       AND NOT (b.is_unavailable = true AND b.has_guest = false)
+      AND b.active = true
     WHERE ct.scheduled_date >= CURRENT_DATE
       AND b.id IS NULL
     GROUP BY ct.property_id
     ORDER BY task_count DESC, ct.property_id
   `,
-};
+  };
+}
 
 async function main() {
   const client = await pool.connect();
@@ -142,6 +155,17 @@ async function main() {
 
   try {
     await client.query('BEGIN READ ONLY');
+    const activeColumn = await client.query(`
+      SELECT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = 'bookings'
+          AND column_name = 'active'
+      ) AS exists
+    `);
+    report.schema = { bookings_active_column: Boolean(activeColumn.rows[0]?.exists) };
+    const queries = buildQueries({ hasActiveColumn: report.schema.bookings_active_column });
     for (const [name, sql] of Object.entries(queries)) {
       const result = await client.query(sql);
       report[name] = result.rows;

@@ -100,7 +100,7 @@ async function syncPropertyCalendars(property) {
 
   const today = todayInRome();
   let totalEvents = 0;
-  let totalDeleted = 0;
+  let totalArchived = 0;
 
   for (const calendar of property.calendars) {
     try {
@@ -135,16 +135,19 @@ async function syncPropertyCalendars(property) {
         feedKeys.push({ startDate: event.startDate, endDate: event.endDate });
       }
 
-      // Remove future bookings that are no longer in the iCal feed
+      // Soft-archive future bookings that are no longer in the iCal feed.
+      // Rows remain in the database for history/backups, but are hidden from active views.
       try {
-        const deleted = await db.deleteStaleBookings(property.id, calendar.platform, feedKeys, today);
-        const deletedCount = deleted.rowCount || deleted.changes || 0;
-        if (deletedCount > 0) {
-          console.log(`  🗑️  Removed ${deletedCount} stale bookings for ${calendar.platform}`);
-          totalDeleted += deletedCount;
+        const archived = typeof db.archiveStaleBookings === 'function'
+          ? await db.archiveStaleBookings(property.id, calendar.platform, feedKeys, today)
+          : await db.deleteStaleBookings(property.id, calendar.platform, feedKeys, today);
+        const archivedCount = archived.rowCount || archived.changes || 0;
+        if (archivedCount > 0) {
+          console.log(`  📦 Archived ${archivedCount} stale bookings for ${calendar.platform}`);
+          totalArchived += archivedCount;
         }
-      } catch (delErr) {
-        console.error(`  ⚠️ Failed to clean stale bookings for ${calendar.platform}:`, delErr.message);
+      } catch (archiveErr) {
+        console.error(`  ⚠️ Failed to archive stale bookings for ${calendar.platform}:`, archiveErr.message);
       }
 
       totalEvents += events.length;
@@ -153,7 +156,7 @@ async function syncPropertyCalendars(property) {
     }
   }
 
-  return { events: totalEvents, deleted: totalDeleted };
+  return { events: totalEvents, archived: totalArchived, deleted: 0 };
 }
 
 async function generateCleaningTasks() {
@@ -228,22 +231,21 @@ async function syncAll() {
     
     // Sync all property calendars
     let totalEvents = 0;
-    let totalDeleted = 0;
+    let totalArchived = 0;
     for (const property of config.properties) {
       const result = await syncPropertyCalendars(property);
       totalEvents += result.events;
-      totalDeleted += result.deleted;
+      totalArchived += result.archived || 0;
     }
 
-    console.log(`\n✅ Total events synced: ${totalEvents}, stale removed: ${totalDeleted}`);
+    console.log(`\n✅ Total events synced: ${totalEvents}, stale archived: ${totalArchived}`);
 
     // Enrich bookings from Airbnb CSV exports
     const { enrichFromExports } = require('./enrich-from-exports');
     const USE_POSTGRES = process.env.POSTGRES_URL || process.env.DATABASE_URL;
     await enrichFromExports(db, !!USE_POSTGRES);
 
-    // Generate cleaning tasks after enrichment so bookings inserted from manual
-    // exports receive checkout tasks too.
+    // Generate cleaning tasks after enrichment so guest metadata is current.
     await generateCleaningTasks();
 
     // Store an aggregate statistics snapshot after the final booking state is known.
@@ -275,15 +277,15 @@ async function syncCalendars() {
   
   // Sync all property calendars
   let totalEvents = 0;
-  let totalDeleted = 0;
+  let totalArchived = 0;
   for (const property of config.properties) {
     const result = await syncPropertyCalendars(property);
     totalEvents += result.events;
-    totalDeleted += result.deleted;
+    totalArchived += result.archived || 0;
   }
 
-  console.log(`\n✅ Total events synced: ${totalEvents}, stale removed: ${totalDeleted}`);
-  return { totalEvents, totalDeleted };
+  console.log(`\n✅ Total events synced: ${totalEvents}, stale archived: ${totalArchived}`);
+  return { totalEvents, totalArchived, totalDeleted: 0 };
 }
 
 // Run if called directly

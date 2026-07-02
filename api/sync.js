@@ -38,7 +38,8 @@ module.exports = async (req, res) => {
       success: true,
       message: 'Calendars synced successfully',
       events_synced: syncResult.totalEvents,
-      stale_removed: syncResult.totalDeleted,
+      stale_archived: syncResult.totalArchived || 0,
+      stale_removed: 0,
       tasks_created: tasksCount,
       enriched: enrichResult,
       stats_snapshot: {

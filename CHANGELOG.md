@@ -4,6 +4,9 @@
 
 ### ✨ Новое
 
+- Закреплена рабочая версия на GitHub tag `working-2026-07-02-booking-manager`.
+- Добавлены `npm run backup:data` и `npm run audit:data` для read-only backup/audit Vercel Postgres.
+- Синхронизация календарей больше не удаляет stale future bookings физически: строки мягко архивируются через `active = false` и `missing_since`, чтобы прошлые и будущие брони оставались в production DB.
 - Создана точка отката перед закрытием админки: `rollback/pre-cloudflare-access-2026-05-30` на `820a27a9e6e94f0ac8eec76590e287df0201cbc5`.
 - Добавлена кодовая страховка для Vercel: прямые `*.vercel.app` URL больше не открывают админку, публичные `/maid/:slug` и `/api/maid/:slug` остаются доступными без пароля.
 - Подготовлены машинные клиенты к Cloudflare Access service token для мониторинга и Telegram-бота.

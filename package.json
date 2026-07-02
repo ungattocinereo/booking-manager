@@ -9,6 +9,7 @@
     "sync": "node backend/src/sync-calendars.js",
     "enrich": "node scripts/enrich-bookings.js",
     "audit:data": "node scripts/audit-production-data.js",
+    "backup:data": "node scripts/backup-production-data.js",
     "test": "npm run sync && curl http://localhost:3001/health"
   },
   "keywords": [

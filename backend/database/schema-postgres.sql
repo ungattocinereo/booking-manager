@@ -17,6 +17,8 @@ CREATE TABLE IF NOT EXISTS bookings (
   reservation_url TEXT,
   phone_last4 VARCHAR(10),
   booking_type VARCHAR(50) DEFAULT 'reservation' CHECK (booking_type IN ('reservation', 'blocked', 'unavailable')),
+  active BOOLEAN DEFAULT TRUE,
+  missing_since TIMESTAMP,
   synced_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   UNIQUE (property_id, platform, start_date, end_date)
@@ -82,6 +84,10 @@ CREATE INDEX IF NOT EXISTS idx_stats_snapshots_season ON booking_stats_snapshots
 -- Add guest_country column (migration)
 ALTER TABLE bookings ADD COLUMN IF NOT EXISTS guest_country VARCHAR(5);
 ALTER TABLE bookings ADD COLUMN IF NOT EXISTS guest_count INTEGER;
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS active BOOLEAN DEFAULT TRUE;
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS missing_since TIMESTAMP;
+UPDATE bookings SET active = TRUE WHERE active IS NULL;
+CREATE INDEX IF NOT EXISTS idx_bookings_active ON bookings(active);
 
 -- Add slug column to cleaners (migration)
 ALTER TABLE cleaners ADD COLUMN IF NOT EXISTS slug VARCHAR(100) UNIQUE;

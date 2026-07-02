@@ -40,12 +40,13 @@ app.get('/api/dashboard', async (req, res) => {
   try {
     const today = todayInRome();
     const full = req.query.full === '1';
+    const includeInactive = req.query.include_inactive === '1';
     const seasonYear = req.query.season_year || new Date().getFullYear();
     const snapshotsLimit = req.query.snapshots_limit || req.query.limit || 1000;
 
     const [properties, bookings, cleaningTasks, cleaners, statsSnapshots] = await Promise.all([
       db.getProperties(),
-      db.getBookings(null, full ? null : today),
+      db.getBookings(null, full ? null : today, { includeInactive }),
       db.getCleaningTasks(null, today),
       db.getCleaners(),
       full && typeof db.getStatsSnapshots === 'function'
@@ -106,7 +107,8 @@ app.get('/api/bookings', async (req, res) => {
     }
 
     const { property_id, from_date } = req.query;
-    const bookings = await db.getBookings(property_id, from_date);
+    const includeInactive = req.query.include_inactive === '1';
+    const bookings = await db.getBookings(property_id, from_date, { includeInactive });
     const visibleBookings = req.query.include_markers === '1'
       ? bookings
       : normalizeBookingsForDisplay(bookings);

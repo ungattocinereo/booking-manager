@@ -19,6 +19,8 @@ CREATE TABLE IF NOT EXISTS bookings (
   phone_last4 TEXT,
   booking_type TEXT DEFAULT 'reservation',
   status TEXT DEFAULT 'confirmed',
+  active INTEGER DEFAULT 1,
+  missing_since DATETIME,
   raw_summary TEXT,
   synced_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,

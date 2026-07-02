@@ -50,7 +50,11 @@ class Database {
             'ALTER TABLE bookings ADD COLUMN tax_paid INTEGER DEFAULT 0',
             'ALTER TABLE bookings ADD COLUMN tax_paid_at TEXT',
             'ALTER TABLE bookings ADD COLUMN created_at TEXT',
+            'ALTER TABLE bookings ADD COLUMN active INTEGER DEFAULT 1',
+            'ALTER TABLE bookings ADD COLUMN missing_since TEXT',
             'UPDATE bookings SET created_at = COALESCE(created_at, synced_at, CURRENT_TIMESTAMP) WHERE created_at IS NULL',
+            'UPDATE bookings SET active = COALESCE(active, 1) WHERE active IS NULL',
+            'CREATE INDEX IF NOT EXISTS idx_bookings_active ON bookings(active)',
           ];
 
           const runMigration = (index = 0) => {
@@ -123,7 +127,7 @@ class Database {
 
     if (existing) {
       // Update
-      let updateFields = 'raw_summary = ?, synced_at = CURRENT_TIMESTAMP';
+      let updateFields = 'raw_summary = ?, synced_at = CURRENT_TIMESTAMP, active = 1, missing_since = NULL';
       const updateParams = [rawSummary];
       if (guestName) {
         updateFields += ', guest_name = ?';
@@ -153,8 +157,8 @@ class Database {
     } else {
       // Insert
       return this.run(
-        `INSERT INTO bookings (property_id, platform, start_date, end_date, raw_summary, guest_name, guest_country, reservation_url, phone_last4, booking_type, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+        `INSERT INTO bookings (property_id, platform, start_date, end_date, raw_summary, guest_name, guest_country, reservation_url, phone_last4, booking_type, active, missing_since, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, NULL, CURRENT_TIMESTAMP)`,
         [
           propertyId,
           platform,
@@ -171,7 +175,7 @@ class Database {
     }
   }
 
-  async getBookings(propertyId = null, fromDate = null) {
+  async getBookings(propertyId = null, fromDate = null, options = {}) {
     let sql = 'SELECT * FROM bookings WHERE 1=1';
     const params = [];
 
@@ -185,23 +189,30 @@ class Database {
       params.push(fromDate);
     }
 
+    if (!options.includeInactive) {
+      sql += ' AND COALESCE(active, 1) != 0';
+    }
+
     sql += ' ORDER BY start_date ASC';
     return this.all(sql, params);
   }
 
-  async deleteStaleBookings(propertyId, platform, feedKeys, today) {
+  async archiveStaleBookings(propertyId, platform, feedKeys, today) {
     if (feedKeys.length === 0) return { changes: 0 };
-    const placeholders = feedKeys.map(() => '(?, ?)').join(', ');
-    const params = [propertyId, platform, today];
-    for (const key of feedKeys) {
-      params.push(key.startDate, key.endDate);
-    }
     return this.run(
-      `DELETE FROM bookings
+      `UPDATE bookings
+       SET active = 0,
+           missing_since = COALESCE(missing_since, CURRENT_TIMESTAMP),
+           synced_at = CURRENT_TIMESTAMP
        WHERE property_id = ? AND platform = ? AND end_date >= ?
+       AND COALESCE(active, 1) != 0
        AND (start_date || '|' || end_date) NOT IN (${feedKeys.map(() => '?').join(', ')})`,
       [propertyId, platform, today, ...feedKeys.map(k => k.startDate + '|' + k.endDate)]
     );
+  }
+
+  async deleteStaleBookings(propertyId, platform, feedKeys, today) {
+    return this.archiveStaleBookings(propertyId, platform, feedKeys, today);
   }
 
   // Cleaner operations
@@ -297,6 +308,7 @@ class Database {
        FROM bookings b
        JOIN properties p ON b.property_id = p.id
        WHERE b.end_date = ?
+         AND COALESCE(b.active, 1) != 0
          AND b.tax_paid = 0
          AND NOT (
            (b.raw_summary LIKE '%Not available%' OR b.raw_summary LIKE '%CLOSED%' OR b.booking_type IN ('blocked', 'unavailable'))
@@ -314,6 +326,7 @@ class Database {
        FROM bookings b
        JOIN properties p ON b.property_id = p.id
        WHERE b.end_date = ?
+         AND COALESCE(b.active, 1) != 0
          AND NOT (
            (b.raw_summary LIKE '%Not available%' OR b.raw_summary LIKE '%CLOSED%' OR b.booking_type IN ('blocked', 'unavailable'))
            AND b.guest_name IS NULL

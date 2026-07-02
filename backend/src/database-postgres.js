@@ -96,15 +96,15 @@ class Database {
   async upsertBooking(propertyId, platform, startDate, endDate, rawSummary, extra = {}) {
     const { guestName, guestCountry, reservationUrl, phoneLast4, bookingType } = extra;
     return this.execute(
-      `INSERT INTO bookings (property_id, platform, start_date, end_date, raw_summary, guest_name, guest_country, reservation_url, phone_last4, booking_type, synced_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())
+      `INSERT INTO bookings (property_id, platform, start_date, end_date, raw_summary, guest_name, guest_country, reservation_url, phone_last4, booking_type, active, missing_since, synced_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, TRUE, NULL, NOW())
        ON CONFLICT (property_id, platform, start_date, end_date)
-       DO UPDATE SET raw_summary = $5, guest_name = COALESCE($6, bookings.guest_name), guest_country = COALESCE($7, bookings.guest_country), reservation_url = COALESCE($8, bookings.reservation_url), phone_last4 = COALESCE($9, bookings.phone_last4), booking_type = COALESCE($10, bookings.booking_type), synced_at = NOW()`,
+       DO UPDATE SET raw_summary = $5, guest_name = COALESCE($6, bookings.guest_name), guest_country = COALESCE($7, bookings.guest_country), reservation_url = COALESCE($8, bookings.reservation_url), phone_last4 = COALESCE($9, bookings.phone_last4), booking_type = COALESCE($10, bookings.booking_type), active = TRUE, missing_since = NULL, synced_at = NOW()`,
       [propertyId, platform, startDate, endDate, rawSummary, guestName || null, guestCountry || null, reservationUrl || null, phoneLast4 || null, bookingType || 'reservation']
     );
   }
 
-  async getBookings(propertyId = null, fromDate = null) {
+  async getBookings(propertyId = null, fromDate = null, options = {}) {
     let sql = `
       SELECT b.*,
              to_char(b.start_date, 'YYYY-MM-DD') AS start_date,
@@ -125,20 +125,32 @@ class Database {
       params.push(fromDate);
     }
 
+    if (!options.includeInactive) {
+      sql += ' AND b.active IS NOT FALSE';
+    }
+
     sql += ' ORDER BY b.start_date ASC';
     return this.query(sql, params);
   }
 
-  async deleteStaleBookings(propertyId, platform, feedKeys, today) {
+  async archiveStaleBookings(propertyId, platform, feedKeys, today) {
     if (feedKeys.length === 0) return { rowCount: 0 };
     const keyStrings = feedKeys.map(k => k.startDate + '|' + k.endDate);
     const placeholders = keyStrings.map((_, i) => `$${i + 4}`).join(', ');
     return this.execute(
-      `DELETE FROM bookings
+      `UPDATE bookings
+       SET active = FALSE,
+           missing_since = COALESCE(missing_since, NOW()),
+           synced_at = NOW()
        WHERE property_id = $1 AND platform = $2 AND end_date >= $3::date
+       AND active IS NOT FALSE
        AND (to_char(start_date, 'YYYY-MM-DD') || '|' || to_char(end_date, 'YYYY-MM-DD')) NOT IN (${placeholders})`,
       [propertyId, platform, today, ...keyStrings]
     );
+  }
+
+  async deleteStaleBookings(propertyId, platform, feedKeys, today) {
+    return this.archiveStaleBookings(propertyId, platform, feedKeys, today);
   }
 
   // Cleaner operations
@@ -247,6 +259,7 @@ class Database {
        FROM bookings b
        JOIN properties p ON b.property_id = p.id
        WHERE b.end_date = $1::date
+         AND b.active IS NOT FALSE
          AND b.tax_paid = false
          AND NOT (
            (b.raw_summary LIKE '%Not available%' OR b.raw_summary LIKE '%CLOSED%' OR b.booking_type IN ('blocked', 'unavailable'))
@@ -267,6 +280,7 @@ class Database {
        FROM bookings b
        JOIN properties p ON b.property_id = p.id
        WHERE b.end_date = $1::date
+         AND b.active IS NOT FALSE
          AND NOT (
            (b.raw_summary LIKE '%Not available%' OR b.raw_summary LIKE '%CLOSED%' OR b.booking_type IN ('blocked', 'unavailable'))
            AND b.guest_name IS NULL
