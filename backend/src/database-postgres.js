@@ -144,6 +144,7 @@ class Database {
            synced_at = NOW()
        WHERE property_id = $1 AND platform = $2 AND end_date >= $3::date
        AND active IS NOT FALSE
+       AND NOT (platform = 'booking' AND COALESCE(booking_type, 'reservation') = 'reservation')
        AND (to_char(start_date, 'YYYY-MM-DD') || '|' || to_char(end_date, 'YYYY-MM-DD')) NOT IN (${placeholders})`,
       [propertyId, platform, today, ...keyStrings]
     );

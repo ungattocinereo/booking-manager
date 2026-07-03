@@ -1,7 +1,5 @@
 const fs = require('fs');
 const path = require('path');
-const { todayInRome } = require('../../api/_helpers');
-
 const EXPORTS_DIR = path.join(__dirname, '..', '..', 'exports');
 
 // Airbnb listing name -> property_id
@@ -266,63 +264,13 @@ async function upsertBookingExportRow(db, isPostgres, row) {
   return result.changes || 0;
 }
 
-async function archiveMissingBookingExportRows(db, isPostgres, propertyIds, activeKeys, today) {
-  if (propertyIds.size === 0) return 0;
-
-  const properties = [...propertyIds];
-  const keys = [...activeKeys];
-
-  if (isPostgres) {
-    const propertyPlaceholders = properties.map((_, idx) => `$${idx + 2}`).join(', ');
-    const keyStart = properties.length + 2;
-    const keyPlaceholders = keys.map((_, idx) => `$${keyStart + idx}`).join(', ');
-    const keyPredicate = keys.length > 0
-      ? `(property_id || '|' || to_char(start_date, 'YYYY-MM-DD') || '|' || to_char(end_date, 'YYYY-MM-DD')) NOT IN (${keyPlaceholders})`
-      : 'TRUE';
-    const result = await db.execute(
-      `UPDATE bookings
-       SET active = FALSE,
-           missing_since = COALESCE(missing_since, NOW()),
-           synced_at = NOW()
-       WHERE platform = 'booking'
-         AND booking_type = 'reservation'
-         AND end_date >= $1::date
-         AND property_id IN (${propertyPlaceholders})
-         AND active IS NOT FALSE
-         AND ${keyPredicate}`,
-      [today, ...properties, ...keys]
-    );
-    return result.rowCount || 0;
-  }
-
-  const propertyPlaceholders = properties.map(() => '?').join(', ');
-  const keyPlaceholders = keys.map(() => '?').join(', ');
-  const keyPredicate = keys.length > 0
-    ? `(property_id || '|' || start_date || '|' || end_date) NOT IN (${keyPlaceholders})`
-    : '1=1';
-  const result = await db.run(
-    `UPDATE bookings
-     SET active = 0,
-         missing_since = COALESCE(missing_since, CURRENT_TIMESTAMP),
-         synced_at = CURRENT_TIMESTAMP
-     WHERE platform = 'booking'
-       AND booking_type = 'reservation'
-       AND end_date >= ?
-       AND property_id IN (${propertyPlaceholders})
-       AND COALESCE(active, 1) != 0
-       AND ${keyPredicate}`,
-    [today, ...properties, ...keys]
-  );
-  return result.changes || 0;
-}
-
 /**
  * Enrich bookings from Airbnb CSV and Booking.com XLS exports.
- * Exports are manual snapshots: they may update matching iCal bookings, but
- * cron must not insert or delete bookings from them.
+ * Exports are manual snapshots: they may add or update known bookings, but
+ * cron must not hide rows that are absent from a snapshot.
  * @param {object} db - The database module (already initialized)
  * @param {boolean} isPostgres - Whether using Postgres (vs SQLite)
- * @returns {{ parsed: number, updated: number, skipped: number, deleted: number }}
+ * @returns {{ parsed: number, updated: number, skipped: number, archived: number, deleted: number }}
  */
 async function enrichFromExports(db, isPostgres) {
   let parsed = 0;
@@ -417,8 +365,8 @@ async function enrichFromExports(db, isPostgres) {
   }
 
   // Process Booking.com XLS files. Booking.com iCal often exposes reservations as
-  // CLOSED/Not available blocks, so the manual XLS export is the source of truth
-  // for real Booking.com reservations.
+  // CLOSED/Not available blocks, so XLS rows enrich those blocks with guest data.
+  // Missing XLS rows are not authoritative enough to hide existing reservations.
   const xlsFiles = files.filter(f => f.endsWith('.xls') || f.endsWith('.xlsx'));
   if (xlsFiles.length > 0) {
     let XLSX;
@@ -430,8 +378,6 @@ async function enrichFromExports(db, isPostgres) {
     }
 
     console.log(`Enrich: found ${xlsFiles.length} XLS file(s): ${xlsFiles.join(', ')}`);
-    const bookingExportPropertyIds = new Set();
-    const activeBookingExportKeys = new Set();
 
     for (const file of xlsFiles) {
       const filePath = path.join(EXPORTS_DIR, file);
@@ -470,7 +416,6 @@ async function enrichFromExports(db, isPostgres) {
           skipped++;
           continue;
         }
-        bookingExportPropertyIds.add(propertyId);
 
         if (String(status).toLowerCase().includes('cancelled')) {
           skipped++;
@@ -486,7 +431,6 @@ async function enrichFromExports(db, isPostgres) {
           country,
           guestCount,
         };
-        activeBookingExportKeys.add(`${propertyId}|${checkIn}|${checkOut}`);
 
         try {
           const changes = await upsertBookingExportRow(db, isPostgres, bookingRow);
@@ -496,18 +440,6 @@ async function enrichFromExports(db, isPostgres) {
           console.error(`Enrich: error updating ${guestName}: ${err.message}`);
         }
       }
-    }
-
-    try {
-      archived = await archiveMissingBookingExportRows(
-        db,
-        isPostgres,
-        bookingExportPropertyIds,
-        activeBookingExportKeys,
-        todayInRome()
-      );
-    } catch (err) {
-      console.error(`Enrich: error archiving stale Booking.com exports: ${err.message}`);
     }
   }
 

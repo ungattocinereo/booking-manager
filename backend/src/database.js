@@ -210,6 +210,7 @@ class Database {
            synced_at = CURRENT_TIMESTAMP
        WHERE property_id = ? AND platform = ? AND end_date >= ?
        AND COALESCE(active, 1) != 0
+       AND NOT (platform = 'booking' AND COALESCE(booking_type, 'reservation') = 'reservation')
        AND (start_date || '|' || end_date) NOT IN (${feedKeys.map(() => '?').join(', ')})`,
       [propertyId, platform, today, ...feedKeys.map(k => k.startDate + '|' + k.endDate)]
     );

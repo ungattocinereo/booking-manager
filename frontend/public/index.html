@@ -3327,6 +3327,7 @@ let calendarDayOffsets = [];
 let calendarDayWidths = [];
 let calendarCurrentStartDate = null;
 let calendarPropertyColumnCollapsed = false;
+let calendarPropertyColumnLastScrollLeft = 0;
 let calendarScrollStateBound = false;
 let mobileAgendaRange = 'today';
 let mobileCalendarVisible = false;
@@ -3409,10 +3410,22 @@ function getCalendarHandoverRange(metrics, start, end, startDate, endDate) {
   };
 }
 
-function syncCalendarPropertyColumnState() {
+function syncCalendarPropertyColumnState(options = {}) {
   const scroll = document.getElementById('calendarScroll');
   if (!scroll) return;
-  const shouldCollapse = scroll.scrollLeft > 12;
+  const currentScrollLeft = scroll.scrollLeft || 0;
+  const delta = currentScrollLeft - calendarPropertyColumnLastScrollLeft;
+  let shouldCollapse = calendarPropertyColumnCollapsed;
+
+  if (options.forceExpanded || currentScrollLeft <= 12) {
+    shouldCollapse = false;
+  } else if (delta > 2) {
+    shouldCollapse = true;
+  } else if (delta < -2) {
+    shouldCollapse = false;
+  }
+
+  calendarPropertyColumnLastScrollLeft = currentScrollLeft;
   if (calendarPropertyColumnCollapsed === shouldCollapse && scroll.classList.contains('is-property-collapsed') === shouldCollapse) return;
   calendarPropertyColumnCollapsed = shouldCollapse;
   scroll.classList.toggle('is-property-collapsed', shouldCollapse);
@@ -3423,7 +3436,7 @@ function bindCalendarScrollState() {
   if (!scroll || calendarScrollStateBound) return;
   scroll.addEventListener('scroll', syncCalendarPropertyColumnState, { passive: true });
   calendarScrollStateBound = true;
-  syncCalendarPropertyColumnState();
+  syncCalendarPropertyColumnState({ forceExpanded: true });
 }
 
 function formatBookingDate(iso, options = { day: 'numeric', month: 'short' }) {
@@ -3452,6 +3465,7 @@ function centerCalendarTodayOnce() {
   if (!scroll || scroll.clientWidth === 0) return false;
   scrollCalendarToToday({ behavior: 'auto' });
   calendarHasAutoScrolledToday = true;
+  requestAnimationFrame(() => syncCalendarPropertyColumnState({ forceExpanded: true }));
   return true;
 }
 
@@ -3759,7 +3773,7 @@ function renderCalendar({ preserveScroll = false, focusDate = null, behavior = '
       const focusIndex = days.findIndex(day => day.getTime() === targetDate.getTime());
       if (focusIndex >= 0) {
         scroll.scrollTo({ left: getCalendarCenteredScrollLeft(scroll, focusIndex), behavior });
-        requestAnimationFrame(syncCalendarPropertyColumnState);
+        requestAnimationFrame(() => syncCalendarPropertyColumnState({ forceExpanded: true }));
         return;
       }
     }
