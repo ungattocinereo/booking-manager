@@ -575,7 +575,6 @@
       border-right: 1px solid #cfd8e3;
       width: var(--calendar-property-col-width);
       min-width: var(--calendar-property-col-width);
-      transition: width .18s ease, min-width .18s ease, padding .18s ease;
       box-shadow: 8px 0 16px rgba(15,23,42,.04);
     }
     .calendar-scroll-wrapper.is-property-collapsed {
@@ -607,7 +606,7 @@
     .cal-property-header-title,
     .cal-property-title,
     .cal-group-label {
-      transition: opacity .14s ease, max-width .18s ease;
+      transition: opacity .08s ease;
     }
     .calendar-scroll-wrapper.is-property-collapsed .cal-property-header,
     .calendar-scroll-wrapper.is-property-collapsed .cal-property-name,
@@ -3372,6 +3371,14 @@ function getCalendarPropertyColWidth(scroll) {
   return parseFloat(styles.getPropertyValue('--calendar-property-col-width')) || 0;
 }
 
+function getCalendarPropertyColDelta(scroll) {
+  if (!scroll) return 0;
+  const styles = getComputedStyle(scroll);
+  const expanded = parseFloat(styles.getPropertyValue('--calendar-property-col-expanded-width')) || 0;
+  const collapsed = parseFloat(styles.getPropertyValue('--calendar-property-col-collapsed-width')) || 0;
+  return Math.max(0, expanded - collapsed);
+}
+
 function buildCalendarDayMetrics(days, mode, today, scroll) {
   const todayIndex = days.findIndex(day => day.getTime() === today.getTime());
   const propertyColWidth = getCalendarPropertyColWidth(scroll);
@@ -3415,11 +3422,12 @@ function syncCalendarPropertyColumnState(options = {}) {
   if (!scroll) return;
   const currentScrollLeft = scroll.scrollLeft || 0;
   const delta = currentScrollLeft - calendarPropertyColumnLastScrollLeft;
+  const collapseScrollThreshold = getCalendarPropertyColDelta(scroll) + 12;
   let shouldCollapse = calendarPropertyColumnCollapsed;
 
   if (options.forceExpanded || currentScrollLeft <= 12) {
     shouldCollapse = false;
-  } else if (delta > 2) {
+  } else if (delta > 2 && currentScrollLeft > collapseScrollThreshold) {
     shouldCollapse = true;
   } else if (delta < -2) {
     shouldCollapse = false;
@@ -3427,8 +3435,16 @@ function syncCalendarPropertyColumnState(options = {}) {
 
   calendarPropertyColumnLastScrollLeft = currentScrollLeft;
   if (calendarPropertyColumnCollapsed === shouldCollapse && scroll.classList.contains('is-property-collapsed') === shouldCollapse) return;
+  const previousWidth = getCalendarPropertyColWidth(scroll);
   calendarPropertyColumnCollapsed = shouldCollapse;
   scroll.classList.toggle('is-property-collapsed', shouldCollapse);
+  const nextWidth = getCalendarPropertyColWidth(scroll);
+  const widthDelta = nextWidth - previousWidth;
+  if (widthDelta && currentScrollLeft > 12) {
+    const maxLeft = Math.max(0, scroll.scrollWidth - scroll.clientWidth);
+    scroll.scrollLeft = Math.max(0, Math.min(currentScrollLeft + widthDelta, maxLeft));
+    calendarPropertyColumnLastScrollLeft = scroll.scrollLeft || 0;
+  }
 }
 
 function bindCalendarScrollState() {
