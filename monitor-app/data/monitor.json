@@ -1,6 +1,6 @@
 {
   "since": "2026-04-17",
-  "generated_at": "2026-07-03T22:33:10.680Z",
+  "generated_at": "2026-07-04T00:03:49.220Z",
   "available_dates": [
     "2026-07-03",
     "2026-06-30",
@@ -1123,23 +1123,6 @@
           "status": "active",
           "cancelledAt": null,
           "link": "https://www.airbnb.com/hosting/reservations/details/HM25QAZY9C",
-          "sources": [
-            "upstream_api",
-            "export_airbnb_csv"
-          ]
-        },
-        {
-          "bookingKey": "royal|airbnb|2026-06-29|2026-07-03",
-          "propertyId": "royal",
-          "platform": "airbnb",
-          "startDate": "2026-06-29",
-          "endDate": "2026-07-03",
-          "guestName": "Josh Real-Diaz",
-          "confirmationCode": "HMRC2FFWBP",
-          "firstSeenAt": "2026-03-28T19:32:10.969Z",
-          "status": "active",
-          "cancelledAt": null,
-          "link": "https://www.airbnb.com/hosting/reservations/details/HMRC2FFWBP",
           "sources": [
             "upstream_api",
             "export_airbnb_csv"
