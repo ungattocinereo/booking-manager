@@ -3182,6 +3182,42 @@
       "rawSummary": "Reserved",
       "bookingType": "reservation",
       "detectedAt": "2026-07-04T07:21:56.537Z"
+    },
+    {
+      "eventType": "created",
+      "bookingKey": "harmony|airbnb|2026-08-14|2026-08-17",
+      "propertyId": "harmony",
+      "platform": "airbnb",
+      "startDate": "2026-08-14",
+      "endDate": "2026-08-17",
+      "guestName": null,
+      "guestCount": null,
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HM9QTMZM3P",
+      "confirmationCode": null,
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync",
+      "bookingCreatedAt": "2026-07-05T06:16:27.828Z",
+      "rawSummary": "Reserved",
+      "bookingType": "reservation",
+      "detectedAt": "2026-07-05T07:56:33.575Z"
+    },
+    {
+      "eventType": "created",
+      "bookingKey": "royal|airbnb|2026-07-27|2026-07-30",
+      "propertyId": "royal",
+      "platform": "airbnb",
+      "startDate": "2026-07-27",
+      "endDate": "2026-07-30",
+      "guestName": null,
+      "guestCount": null,
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HM2442EE42",
+      "confirmationCode": null,
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync",
+      "bookingCreatedAt": "2026-07-05T06:16:28.208Z",
+      "rawSummary": "Reserved",
+      "bookingType": "reservation",
+      "detectedAt": "2026-07-05T07:56:33.575Z"
     }
   ],
   "imports": [
