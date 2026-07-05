@@ -538,7 +538,8 @@
     .calendar-scroll-wrapper {
       --calendar-property-col-expanded-width: 224px;
       --calendar-property-col-collapsed-width: 58px;
-      --calendar-property-col-width: var(--calendar-property-col-expanded-width);
+      --calendar-property-col-width: var(--calendar-property-col-collapsed-width);
+      --calendar-property-rail-width: var(--calendar-property-col-expanded-width);
       --calendar-day-width: 30px;
       --calendar-today-width: 48px;
       --calendar-row-height: 46px;
@@ -561,24 +562,35 @@
       min-width: max-content;
       position: relative;
     }
+    .calendar-property-rail {
+      position: sticky;
+      left: 0;
+      top: 0;
+      z-index: 34;
+      width: var(--calendar-property-rail-width);
+      height: 0;
+      overflow: visible;
+      pointer-events: none;
+    }
+    .calendar-property-rail-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      width: var(--calendar-property-rail-width);
+      overflow: hidden;
+      background: #fff;
+      border-right: 1px solid #cfd8e3;
+      box-shadow: 8px 0 16px rgba(15,23,42,.04);
+      transition: width .14s ease;
+      will-change: width;
+    }
     .calendar-empty-state {
       padding: 36px;
       color: var(--text-secondary);
       font-size: 14px;
       text-align: center;
     }
-    .cal-property-col {
-      position: sticky;
-      left: 0;
-      z-index: 18;
-      background: #fff;
-      border-right: 1px solid #cfd8e3;
-      width: var(--calendar-property-col-width);
-      min-width: var(--calendar-property-col-width);
-      box-shadow: 8px 0 16px rgba(15,23,42,.04);
-    }
     .calendar-scroll-wrapper.is-property-collapsed {
-      --calendar-property-col-width: var(--calendar-property-col-collapsed-width);
+      --calendar-property-rail-width: var(--calendar-property-col-collapsed-width);
     }
     .cal-property-header {
       position: sticky;
@@ -610,7 +622,7 @@
     }
     .calendar-scroll-wrapper.is-property-collapsed .cal-property-header,
     .calendar-scroll-wrapper.is-property-collapsed .cal-property-name,
-    .calendar-scroll-wrapper.is-property-collapsed .cal-group-header.cal-property-col {
+    .calendar-scroll-wrapper.is-property-collapsed .calendar-property-rail .cal-group-header {
       justify-content: center;
       gap: 0;
       padding-left: 0;
@@ -2503,6 +2515,9 @@
       </div>
       <div class="calendar-container">
         <div class="calendar-scroll-wrapper" id="calendarScroll">
+          <div class="calendar-property-rail" id="calendarPropertyRail" aria-hidden="true">
+            <div class="calendar-property-rail-grid" id="calendarPropertyRailGrid"></div>
+          </div>
           <div id="calendarGrid"></div>
         </div>
       </div>
@@ -3326,7 +3341,6 @@ let calendarDayOffsets = [];
 let calendarDayWidths = [];
 let calendarCurrentStartDate = null;
 let calendarPropertyColumnCollapsed = false;
-let calendarPropertyColumnLastScrollLeft = 0;
 let calendarScrollStateBound = false;
 let mobileAgendaRange = 'today';
 let mobileCalendarVisible = false;
@@ -3371,14 +3385,6 @@ function getCalendarPropertyColWidth(scroll) {
   return parseFloat(styles.getPropertyValue('--calendar-property-col-width')) || 0;
 }
 
-function getCalendarPropertyColDelta(scroll) {
-  if (!scroll) return 0;
-  const styles = getComputedStyle(scroll);
-  const expanded = parseFloat(styles.getPropertyValue('--calendar-property-col-expanded-width')) || 0;
-  const collapsed = parseFloat(styles.getPropertyValue('--calendar-property-col-collapsed-width')) || 0;
-  return Math.max(0, expanded - collapsed);
-}
-
 function buildCalendarDayMetrics(days, mode, today, scroll) {
   const todayIndex = days.findIndex(day => day.getTime() === today.getTime());
   const propertyColWidth = getCalendarPropertyColWidth(scroll);
@@ -3421,30 +3427,12 @@ function syncCalendarPropertyColumnState(options = {}) {
   const scroll = document.getElementById('calendarScroll');
   if (!scroll) return;
   const currentScrollLeft = scroll.scrollLeft || 0;
-  const delta = currentScrollLeft - calendarPropertyColumnLastScrollLeft;
-  const collapseScrollThreshold = getCalendarPropertyColDelta(scroll) + 12;
-  let shouldCollapse = calendarPropertyColumnCollapsed;
+  const expandThreshold = 18;
+  const shouldCollapse = !(options.forceExpanded || currentScrollLeft <= expandThreshold);
 
-  if (options.forceExpanded || currentScrollLeft <= 12) {
-    shouldCollapse = false;
-  } else if (delta > 2 && currentScrollLeft > collapseScrollThreshold) {
-    shouldCollapse = true;
-  } else if (delta < -2) {
-    shouldCollapse = false;
-  }
-
-  calendarPropertyColumnLastScrollLeft = currentScrollLeft;
   if (calendarPropertyColumnCollapsed === shouldCollapse && scroll.classList.contains('is-property-collapsed') === shouldCollapse) return;
-  const previousWidth = getCalendarPropertyColWidth(scroll);
   calendarPropertyColumnCollapsed = shouldCollapse;
   scroll.classList.toggle('is-property-collapsed', shouldCollapse);
-  const nextWidth = getCalendarPropertyColWidth(scroll);
-  const widthDelta = nextWidth - previousWidth;
-  if (widthDelta && currentScrollLeft > 12) {
-    const maxLeft = Math.max(0, scroll.scrollWidth - scroll.clientWidth);
-    scroll.scrollLeft = Math.max(0, Math.min(currentScrollLeft + widthDelta, maxLeft));
-    calendarPropertyColumnLastScrollLeft = scroll.scrollLeft || 0;
-  }
 }
 
 function bindCalendarScrollState() {
@@ -3481,7 +3469,7 @@ function centerCalendarTodayOnce() {
   if (!scroll || scroll.clientWidth === 0) return false;
   scrollCalendarToToday({ behavior: 'auto' });
   calendarHasAutoScrolledToday = true;
-  requestAnimationFrame(() => syncCalendarPropertyColumnState({ forceExpanded: true }));
+  requestAnimationFrame(() => syncCalendarPropertyColumnState());
   return true;
 }
 
@@ -3619,7 +3607,8 @@ function jumpCalendarToMonth(value) {
 function renderCalendar({ preserveScroll = false, focusDate = null, behavior = 'auto' } = {}) {
   const grid = document.getElementById('calendarGrid');
   const scroll = document.getElementById('calendarScroll');
-  if (!grid || !scroll) return;
+  const propertyRail = document.getElementById('calendarPropertyRailGrid');
+  if (!grid || !scroll || !propertyRail) return;
 
   bindCalendarScrollState();
   syncCalendarPropertyColumnState();
@@ -3648,17 +3637,17 @@ function renderCalendar({ preserveScroll = false, focusDate = null, behavior = '
   grid.style.gridTemplateColumns = `var(--calendar-property-col-width) ${dayMetrics.widths.map(formatCalendarPx).join(' ')}`;
   grid.style.width = `calc(var(--calendar-property-col-width) + ${formatCalendarPx(dayMetrics.totalWidth)})`;
   grid.innerHTML = '';
+  propertyRail.innerHTML = '';
   scroll.querySelectorAll('.cal-month-label').forEach(label => label.remove());
 
   const dayNames = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
   const monthNames = ['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'];
 
   const propHeader = document.createElement('div');
-  propHeader.className = 'cal-property-header cal-property-col';
+  propHeader.className = 'cal-property-header';
   propHeader.innerHTML = '<span class="cal-property-header-icon"><i data-lucide="home" style="width:15px;height:15px;"></i></span><span class="cal-property-header-title">Апартаменты</span>';
   propHeader.style.gridRow = '1';
-  propHeader.style.gridColumn = '1';
-  grid.appendChild(propHeader);
+  propertyRail.appendChild(propHeader);
 
   days.forEach((day, i) => {
     const col = i + 2;
@@ -3695,11 +3684,10 @@ function renderCalendar({ preserveScroll = false, focusDate = null, behavior = '
     if (!groupProperties.length) return;
 
     const gh = document.createElement('div');
-    gh.className = 'cal-group-header cal-property-col';
+    gh.className = 'cal-group-header';
     gh.style.gridRow = currentRow;
-    gh.style.gridColumn = '1';
     gh.innerHTML = `<span class="cal-group-label">${escapeHtml(group.name)}</span>`;
-    grid.appendChild(gh);
+    propertyRail.appendChild(gh);
 
     days.forEach((_, i) => {
       const spacer = document.createElement('div');
@@ -3717,16 +3705,15 @@ function renderCalendar({ preserveScroll = false, focusDate = null, behavior = '
       visiblePropertyCount++;
 
       const nameEl = document.createElement('div');
-      nameEl.className = 'cal-property-name cal-property-col';
+      nameEl.className = 'cal-property-name';
       nameEl.style.gridRow = row;
-      nameEl.style.gridColumn = '1';
       nameEl.innerHTML = `
         <div class="cal-property-icon" style="background:${cfg.bg}; color:${cfg.color};">
           <i data-lucide="${cfg.icon}" style="width:14px;height:14px;"></i>
         </div>
         <span class="cal-property-title">${escapeHtml(prop.name)}</span>
       `;
-      grid.appendChild(nameEl);
+      propertyRail.appendChild(nameEl);
 
       days.forEach((day, dayIdx) => {
         const cell = document.createElement('div');
@@ -3779,6 +3766,7 @@ function renderCalendar({ preserveScroll = false, focusDate = null, behavior = '
 
   if (!visiblePropertyCount) {
     grid.innerHTML = '<div class="calendar-empty-state">Нет апартаментов для выбранной группы.</div>';
+    propertyRail.innerHTML = '';
   }
 
   requestAnimationFrame(() => {
@@ -3789,7 +3777,7 @@ function renderCalendar({ preserveScroll = false, focusDate = null, behavior = '
       const focusIndex = days.findIndex(day => day.getTime() === targetDate.getTime());
       if (focusIndex >= 0) {
         scroll.scrollTo({ left: getCalendarCenteredScrollLeft(scroll, focusIndex), behavior });
-        requestAnimationFrame(() => syncCalendarPropertyColumnState({ forceExpanded: true }));
+        requestAnimationFrame(() => syncCalendarPropertyColumnState());
         return;
       }
     }
