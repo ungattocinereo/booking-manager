@@ -25,6 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       head_sha: ${{ steps.head.outputs.sha }}
+      artifact_id: ${{ steps.upload-pages.outputs.artifact_id }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -64,7 +65,8 @@ jobs:
       - id: head
         run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
-      - name: Upload Pages artifact
+      - id: upload-pages
+        name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: monitor-app
@@ -77,4 +79,63 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/github-script@v9
+        env:
+          PAGES_ARTIFACT_ID: ${{ needs.sync.outputs.artifact_id }}
+          PAGES_BUILD_VERSION: ${{ needs.sync.outputs.head_sha }}
+        with:
+          script: |
+            const artifactId = Number(process.env.PAGES_ARTIFACT_ID);
+            const buildVersion = process.env.PAGES_BUILD_VERSION;
+
+            if (!artifactId) {
+              throw new Error('Missing Pages artifact id from upload-pages-artifact');
+            }
+            if (!buildVersion) {
+              throw new Error('Missing monitor branch HEAD SHA');
+            }
+
+            const oidcToken = await core.getIDToken();
+            const deployment = await github.request('POST /repos/{owner}/{repo}/pages/deployments', {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              artifact_id: artifactId,
+              pages_build_version: buildVersion,
+              oidc_token: oidcToken,
+            });
+
+            const deploymentId = deployment.data.id;
+            const initialPageUrl = deployment.data.page_url || 'https://ungattocinereo.github.io/booking-manager/';
+            core.info(`Created Pages deployment ${deploymentId} for ${buildVersion}`);
+
+            const deadline = Date.now() + 10 * 60 * 1000;
+            while (Date.now() < deadline) {
+              await new Promise((resolve) => setTimeout(resolve, 5000));
+
+              const status = await github.request('GET /repos/{owner}/{repo}/pages/deployments/{deploymentId}', {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                deploymentId,
+              });
+
+              const deploymentStatus = status.data.status;
+              core.info(`Pages deployment status: ${deploymentStatus}`);
+
+              if (deploymentStatus === 'succeed') {
+                core.setOutput('page_url', status.data.page_url || initialPageUrl);
+                return;
+              }
+
+              const finalErrorStatuses = [
+                'deployment_failed',
+                'deployment_perms_error',
+                'deployment_content_failed',
+                'deployment_cancelled',
+                'deployment_lost',
+              ];
+              if (finalErrorStatuses.includes(deploymentStatus)) {
+                throw new Error(`Pages deployment failed with status ${deploymentStatus}`);
+              }
+            }
+
+            throw new Error('Timed out waiting for Pages deployment');
