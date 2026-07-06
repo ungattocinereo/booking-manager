@@ -10,6 +10,7 @@
 - Производные future cleaning tasks без активного реального checkout теперь тоже мягко архивируются, чтобы старые задачи не создавали лишние выезды в календарях уборки.
 - Booking.com Excel/XLS экспорт теперь создает и реактивирует реальные Booking-брони как `reservation`, а технические `CLOSED/Not available` iCal-маркеры скрываются из обычного календаря.
 - Booking.com `reservation` больше не архивируются автоматически из-за отсутствия в iCal/XLS-снимке; это защищает текущие брони от временно неполных Booking-фидов или локальных export-файлов.
+- Booking.com iCal `CLOSED/Not available` больше не понижает существующие guest rows, а manual enrich использует общий XLS importer; audit теперь ловит будущие Booking rows с гостем, но скрытым lifecycle state.
 - В десктопном календаре левая колонка апартаментов раскрывается после программного перехода к 90 дням/сезону и дальше сжимается/раскрывается по направлению горизонтального скролла.
 - Airbnb export enrichment распознает листинг Carmela как `The Sunrise Balcony • Amalfi Coast View` и новые телефонные страны BG/RO/UY/TN.
 - Создана точка отката перед закрытием админки: `rollback/pre-cloudflare-access-2026-05-30` на `820a27a9e6e94f0ac8eec76590e287df0201cbc5`.

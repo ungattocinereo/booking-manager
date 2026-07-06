@@ -33,6 +33,11 @@ function buildQueries({ hasActiveColumn, hasCleaningTaskActiveColumn }) {
       start_date,
       end_date,
       booking_type,
+      raw_summary,
+      guest_name,
+      guest_count,
+      missing_since,
+      synced_at,
       ${activeExpr} AS active,
       (
         lower(coalesce(raw_summary, '')) LIKE '%not available%' OR
@@ -132,6 +137,31 @@ function buildQueries({ hasActiveColumn, hasCleaningTaskActiveColumn }) {
     GROUP BY property_id, platform, booking_type, active
     ORDER BY count DESC, property_id
   `,
+    booking_guest_lifecycle_issues: `
+    ${normalizedBookingsCte}
+    SELECT
+      id,
+      property_id,
+      platform,
+      start_date::text AS start_date,
+      end_date::text AS end_date,
+      raw_summary,
+      guest_name,
+      guest_count,
+      booking_type,
+      active,
+      missing_since::text AS missing_since,
+      synced_at::text AS synced_at
+    FROM normalized_bookings
+    WHERE platform = 'booking'
+      AND end_date >= CURRENT_DATE
+      AND has_guest = true
+      AND (
+        active = false OR
+        COALESCE(booking_type, 'reservation') <> 'reservation'
+      )
+    ORDER BY property_id, start_date, end_date, id
+  `,
     cleaning_task_totals: `
     SELECT
       COUNT(*)::int AS cleaning_tasks,
@@ -212,6 +242,7 @@ async function main() {
     const hasProblems =
       report.exact_duplicates.length > 0 ||
       report.blocked_over_real_summary.length > 0 ||
+      report.booking_guest_lifecycle_issues.length > 0 ||
       report.cleaning_tasks_without_real_checkout.length > 0;
     if (hasProblems) process.exitCode = 1;
   }

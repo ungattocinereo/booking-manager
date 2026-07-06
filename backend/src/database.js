@@ -2,8 +2,22 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs');
 
-const DB_PATH = path.join(__dirname, '../database/bookings.db');
+const DB_PATH = process.env.SQLITE_DB_PATH || path.join(__dirname, '../database/bookings.db');
 const SCHEMA_PATH = path.join(__dirname, '../database/schema.sql');
+
+function hasGuestDetails(row) {
+  return Boolean(String(row?.guest_name || '').trim()) || Number(row?.guest_count) > 0;
+}
+
+function shouldProtectExistingBookingFromMarker(existing, platform, bookingType) {
+  return platform === 'booking'
+    && ['blocked', 'unavailable'].includes(String(bookingType || '').toLowerCase())
+    && (
+      !existing?.booking_type ||
+      String(existing.booking_type).toLowerCase() === 'reservation' ||
+      hasGuestDetails(existing)
+    );
+}
 
 function stringifyJson(value) {
   return JSON.stringify(value || {});
@@ -124,15 +138,18 @@ class Database {
     const { guestName, guestCountry, reservationUrl, phoneLast4, bookingType } = extra;
     // Check if booking exists
     const existing = await this.get(
-      `SELECT id FROM bookings
+      `SELECT id, booking_type, guest_name, guest_count, raw_summary FROM bookings
        WHERE property_id = ? AND platform = ? AND start_date = ? AND end_date = ?`,
       [propertyId, platform, startDate, endDate]
     );
 
     if (existing) {
+      const protectedFromMarker = shouldProtectExistingBookingFromMarker(existing, platform, bookingType);
+      const nextRawSummary = protectedFromMarker ? (existing.raw_summary || rawSummary) : rawSummary;
+      const nextBookingType = protectedFromMarker ? 'reservation' : bookingType;
       // Update
       let updateFields = 'raw_summary = ?, synced_at = CURRENT_TIMESTAMP, active = 1, missing_since = NULL';
-      const updateParams = [rawSummary];
+      const updateParams = [nextRawSummary];
       if (guestName) {
         updateFields += ', guest_name = ?';
         updateParams.push(guestName);
@@ -149,9 +166,9 @@ class Database {
         updateFields += ', phone_last4 = ?';
         updateParams.push(phoneLast4);
       }
-      if (bookingType) {
+      if (nextBookingType) {
         updateFields += ', booking_type = ?';
-        updateParams.push(bookingType);
+        updateParams.push(nextBookingType);
       }
       updateParams.push(existing.id);
       return this.run(
@@ -210,7 +227,13 @@ class Database {
            synced_at = CURRENT_TIMESTAMP
        WHERE property_id = ? AND platform = ? AND end_date >= ?
        AND COALESCE(active, 1) != 0
-       AND NOT (platform = 'booking' AND COALESCE(booking_type, 'reservation') = 'reservation')
+       AND NOT (
+         platform = 'booking' AND (
+           COALESCE(booking_type, 'reservation') = 'reservation' OR
+           COALESCE(NULLIF(TRIM(guest_name), ''), '') <> '' OR
+           COALESCE(guest_count, 0) > 0
+         )
+       )
        AND (start_date || '|' || end_date) NOT IN (${feedKeys.map(() => '?').join(', ')})`,
       [propertyId, platform, today, ...feedKeys.map(k => k.startDate + '|' + k.endDate)]
     );

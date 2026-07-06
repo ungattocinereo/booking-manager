@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const EXPORTS_DIR = path.join(__dirname, '..', '..', 'exports');
+const EXPORTS_DIR = process.env.BOOKING_EXPORTS_DIR || path.join(__dirname, '..', '..', 'exports');
 
 // Airbnb listing name -> property_id
 const LISTING_MAP = {

@@ -99,7 +99,36 @@ class Database {
       `INSERT INTO bookings (property_id, platform, start_date, end_date, raw_summary, guest_name, guest_country, reservation_url, phone_last4, booking_type, active, missing_since, synced_at)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, TRUE, NULL, NOW())
        ON CONFLICT (property_id, platform, start_date, end_date)
-       DO UPDATE SET raw_summary = $5, guest_name = COALESCE($6, bookings.guest_name), guest_country = COALESCE($7, bookings.guest_country), reservation_url = COALESCE($8, bookings.reservation_url), phone_last4 = COALESCE($9, bookings.phone_last4), booking_type = COALESCE($10, bookings.booking_type), active = TRUE, missing_since = NULL, synced_at = NOW()`,
+       DO UPDATE SET
+         raw_summary = CASE
+           WHEN $2 = 'booking'
+             AND $10 IN ('blocked', 'unavailable')
+             AND (
+               COALESCE(bookings.booking_type, 'reservation') = 'reservation' OR
+               COALESCE(NULLIF(TRIM(bookings.guest_name), ''), '') <> '' OR
+               COALESCE(bookings.guest_count, 0) > 0
+             )
+           THEN bookings.raw_summary
+           ELSE $5
+         END,
+         guest_name = COALESCE($6, bookings.guest_name),
+         guest_country = COALESCE($7, bookings.guest_country),
+         reservation_url = COALESCE($8, bookings.reservation_url),
+         phone_last4 = COALESCE($9, bookings.phone_last4),
+         booking_type = CASE
+           WHEN $2 = 'booking'
+             AND $10 IN ('blocked', 'unavailable')
+             AND (
+               COALESCE(bookings.booking_type, 'reservation') = 'reservation' OR
+               COALESCE(NULLIF(TRIM(bookings.guest_name), ''), '') <> '' OR
+               COALESCE(bookings.guest_count, 0) > 0
+             )
+           THEN 'reservation'
+           ELSE COALESCE($10, bookings.booking_type)
+         END,
+         active = TRUE,
+         missing_since = NULL,
+         synced_at = NOW()`,
       [propertyId, platform, startDate, endDate, rawSummary, guestName || null, guestCountry || null, reservationUrl || null, phoneLast4 || null, bookingType || 'reservation']
     );
   }
@@ -144,7 +173,13 @@ class Database {
            synced_at = NOW()
        WHERE property_id = $1 AND platform = $2 AND end_date >= $3::date
        AND active IS NOT FALSE
-       AND NOT (platform = 'booking' AND COALESCE(booking_type, 'reservation') = 'reservation')
+       AND NOT (
+         platform = 'booking' AND (
+           COALESCE(booking_type, 'reservation') = 'reservation' OR
+           COALESCE(NULLIF(TRIM(guest_name), ''), '') <> '' OR
+           COALESCE(guest_count, 0) > 0
+         )
+       )
        AND (to_char(start_date, 'YYYY-MM-DD') || '|' || to_char(end_date, 'YYYY-MM-DD')) NOT IN (${placeholders})`,
       [propertyId, platform, today, ...keyStrings]
     );
