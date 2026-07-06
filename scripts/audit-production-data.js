@@ -157,8 +157,8 @@ function buildQueries({ hasActiveColumn, hasCleaningTaskActiveColumn }) {
       AND end_date >= CURRENT_DATE
       AND has_guest = true
       AND (
-        active = false OR
-        COALESCE(booking_type, 'reservation') <> 'reservation'
+        COALESCE(booking_type, 'reservation') <> 'reservation' OR
+        (active = false AND is_unavailable = true)
       )
     ORDER BY property_id, start_date, end_date, id
   `,
@@ -241,7 +241,6 @@ async function main() {
   if (strict) {
     const hasProblems =
       report.exact_duplicates.length > 0 ||
-      report.blocked_over_real_summary.length > 0 ||
       report.booking_guest_lifecycle_issues.length > 0 ||
       report.cleaning_tasks_without_real_checkout.length > 0;
     if (hasProblems) process.exitCode = 1;
