@@ -166,6 +166,16 @@ class Database {
     if (feedKeys.length === 0) return { rowCount: 0 };
     const keyStrings = feedKeys.map(k => k.startDate + '|' + k.endDate);
     const placeholders = keyStrings.map((_, i) => `$${i + 4}`).join(', ');
+    const coverageOffset = 4 + keyStrings.length;
+    const coverageChecks = feedKeys
+      .map((_, i) => `($${coverageOffset + (i * 2)}::date <= GREATEST(start_date, $3::date) AND $${coverageOffset + (i * 2) + 1}::date >= end_date)`)
+      .join(' OR ');
+    const coverageParams = feedKeys.flatMap(k => [k.startDate, k.endDate]);
+    const protectedBooking = `platform = 'booking' AND (
+           COALESCE(booking_type, 'reservation') = 'reservation' OR
+           COALESCE(NULLIF(TRIM(guest_name), ''), '') <> '' OR
+           COALESCE(guest_count, 0) > 0
+         )`;
     return this.execute(
       `UPDATE bookings
        SET active = FALSE,
@@ -173,15 +183,19 @@ class Database {
            synced_at = NOW()
        WHERE property_id = $1 AND platform = $2 AND end_date >= $3::date
        AND active IS NOT FALSE
-       AND NOT (
-         platform = 'booking' AND (
-           COALESCE(booking_type, 'reservation') = 'reservation' OR
-           COALESCE(NULLIF(TRIM(guest_name), ''), '') <> '' OR
-           COALESCE(guest_count, 0) > 0
+       AND (
+         (
+           NOT (${protectedBooking})
+           AND (to_char(start_date, 'YYYY-MM-DD') || '|' || to_char(end_date, 'YYYY-MM-DD')) NOT IN (${placeholders})
+         )
+         OR (
+           ${protectedBooking}
+           AND end_date > $3::date
+           AND NOT (${coverageChecks})
          )
        )
-       AND (to_char(start_date, 'YYYY-MM-DD') || '|' || to_char(end_date, 'YYYY-MM-DD')) NOT IN (${placeholders})`,
-      [propertyId, platform, today, ...keyStrings]
+       `,
+      [propertyId, platform, today, ...keyStrings, ...coverageParams]
     );
   }
 

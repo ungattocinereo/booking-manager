@@ -220,6 +220,12 @@ class Database {
 
   async archiveStaleBookings(propertyId, platform, feedKeys, today) {
     if (feedKeys.length === 0) return { changes: 0 };
+    const protectedBooking = `platform = 'booking' AND (
+           COALESCE(booking_type, 'reservation') = 'reservation' OR
+           COALESCE(NULLIF(TRIM(guest_name), ''), '') <> '' OR
+           COALESCE(guest_count, 0) > 0
+         )`;
+    const coverageChecks = feedKeys.map(() => '(? <= MAX(start_date, ?) AND ? >= end_date)').join(' OR ');
     return this.run(
       `UPDATE bookings
        SET active = 0,
@@ -227,15 +233,26 @@ class Database {
            synced_at = CURRENT_TIMESTAMP
        WHERE property_id = ? AND platform = ? AND end_date >= ?
        AND COALESCE(active, 1) != 0
-       AND NOT (
-         platform = 'booking' AND (
-           COALESCE(booking_type, 'reservation') = 'reservation' OR
-           COALESCE(NULLIF(TRIM(guest_name), ''), '') <> '' OR
-           COALESCE(guest_count, 0) > 0
+       AND (
+         (
+           NOT (${protectedBooking})
+           AND (start_date || '|' || end_date) NOT IN (${feedKeys.map(() => '?').join(', ')})
+         )
+         OR (
+           ${protectedBooking}
+           AND end_date > ?
+           AND NOT (${coverageChecks})
          )
        )
-       AND (start_date || '|' || end_date) NOT IN (${feedKeys.map(() => '?').join(', ')})`,
-      [propertyId, platform, today, ...feedKeys.map(k => k.startDate + '|' + k.endDate)]
+       `,
+      [
+        propertyId,
+        platform,
+        today,
+        ...feedKeys.map(k => k.startDate + '|' + k.endDate),
+        today,
+        ...feedKeys.flatMap(k => [k.startDate, today, k.endDate])
+      ]
     );
   }
 

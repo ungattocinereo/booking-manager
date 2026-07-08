@@ -61,18 +61,27 @@ async function main() {
      ) VALUES (?, 'booking', ?, ?, 'CLOSED - Not available', 'blocked', 1, NULL, CURRENT_TIMESTAMP)`,
     ['solo', '2026-08-04', '2026-08-06']
   );
+  await db.run(
+    `INSERT INTO bookings (
+       property_id, platform, start_date, end_date, raw_summary,
+       guest_name, guest_count, booking_type, active, missing_since, created_at
+     ) VALUES (?, 'booking', ?, ?, ?, ?, ?, 'reservation', 1, NULL, CURRENT_TIMESTAMP)`,
+    ['solo', '2026-08-05', '2026-08-08', 'Partially Covered Guest', 'Partially Covered Guest', 1]
+  );
 
   await db.archiveStaleBookings(
     'solo',
     'booking',
-    [{ startDate: '2026-01-01', endDate: '2026-01-02' }],
+    [{ startDate: '2026-08-01', endDate: '2026-08-06' }],
     '2026-07-01'
   );
 
   const legacyGuest = await getBooking('solo', '2026-08-01', '2026-08-03');
   const technicalMarker = await getBooking('solo', '2026-08-04', '2026-08-06');
+  const partiallyCoveredGuest = await getBooking('solo', '2026-08-05', '2026-08-08');
   assert.strictEqual(Number(legacyGuest.active), 1);
   assert.strictEqual(Number(technicalMarker.active), 0);
+  assert.strictEqual(Number(partiallyCoveredGuest.active), 0);
 
   await db.run(
     `INSERT INTO bookings (
@@ -81,6 +90,9 @@ async function main() {
      ) VALUES (?, 'booking', ?, ?, ?, ?, ?, ?, 'blocked', 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
     ['solo', '2026-12-01', '2026-12-03', 'CLOSED - Not available', 'Hidden Guest', 'US', 1]
   );
+  await db.upsertBooking('solo', 'booking', '2026-12-01', '2026-12-05', 'CLOSED - Not available', {
+    bookingType: 'blocked',
+  });
 
   writeBookingXls([
     {
@@ -93,16 +105,28 @@ async function main() {
       Adults: 1,
       Children: 0,
     },
+    {
+      Status: 'ok',
+      'Unit type': 'Solo Traveller room',
+      'Check-in': '2026-12-10',
+      'Check-out': '2026-12-12',
+      'Guest Name(s)': 'Stale Export Guest',
+      'Booker country': 'us',
+      Adults: 1,
+      Children: 0,
+    },
   ]);
 
   const enrichResult = await enrichFromExports(db, false);
   assert.strictEqual(enrichResult.updated, 1);
 
   const repairedBooking = await getBooking('solo', '2026-12-01', '2026-12-03');
+  const staleExportBooking = await getBooking('solo', '2026-12-10', '2026-12-12');
   assert.strictEqual(repairedBooking.booking_type, 'reservation');
   assert.strictEqual(Number(repairedBooking.active), 1);
   assert.strictEqual(repairedBooking.guest_name, 'Visible Guest');
   assert.strictEqual(repairedBooking.guest_country, 'US');
+  assert.strictEqual(staleExportBooking, undefined);
 
   console.log('Booking lifecycle tests passed');
 }

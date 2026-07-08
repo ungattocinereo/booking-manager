@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const { todayInRome } = require('../../api/_helpers');
 const EXPORTS_DIR = process.env.BOOKING_EXPORTS_DIR || path.join(__dirname, '..', '..', 'exports');
 
 // Airbnb listing name -> property_id
@@ -264,10 +265,45 @@ async function upsertBookingExportRow(db, isPostgres, row) {
   return result.changes || 0;
 }
 
+async function bookingExportRowHasCalendarCoverage(db, isPostgres, row, today) {
+  if (row.endDate <= today) return true;
+
+  const effectiveStart = row.startDate > today ? row.startDate : today;
+  if (isPostgres) {
+    const existing = await db.queryOne(
+      `SELECT id
+       FROM bookings
+       WHERE property_id = $1
+         AND platform = 'booking'
+         AND active IS NOT FALSE
+         AND start_date <= $2::date
+         AND end_date >= $3::date
+       LIMIT 1`,
+      [row.propertyId, effectiveStart, row.endDate]
+    );
+    return Boolean(existing);
+  }
+
+  const existing = await db.get(
+    `SELECT id
+     FROM bookings
+     WHERE property_id = ?
+       AND platform = 'booking'
+       AND COALESCE(active, 1) != 0
+       AND start_date <= ?
+       AND end_date >= ?
+     LIMIT 1`,
+    [row.propertyId, effectiveStart, row.endDate]
+  );
+  return Boolean(existing);
+}
+
 /**
  * Enrich bookings from Airbnb CSV and Booking.com XLS exports.
  * Exports are manual snapshots: they may add or update known bookings, but
- * cron must not hide rows that are absent from a snapshot.
+ * cron must not hide rows that are absent from a snapshot. Booking.com snapshots
+ * are also checked against current iCal coverage before they can create or
+ * reactivate future rows, because stale XLS files can contain cancelled stays.
  * @param {object} db - The database module (already initialized)
  * @param {boolean} isPostgres - Whether using Postgres (vs SQLite)
  * @returns {{ parsed: number, updated: number, skipped: number, archived: number, deleted: number }}
@@ -278,6 +314,7 @@ async function enrichFromExports(db, isPostgres) {
   let skipped = 0;
   let deleted = 0;
   let archived = 0;
+  const today = todayInRome();
 
   // Gracefully handle missing exports directory
   if (!fs.existsSync(EXPORTS_DIR)) {
@@ -433,6 +470,12 @@ async function enrichFromExports(db, isPostgres) {
         };
 
         try {
+          const hasCalendarCoverage = await bookingExportRowHasCalendarCoverage(db, isPostgres, bookingRow, today);
+          if (!hasCalendarCoverage) {
+            skipped++;
+            continue;
+          }
+
           const changes = await upsertBookingExportRow(db, isPostgres, bookingRow);
           if (changes > 0) updated++;
           else skipped++;
