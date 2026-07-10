@@ -21,6 +21,7 @@ const TABLES = [
   'cleaner_properties',
   'cleaning_tasks',
   'booking_stats_snapshots',
+  'sync_runs',
 ];
 
 function timestamp() {

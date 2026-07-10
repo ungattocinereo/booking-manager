@@ -103,8 +103,14 @@ Deploys automatically from `main`. Required environment variables:
 | `TELEGRAM_WEBHOOK_SECRET` | Secret token for Telegram webhook requests |
 | `BOOKING_MANAGER_CF_ACCESS_CLIENT_ID` | Optional Cloudflare Access service token ID for machine clients |
 | `BOOKING_MANAGER_CF_ACCESS_CLIENT_SECRET` | Optional Cloudflare Access service token secret for machine clients |
+| `ICAL_FETCH_TIMEOUT_MS` | Per-attempt iCal timeout, default `12000` |
+| `ICAL_FETCH_RETRIES` | Transient iCal retry count, default `2` |
+| `BOOKING_STALE_GRACE_HOURS` | Quarantine before a missing booking is hidden, default `6` |
+| `HEALTH_SYNC_STALE_MINUTES` | Maximum healthy sync age, default `1560` (26 hours) |
 
 Run `npm run migrate:postgres` after schema changes. Runtime requests only connect to Postgres; they do not execute DDL unless `POSTGRES_AUTO_MIGRATE=true` is explicitly set for a fresh environment.
+
+The `ci` GitHub Actions workflow runs syntax checks, unit/lifecycle tests, the Playwright UI performance suite, and a production dependency audit for pull requests and pushes to `main`. Configure the `ci / test` check as required in GitHub branch protection before allowing merges to production.
 
 ### Local development
 
@@ -172,7 +178,7 @@ node bot.js
 - `GET /api/sync` — Sync calendars (cron, requires `CRON_SECRET`)
 - `POST /api/sync` — Sync calendars (manual, from dashboard)
 - `GET /api/dashboard` — Aggregated dashboard data
-- `GET /health` — Health check
+- `GET /health` or `GET /api/health` — Database and calendar freshness health check (`503` when unavailable or stale)
 
 ## Project Structure
 

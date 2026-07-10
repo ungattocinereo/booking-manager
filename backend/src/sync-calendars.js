@@ -40,13 +40,73 @@ function loadConfig() {
 
 const config = loadConfig();
 
-async function fetchCalendar(url) {
-  console.log(`📥 Fetching: ${url.substring(0, 50)}...`);
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch calendar: ${response.status}`);
+function nonNegativeInteger(value, fallback) {
+  const number = Number(value);
+  return Number.isInteger(number) && number >= 0 ? number : fallback;
+}
+
+function calendarHost(url) {
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return 'calendar source';
   }
-  return response.text();
+}
+
+function wait(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function fetchCalendar(url, options = {}) {
+  const fetchImpl = options.fetchImpl || fetch;
+  const sleep = options.sleep || wait;
+  const timeoutMs = nonNegativeInteger(
+    options.timeoutMs ?? process.env.ICAL_FETCH_TIMEOUT_MS,
+    12000
+  );
+  const retries = nonNegativeInteger(
+    options.retries ?? process.env.ICAL_FETCH_RETRIES,
+    2
+  );
+  const source = calendarHost(url);
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      console.log(`📥 Fetching ${source} (attempt ${attempt + 1}/${retries + 1})`);
+      const response = await fetchImpl(url, { signal: controller.signal });
+      if (!response.ok) {
+        const error = new Error(`Calendar source returned HTTP ${response.status}`);
+        error.retryable = response.status === 408 || response.status === 429 || response.status >= 500;
+        throw error;
+      }
+      const body = await response.text();
+      if (!String(body || '').trim()) {
+        const error = new Error('Calendar source returned an empty response');
+        error.retryable = true;
+        throw error;
+      }
+      if (!/BEGIN:VCALENDAR/i.test(body) || !/END:VCALENDAR/i.test(body)) {
+        const error = new Error('Calendar source returned an incomplete iCal document');
+        error.retryable = true;
+        throw error;
+      }
+      return body;
+    } catch (error) {
+      const aborted = error?.name === 'AbortError';
+      const retryable = aborted || error?.retryable !== false;
+      if (!retryable || attempt >= retries) {
+        if (aborted) throw new Error(`Calendar source timed out after ${timeoutMs}ms`);
+        throw error;
+      }
+      await sleep(Math.min(2000, 400 * (2 ** attempt)));
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  throw new Error('Calendar source could not be fetched');
 }
 
 function parseICalData(icalData) {
@@ -309,9 +369,19 @@ async function syncCalendars() {
   return { totalEvents, totalArchived, totalDeleted: 0, failures };
 }
 
-// Run if called directly
-if (require.main === module) {
-  syncAll();
-}
+module.exports = { syncAll, syncCalendars, generateCleaningTasks, fetchCalendar, parseICalData };
 
-module.exports = { syncAll, syncCalendars, generateCleaningTasks };
+// Run the same protected service path used by the API when called directly.
+if (require.main === module) {
+  const { runSync } = require('./sync-service');
+  runSync({ source: 'cli' })
+    .then(result => {
+      console.log(result.partial ? 'Sync completed partially' : 'Sync completed successfully');
+      if (result.partial) process.exitCode = 1;
+    })
+    .catch(error => {
+      console.error('Sync failed:', error.message);
+      process.exitCode = 1;
+    })
+    .finally(() => db.close());
+}

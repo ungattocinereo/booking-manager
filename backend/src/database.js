@@ -1,6 +1,7 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs');
+const { buildSyncHealth } = require('../../lib/sync-health');
 
 const DB_PATH = process.env.SQLITE_DB_PATH || path.join(__dirname, '../database/bookings.db');
 const SCHEMA_PATH = path.join(__dirname, '../database/schema.sql');
@@ -31,6 +32,12 @@ function parseJsonColumn(value) {
   } catch {
     return {};
   }
+}
+
+function staleBookingCutoffIso() {
+  const configured = Number(process.env.BOOKING_STALE_GRACE_HOURS);
+  const graceHours = Number.isFinite(configured) && configured >= 0 ? configured : 6;
+  return new Date(Date.now() - graceHours * 60 * 60 * 1000).toISOString();
 }
 
 class Database {
@@ -227,12 +234,7 @@ class Database {
            COALESCE(guest_count, 0) > 0
          )`;
     const coverageChecks = feedKeys.map(() => '(? <= MAX(start_date, ?) AND ? >= end_date)').join(' OR ');
-    return this.run(
-      `UPDATE bookings
-       SET active = 0,
-           missing_since = COALESCE(missing_since, CURRENT_TIMESTAMP),
-           synced_at = CURRENT_TIMESTAMP
-       WHERE property_id = ? AND platform = ? AND end_date >= ?
+    const staleWhere = `property_id = ? AND platform = ? AND end_date >= ?
        AND COALESCE(active, 1) != 0
        AND (
          (
@@ -244,17 +246,34 @@ class Database {
            AND end_date > ?
            AND NOT (${coverageChecks})
          )
-       )
-       `,
-      [
-        propertyId,
-        platform,
-        today,
-        ...feedKeys.map(k => k.startDate + '|' + k.endDate),
-        today,
-        ...feedKeys.flatMap(k => [k.startDate, today, k.endDate])
-      ]
+       )`;
+    const staleParams = [
+      propertyId,
+      platform,
+      today,
+      ...feedKeys.map(k => k.startDate + '|' + k.endDate),
+      today,
+      ...feedKeys.flatMap(k => [k.startDate, today, k.endDate])
+    ];
+
+    const archived = await this.run(
+      `UPDATE bookings
+       SET active = 0, synced_at = CURRENT_TIMESTAMP
+       WHERE ${staleWhere}
+       AND missing_since IS NOT NULL
+       AND missing_since <= ?`,
+      [...staleParams, staleBookingCutoffIso()]
     );
+
+    const quarantined = await this.run(
+      `UPDATE bookings
+       SET missing_since = COALESCE(missing_since, CURRENT_TIMESTAMP),
+           synced_at = CURRENT_TIMESTAMP
+       WHERE ${staleWhere}`,
+      staleParams
+    );
+
+    return { changes: archived.changes, quarantined: quarantined.changes };
   }
 
   async deleteStaleBookings(propertyId, platform, feedKeys, today) {
@@ -523,6 +542,71 @@ class Database {
     );
 
     return rows.map(row => this.normalizeStatsSnapshot(row));
+  }
+
+  async ping() {
+    const row = await this.get('SELECT 1 AS ok');
+    return row?.ok === 1;
+  }
+
+  async startSyncRun(source = 'manual') {
+    const result = await this.run(
+      `INSERT INTO sync_runs (source, status, feed_errors)
+       VALUES (?, 'running', '[]')`,
+      [source]
+    );
+    return result.lastID;
+  }
+
+  async finishSyncRun(id, { status, eventsSynced = 0, feedErrors = [], errorMessage = null }) {
+    if (!id) return;
+    await this.run(
+      `UPDATE sync_runs
+       SET completed_at = CURRENT_TIMESTAMP,
+           status = ?,
+           events_synced = ?,
+           feed_errors = ?,
+           error_message = ?
+       WHERE id = ?`,
+      [status, eventsSynced, JSON.stringify(feedErrors || []), errorMessage, id]
+    );
+  }
+
+  async getSyncHealth(options = {}) {
+    let lastRun = null;
+    let lastDataRun = null;
+    try {
+      [lastRun, lastDataRun] = await Promise.all([
+        this.get(
+          `SELECT id, started_at, completed_at, source, status, events_synced, feed_errors
+           FROM sync_runs
+           ORDER BY started_at DESC, id DESC
+           LIMIT 1`
+        ),
+        this.get(
+          `SELECT completed_at
+           FROM sync_runs
+           WHERE status IN ('success', 'partial') AND completed_at IS NOT NULL
+           ORDER BY completed_at DESC, id DESC
+           LIMIT 1`
+        )
+      ]);
+    } catch (error) {
+      if (!/no such table: sync_runs/i.test(error.message)) throw error;
+    }
+    const legacySnapshot = await this.get(
+      `SELECT captured_at
+       FROM booking_stats_snapshots
+       WHERE source = 'sync'
+       ORDER BY captured_at DESC
+       LIMIT 1`
+    );
+
+    return buildSyncHealth({
+      lastRun,
+      lastDataAt: lastDataRun?.completed_at || legacySnapshot?.captured_at || null,
+      staleMinutes: options.staleMinutes
+    });
   }
 
   close() {

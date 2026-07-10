@@ -74,6 +74,19 @@ CREATE TABLE IF NOT EXISTS booking_stats_snapshots (
   payload JSONB NOT NULL DEFAULT '{}'::jsonb
 );
 
+-- Durable history of calendar sync attempts for health checks and UI freshness.
+CREATE TABLE IF NOT EXISTS sync_runs (
+  id BIGSERIAL PRIMARY KEY,
+  started_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+  completed_at TIMESTAMPTZ,
+  source VARCHAR(50) NOT NULL DEFAULT 'manual',
+  status VARCHAR(20) NOT NULL DEFAULT 'running'
+    CHECK (status IN ('running', 'success', 'partial', 'failed')),
+  events_synced INTEGER NOT NULL DEFAULT 0,
+  feed_errors JSONB NOT NULL DEFAULT '[]'::jsonb,
+  error_message TEXT
+);
+
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_bookings_property ON bookings(property_id);
 CREATE INDEX IF NOT EXISTS idx_bookings_dates ON bookings(start_date, end_date);
@@ -82,6 +95,7 @@ CREATE INDEX IF NOT EXISTS idx_cleaning_tasks_cleaner ON cleaning_tasks(cleaner_
 CREATE INDEX IF NOT EXISTS idx_cleaning_tasks_date ON cleaning_tasks(scheduled_date);
 CREATE INDEX IF NOT EXISTS idx_stats_snapshots_captured ON booking_stats_snapshots(captured_at);
 CREATE INDEX IF NOT EXISTS idx_stats_snapshots_season ON booking_stats_snapshots(season_year, captured_at);
+CREATE INDEX IF NOT EXISTS idx_sync_runs_completed ON sync_runs(completed_at DESC);
 
 -- Add guest_country column (migration)
 ALTER TABLE bookings ADD COLUMN IF NOT EXISTS guest_country VARCHAR(5);
