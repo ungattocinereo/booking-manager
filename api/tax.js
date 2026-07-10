@@ -5,6 +5,7 @@ const db = USE_POSTGRES
   : require('../backend/src/database');
 
 const { formatDate } = require('./_helpers');
+const { isDateOnly } = require('../lib/api-validation');
 
 module.exports = async (req, res) => {
   // CORS
@@ -23,7 +24,7 @@ module.exports = async (req, res) => {
 
     if (req.method === 'GET') {
       const { date } = req.query;
-      if (!date) {
+      if (!isDateOnly(date)) {
         return res.status(400).json({ error: 'date query parameter is required (YYYY-MM-DD)' });
       }
       const bookings = await db.getTaxByDate(date);

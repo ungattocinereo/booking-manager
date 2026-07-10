@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS cleaning_tasks (
   property_id VARCHAR(50) NOT NULL REFERENCES properties(id),
   cleaner_id VARCHAR(50) REFERENCES cleaners(id),
   scheduled_date DATE NOT NULL,
-  task_type VARCHAR(50) DEFAULT 'checkout_cleaning' CHECK (task_type IN ('checkout_cleaning', 'general_cleaning', 'deep_cleaning')),
+  task_type VARCHAR(50) DEFAULT 'checkout_cleaning' CHECK (task_type IN ('checkout_cleaning', 'general_cleaning', 'deep_cleaning', 'manual')),
   status VARCHAR(50) DEFAULT 'pending' CHECK (status IN ('pending', 'in_progress', 'completed', 'cancelled')),
   notes TEXT,
   completed_at TIMESTAMP,
@@ -96,6 +96,12 @@ ALTER TABLE cleaning_tasks ADD COLUMN IF NOT EXISTS active BOOLEAN DEFAULT TRUE;
 ALTER TABLE cleaning_tasks ADD COLUMN IF NOT EXISTS missing_since TIMESTAMP;
 UPDATE cleaning_tasks SET active = TRUE WHERE active IS NULL;
 CREATE INDEX IF NOT EXISTS idx_cleaning_tasks_active ON cleaning_tasks(active);
+
+-- Keep the task type constraint compatible with manually-created tasks.
+ALTER TABLE cleaning_tasks DROP CONSTRAINT IF EXISTS cleaning_tasks_task_type_check;
+ALTER TABLE cleaning_tasks
+  ADD CONSTRAINT cleaning_tasks_task_type_check
+  CHECK (task_type IN ('checkout_cleaning', 'general_cleaning', 'deep_cleaning', 'manual'));
 
 -- Add slug column to cleaners (migration)
 ALTER TABLE cleaners ADD COLUMN IF NOT EXISTS slug VARCHAR(100) UNIQUE;

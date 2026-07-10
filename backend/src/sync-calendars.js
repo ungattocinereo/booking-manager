@@ -101,6 +101,7 @@ async function syncPropertyCalendars(property) {
   const today = todayInRome();
   let totalEvents = 0;
   let totalArchived = 0;
+  const failures = [];
 
   for (const calendar of property.calendars) {
     try {
@@ -148,15 +149,17 @@ async function syncPropertyCalendars(property) {
         }
       } catch (archiveErr) {
         console.error(`  ⚠️ Failed to archive stale bookings for ${calendar.platform}:`, archiveErr.message);
+        failures.push({ property_id: property.id, platform: calendar.platform, error: `archive: ${archiveErr.message}` });
       }
 
       totalEvents += events.length;
     } catch (error) {
       console.error(`  ❌ Error syncing ${calendar.platform}:`, error.message);
+      failures.push({ property_id: property.id, platform: calendar.platform, error: error.message });
     }
   }
 
-  return { events: totalEvents, archived: totalArchived, deleted: 0 };
+  return { events: totalEvents, archived: totalArchived, deleted: 0, failures };
 }
 
 async function generateCleaningTasks() {
@@ -241,10 +244,12 @@ async function syncAll() {
     // Sync all property calendars
     let totalEvents = 0;
     let totalArchived = 0;
+    const failures = [];
     for (const property of config.properties) {
       const result = await syncPropertyCalendars(property);
       totalEvents += result.events;
       totalArchived += result.archived || 0;
+      failures.push(...(result.failures || []));
     }
 
     console.log(`\n✅ Total events synced: ${totalEvents}, stale archived: ${totalArchived}`);
@@ -262,13 +267,17 @@ async function syncAll() {
     const snapshot = await recordBookingStatsSnapshot(db, { source: 'sync' });
     console.log(`\n📈 Stats snapshot saved: ${snapshot.booking_count} bookings, ${snapshot.occupied_nights} nights`);
 
+    if (failures.length) {
+      throw new Error(`${failures.length} calendar feed(s) failed`);
+    }
+
     console.log('\n🎉 Sync completed successfully!');
     
   } catch (error) {
     console.error('❌ Sync failed:', error);
-    process.exit(1);
+    process.exitCode = 1;
   } finally {
-    db.close();
+    await db.close();
   }
 }
 
@@ -287,14 +296,17 @@ async function syncCalendars() {
   // Sync all property calendars
   let totalEvents = 0;
   let totalArchived = 0;
+  const failures = [];
   for (const property of config.properties) {
     const result = await syncPropertyCalendars(property);
     totalEvents += result.events;
     totalArchived += result.archived || 0;
+    failures.push(...(result.failures || []));
   }
 
   console.log(`\n✅ Total events synced: ${totalEvents}, stale archived: ${totalArchived}`);
-  return { totalEvents, totalArchived, totalDeleted: 0 };
+  if (failures.length) console.error(`⚠️ ${failures.length} calendar feed(s) failed`);
+  return { totalEvents, totalArchived, totalDeleted: 0, failures };
 }
 
 // Run if called directly

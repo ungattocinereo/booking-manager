@@ -43,6 +43,13 @@ function hasTelegramSecret(request: Request) {
   return Boolean(secret && header === secret);
 }
 
+function hasCloudflareAccessIdentity(request: Request) {
+  return Boolean(
+    request.headers.get('cf-access-authenticated-user-email') ||
+    request.headers.get('cf-access-jwt-assertion')
+  );
+}
+
 function isAllowedMachinePath(pathname: string, request: Request) {
   if (pathname === '/api/sync') {
     return hasBearerSecret(request, process.env.CRON_SECRET || '');
@@ -68,12 +75,16 @@ function blockedResponse() {
 export default function middleware(request: Request) {
   const url = new URL(request.url);
 
-  if (!isVercelHost(url.hostname)) return;
   if (PUBLIC_ASSET_PATHS.has(url.pathname)) return;
   if (isPublicMaidPath(url.pathname)) return;
   if (isPublicMaidApiPath(url.pathname)) return;
   if (isPublicWidgetApiRequest(url.pathname, request)) return;
   if (isAllowedMachinePath(url.pathname, request)) return;
+
+  if (!isVercelHost(url.hostname)) {
+    const requireIdentity = process.env.REQUIRE_CF_ACCESS_IDENTITY === '1' || process.env.REQUIRE_CF_ACCESS_IDENTITY === 'true';
+    if (!requireIdentity || hasCloudflareAccessIdentity(request)) return;
+  }
 
   return blockedResponse();
 }

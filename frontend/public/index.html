@@ -37,7 +37,6 @@
   <meta name="twitter:image" content="/icon-512.png">
 
   <script defer src="https://unpkg.com/lucide@1.17.0/dist/umd/lucide.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;750;800&display=swap" rel="stylesheet">
   <style>
@@ -181,6 +180,11 @@
       flex: 0 0 auto;
       white-space: nowrap;
       scroll-snap-align: start;
+      background: transparent;
+      border-left: 0;
+      border-right: 0;
+      border-top: 0;
+      font-family: inherit;
     }
     .nav-item:hover { color: var(--text); background: var(--bg); }
     .nav-item.active {
@@ -299,6 +303,12 @@
     .stat-checkin-item .guest-info {
       color: var(--text-secondary);
       white-space: nowrap;
+    }
+    .stat-checkin-more {
+      padding-left: 24px;
+      color: var(--text-secondary);
+      font-size: 11px;
+      font-weight: 700;
     }
 
     /* ===== BOOKING TOOLTIP ===== */
@@ -747,22 +757,20 @@
       justify-content: center;
       flex-shrink: 0;
     }
-    .cal-cell {
-      border-bottom: 1px solid var(--calendar-grid-line);
-      border-right: 1px solid var(--calendar-grid-line);
-      height: var(--calendar-row-height);
-      min-height: var(--calendar-row-height);
-      min-width: var(--calendar-day-width);
+    .cal-day-column {
       position: relative;
+      z-index: 1;
+      min-width: var(--calendar-day-width);
+      border-right: 1px solid var(--calendar-grid-line);
       background: #fff;
-      box-sizing: border-box;
+      pointer-events: none;
     }
-    .cal-cell.today {
+    .cal-day-column.today {
       min-width: var(--calendar-today-width);
       background: linear-gradient(180deg, rgba(15,118,110,.11), rgba(15,118,110,.045));
       box-shadow: inset 1px 0 rgba(15,118,110,.28), inset -1px 0 rgba(15,118,110,.24);
     }
-    .cal-cell.today::after {
+    .cal-day-column.today::after {
       content: "";
       position: absolute;
       top: 0;
@@ -774,13 +782,31 @@
       border-radius: 999px;
       opacity: .55;
     }
-    .cal-cell.past { background: #f7f7f8; }
-    .cal-cell.weekend { background: rgba(217,119,6,.035); }
-    .cal-cell.past.weekend { background: #f2f3f5; }
-    .cal-cell.today.weekend {
+    .cal-day-column.past { background: #f7f7f8; }
+    .cal-day-column.weekend { background: #fffaf2; }
+    .cal-day-column.past.weekend { background: #f2f3f5; }
+    .cal-day-column.today.weekend {
       background: linear-gradient(180deg, rgba(15,118,110,.11), rgba(15,118,110,.045));
     }
-    .cal-cell.month-start { border-left: 2px solid var(--accent); }
+    .cal-day-column.month-start { border-left: 2px solid var(--accent); }
+    .cal-row-layer {
+      position: relative;
+      z-index: 2;
+      pointer-events: none;
+      box-sizing: border-box;
+      border-bottom: 1px solid var(--calendar-grid-line);
+    }
+    .cal-row-layer.property {
+      height: var(--calendar-row-height);
+      min-height: var(--calendar-row-height);
+      background: transparent;
+    }
+    .cal-row-layer.group {
+      z-index: 3;
+      height: 30px;
+      min-height: 30px;
+      background: rgba(238,242,246,.94);
+    }
     .booking-bar {
       border: 0;
       position: relative;
@@ -1065,6 +1091,16 @@
       text-align: center;
       color: var(--text-secondary);
       font-size: 14px;
+    }
+    button.agenda-item {
+      width: 100%;
+      font-family: inherit;
+      text-align: left;
+      cursor: pointer;
+    }
+    button.agenda-item:focus-visible {
+      outline: 3px solid rgba(15,118,110,.22);
+      outline-offset: 2px;
     }
 
     /* ===== BOOKING DETAILS PANEL ===== */
@@ -2416,20 +2452,20 @@
   </div>
 
   <!-- NAV -->
-  <div class="nav">
-    <div class="nav-item active" data-tab="calendar" onclick="switchTab('calendar')">
+  <nav class="nav" aria-label="Разделы приложения">
+    <button type="button" class="nav-item active" data-tab="calendar" onclick="switchTab('calendar')">
       <i data-lucide="calendar-days" style="width:16px;height:16px;"></i>Календарь
-    </div>
-    <div class="nav-item" data-tab="cleaners" onclick="switchTab('cleaners')">
+    </button>
+    <button type="button" class="nav-item" data-tab="cleaners" onclick="switchTab('cleaners')">
       <i data-lucide="sparkles" style="width:16px;height:16px;"></i>Уборка
-    </div>
-    <div class="nav-item" data-tab="stats" onclick="switchTab('stats')">
+    </button>
+    <button type="button" class="nav-item" data-tab="stats" onclick="switchTab('stats')">
       <i data-lucide="bar-chart-3" style="width:16px;height:16px;"></i>Статистика
-    </div>
-    <div class="nav-item" data-tab="tax" onclick="switchTab('tax')">
+    </button>
+    <button type="button" class="nav-item" data-tab="tax" onclick="switchTab('tax')">
       <i data-lucide="receipt" style="width:16px;height:16px;"></i>Налоги
-    </div>
-  </div>
+    </button>
+  </nav>
 
   <!-- STATS -->
   <div class="stats-bar" id="statsBar">
@@ -2699,6 +2735,8 @@ let properties = [];
 let bookings = [];
 let cleaners = [];
 let statsSnapshots = [];
+let statsSnapshotsLoaded = false;
+let statsSnapshotsPromise = null;
 let allAssignments = {};
 let allTaxBookings = [];
 let taxFocusTodayOnNextRender = false;
@@ -2728,9 +2766,11 @@ function switchTab(tab, pushState = true) {
   if (tab !== 'calendar') closeBookingPanel();
   if (tab === 'calendar') {
     renderMobileAgenda();
-    requestAnimationFrame(() => {
-      if (!calendarHasAutoScrolledToday) centerCalendarTodayOnce();
-    });
+    if (shouldMountCalendarGrid()) {
+      requestAnimationFrame(() => {
+        if (!calendarHasAutoScrolledToday) centerCalendarTodayOnce();
+      });
+    }
   }
   if (tab === 'stats') renderStats();
   if (tab === 'tax') {
@@ -2766,9 +2806,17 @@ function dashboardPayloadFromResponse(dashboard) {
   const bks = Array.isArray(dashboard?.bookings) ? dashboard.bookings : null;
   const cls = Array.isArray(dashboard?.cleaners) ? dashboard.cleaners : null;
   const snapshots = Array.isArray(dashboard?.stats_snapshots) ? dashboard.stats_snapshots : [];
+  const meta = dashboard?.meta && typeof dashboard.meta === 'object' ? dashboard.meta : {};
 
   if (!props || !bks || !cls) return null;
-  return { properties: props, bookings: bks, cleaners: cls, statsSnapshots: snapshots };
+  return {
+    properties: props,
+    bookings: bks,
+    cleaners: cls,
+    statsSnapshots: snapshots,
+    statsSnapshotsIncluded: meta.stats_included === true || snapshots.length > 0,
+    meta
+  };
 }
 
 function dashboardPayloadSignature(payload) {
@@ -2776,7 +2824,9 @@ function dashboardPayloadSignature(payload) {
     properties: payload.properties,
     bookings: payload.bookings,
     cleaners: payload.cleaners,
-    statsSnapshots: payload.statsSnapshots || []
+    statsSnapshots: payload.statsSnapshotsIncluded ? (payload.statsSnapshots || []) : undefined,
+    range: payload.meta?.range || null,
+    datasetVersion: payload.meta?.dataset_version || null
   });
 }
 
@@ -2801,7 +2851,11 @@ function writeCachedDashboard(payload) {
         properties: payload.properties,
         bookings: payload.bookings,
         cleaners: payload.cleaners,
-        stats_snapshots: payload.statsSnapshots
+        stats_snapshots: payload.statsSnapshotsIncluded ? payload.statsSnapshots : [],
+        meta: {
+          ...(payload.meta || {}),
+          stats_included: Boolean(payload.statsSnapshotsIncluded)
+        }
       }
     }));
   } catch {
@@ -2817,6 +2871,7 @@ function cachedDashboardLabel(savedAt) {
 
 function shouldPreserveExistingDashboard(payload) {
   if (!hasLoadedOnce) return false;
+  if (payload.meta?.complete === true) return false;
   const wouldClearBookings = bookings.length > 0 && payload.bookings.length === 0;
   const wouldClearProperties = properties.length > 0 && payload.properties.length === 0;
   return wouldClearBookings || wouldClearProperties;
@@ -2829,7 +2884,25 @@ function markNetworkDashboardFresh(payload) {
   writeCachedDashboard(payload);
 }
 
+function shouldMountCalendarGrid() {
+  return !window.matchMedia('(max-width: 768px)').matches || mobileCalendarVisible;
+}
+
+function unmountCalendarGrid() {
+  const grid = document.getElementById('calendarGrid');
+  const propertyRail = document.getElementById('calendarPropertyRailGrid');
+  const scroll = document.getElementById('calendarScroll');
+  if (grid) grid.innerHTML = '';
+  if (propertyRail) propertyRail.innerHTML = '';
+  if (scroll) scroll.querySelectorAll('.cal-month-label').forEach(label => label.remove());
+}
+
 function renderCalendarWhenVisible(options = {}) {
+  if (!shouldMountCalendarGrid()) {
+    calendarNeedsVisibleRender = false;
+    unmountCalendarGrid();
+    return;
+  }
   if (document.hidden || document.visibilityState === 'hidden') {
     calendarNeedsVisibleRender = true;
     return;
@@ -2858,7 +2931,10 @@ function applyDashboardPayload(payload, {
   properties = payload.properties;
   bookings = payload.bookings;
   cleaners = payload.cleaners;
-  statsSnapshots = payload.statsSnapshots || [];
+  if (payload.statsSnapshotsIncluded) {
+    statsSnapshots = payload.statsSnapshots || [];
+    statsSnapshotsLoaded = true;
+  }
 
   rebuildAssignments();
 
@@ -2904,8 +2980,12 @@ async function loadData({ silent = false, attempt = 1, preserveCalendarScroll = 
   if (!hasLoadedOnce && !silent) lastSyncEl.textContent = 'Загрузка…';
 
   try {
-    const statsYear = new Date().getFullYear();
-    const dashboard = await fetchJsonOrNull(`${API}/dashboard?full=1&season_year=${statsYear}&snapshots_limit=1000`);
+    const romeToday = todayLocal();
+    const statsYear = romeToday.getFullYear();
+    const dashboardStart = romeToday.getMonth() >= 3
+      ? `${statsYear}-04-01`
+      : toLocalIso(addCalendarDays(romeToday, -45));
+    const dashboard = await fetchJsonOrNull(`${API}/dashboard?from_date=${dashboardStart}&season_year=${statsYear}`);
     if (loadSeq !== dashboardLoadSeq) return;
 
     const payload = dashboardPayloadFromResponse(dashboard);
@@ -2975,6 +3055,14 @@ function updateStats() {
     </div>`;
   }
 
+  function renderCheckinList(items, limit = 3) {
+    const visible = items.slice(0, limit).map(renderCheckinItem).join('');
+    const remaining = items.length - limit;
+    return remaining > 0
+      ? `${visible}<div class="stat-checkin-more">+ ещё ${remaining}</div>`
+      : visible;
+  }
+
   function formatDateTitle(dateStr) {
     const d = new Date(dateStr + 'T00:00:00');
     return `${dayNamesRu[d.getDay()]}, ${d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}`;
@@ -2985,18 +3073,24 @@ function updateStats() {
   document.getElementById('statTodayCount').textContent = todayCheckins.length > 0
     ? `${todayCheckins.length} заезд${todayCheckins.length > 1 ? (todayCheckins.length < 5 ? 'а' : 'ов') : ''}`
     : 'Нет заездов';
-  document.getElementById('statTodayList').innerHTML = todayCheckins.map(renderCheckinItem).join('');
+  document.getElementById('statTodayList').innerHTML = renderCheckinList(todayCheckins);
 
   // Next check-in day (skip today)
   const futureDates = sortedDates.filter(d => d > today);
   if (futureDates.length > 0) {
     document.getElementById('statNextDate').textContent = formatDateTitle(futureDates[0]);
-    document.getElementById('statNextList').innerHTML = checkinDates[futureDates[0]].map(renderCheckinItem).join('');
+    document.getElementById('statNextList').innerHTML = renderCheckinList(checkinDates[futureDates[0]]);
+  } else {
+    document.getElementById('statNextDate').textContent = '—';
+    document.getElementById('statNextList').innerHTML = '';
   }
   // Following check-in day
   if (futureDates.length > 1) {
     document.getElementById('statNext2Date').textContent = formatDateTitle(futureDates[1]);
-    document.getElementById('statNext2List').innerHTML = checkinDates[futureDates[1]].map(renderCheckinItem).join('');
+    document.getElementById('statNext2List').innerHTML = renderCheckinList(checkinDates[futureDates[1]]);
+  } else {
+    document.getElementById('statNext2Date').textContent = '—';
+    document.getElementById('statNext2List').innerHTML = '';
   }
 
   // Detect conflicts: overlapping bookings for the same property
@@ -3341,6 +3435,7 @@ let calendarDayOffsets = [];
 let calendarDayWidths = [];
 let calendarCurrentStartDate = null;
 let calendarPropertyColumnCollapsed = false;
+let calendarPropertyColumnOpenScrollLeft = 0;
 let calendarScrollStateBound = false;
 let mobileAgendaRange = 'today';
 let mobileCalendarVisible = false;
@@ -3366,9 +3461,14 @@ function toLocalIso(date) {
 }
 
 function todayLocal() {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  return today;
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Rome',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).formatToParts(new Date());
+  const values = Object.fromEntries(parts.map(part => [part.type, part.value]));
+  return parseLocalDate(`${values.year}-${values.month}-${values.day}`);
 }
 
 function shouldShowCalendarArchive(view = calendarState.view) {
@@ -3428,11 +3528,20 @@ function syncCalendarPropertyColumnState(options = {}) {
   if (!scroll) return;
   const currentScrollLeft = scroll.scrollLeft || 0;
   const expandThreshold = 18;
-  const shouldCollapse = !(options.forceExpanded || currentScrollLeft <= expandThreshold);
+  const collapseThreshold = 18;
+  const openBoundary = Math.max(expandThreshold, calendarPropertyColumnOpenScrollLeft + collapseThreshold);
+  const shouldCollapse = !(options.forceExpanded || currentScrollLeft <= openBoundary);
 
   if (calendarPropertyColumnCollapsed === shouldCollapse && scroll.classList.contains('is-property-collapsed') === shouldCollapse) return;
   calendarPropertyColumnCollapsed = shouldCollapse;
   scroll.classList.toggle('is-property-collapsed', shouldCollapse);
+}
+
+function openCalendarPropertyColumnAt(left = null) {
+  const scroll = document.getElementById('calendarScroll');
+  if (!scroll) return;
+  calendarPropertyColumnOpenScrollLeft = Math.max(0, left == null ? (scroll.scrollLeft || 0) : left);
+  syncCalendarPropertyColumnState({ forceExpanded: true });
 }
 
 function bindCalendarScrollState() {
@@ -3461,6 +3570,7 @@ function scrollCalendarToToday({ behavior = 'smooth' } = {}) {
 
   const scroll = document.getElementById('calendarScroll');
   if (!scroll) return;
+  openCalendarPropertyColumnAt(calendarTodayScrollLeft);
   scroll.scrollTo({ left: calendarTodayScrollLeft, behavior });
 }
 
@@ -3605,13 +3715,18 @@ function jumpCalendarToMonth(value) {
 }
 
 function renderCalendar({ preserveScroll = false, focusDate = null, behavior = 'auto' } = {}) {
+  if (!shouldMountCalendarGrid()) {
+    unmountCalendarGrid();
+    return;
+  }
   const grid = document.getElementById('calendarGrid');
   const scroll = document.getElementById('calendarScroll');
   const propertyRail = document.getElementById('calendarPropertyRailGrid');
   if (!grid || !scroll || !propertyRail) return;
 
   bindCalendarScrollState();
-  syncCalendarPropertyColumnState();
+  if (focusDate || !preserveScroll) openCalendarPropertyColumnAt();
+  else syncCalendarPropertyColumnState();
 
   const previousScrollLeft = scroll.scrollLeft || 0;
   const today = todayLocal();
@@ -3689,14 +3804,11 @@ function renderCalendar({ preserveScroll = false, focusDate = null, behavior = '
     gh.innerHTML = `<span class="cal-group-label">${escapeHtml(group.name)}</span>`;
     propertyRail.appendChild(gh);
 
-    days.forEach((_, i) => {
-      const spacer = document.createElement('div');
-      spacer.className = 'cal-group-header';
-      spacer.style.gridRow = currentRow;
-      spacer.style.gridColumn = i + 2;
-      spacer.style.minWidth = formatCalendarPx(dayMetrics.widths[i]);
-      grid.appendChild(spacer);
-    });
+    const groupLayer = document.createElement('div');
+    groupLayer.className = 'cal-row-layer group';
+    groupLayer.style.gridRow = currentRow;
+    groupLayer.style.gridColumn = `2 / ${totalDays + 2}`;
+    grid.appendChild(groupLayer);
     currentRow++;
 
     groupProperties.forEach(prop => {
@@ -3715,18 +3827,11 @@ function renderCalendar({ preserveScroll = false, focusDate = null, behavior = '
       `;
       propertyRail.appendChild(nameEl);
 
-      days.forEach((day, dayIdx) => {
-        const cell = document.createElement('div');
-        const isToday = day.getTime() === today.getTime();
-        const isPast = day < today;
-        const isWeekend = day.getDay() === 0 || day.getDay() === 6;
-        const isMonthStart = day.getDate() === 1;
-        cell.className = 'cal-cell' + (isToday ? ' today' : '') + (isPast ? ' past' : '') + (isWeekend ? ' weekend' : '') + (isMonthStart ? ' month-start' : '');
-        cell.style.gridRow = row;
-        cell.style.gridColumn = dayIdx + 2;
-        cell.style.minWidth = formatCalendarPx(dayMetrics.widths[dayIdx]);
-        grid.appendChild(cell);
-      });
+      const rowLayer = document.createElement('div');
+      rowLayer.className = 'cal-row-layer property';
+      rowLayer.style.gridRow = row;
+      rowLayer.style.gridColumn = `2 / ${totalDays + 2}`;
+      grid.appendChild(rowLayer);
 
       getCalendarBookingsForProperty(prop.id, startDate, endDate, today).forEach(booking => {
         const start = parseLocalDate(booking.start_date);
@@ -3764,6 +3869,21 @@ function renderCalendar({ preserveScroll = false, focusDate = null, behavior = '
     });
   });
 
+  if (visiblePropertyCount) {
+    days.forEach((day, dayIdx) => {
+      const isToday = day.getTime() === today.getTime();
+      const isPast = day < today;
+      const isWeekend = day.getDay() === 0 || day.getDay() === 6;
+      const isMonthStart = day.getDate() === 1;
+      const column = document.createElement('div');
+      column.className = 'cal-day-column' + (isToday ? ' today' : '') + (isPast ? ' past' : '') + (isWeekend ? ' weekend' : '') + (isMonthStart ? ' month-start' : '');
+      column.style.gridRow = `2 / ${currentRow}`;
+      column.style.gridColumn = dayIdx + 2;
+      column.style.minWidth = formatCalendarPx(dayMetrics.widths[dayIdx]);
+      grid.appendChild(column);
+    });
+  }
+
   if (!visiblePropertyCount) {
     grid.innerHTML = '<div class="calendar-empty-state">Нет апартаментов для выбранной группы.</div>';
     propertyRail.innerHTML = '';
@@ -3776,8 +3896,10 @@ function renderCalendar({ preserveScroll = false, focusDate = null, behavior = '
     if (targetDate) {
       const focusIndex = days.findIndex(day => day.getTime() === targetDate.getTime());
       if (focusIndex >= 0) {
-        scroll.scrollTo({ left: getCalendarCenteredScrollLeft(scroll, focusIndex), behavior });
-        requestAnimationFrame(() => syncCalendarPropertyColumnState());
+        const targetLeft = getCalendarCenteredScrollLeft(scroll, focusIndex);
+        openCalendarPropertyColumnAt(targetLeft);
+        scroll.scrollTo({ left: targetLeft, behavior });
+        requestAnimationFrame(() => syncCalendarPropertyColumnState({ forceExpanded: true }));
         return;
       }
     }
@@ -3791,7 +3913,7 @@ function renderCalendar({ preserveScroll = false, focusDate = null, behavior = '
       return;
     }
     scroll.scrollLeft = 0;
-    syncCalendarPropertyColumnState();
+    openCalendarPropertyColumnAt(0);
   });
 
   if (typeof lucide !== 'undefined') lucide.createIcons();
@@ -3832,6 +3954,8 @@ function toggleMobileCalendar() {
   if (mobileCalendarVisible) {
     calendarHasAutoScrolledToday = false;
     requestAnimationFrame(() => renderCalendar({ focusDate: todayLocal(), behavior: 'auto' }));
+  } else {
+    unmountCalendarGrid();
   }
 }
 
@@ -3907,11 +4031,11 @@ function renderMobileAgenda() {
       <div class="agenda-date-header"><span>Конфликты</span><span>${conflicts.length}</span></div>
       ${conflicts.slice(0, 3).map(c => {
         const meta = propertyMeta(c.propertyId);
-        return `<div class="agenda-item" style="--property-color:${meta.color};--property-bg:${meta.bg}" onclick="openBookingPanel(${c.a.id})">
+        return `<button type="button" class="agenda-item" style="--property-color:${meta.color};--property-bg:${meta.bg}" onclick="openBookingPanel(${c.a.id})">
           <div class="agenda-item-icon"><i data-lucide="alert-triangle" style="width:18px;height:18px;"></i></div>
           <div><div class="agenda-item-title">${escapeHtml(c.property)}</div><div class="agenda-item-meta">${formatBookingDate(c.a.start_date)} - ${formatBookingDate(c.b.end_date)}</div></div>
           <span class="agenda-type conflict">конфликт</span>
-        </div>`;
+        </button>`;
       }).join('')}
     </div>`;
   }
@@ -3934,14 +4058,14 @@ function renderMobileAgenda() {
         const agendaIcon = platformLogo
           ? `<div class="agenda-platform-wrap">${platformLogo}<span class="agenda-platform-action ${isCheckout ? 'checkout' : 'checkin'}"><i data-lucide="${isCheckout ? 'sparkles' : 'log-in'}" style="width:11px;height:11px;"></i></span></div>`
           : `<div class="agenda-item-icon"><i data-lucide="${isCheckout ? 'sparkles' : 'log-in'}" style="width:18px;height:18px;"></i></div>`;
-        html += `<div class="agenda-item" style="--property-color:${meta.color};--property-bg:${meta.bg}" onclick="openBookingPanel(${booking.id})">
+        html += `<button type="button" class="agenda-item" style="--property-color:${meta.color};--property-bg:${meta.bg}" onclick="openBookingPanel(${booking.id})">
           ${agendaIcon}
           <div>
             <div class="agenda-item-title">${escapeHtml(meta.name)}</div>
             <div class="agenda-item-meta">${escapeHtml(guest)}${flag}${taxNote}</div>
           </div>
           <span class="agenda-type ${isCheckout ? 'checkout' : 'checkin'}">${isCheckout ? 'выезд' : 'заезд'}</span>
-        </div>`;
+        </button>`;
       });
       html += '</div>';
     });
@@ -4213,7 +4337,90 @@ async function toggleAssignment(cleanerId, propertyId, checked) {
 }
 
 // ===== STATISTICS =====
+const CHART_JS_URL = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js';
 let statsCharts = {};
+let chartJsPromise = null;
+let statsRenderSequence = 0;
+let statsChartObservers = [];
+
+function ensureChartJs() {
+  if (typeof Chart !== 'undefined') return Promise.resolve();
+  if (chartJsPromise) return chartJsPromise;
+
+  chartJsPromise = new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = CHART_JS_URL;
+    script.async = true;
+    script.dataset.chartJs = 'true';
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error('Не удалось загрузить модуль графиков'));
+    document.head.appendChild(script);
+  }).catch(error => {
+    chartJsPromise = null;
+    throw error;
+  });
+
+  return chartJsPromise;
+}
+
+function ensureStatsSnapshots() {
+  if (statsSnapshotsLoaded) return Promise.resolve(statsSnapshots);
+  if (statsSnapshotsPromise) return statsSnapshotsPromise;
+
+  const year = todayLocal().getFullYear();
+  statsSnapshotsPromise = fetchJsonOrNull(`${API}/bookings?stats_snapshots=1&season_year=${year}&limit=1000`)
+    .then(rows => {
+      if (!Array.isArray(rows)) throw new Error('Не удалось загрузить историю статистики');
+      statsSnapshots = rows;
+      statsSnapshotsLoaded = true;
+      return rows;
+    })
+    .finally(() => {
+      statsSnapshotsPromise = null;
+    });
+
+  return statsSnapshotsPromise;
+}
+
+async function renderStats() {
+  const sequence = ++statsRenderSequence;
+  const section = document.getElementById('statsTab');
+  if (section) section.setAttribute('aria-busy', 'true');
+
+  try {
+    await Promise.all([ensureChartJs(), ensureStatsSnapshots()]);
+    if (sequence !== statsRenderSequence) return;
+    renderStatsNow();
+  } catch (error) {
+    if (sequence === statsRenderSequence) toast(error.message || 'Ошибка загрузки статистики');
+  } finally {
+    if (sequence === statsRenderSequence && section) section.removeAttribute('aria-busy');
+  }
+}
+
+function createDeferredStatsChart(key, canvasId, factory) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+
+  const mount = () => {
+    if (!canvas.isConnected || statsCharts[key]) return;
+    statsCharts[key] = factory(canvas);
+  };
+  const rect = canvas.getBoundingClientRect();
+  if (typeof IntersectionObserver === 'undefined' || rect.top < window.innerHeight + 80) {
+    mount();
+    return;
+  }
+
+  const observer = new IntersectionObserver(entries => {
+    if (entries.some(entry => entry.isIntersecting)) {
+      observer.disconnect();
+      mount();
+    }
+  }, { rootMargin: '80px 0px' });
+  observer.observe(canvas);
+  statsChartObservers.push(observer);
+}
 let statsDynamicsState = { year: null, snapshots: [], monthLabels: [], monthKeys: [] };
 let statsSnapshotIndex = null;
 let statsSnapshotUserSelected = false;
@@ -4285,6 +4492,25 @@ function statsClippedNights(booking, rangeStart, rangeEnd) {
   return Math.max(0, Math.round((clippedEnd - clippedStart) / 86400000));
 }
 
+function buildStatsOccupiedNightSets(source, rangeStart, rangeEnd) {
+  const byProperty = new Map();
+  for (const booking of source) {
+    if (!booking.property_id) continue;
+    const start = parseLocalDate(booking.start_date);
+    const end = parseLocalDate(booking.end_date);
+    const clippedStart = new Date(Math.max(start.getTime(), rangeStart.getTime()));
+    const clippedEnd = new Date(Math.min(end.getTime(), rangeEnd.getTime()));
+    if (clippedEnd <= clippedStart) continue;
+
+    if (!byProperty.has(booking.property_id)) byProperty.set(booking.property_id, new Set());
+    const occupiedDates = byProperty.get(booking.property_id);
+    for (const day = new Date(clippedStart); day < clippedEnd; day.setDate(day.getDate() + 1)) {
+      occupiedDates.add(toLocalIso(day));
+    }
+  }
+  return byProperty;
+}
+
 function getSeasonBookings(year) {
   const season = statsSeasonRange(year);
   return bookings.filter(b => {
@@ -4329,8 +4555,16 @@ function buildCurrentStatsSnapshot(year, seasonBookings, totalOccupiedNights, av
       const monthStart = new Date(year, monthIndex, 1);
       const monthEnd = new Date(year, monthIndex + 1, 1);
       const nights = statsClippedNights(booking, monthStart, monthEnd);
-      monthlyNights[key] += nights;
       if (nights > 0) monthlyGuests[key] += guests;
+    }
+  }
+
+  const season = statsSeasonRange(year);
+  const occupiedNightSets = buildStatsOccupiedNightSets(seasonBookings, season.start, season.end);
+  for (const dates of occupiedNightSets.values()) {
+    for (const date of dates) {
+      const monthKey = date.slice(0, 7);
+      if (monthlyNights[monthKey] !== undefined) monthlyNights[monthKey]++;
     }
   }
 
@@ -4632,8 +4866,8 @@ function createStatsDynamicsChart() {
   });
 }
 
-function renderStats() {
-  const year = new Date().getFullYear();
+function renderStatsNow() {
+  const year = todayLocal().getFullYear();
   const monthLabels = STATS_MONTH_LABELS;
   const monthIndices = STATS_MONTH_INDICES;
   const monthKeys = monthIndices.map(monthIndex => statsMonthKey(year, monthIndex));
@@ -4643,6 +4877,8 @@ function renderStats() {
   const seasonBookings = getSeasonBookings(year);
 
   // Destroy old charts
+  statsChartObservers.forEach(observer => observer.disconnect());
+  statsChartObservers = [];
   Object.values(statsCharts).forEach(c => c.destroy());
   statsCharts = {};
 
@@ -4652,13 +4888,9 @@ function renderStats() {
     return sum + daysInMonth;
   }, 0); // per property
 
-  let totalOccupiedNights = 0;
-  const propNights = {};
-  for (const b of seasonBookings) {
-    const nights = statsClippedNights(b, seasonRange.start, seasonRange.end);
-    totalOccupiedNights += nights;
-    propNights[b.property_id] = (propNights[b.property_id] || 0) + nights;
-  }
+  const occupiedNightSets = buildStatsOccupiedNightSets(seasonBookings, seasonRange.start, seasonRange.end);
+  const propNights = Object.fromEntries([...occupiedNightSets.entries()].map(([propertyId, dates]) => [propertyId, dates.size]));
+  const totalOccupiedNights = Object.values(propNights).reduce((sum, nights) => sum + nights, 0);
   const avgOccupancy = properties.length > 0
     ? Number(((totalOccupiedNights / (totalNightsSeason * properties.length)) * 100).toFixed(1))
     : 0;
@@ -4810,7 +5042,7 @@ function renderStats() {
   if (othersCount > 0) { countryLabels.push('Другие'); countryData.push(othersCount); }
   const countryColors = ['#0f766e','#D8304E','#003b95','#d97706','#0891b2','#be185d','#7c3aed','#475467','#98a2b3'];
 
-  statsCharts.countries = new Chart(document.getElementById('chartCountries'), {
+  createDeferredStatsChart('countries', 'chartCountries', canvas => new Chart(canvas, {
     type: 'doughnut',
     data: {
       labels: countryLabels,
@@ -4833,7 +5065,7 @@ function renderStats() {
         }
       }
     }
-  });
+  }));
 
   // ===== 4. CHECK-IN DAY OF WEEK (bar) =====
   const dayNamesRu = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
@@ -4847,7 +5079,7 @@ function renderStats() {
   const reorderedLabels = [...dayNamesRu.slice(1), dayNamesRu[0]];
   const dayColors = reordered.map((_, i) => i >= 5 ? '#f59e0b' : '#0f766e'); // weekend accent
 
-  statsCharts.checkinDays = new Chart(document.getElementById('chartCheckinDays'), {
+  createDeferredStatsChart('checkinDays', 'chartCheckinDays', canvas => new Chart(canvas, {
     type: 'bar',
     data: {
       labels: reorderedLabels,
@@ -4861,7 +5093,7 @@ function renderStats() {
         y: { ...chartDefaults.scales.y, ticks: { ...chartDefaults.scales.y.ticks, stepSize: 1 } }
       }
     }
-  });
+  }));
 
   // ===== 5. AVERAGE STAY DURATION (bar by property) =====
   const propDuration = {};
@@ -4881,7 +5113,7 @@ function renderStats() {
     };
   }).sort((a, b) => b.value - a.value);
 
-  statsCharts.duration = new Chart(document.getElementById('chartDuration'), {
+  createDeferredStatsChart('duration', 'chartDuration', canvas => new Chart(canvas, {
     type: 'bar',
     data: {
       labels: durationRows.map(row => row.label),
@@ -4900,7 +5132,7 @@ function renderStats() {
         y: chartDefaults.scales.y
       }
     }
-  });
+  }));
 
   // ===== 6. GUESTS BY MONTH (line) =====
   const monthlyGuests = new Array(8).fill(0);
@@ -4912,7 +5144,7 @@ function renderStats() {
     }
   }
 
-  statsCharts.guests = new Chart(document.getElementById('chartGuests'), {
+  createDeferredStatsChart('guests', 'chartGuests', canvas => new Chart(canvas, {
     type: 'line',
     data: {
       labels: monthLabels,
@@ -4938,7 +5170,7 @@ function renderStats() {
         y: { ...chartDefaults.scales.y, ticks: { ...chartDefaults.scales.y.ticks, stepSize: 5 } }
       }
     }
-  });
+  }));
 }
 
 async function syncCalendars() {
@@ -4952,11 +5184,17 @@ async function syncCalendars() {
     if (!res.ok || result?.success === false) {
       throw new Error(result?.error || `HTTP ${res.status}`);
     }
+    statsSnapshotsLoaded = false;
+    statsSnapshotsPromise = null;
     await loadData();
     btn.disabled = false;
     btn.innerHTML = '<i data-lucide="refresh-cw" style="width:14px;height:14px;"></i>Синхронизация';
     if (typeof lucide !== 'undefined') lucide.createIcons();
-    toast('✅ Синхронизация завершена');
+    if (result?.partial) {
+      toast(`⚠️ Обновлено частично: ошибок источников ${result.feed_errors?.length || 0}`);
+    } else {
+      toast('✅ Синхронизация завершена');
+    }
   } catch (err) {
     toast('❌ Ошибка синхронизации: ' + err.message);
     btn.disabled = false;

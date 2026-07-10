@@ -1,5 +1,6 @@
 const DAY_MS = 86400000;
 const { isRealGuestBooking } = require('../../lib/booking-normalization');
+const { todayInRome } = require('../../api/_helpers');
 
 const STATS_MONTHS = [3, 4, 5, 6, 7, 8, 9, 10];
 
@@ -26,7 +27,7 @@ function daysBetween(start, end) {
   return Math.max(0, Math.round((end - start) / DAY_MS));
 }
 
-function seasonRange(year = new Date().getFullYear()) {
+function seasonRange(year = Number(todayInRome().slice(0, 4))) {
   const start = new Date(year, 3, 1);
   const end = new Date(year, 11, 1);
   start.setHours(0, 0, 0, 0);
@@ -65,6 +66,27 @@ function stayBucket(nights) {
   return '7+';
 }
 
+function buildOccupiedNightSets(bookings, rangeStart, rangeEnd) {
+  const byProperty = new Map();
+
+  for (const booking of bookings) {
+    if (!booking.property_id) continue;
+    const start = parseLocalDate(booking.start_date);
+    const end = parseLocalDate(booking.end_date);
+    const clippedStart = new Date(Math.max(start.getTime(), rangeStart.getTime()));
+    const clippedEnd = new Date(Math.min(end.getTime(), rangeEnd.getTime()));
+    if (clippedEnd <= clippedStart) continue;
+
+    if (!byProperty.has(booking.property_id)) byProperty.set(booking.property_id, new Set());
+    const occupiedDates = byProperty.get(booking.property_id);
+    for (const day = new Date(clippedStart); day < clippedEnd; day.setDate(day.getDate() + 1)) {
+      occupiedDates.add(toLocalIso(day));
+    }
+  }
+
+  return byProperty;
+}
+
 function computeBookingStatsSnapshot({ bookings, properties = [], source = 'sync', seasonYear, capturedAt } = {}) {
   const season = seasonRange(seasonYear);
   const realBookings = (bookings || [])
@@ -80,7 +102,6 @@ function computeBookingStatsSnapshot({ bookings, properties = [], source = 'sync
   const countryCounts = {};
   const checkinDays = { mon: 0, tue: 0, wed: 0, thu: 0, fri: 0, sat: 0, sun: 0 };
   const stayBuckets = { '1': 0, '2': 0, '3': 0, '4-6': 0, '7+': 0 };
-  let occupiedNights = 0;
   let guestCount = 0;
   let bookingsWithGuests = 0;
   let stayTotal = 0;
@@ -93,7 +114,6 @@ function computeBookingStatsSnapshot({ bookings, properties = [], source = 'sync
   }
 
   for (const booking of realBookings) {
-    occupiedNights += clippedNights(booking, season.start, season.end);
     increment(platformCounts, booking.platform || 'other');
 
     const country = String(booking.guest_country || '').trim().toLowerCase();
@@ -120,12 +140,23 @@ function computeBookingStatsSnapshot({ bookings, properties = [], source = 'sync
       const monthStart = new Date(season.year, month, 1);
       const monthEnd = new Date(season.year, month + 1, 1);
       const monthNights = clippedNights(booking, monthStart, monthEnd);
-      monthlyNights[key] += monthNights;
       if (monthNights > 0) monthlyGuests[key] += guests;
     }
 
     const startMonthKey = `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, '0')}`;
     if (monthlyBookings[startMonthKey] !== undefined) monthlyBookings[startMonthKey]++;
+  }
+
+  const occupiedNightSets = buildOccupiedNightSets(realBookings, season.start, season.end);
+  const propertyOccupiedNights = {};
+  let occupiedNights = 0;
+  for (const [propertyId, dates] of occupiedNightSets.entries()) {
+    propertyOccupiedNights[propertyId] = dates.size;
+    occupiedNights += dates.size;
+    for (const date of dates) {
+      const monthKey = date.slice(0, 7);
+      if (monthlyNights[monthKey] !== undefined) monthlyNights[monthKey]++;
+    }
   }
 
   const occupancyPercent = potentialNights > 0
@@ -155,7 +186,8 @@ function computeBookingStatsSnapshot({ bookings, properties = [], source = 'sync
       avg_guests: avgGuests,
       checkin_days: checkinDays,
       stay_buckets: stayBuckets,
-      monthly_guests: monthlyGuests
+      monthly_guests: monthlyGuests,
+      property_occupied_nights: propertyOccupiedNights
     }
   };
 }
@@ -177,6 +209,7 @@ async function recordBookingStatsSnapshot(db, options = {}) {
 }
 
 module.exports = {
+  buildOccupiedNightSets,
   computeBookingStatsSnapshot,
   recordBookingStatsSnapshot
 };

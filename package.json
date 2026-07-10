@@ -10,8 +10,11 @@
     "enrich": "node scripts/enrich-bookings.js",
     "audit:data": "node scripts/audit-production-data.js",
     "backup:data": "node scripts/backup-production-data.js",
-    "test": "npm run sync && curl http://localhost:3001/health",
-    "test:booking-lifecycle": "node scripts/test-booking-lifecycle.js"
+    "migrate:postgres": "node scripts/migrate-postgres.js",
+    "test": "npm run test:unit && npm run test:booking-lifecycle",
+    "test:unit": "node --test tests/*.test.js",
+    "test:booking-lifecycle": "node scripts/test-booking-lifecycle.js",
+    "test:ui": "node scripts/test-ui-performance.js"
   },
   "keywords": [
     "booking",
@@ -30,15 +33,19 @@
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^16.6.1",
-    "express": "^4.18.2",
+    "express": "^4.22.2",
     "ical.js": "^1.5.0",
     "node-fetch": "^2.6.7",
     "pg": "^8.20.0",
     "playwright": "^1.58.2",
-    "sqlite3": "^5.1.6",
-    "xlsx": "^0.18.5"
+    "sqlite3": "^6.0.1",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   },
   "devDependencies": {
-    "nodemon": "^2.0.20"
+    "nodemon": "^3.1.14",
+    "picomatch": "2.3.2"
+  },
+  "overrides": {
+    "path-to-regexp": "0.1.13"
   }
 }

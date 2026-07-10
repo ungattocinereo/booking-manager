@@ -27,7 +27,7 @@
   <meta property="og:description" content="Calendario arrivi e partenze per le pulizie degli appartamenti">
   <meta property="og:image" content="/icon-512.png">
 
-  <script src="https://unpkg.com/lucide@latest"></script>
+  <script defer src="https://unpkg.com/lucide@1.17.0/dist/umd/lucide.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;750;800&display=swap" rel="stylesheet">
   <style>
@@ -446,6 +446,17 @@ let data = null;
 let currentMonth = null; // { year, month }
 let viewMode = 'today'; // today | tomorrow | month
 
+function todayInRome() {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Rome',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).formatToParts(new Date());
+  const values = Object.fromEntries(parts.map(part => [part.type, part.value]));
+  return new Date(Number(values.year), Number(values.month) - 1, Number(values.day));
+}
+
 async function loadData() {
   try {
     const res = await fetch(`/api/maid/${slug}`);
@@ -456,7 +467,7 @@ async function loadData() {
     data = await res.json();
     const events = getEvents();
     const months = getAvailableMonths(events);
-    const today = new Date();
+    const today = todayInRome();
     currentMonth = months.find(m => m.year === today.getFullYear() && m.month === today.getMonth())
       || months[0]
       || { year: today.getFullYear(), month: today.getMonth() };
@@ -479,9 +490,9 @@ function showError() {
 function getEvents() {
   if (!data) return [];
   const events = [];
-  const today = new Date();
-  today.setHours(0,0,0,0);
-  const endOfYear = new Date(today.getFullYear(), 11, 31);
+  const today = todayInRome();
+  const endOfWindow = new Date(today);
+  endOfWindow.setFullYear(endOfWindow.getFullYear() + 1);
 
   for (const b of data.bookings) {
     const startDate = new Date(b.start_date + 'T00:00:00');
@@ -491,7 +502,7 @@ function getEvents() {
     const propName = prop?.name || cfg.name || b.property_id;
 
     // Check-in event
-    if (startDate >= today && startDate <= endOfYear) {
+    if (startDate >= today && startDate <= endOfWindow) {
       events.push({
         date: b.start_date,
         dateObj: startDate,
@@ -506,7 +517,7 @@ function getEvents() {
     }
 
     // Check-out event
-    if (endDate >= today && endDate <= endOfYear) {
+    if (endDate >= today && endDate <= endOfWindow) {
       events.push({
         date: b.end_date,
         dateObj: endDate,
@@ -545,8 +556,7 @@ function toLocalIso(date) {
 }
 
 function getViewEvents(events) {
-  const today = new Date();
-  today.setHours(0,0,0,0);
+  const today = todayInRome();
 
   if (viewMode === 'today' || viewMode === 'tomorrow') {
     const target = new Date(today);
@@ -571,8 +581,7 @@ function getAvailableMonths(events) {
 
 function formatDayLabel(dateStr) {
   const d = new Date(dateStr + 'T00:00:00');
-  const today = new Date();
-  today.setHours(0,0,0,0);
+  const today = todayInRome();
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
 
@@ -588,9 +597,8 @@ function render() {
   const months = getAvailableMonths(events);
   const selectedEvents = getViewEvents(events);
 
-  const today = new Date();
-  today.setHours(0,0,0,0);
-  const todayStr = today.toISOString().split('T')[0];
+  const today = todayInRome();
+  const todayStr = toLocalIso(today);
 
   // Group events by date
   const byDate = {};

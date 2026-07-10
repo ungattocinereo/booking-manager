@@ -6,6 +6,7 @@ const db = USE_POSTGRES
 
 const { formatBooking, formatCleaningTask, todayInRome } = require('./_helpers');
 const { normalizeBookingsForDisplay } = require('../lib/booking-normalization');
+const { isDateOnly } = require('../lib/api-validation');
 
 module.exports = async (req, res) => {
   try {
@@ -17,13 +18,17 @@ module.exports = async (req, res) => {
     const today = todayInRome();
     const full = req.query.full === '1';
     const includeInactive = req.query.include_inactive === '1';
-    const seasonYear = req.query.season_year || new Date().getFullYear();
+    if (req.query.from_date && !isDateOnly(req.query.from_date)) {
+      return res.status(400).json({ error: 'from_date must be YYYY-MM-DD' });
+    }
+    const fromDate = full ? null : (req.query.from_date || today);
+    const seasonYear = req.query.season_year || Number(today.slice(0, 4));
     const snapshotsLimit = req.query.snapshots_limit || req.query.limit || 1000;
     
     // Fetch all data
     const [properties, bookings, cleaningTasks, cleaners, statsSnapshots] = await Promise.all([
       db.getProperties(),
-      db.getBookings(null, full ? null : today, { includeInactive }),
+      db.getBookings(null, fromDate, { includeInactive }),
       db.getCleaningTasks(null, today),
       db.getCleaners(),
       full && typeof db.getStatsSnapshots === 'function'
@@ -31,9 +36,9 @@ module.exports = async (req, res) => {
         : Promise.resolve([])
     ]);
 
-    for (const cleaner of cleaners) {
+    await Promise.all(cleaners.map(async cleaner => {
       cleaner.properties = await db.getCleanerProperties(cleaner.id);
-    }
+    }));
 
     // Format dates to YYYY-MM-DD
     const normalizedBookings = normalizeBookingsForDisplay(bookings);
@@ -42,6 +47,10 @@ module.exports = async (req, res) => {
       : normalizedBookings;
     const formattedBookings = visibleBookings.map(formatBooking);
     const formattedTasks = cleaningTasks.map(formatCleaningTask);
+    const latestSyncedAt = bookings.reduce((latest, booking) => {
+      const value = booking.synced_at ? new Date(booking.synced_at).getTime() : 0;
+      return Number.isFinite(value) && value > latest ? value : latest;
+    }, 0);
 
     // Calculate stats
     const stats = {
@@ -63,6 +72,13 @@ module.exports = async (req, res) => {
     }
 
     res.status(200).json({
+      meta: {
+        complete: true,
+        generated_at: new Date().toISOString(),
+        dataset_version: `${formattedBookings.length}:${latestSyncedAt || 0}`,
+        stats_included: full,
+        range: { from: fromDate, to: null }
+      },
       stats,
       properties,
       bookings: formattedBookings,
