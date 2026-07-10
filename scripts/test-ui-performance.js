@@ -47,7 +47,15 @@ const dashboardPayload = JSON.stringify({
     generated_at: new Date().toISOString(),
     dataset_version: 'ui-test',
     stats_included: false,
-    range: { from: toIso(today), to: null }
+    range: { from: toIso(today), to: null },
+    sync_health: {
+      status: 'ok',
+      run_status: 'success',
+      stale: false,
+      last_data_at: new Date().toISOString(),
+      feed_error_count: 0,
+      feed_errors: []
+    }
   },
   properties,
   bookings,
@@ -120,12 +128,16 @@ async function inspectPage(browser, baseUrl, viewport, isMobile) {
     dayColumns: document.querySelectorAll('.cal-day-column').length,
     bookingBars: document.querySelectorAll('.booking-bar').length,
     navButtons: document.querySelectorAll('nav .nav-item[type="button"]').length,
-    chartLoaded: Boolean(document.querySelector('script[data-chart-js]'))
+    chartLoaded: Boolean(document.querySelector('script[data-chart-js]')),
+    freshnessState: document.getElementById('freshnessStatus')?.dataset.state,
+    freshnessTitle: document.getElementById('freshnessTitle')?.textContent
   }));
 
   assert.equal(metrics.cells, 0);
   assert.equal(metrics.navButtons, 4);
   assert.equal(metrics.chartLoaded, false);
+  assert.equal(metrics.freshnessState, 'ok');
+  assert.match(metrics.freshnessTitle, /актуальны/i);
 
   if (isMobile) {
     assert.equal(metrics.dayColumns, 0);

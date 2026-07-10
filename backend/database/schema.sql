@@ -79,6 +79,18 @@ CREATE TABLE IF NOT EXISTS booking_stats_snapshots (
   payload TEXT NOT NULL DEFAULT '{}'
 );
 
+-- Durable history of calendar sync attempts for health checks and UI freshness.
+CREATE TABLE IF NOT EXISTS sync_runs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  started_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  completed_at DATETIME,
+  source TEXT NOT NULL DEFAULT 'manual',
+  status TEXT NOT NULL DEFAULT 'running',
+  events_synced INTEGER NOT NULL DEFAULT 0,
+  feed_errors TEXT NOT NULL DEFAULT '[]',
+  error_message TEXT
+);
+
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_bookings_property ON bookings(property_id);
 CREATE INDEX IF NOT EXISTS idx_bookings_dates ON bookings(start_date, end_date);
@@ -86,3 +98,4 @@ CREATE INDEX IF NOT EXISTS idx_cleaning_tasks_date ON cleaning_tasks(scheduled_d
 CREATE INDEX IF NOT EXISTS idx_cleaning_tasks_cleaner ON cleaning_tasks(cleaner_id);
 CREATE INDEX IF NOT EXISTS idx_stats_snapshots_captured ON booking_stats_snapshots(captured_at);
 CREATE INDEX IF NOT EXISTS idx_stats_snapshots_season ON booking_stats_snapshots(season_year, captured_at);
+CREATE INDEX IF NOT EXISTS idx_sync_runs_completed ON sync_runs(completed_at DESC);

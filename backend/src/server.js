@@ -9,6 +9,7 @@ const db = USE_POSTGRES
   : require('./database');
 const { formatBooking, formatCleaningTask, todayInRome } = require('../../api/_helpers');
 const { normalizeBookingsForDisplay } = require('../../lib/booking-normalization');
+const { checkApplicationHealth } = require('../../lib/health-check');
 const {
   normalizeCleanerName,
   cleanerIdFromName,
@@ -50,14 +51,17 @@ app.get('/api/dashboard', async (req, res) => {
     const seasonYear = req.query.season_year || Number(today.slice(0, 4));
     const snapshotsLimit = req.query.snapshots_limit || req.query.limit || 1000;
 
-    const [properties, bookings, cleaningTasks, cleaners, statsSnapshots] = await Promise.all([
+    const [properties, bookings, cleaningTasks, cleaners, statsSnapshots, syncHealth] = await Promise.all([
       db.getProperties(),
       db.getBookings(null, fromDate, { includeInactive }),
       db.getCleaningTasks(null, today),
       db.getCleaners(),
       full && typeof db.getStatsSnapshots === 'function'
         ? db.getStatsSnapshots({ seasonYear, limit: snapshotsLimit })
-        : Promise.resolve([])
+        : Promise.resolve([]),
+      typeof db.getSyncHealth === 'function'
+        ? db.getSyncHealth()
+        : Promise.resolve(null)
     ]);
 
     await Promise.all(cleaners.map(async cleaner => {
@@ -96,7 +100,8 @@ app.get('/api/dashboard', async (req, res) => {
         generated_at: new Date().toISOString(),
         dataset_version: `${formattedBookings.length}:${latestSyncedAt || 0}`,
         stats_included: full,
-        range: { from: fromDate, to: null }
+        range: { from: fromDate, to: null },
+        sync_health: syncHealth
       },
       stats,
       properties,
@@ -428,8 +433,10 @@ app.post('/api/sync', async (req, res) => {
 
 // ===== HEALTH CHECK =====
 
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+app.get(['/health', '/api/health'], async (req, res) => {
+  const result = await checkApplicationHealth(db);
+  res.set('Cache-Control', 'no-store');
+  res.status(result.httpStatus).json(result.body);
 });
 
 let httpServer = null;

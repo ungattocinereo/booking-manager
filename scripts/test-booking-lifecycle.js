@@ -77,9 +77,26 @@ async function main() {
   );
 
   const legacyGuest = await getBooking('solo', '2026-08-01', '2026-08-03');
-  const technicalMarker = await getBooking('solo', '2026-08-04', '2026-08-06');
-  const partiallyCoveredGuest = await getBooking('solo', '2026-08-05', '2026-08-08');
+  let technicalMarker = await getBooking('solo', '2026-08-04', '2026-08-06');
+  let partiallyCoveredGuest = await getBooking('solo', '2026-08-05', '2026-08-08');
   assert.strictEqual(Number(legacyGuest.active), 1);
+  assert.strictEqual(Number(technicalMarker.active), 1);
+  assert.strictEqual(Number(partiallyCoveredGuest.active), 1);
+  assert.ok(technicalMarker.missing_since);
+  assert.ok(partiallyCoveredGuest.missing_since);
+
+  await db.run(
+    `UPDATE bookings SET missing_since = datetime('now', '-7 hours')
+     WHERE property_id = 'solo' AND start_date IN ('2026-08-04', '2026-08-05')`
+  );
+  await db.archiveStaleBookings(
+    'solo',
+    'booking',
+    [{ startDate: '2026-08-01', endDate: '2026-08-06' }],
+    '2026-07-01'
+  );
+  technicalMarker = await getBooking('solo', '2026-08-04', '2026-08-06');
+  partiallyCoveredGuest = await getBooking('solo', '2026-08-05', '2026-08-08');
   assert.strictEqual(Number(technicalMarker.active), 0);
   assert.strictEqual(Number(partiallyCoveredGuest.active), 0);
 

@@ -192,6 +192,70 @@
       border-bottom-color: var(--accent);
     }
 
+    /* ===== DATA FRESHNESS ===== */
+    .freshness-status {
+      margin: 12px 28px 0;
+      min-height: 48px;
+      padding: 9px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--card);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: var(--shadow-sm);
+    }
+    .freshness-status[data-state="ok"] { background: var(--success-light); border-color: #a7f3d0; }
+    .freshness-status[data-state="warning"] { background: var(--warning-light); border-color: #fcd34d; }
+    .freshness-status[data-state="error"] { background: #fef2f2; border-color: #fecaca; }
+    .freshness-status[data-state="cached"] { background: #eff6ff; border-color: #bfdbfe; }
+    .freshness-icon {
+      width: 30px;
+      height: 30px;
+      border-radius: 9px;
+      display: grid;
+      place-items: center;
+      flex: 0 0 30px;
+      color: var(--text-secondary);
+      background: rgba(255,255,255,.72);
+    }
+    .freshness-status[data-state="ok"] .freshness-icon { color: var(--success); }
+    .freshness-status[data-state="warning"] .freshness-icon { color: var(--warning); }
+    .freshness-status[data-state="error"] .freshness-icon { color: var(--danger); }
+    .freshness-status[data-state="cached"] .freshness-icon { color: var(--booking); }
+    .freshness-copy { min-width: 0; flex: 1; }
+    .freshness-title { font-size: 12px; line-height: 1.2; font-weight: 800; }
+    .freshness-detail {
+      margin-top: 2px;
+      font-size: 11px;
+      line-height: 1.25;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .freshness-retry {
+      min-height: 32px;
+      flex: 0 0 auto;
+    }
+    .freshness-retry[hidden] { display: none; }
+
+    @media (max-width: 768px) {
+      .freshness-status { margin: 10px 12px 0; }
+      .freshness-detail { white-space: normal; }
+      .freshness-retry span { display: none; }
+      .freshness-retry { width: 34px; padding: 0; justify-content: center; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        scroll-behavior: auto !important;
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+      }
+    }
+
     /* ===== BUTTONS ===== */
     .btn {
       border: none;
@@ -2467,6 +2531,19 @@
     </button>
   </nav>
 
+  <section class="freshness-status" id="freshnessStatus" data-state="loading" role="status" aria-live="polite" aria-atomic="true">
+    <div class="freshness-icon" aria-hidden="true">
+      <i data-lucide="loader-2" style="width:17px;height:17px;"></i>
+    </div>
+    <div class="freshness-copy">
+      <div class="freshness-title" id="freshnessTitle">Проверяем актуальность данных</div>
+      <div class="freshness-detail" id="freshnessDetail">Загружаем последнее состояние календарей…</div>
+    </div>
+    <button class="btn btn-ghost btn-sm freshness-retry" id="freshnessRetry" type="button" onclick="retryDashboardLoad()" hidden>
+      <i data-lucide="rotate-cw" style="width:14px;height:14px;"></i><span>Повторить</span>
+    </button>
+  </section>
+
   <!-- STATS -->
   <div class="stats-bar" id="statsBar">
     <div class="stat-card">
@@ -2713,7 +2790,7 @@
     <div id="taxList" class="tax-list"></div>
   </div>
 
-  <div class="toast" id="toast"></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <div class="booking-panel-backdrop" id="bookingPanelBackdrop" onclick="closeBookingPanel()"></div>
   <aside class="booking-panel" id="bookingPanel" aria-hidden="true">
     <div class="booking-panel-header">
@@ -2789,14 +2866,118 @@ window.addEventListener('popstate', (e) => {
 });
 
 async function fetchJsonOrNull(url, options = {}) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
   try {
-    const res = await fetch(url, { cache: 'no-store', ...options });
+    const res = await fetch(url, { cache: 'no-store', ...options, signal: options.signal || controller.signal });
     if (!res.ok) return null;
     const data = await res.json();
     return data || null;
   } catch {
     return null;
+  } finally {
+    clearTimeout(timeout);
   }
+}
+
+function relativeFreshnessTime(value) {
+  if (!value) return 'время синхронизации неизвестно';
+  const timestamp = new Date(value).getTime();
+  if (!Number.isFinite(timestamp)) return 'время синхронизации неизвестно';
+  const minutes = Math.max(0, Math.floor((Date.now() - timestamp) / 60000));
+  if (minutes < 2) return 'только что';
+  if (minutes < 60) return `${minutes} мин назад`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} ч назад`;
+  const days = Math.floor(hours / 24);
+  return `${days} дн назад`;
+}
+
+function setFreshnessStatus({ state, icon, title, detail, retry = false }) {
+  const container = document.getElementById('freshnessStatus');
+  const iconEl = container?.querySelector('.freshness-icon');
+  const titleEl = document.getElementById('freshnessTitle');
+  const detailEl = document.getElementById('freshnessDetail');
+  const retryEl = document.getElementById('freshnessRetry');
+  if (!container || !iconEl || !titleEl || !detailEl || !retryEl) return;
+
+  container.dataset.state = state;
+  iconEl.innerHTML = `<i data-lucide="${icon}" style="width:17px;height:17px;"></i>`;
+  titleEl.textContent = title;
+  detailEl.textContent = detail;
+  retryEl.hidden = !retry;
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+function renderFreshnessFromPayload(payload, { source = 'network', savedAt = null } = {}) {
+  const health = payload?.meta?.sync_health || null;
+  const syncTime = health?.last_data_at || health?.last_completed_at || payload?.meta?.generated_at || null;
+  const syncAge = relativeFreshnessTime(syncTime);
+
+  if (source === 'cache') {
+    const cacheAge = relativeFreshnessTime(savedAt);
+    setFreshnessStatus({
+      state: 'cached',
+      icon: 'database-backup',
+      title: 'Показаны сохранённые данные',
+      detail: `Копия сохранена ${cacheAge}; последняя синхронизация ${syncAge}`,
+      retry: true
+    });
+    return;
+  }
+
+  if (!health) {
+    setFreshnessStatus({
+      state: 'warning',
+      icon: 'triangle-alert',
+      title: 'Данные загружены, статус синхронизации неизвестен',
+      detail: `Ответ сервера получен ${relativeFreshnessTime(payload?.meta?.generated_at)}`,
+      retry: false
+    });
+    return;
+  }
+
+  if (health.status === 'error') {
+    setFreshnessStatus({
+      state: 'error',
+      icon: 'circle-alert',
+      title: health.stale ? 'Данные требуют обновления' : 'Последняя синхронизация завершилась ошибкой',
+      detail: `Последние актуальные данные: ${syncAge}`,
+      retry: true
+    });
+    return;
+  }
+
+  if (health.status === 'warning') {
+    const errors = Number(health.feed_error_count) || 0;
+    setFreshnessStatus({
+      state: 'warning',
+      icon: 'triangle-alert',
+      title: 'Календари обновлены частично',
+      detail: `${errors} ${errors === 1 ? 'источник не обновился' : 'источника не обновились'}; актуальные данные ${syncAge}`,
+      retry: true
+    });
+    return;
+  }
+
+  setFreshnessStatus({
+    state: 'ok',
+    icon: 'circle-check',
+    title: 'Данные актуальны',
+    detail: `Последняя синхронизация ${syncAge}`,
+    retry: false
+  });
+}
+
+function retryDashboardLoad() {
+  setFreshnessStatus({
+    state: 'loading',
+    icon: 'loader-2',
+    title: 'Обновляем данные',
+    detail: 'Проверяем состояние календарей…',
+    retry: false
+  });
+  loadData({ silent: false, preserveCalendarScroll: true });
 }
 
 let hasLoadedOnce = false;
@@ -2882,6 +3063,7 @@ function markNetworkDashboardFresh(payload) {
   lastSyncEl.textContent = 'Обновлено ' + new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
   lastDashboardLoadAt = Date.now();
   writeCachedDashboard(payload);
+  renderFreshnessFromPayload(payload, { source: 'network' });
 }
 
 function shouldMountCalendarGrid() {
@@ -2956,6 +3138,7 @@ function applyDashboardPayload(payload, {
   const lastSyncEl = document.getElementById('lastSync');
   if (source === 'cache') {
     lastSyncEl.textContent = cachedDashboardLabel(savedAt);
+    renderFreshnessFromPayload(payload, { source, savedAt });
   } else {
     markNetworkDashboardFresh(payload);
   }
@@ -2977,7 +3160,16 @@ async function loadData({ silent = false, attempt = 1, preserveCalendarScroll = 
   lastDashboardRefreshRequestedAt = Date.now();
   const loadSeq = ++dashboardLoadSeq;
   const lastSyncEl = document.getElementById('lastSync');
-  if (!hasLoadedOnce && !silent) lastSyncEl.textContent = 'Загрузка…';
+  if (!hasLoadedOnce && !silent) {
+    lastSyncEl.textContent = 'Загрузка…';
+    setFreshnessStatus({
+      state: 'loading',
+      icon: 'loader-2',
+      title: 'Проверяем актуальность данных',
+      detail: 'Загружаем последнее состояние календарей…',
+      retry: false
+    });
+  }
 
   try {
     const romeToday = todayLocal();
@@ -3001,6 +3193,13 @@ async function loadData({ silent = false, attempt = 1, preserveCalendarScroll = 
         lastSyncEl.textContent = 'Ошибка загрузки';
         toast('Ошибка загрузки. Нажмите «Синхронизация».');
       }
+      setFreshnessStatus({
+        state: 'error',
+        icon: 'circle-alert',
+        title: 'Не удалось обновить данные',
+        detail: hasLoadedOnce ? 'На экране оставлена последняя загруженная версия' : 'Проверьте соединение и повторите попытку',
+        retry: true
+      });
       return;
     }
 
@@ -5177,6 +5376,13 @@ async function syncCalendars() {
   const btn = document.getElementById('syncBtn');
   btn.disabled = true;
   btn.innerHTML = '<i data-lucide="loader-2" style="width:14px;height:14px;animation:spin 1s linear infinite;"></i>Синхронизация...';
+  setFreshnessStatus({
+    state: 'loading',
+    icon: 'loader-2',
+    title: 'Синхронизация календарей',
+    detail: 'Получаем данные Airbnb и Booking.com…',
+    retry: false
+  });
   if (typeof lucide !== 'undefined') lucide.createIcons();
   try {
     const res = await fetch(`${API}/sync`, { method: 'POST' });
@@ -5197,6 +5403,13 @@ async function syncCalendars() {
     }
   } catch (err) {
     toast('❌ Ошибка синхронизации: ' + err.message);
+    setFreshnessStatus({
+      state: 'error',
+      icon: 'circle-alert',
+      title: 'Синхронизация не завершена',
+      detail: err.message || 'Повторите попытку позже',
+      retry: true
+    });
     btn.disabled = false;
     btn.innerHTML = '<i data-lucide="refresh-cw" style="width:14px;height:14px;"></i>Синхронизация';
   }

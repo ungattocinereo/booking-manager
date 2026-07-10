@@ -14,7 +14,9 @@
     "test": "npm run test:unit && npm run test:booking-lifecycle",
     "test:unit": "node --test tests/*.test.js",
     "test:booking-lifecycle": "node scripts/test-booking-lifecycle.js",
-    "test:ui": "node scripts/test-ui-performance.js"
+    "test:ui": "node scripts/test-ui-performance.js",
+    "test:syntax": "node scripts/check-js-syntax.js",
+    "test:ci": "npm run test:syntax && npm test && npm run test:ui"
   },
   "keywords": [
     "booking",

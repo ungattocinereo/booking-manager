@@ -19,6 +19,7 @@
     { "source": "/airbnb-badge.png", "destination": "/frontend/public/airbnb-badge.png" },
     { "source": "/booking-badge.png", "destination": "/frontend/public/booking-badge.png" },
     { "source": "/manifest.json", "destination": "/frontend/public/manifest.json" },
+    { "source": "/health", "destination": "/api/health" },
     { "source": "/maid/:slug", "destination": "/frontend/public/maid.html" },
     { "source": "/stats", "destination": "/frontend/public/index.html" },
     { "source": "/maid", "destination": "/frontend/public/index.html" },

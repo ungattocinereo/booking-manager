@@ -26,14 +26,17 @@ module.exports = async (req, res) => {
     const snapshotsLimit = req.query.snapshots_limit || req.query.limit || 1000;
     
     // Fetch all data
-    const [properties, bookings, cleaningTasks, cleaners, statsSnapshots] = await Promise.all([
+    const [properties, bookings, cleaningTasks, cleaners, statsSnapshots, syncHealth] = await Promise.all([
       db.getProperties(),
       db.getBookings(null, fromDate, { includeInactive }),
       db.getCleaningTasks(null, today),
       db.getCleaners(),
       full && typeof db.getStatsSnapshots === 'function'
         ? db.getStatsSnapshots({ seasonYear, limit: snapshotsLimit })
-        : Promise.resolve([])
+        : Promise.resolve([]),
+      typeof db.getSyncHealth === 'function'
+        ? db.getSyncHealth()
+        : Promise.resolve(null)
     ]);
 
     await Promise.all(cleaners.map(async cleaner => {
@@ -77,7 +80,8 @@ module.exports = async (req, res) => {
         generated_at: new Date().toISOString(),
         dataset_version: `${formattedBookings.length}:${latestSyncedAt || 0}`,
         stats_included: full,
-        range: { from: fromDate, to: null }
+        range: { from: fromDate, to: null },
+        sync_health: syncHealth
       },
       stats,
       properties,

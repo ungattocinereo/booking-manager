@@ -23,14 +23,16 @@ async function executeSync(source) {
     : true;
   if (!lock) throw new SyncInProgressError();
 
+  let runId = null;
   try {
+    if (typeof db.startSyncRun === 'function') runId = await db.startSyncRun(source);
     const syncResult = await syncCalendars();
     const enrichResult = await enrichFromExports(db, Boolean(USE_POSTGRES));
     const tasksCount = await generateCleaningTasks();
     const statsSnapshot = await recordBookingStatsSnapshot(db, { source });
     const failures = syncResult.failures || [];
 
-    return {
+    const result = {
       success: true,
       partial: failures.length > 0,
       message: failures.length ? `Sync completed with ${failures.length} feed error(s)` : 'Calendars synced successfully',
@@ -48,6 +50,22 @@ async function executeSync(source) {
       },
       timestamp: new Date().toISOString()
     };
+    if (runId && typeof db.finishSyncRun === 'function') {
+      await db.finishSyncRun(runId, {
+        status: result.partial ? 'partial' : 'success',
+        eventsSynced: result.events_synced,
+        feedErrors: result.feed_errors
+      });
+    }
+    return result;
+  } catch (error) {
+    if (runId && typeof db.finishSyncRun === 'function') {
+      await db.finishSyncRun(runId, {
+        status: 'failed',
+        errorMessage: String(error?.message || 'Sync failed').slice(0, 500)
+      }).catch(logError => console.error('Failed to record sync failure:', logError.message));
+    }
+    throw error;
   } finally {
     if (typeof db.releaseSyncLock === 'function') await db.releaseSyncLock(lock);
   }
