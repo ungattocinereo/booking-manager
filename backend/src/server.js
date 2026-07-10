@@ -9,6 +9,14 @@ const db = USE_POSTGRES
   : require('./database');
 const { formatBooking, formatCleaningTask, todayInRome } = require('../../api/_helpers');
 const { normalizeBookingsForDisplay } = require('../../lib/booking-normalization');
+const {
+  normalizeCleanerName,
+  cleanerIdFromName,
+  normalizeCleanerSlug,
+  normalizePropertyIds,
+  isDateOnly,
+  normalizeTaskType
+} = require('../../lib/api-validation');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -18,12 +26,6 @@ app.use(express.json());
 
 // Serve frontend
 app.use(express.static(path.join(__dirname, '../../frontend/public')));
-
-// Initialize database on startup
-db.init().catch(err => {
-  console.error('Failed to initialize database:', err);
-  process.exit(1);
-});
 
 // ===== PROPERTIES =====
 
@@ -41,12 +43,16 @@ app.get('/api/dashboard', async (req, res) => {
     const today = todayInRome();
     const full = req.query.full === '1';
     const includeInactive = req.query.include_inactive === '1';
-    const seasonYear = req.query.season_year || new Date().getFullYear();
+    if (req.query.from_date && !isDateOnly(req.query.from_date)) {
+      return res.status(400).json({ error: 'from_date must be YYYY-MM-DD' });
+    }
+    const fromDate = full ? null : (req.query.from_date || today);
+    const seasonYear = req.query.season_year || Number(today.slice(0, 4));
     const snapshotsLimit = req.query.snapshots_limit || req.query.limit || 1000;
 
     const [properties, bookings, cleaningTasks, cleaners, statsSnapshots] = await Promise.all([
       db.getProperties(),
-      db.getBookings(null, full ? null : today, { includeInactive }),
+      db.getBookings(null, fromDate, { includeInactive }),
       db.getCleaningTasks(null, today),
       db.getCleaners(),
       full && typeof db.getStatsSnapshots === 'function'
@@ -54,9 +60,9 @@ app.get('/api/dashboard', async (req, res) => {
         : Promise.resolve([])
     ]);
 
-    for (const cleaner of cleaners) {
+    await Promise.all(cleaners.map(async cleaner => {
       cleaner.properties = await db.getCleanerProperties(cleaner.id);
-    }
+    }));
 
     const normalizedBookings = normalizeBookingsForDisplay(bookings);
     const visibleBookings = req.query.include_markers === '1'
@@ -64,6 +70,10 @@ app.get('/api/dashboard', async (req, res) => {
       : normalizedBookings;
     const formattedBookings = visibleBookings.map(formatBooking);
     const formattedTasks = cleaningTasks.map(formatCleaningTask);
+    const latestSyncedAt = bookings.reduce((latest, booking) => {
+      const value = booking.synced_at ? new Date(booking.synced_at).getTime() : 0;
+      return Number.isFinite(value) && value > latest ? value : latest;
+    }, 0);
 
     const stats = {
       total_properties: properties.length,
@@ -81,6 +91,13 @@ app.get('/api/dashboard', async (req, res) => {
     }
 
     res.json({
+      meta: {
+        complete: true,
+        generated_at: new Date().toISOString(),
+        dataset_version: `${formattedBookings.length}:${latestSyncedAt || 0}`,
+        stats_included: full,
+        range: { from: fromDate, to: null }
+      },
       stats,
       properties,
       bookings: formattedBookings,
@@ -182,9 +199,9 @@ app.get('/api/cleaners', async (req, res) => {
     const cleaners = await db.getCleaners();
     
     // Add property assignments
-    for (const cleaner of cleaners) {
+    await Promise.all(cleaners.map(async cleaner => {
       cleaner.properties = await db.getCleanerProperties(cleaner.id);
-    }
+    }));
     
     res.json(cleaners);
   } catch (error) {
@@ -220,10 +237,10 @@ app.post('/api/cleaning-tasks/:id/assign', async (req, res) => {
     const { id } = req.params;
     const { cleaner_id } = req.body;
     
-    await db.run(
-      'UPDATE cleaning_tasks SET cleaner_id = ? WHERE id = ?',
-      [cleaner_id, id]
-    );
+    const query = USE_POSTGRES
+      ? 'UPDATE cleaning_tasks SET cleaner_id = $1 WHERE id = $2'
+      : 'UPDATE cleaning_tasks SET cleaner_id = ? WHERE id = ?';
+    await (USE_POSTGRES ? db.execute(query, [cleaner_id, id]) : db.run(query, [cleaner_id, id]));
     
     res.json({ success: true });
   } catch (error) {
@@ -234,14 +251,21 @@ app.post('/api/cleaning-tasks/:id/assign', async (req, res) => {
 app.post('/api/cleaning-tasks', async (req, res) => {
   try {
     const { property_id, scheduled_date, task_type, notes } = req.body;
+    const normalizedTaskType = normalizeTaskType(task_type);
+    if (typeof property_id !== 'string' || !property_id.trim() || !isDateOnly(scheduled_date)) {
+      return res.status(400).json({ error: 'property_id and scheduled_date required' });
+    }
+    if (!normalizedTaskType) return res.status(400).json({ error: 'Invalid task_type' });
+
+    const query = USE_POSTGRES
+      ? `INSERT INTO cleaning_tasks (property_id, scheduled_date, task_type, notes)
+         VALUES ($1, $2, $3, $4) RETURNING id`
+      : `INSERT INTO cleaning_tasks (property_id, scheduled_date, task_type, notes)
+         VALUES (?, ?, ?, ?)`;
+    const params = [property_id.trim(), scheduled_date, normalizedTaskType, typeof notes === 'string' ? notes.slice(0, 2000) : ''];
+    const result = USE_POSTGRES ? await db.execute(query, params) : await db.run(query, params);
     
-    const result = await db.run(
-      `INSERT INTO cleaning_tasks (property_id, scheduled_date, task_type, notes)
-       VALUES (?, ?, ?, ?)`,
-      [property_id, scheduled_date, task_type || 'manual', notes || '']
-    );
-    
-    res.json({ success: true, id: result.lastID });
+    res.json({ success: true, id: USE_POSTGRES ? result.rows[0]?.id : result.lastID });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -254,17 +278,22 @@ app.put('/api/cleaners/:id', async (req, res) => {
 
     // Update property assignments
     if (property_ids !== undefined) {
-      await db.run('DELETE FROM cleaner_properties WHERE cleaner_id = ?', [req.params.id]);
-      for (const pid of property_ids) {
-        await db.assignCleanerToProperty(req.params.id, pid);
-      }
+      const normalizedIds = normalizePropertyIds(property_ids);
+      if (!normalizedIds) return res.status(400).json({ error: 'property_ids must be an array of valid IDs' });
+      await db.replaceCleanerProperties(req.params.id, normalizedIds);
       return res.json({ success: true });
     }
 
     // Update name/slug
     const fields = {};
-    if (name !== undefined) fields.name = name;
-    if (slug !== undefined) fields.slug = slug.toLowerCase().replace(/[^a-z0-9-]/g, '').replace(/-+/g, '-') || null;
+    if (name !== undefined) {
+      fields.name = normalizeCleanerName(name);
+      if (!fields.name) return res.status(400).json({ error: 'Invalid name' });
+    }
+    if (slug !== undefined) {
+      fields.slug = normalizeCleanerSlug(slug);
+      if (fields.slug === undefined) return res.status(400).json({ error: 'Invalid slug' });
+    }
     await db.updateCleaner(req.params.id, fields);
     res.json({ success: true });
   } catch (error) {
@@ -275,10 +304,13 @@ app.put('/api/cleaners/:id', async (req, res) => {
 // Create cleaner
 app.post('/api/cleaners', async (req, res) => {
   try {
-    const { name } = req.body;
-    if (!name) return res.status(400).json({ error: 'Name required' });
-    const id = name.toLowerCase().replace(/[^a-z0-9а-яё]/gi, '_').replace(/_+/g, '_');
-    await db.createCleaner(id, name);
+    const name = normalizeCleanerName(req.body?.name);
+    if (!name) return res.status(400).json({ error: 'Valid name required' });
+    const id = cleanerIdFromName(name);
+    if (!id) return res.status(400).json({ error: 'Name must contain letters or numbers' });
+    const result = await db.createCleaner(id, name);
+    const inserted = USE_POSTGRES ? result.rowCount : result.changes;
+    if (!inserted) return res.status(409).json({ error: 'Cleaner already exists' });
     res.json({ success: true, id, name });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -288,9 +320,7 @@ app.post('/api/cleaners', async (req, res) => {
 // Delete cleaner
 app.delete('/api/cleaners/:id', async (req, res) => {
   try {
-    await db.run('DELETE FROM cleaner_properties WHERE cleaner_id = ?', [req.params.id]);
-    await db.run('UPDATE cleaning_tasks SET cleaner_id = NULL WHERE cleaner_id = ?', [req.params.id]);
-    await db.run('DELETE FROM cleaners WHERE id = ?', [req.params.id]);
+    await db.deleteCleanerWithRelations(req.params.id);
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -301,12 +331,9 @@ app.delete('/api/cleaners/:id', async (req, res) => {
 app.put('/api/cleaners/:id/properties', async (req, res) => {
   try {
     const { property_ids } = req.body;
-    // Remove all current assignments
-    await db.run('DELETE FROM cleaner_properties WHERE cleaner_id = ?', [req.params.id]);
-    // Add new ones
-    for (const propId of (property_ids || [])) {
-      await db.assignCleanerToProperty(req.params.id, propId);
-    }
+    const normalizedIds = normalizePropertyIds(property_ids);
+    if (!normalizedIds) return res.status(400).json({ error: 'property_ids must be an array of valid IDs' });
+    await db.replaceCleanerProperties(req.params.id, normalizedIds);
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -363,7 +390,7 @@ app.get('/tax', (req, res) => {
 app.get('/api/tax', async (req, res) => {
   try {
     const { date } = req.query;
-    if (!date) return res.status(400).json({ error: 'date query parameter is required (YYYY-MM-DD)' });
+    if (!isDateOnly(date)) return res.status(400).json({ error: 'date query parameter is required (YYYY-MM-DD)' });
     const rows = await db.getTaxByDate(date);
     res.json(rows.map(r => ({ ...r, tax_paid: !!r.tax_paid })));
   } catch (error) {
@@ -387,17 +414,13 @@ app.patch('/api/tax', async (req, res) => {
 
 app.post('/api/sync', async (req, res) => {
   try {
-    const { syncAll } = require('./sync-calendars');
-    
-    // Run sync in background
-    syncAll().then(() => {
-      console.log('Background sync completed');
-    }).catch(err => {
-      console.error('Background sync failed:', err);
-    });
-    
-    res.json({ success: true, message: 'Sync started in background' });
+    const { runSync } = require('./sync-service');
+    const result = await runSync({ source: 'manual' });
+    res.status(result.partial ? 207 : 200).json(result);
   } catch (error) {
+    if (error.code === 'SYNC_IN_PROGRESS') {
+      return res.status(409).json({ success: false, code: error.code, error: error.message });
+    }
     res.status(500).json({ error: error.message });
   }
 });
@@ -409,15 +432,25 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`🚀 Atrani Booking Manager API running on http://localhost:${PORT}`);
-  console.log(`📊 Dashboard data: http://localhost:${PORT}/api/dashboard`);
+let httpServer = null;
+
+async function startServer() {
+  await db.init();
+  httpServer = app.listen(PORT, () => {
+    console.log(`🚀 Atrani Booking Manager API running on http://localhost:${PORT}`);
+    console.log(`📊 Dashboard data: http://localhost:${PORT}/api/dashboard`);
+  });
+}
+
+startServer().catch(err => {
+  console.error('Failed to initialize database:', err);
+  process.exitCode = 1;
 });
 
 // Graceful shutdown
-process.on('SIGTERM', () => {
+process.on('SIGTERM', async () => {
   console.log('Shutting down gracefully...');
-  db.close();
+  if (httpServer) await new Promise(resolve => httpServer.close(resolve));
+  await db.close();
   process.exit(0);
 });

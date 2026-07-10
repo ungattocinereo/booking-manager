@@ -39,6 +39,7 @@ class Database {
   }
 
   async init() {
+    if (this.db) return;
     return new Promise((resolve, reject) => {
       this.db = new sqlite3.Database(DB_PATH, (err) => {
         if (err) {
@@ -48,7 +49,7 @@ class Database {
 
         // Load schema
         const schema = fs.readFileSync(SCHEMA_PATH, 'utf8');
-        this.db.exec(schema, (err) => {
+        this.db.exec(`PRAGMA foreign_keys = ON;\n${schema}`, (err) => {
           if (err) {
             reject(err);
             return;
@@ -299,6 +300,37 @@ class Database {
     );
   }
 
+  async replaceCleanerProperties(cleanerId, propertyIds = []) {
+    const uniqueIds = [...new Set(propertyIds)];
+    await this.run('BEGIN IMMEDIATE');
+    try {
+      await this.run('DELETE FROM cleaner_properties WHERE cleaner_id = ?', [cleanerId]);
+      for (const propertyId of uniqueIds) {
+        await this.run(
+          'INSERT OR IGNORE INTO cleaner_properties (cleaner_id, property_id) VALUES (?, ?)',
+          [cleanerId, propertyId]
+        );
+      }
+      await this.run('COMMIT');
+    } catch (error) {
+      await this.run('ROLLBACK');
+      throw error;
+    }
+  }
+
+  async deleteCleanerWithRelations(cleanerId) {
+    await this.run('BEGIN IMMEDIATE');
+    try {
+      await this.run('DELETE FROM cleaner_properties WHERE cleaner_id = ?', [cleanerId]);
+      await this.run('UPDATE cleaning_tasks SET cleaner_id = NULL WHERE cleaner_id = ?', [cleanerId]);
+      await this.run('DELETE FROM cleaners WHERE id = ?', [cleanerId]);
+      await this.run('COMMIT');
+    } catch (error) {
+      await this.run('ROLLBACK');
+      throw error;
+    }
+  }
+
   // Cleaning task operations
   async createCleaningTask(propertyId, scheduledDate, taskType = 'checkout_cleaning') {
     // Auto-assign cleaner based on property
@@ -494,9 +526,12 @@ class Database {
   }
 
   close() {
-    if (this.db) {
-      this.db.close();
-    }
+    if (!this.db) return Promise.resolve();
+    const connection = this.db;
+    this.db = null;
+    return new Promise((resolve, reject) => {
+      connection.close(error => error ? reject(error) : resolve());
+    });
   }
 }
 

@@ -84,6 +84,7 @@ Booking and cleaning calendar for vacation rental properties in Atrani, Italy. S
 - Machine clients that call protected admin APIs can use a Cloudflare Access service token via `BOOKING_MANAGER_CF_ACCESS_CLIENT_ID` and `BOOKING_MANAGER_CF_ACCESS_CLIENT_SECRET`
 
 The root `middleware.ts` blocks direct `*.vercel.app` access to admin pages and APIs while preserving public maid links, cron with `CRON_SECRET`, and Telegram webhook calls with `TELEGRAM_WEBHOOK_SECRET`.
+Set `REQUIRE_CF_ACCESS_IDENTITY=true` after confirming the Cloudflare Access JWT header reaches Vercel to enforce the same boundary inside the application.
 
 ## Quick Start
 
@@ -102,6 +103,8 @@ Deploys automatically from `main`. Required environment variables:
 | `TELEGRAM_WEBHOOK_SECRET` | Secret token for Telegram webhook requests |
 | `BOOKING_MANAGER_CF_ACCESS_CLIENT_ID` | Optional Cloudflare Access service token ID for machine clients |
 | `BOOKING_MANAGER_CF_ACCESS_CLIENT_SECRET` | Optional Cloudflare Access service token secret for machine clients |
+
+Run `npm run migrate:postgres` after schema changes. Runtime requests only connect to Postgres; they do not execute DDL unless `POSTGRES_AUTO_MIGRATE=true` is explicitly set for a fresh environment.
 
 ### Local development
 

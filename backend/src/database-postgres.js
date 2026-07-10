@@ -24,6 +24,7 @@ class Database {
   }
 
   async init() {
+    if (this.pool) return;
     // Use Vercel Postgres URL or local
     const connectionString = process.env.POSTGRES_URL || process.env.DATABASE_URL;
     
@@ -36,22 +37,44 @@ class Database {
       ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
     });
 
-    // Test connection
+    let client = null;
     try {
-      const client = await this.pool.connect();
+      client = await this.pool.connect();
       console.log('✅ Database connected');
       
-      // Initialize schema if needed
-      if (fs.existsSync(SCHEMA_PATH)) {
-        const schema = fs.readFileSync(SCHEMA_PATH, 'utf8');
-        await client.query(schema);
-        console.log('✅ Schema initialized');
+      if (process.env.POSTGRES_AUTO_MIGRATE === '1' || process.env.POSTGRES_AUTO_MIGRATE === 'true') {
+        await this.applySchema(client);
       }
       
-      client.release();
     } catch (err) {
       console.error('❌ Database connection failed:', err.message);
+      if (client) {
+        client.release();
+        client = null;
+      }
+      const pool = this.pool;
+      this.pool = null;
+      if (pool) await pool.end().catch(() => {});
       throw err;
+    } finally {
+      if (client) client.release();
+    }
+  }
+
+  async applySchema(client) {
+    if (!fs.existsSync(SCHEMA_PATH)) throw new Error(`Postgres schema not found: ${SCHEMA_PATH}`);
+    const schema = fs.readFileSync(SCHEMA_PATH, 'utf8');
+    await client.query(schema);
+    console.log('✅ Schema migrated');
+  }
+
+  async migrate() {
+    if (!this.pool) await this.init();
+    const client = await this.pool.connect();
+    try {
+      await this.applySchema(client);
+    } finally {
+      client.release();
     }
   }
 
@@ -75,6 +98,30 @@ class Database {
     try {
       const result = await client.query(sql, params);
       return { rowCount: result.rowCount, rows: result.rows };
+    } finally {
+      client.release();
+    }
+  }
+
+  async acquireSyncLock() {
+    const client = await this.pool.connect();
+    try {
+      const result = await client.query('SELECT pg_try_advisory_lock($1) AS acquired', [1729042026]);
+      if (!result.rows[0]?.acquired) {
+        client.release();
+        return null;
+      }
+      return client;
+    } catch (error) {
+      client.release();
+      throw error;
+    }
+  }
+
+  async releaseSyncLock(client) {
+    if (!client) return;
+    try {
+      await client.query('SELECT pg_advisory_unlock($1)', [1729042026]);
     } finally {
       client.release();
     }
@@ -244,6 +291,46 @@ class Database {
        WHERE cp.cleaner_id = $1`,
       [cleanerId]
     );
+  }
+
+  async replaceCleanerProperties(cleanerId, propertyIds = []) {
+    const uniqueIds = [...new Set(propertyIds)];
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query('DELETE FROM cleaner_properties WHERE cleaner_id = $1', [cleanerId]);
+      if (uniqueIds.length) {
+        await client.query(
+          `INSERT INTO cleaner_properties (cleaner_id, property_id)
+           SELECT $1, property_id
+           FROM unnest($2::varchar[]) AS property_id
+           ON CONFLICT DO NOTHING`,
+          [cleanerId, uniqueIds]
+        );
+      }
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async deleteCleanerWithRelations(cleanerId) {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query('DELETE FROM cleaner_properties WHERE cleaner_id = $1', [cleanerId]);
+      await client.query('UPDATE cleaning_tasks SET cleaner_id = NULL WHERE cleaner_id = $1', [cleanerId]);
+      await client.query('DELETE FROM cleaners WHERE id = $1', [cleanerId]);
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 
   // Cleaning task operations
@@ -461,7 +548,9 @@ class Database {
 
   async close() {
     if (this.pool) {
-      await this.pool.end();
+      const pool = this.pool;
+      this.pool = null;
+      await pool.end();
     }
   }
 }
