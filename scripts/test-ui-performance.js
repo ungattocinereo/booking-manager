@@ -176,7 +176,14 @@ const emptyDashboardPayload = JSON.stringify({
   availability_markers: []
 });
 
-function createServer(state = { statsMode: 'ok', statsRequests: 0, dashboardMode: 'normal', dashboardRequests: 0 }) {
+function createServer(state = {
+  statsMode: 'ok',
+  statsRequests: 0,
+  statsPaths: [],
+  legacyStatsRequests: 0,
+  dashboardMode: 'normal',
+  dashboardRequests: 0
+}) {
   return http.createServer((request, response) => {
     const url = new URL(request.url, 'http://127.0.0.1');
     if (url.pathname === '/api/maid/test-cleaner') {
@@ -204,15 +211,23 @@ function createServer(state = { statsMode: 'ok', statsRequests: 0, dashboardMode
       response.end(state.dashboardMode === 'empty' ? emptyDashboardPayload : dashboardPayload);
       return;
     }
-    if (url.pathname === '/api/bookings' && url.searchParams.get('stats_snapshots') === '1') {
+    if (url.pathname === '/api/stats-snapshots') {
       state.statsRequests++;
+      state.statsPaths = state.statsPaths || [];
+      state.statsPaths.push(url.pathname);
       if (state.statsMode === 'auth') {
         response.writeHead(403, { 'content-type': 'text/html; charset=utf-8' });
-        response.end('<!doctype html><html><body>Access session expired</body></html>');
+        response.end('<!doctype html><html><head><title>Error · Cloudflare Access</title></head><body><h1>Forbidden</h1><p>You do not have permission to view this page.</p></body></html>');
         return;
       }
       response.writeHead(200, { 'content-type': 'application/json' });
       response.end(JSON.stringify(statsSnapshots));
+      return;
+    }
+    if (url.pathname === '/api/bookings' && url.searchParams.get('stats_snapshots') === '1') {
+      state.legacyStatsRequests = (state.legacyStatsRequests || 0) + 1;
+      response.writeHead(410, { 'content-type': 'application/json' });
+      response.end(JSON.stringify({ error: 'Legacy statistics route must not be used by the browser' }));
       return;
     }
     if (url.pathname.startsWith('/api/')) {
@@ -452,7 +467,7 @@ async function inspectStatsPage(browser, baseUrl, viewport, isMobile) {
   return { historyTitle, radar7, radar30, overflow, charts };
 }
 
-async function inspectCachedStatsAuthFallback(browser, baseUrl) {
+async function inspectCachedStatsAuthFallback(browser, baseUrl, serverState) {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true });
   await installStatsBrowserMocks(context, statsSnapshots);
   const page = await context.newPage();
@@ -464,12 +479,14 @@ async function inspectCachedStatsAuthFallback(browser, baseUrl) {
   await waitForStatsReady(page, 'cached');
 
   assert.match(await page.locator('#statsHistoryTitle').innerText(), /показана сохранённая история/i);
-  assert.match(await page.locator('#statsHistoryDetail').innerText(), /сессия доступа истекла/i);
-  await page.locator('#statsHistoryActions').getByRole('button', { name: /Обновить сессию/ }).waitFor();
+  assert.match(await page.locator('#statsHistoryDetail').innerText(), /доступ к истории статистики отклонён/i);
+  assert.equal(await page.locator('#statsHistoryActions').getByRole('button', { name: /Обновить сессию/ }).count(), 0);
   const retry = page.locator('#statsHistoryActions').getByRole('button', { name: /Повторить/ });
   await retry.waitFor();
+  serverState.statsMode = 'ok';
   await retry.click();
-  await waitForStatsReady(page, 'cached');
+  await waitForStatsReady(page, 'ok');
+  assert.match(await page.locator('#statsHistoryTitle').innerText(), /история статистики актуальна/i);
 
   const cachedBookings = await page.locator('#statsDynamicBookings').innerText();
   assert.notEqual(cachedBookings, '0');
@@ -505,7 +522,7 @@ async function inspectCachedStatsAuthFallback(browser, baseUrl) {
   const charts = await page.evaluate(() => globalThis.__statsChartMock);
   assert.ok(charts.active <= 7, `cached fallback accumulated chart instances: ${charts.active}`);
   await context.close();
-  return { state: 'cached', cachedBookings, overflow, charts };
+  return { state: 'recovered', cachedBookings, overflow, charts };
 }
 
 async function inspectStatsWithoutChart(browser, baseUrl) {
@@ -569,7 +586,14 @@ async function inspectConfirmedEmptyDashboard(browser, baseUrl, serverState) {
 }
 
 async function main() {
-  const serverState = { statsMode: 'ok', statsRequests: 0, dashboardMode: 'normal', dashboardRequests: 0 };
+  const serverState = {
+    statsMode: 'ok',
+    statsRequests: 0,
+    statsPaths: [],
+    legacyStatsRequests: 0,
+    dashboardMode: 'normal',
+    dashboardRequests: 0
+  };
   const server = createServer(serverState);
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   const baseUrl = `http://127.0.0.1:${server.address().port}/`;
@@ -582,15 +606,16 @@ async function main() {
     const statsMobile = await inspectStatsPage(browser, baseUrl, { width: 390, height: 844 }, true);
     const statsWithoutChart = await inspectStatsWithoutChart(browser, baseUrl);
     assert.ok(serverState.statsRequests >= 3, `statistics history endpoint was requested only ${serverState.statsRequests} time(s)`);
+    assert.deepEqual([...new Set(serverState.statsPaths)], ['/api/stats-snapshots']);
+    assert.equal(serverState.legacyStatsRequests, 0, 'browser still requested the service-token /api/bookings statistics route');
 
     const requestsBeforeAuthFallback = serverState.statsRequests;
     serverState.statsMode = 'auth';
-    const cachedAuthFallback = await inspectCachedStatsAuthFallback(browser, baseUrl);
+    const cachedAuthFallback = await inspectCachedStatsAuthFallback(browser, baseUrl, serverState);
     assert.ok(
       serverState.statsRequests >= requestsBeforeAuthFallback + 2,
       'cached auth fallback did not retry the protected statistics endpoint'
     );
-    serverState.statsMode = 'ok';
     const confirmedEmptyDashboard = await inspectConfirmedEmptyDashboard(browser, baseUrl, serverState);
 
     const maidContext = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true });
@@ -622,6 +647,8 @@ async function main() {
       statsWithoutChart,
       cachedAuthFallback,
       confirmedEmptyDashboard,
+      statsEndpoint: [...new Set(serverState.statsPaths)],
+      legacyStatsRequests: serverState.legacyStatsRequests,
       statsRequests: serverState.statsRequests,
       dashboardRequests: serverState.dashboardRequests,
       maidYearBoundary: true

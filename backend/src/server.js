@@ -189,14 +189,9 @@ app.get('/api/stats-snapshots', async (req, res) => {
   }
 });
 
-app.post('/api/stats-snapshots', async (req, res) => {
-  try {
-    const { recordBookingStatsSnapshot } = require('./stats-snapshots');
-    const snapshot = await recordBookingStatsSnapshot(db, { source: 'manual' });
-    res.json({ success: true, snapshot });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+app.all('/api/stats-snapshots', (_req, res) => {
+  res.set('Allow', 'GET');
+  res.status(405).json({ error: 'Method not allowed' });
 });
 
 // ===== CLEANERS =====

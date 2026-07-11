@@ -5087,6 +5087,11 @@ function statsHistoryErrorCopy(error) {
         title: 'Сессия доступа истекла',
         detail: `Сервер отклонил запрос${status ? ` (HTTP ${status})` : ''}. Обновите сессию и войдите снова.`
       };
+    case 'forbidden':
+      return {
+        title: 'Доступ к истории статистики отклонён',
+        detail: `Cloudflare не разрешил этот маршрут${status ? ` (HTTP ${status})` : ''}. Повторите запрос; если ошибка останется, требуется проверка политики доступа.`
+      };
     case 'wrong_origin':
       return {
         title: 'Статистика недоступна на адресе Vercel',
@@ -5149,11 +5154,15 @@ async function fetchStatsHistoryResult(url) {
     const contentType = String(response.headers.get('content-type') || '').toLowerCase();
     const body = await response.text();
     const looksLikeHtml = contentType.includes('text/html') || /^\s*(?:<!doctype\s+html|<html\b)/i.test(body);
-    const looksLikeLogin = response.redirected || /(?:cloudflare\s+access|sign[ -]?in|log[ -]?in|войти)/i.test(body.slice(0, 4000));
+    const responsePreview = body.slice(0, 4000);
+    const looksLikeLogin = response.redirected || /(?:sign[ -]?in|log[ -]?in|войти|cdn-cgi\/access\/login)/i.test(responsePreview);
+    const looksLikeAccessDenied = status === 403 && /(?:cloudflare\s+access|forbidden|permission\s+denied|access\s+denied)/i.test(responsePreview);
 
     if (!response.ok) {
       let kind = 'http';
-      if (status === 401 || status === 403) kind = 'auth';
+      if (looksLikeAccessDenied) kind = 'forbidden';
+      else if (status === 401 || (status === 403 && looksLikeLogin)) kind = 'auth';
+      else if (status === 403) kind = 'forbidden';
       else if (status === 404 && /(?:^|\.)vercel\.app$/i.test(location.hostname)) kind = 'wrong_origin';
       else if (status === 404) kind = 'not_found';
       else if (status >= 500) kind = 'server';
@@ -5299,7 +5308,7 @@ function ensureStatsSnapshots({ force = false } = {}) {
   statsHistoryMeta = { state: 'loading', source: null, savedAt: null, error: null, quality: null, attemptedNetwork: true };
   renderStatsHistoryStatus();
 
-  statsSnapshotsPromise = fetchStatsHistoryResult(`${API}/bookings?stats_snapshots=1&season_year=${year}&limit=1000`)
+  statsSnapshotsPromise = fetchStatsHistoryResult(`${API}/stats-snapshots?season_year=${year}&limit=1000`)
     .then(result => {
       if (result.ok) {
         const canonical = canonicalizeStatsHistory(result.data, year);

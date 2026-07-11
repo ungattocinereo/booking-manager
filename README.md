@@ -157,6 +157,9 @@ node bot.js
 - `GET /api/bookings` — List bookings (`?property_id=`, `?from_date=`)
 - `GET /api/bookings/summary` — Bookings grouped by property
 
+### Statistics
+- `GET /api/stats-snapshots` — Daily statistics history (`?season_year=`, `?limit=`)
+
 ### Properties
 - `GET /api/properties` — All properties
 
