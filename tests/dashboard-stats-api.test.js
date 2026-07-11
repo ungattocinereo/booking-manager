@@ -20,9 +20,9 @@ function fakeResponse() {
   };
 }
 
-test('statistics snapshots endpoint is read-only and returns requested history', async () => {
+test('dashboard statistics mode is read-only and returns requested history', async () => {
   const dbPath = require.resolve('../backend/src/database');
-  const handlerPath = require.resolve('../api/stats-snapshots');
+  const handlerPath = require.resolve('../api/dashboard');
   const savedDb = require.cache[dbPath];
   const savedHandler = require.cache[handlerPath];
   const savedPostgresUrl = process.env.POSTGRES_URL;
@@ -46,16 +46,19 @@ test('statistics snapshots endpoint is read-only and returns requested history',
       }
     };
     delete require.cache[handlerPath];
-    const handler = require('../api/stats-snapshots');
+    const handler = require('../api/dashboard');
 
     const denied = fakeResponse();
-    await handler({ method: 'POST', query: {} }, denied);
+    await handler({ method: 'POST', query: { stats_only: '1' } }, denied);
     assert.equal(denied.statusCode, 405);
     assert.equal(denied.headers.allow, 'GET');
     assert.equal(queries.length, 0);
 
     const response = fakeResponse();
-    await handler({ method: 'GET', query: { season_year: '2026', limit: '1000' } }, response);
+    await handler({
+      method: 'GET',
+      query: { stats_only: '1', season_year: '2026', limit: '1000' }
+    }, response);
     assert.equal(response.statusCode, 200);
     assert.deepEqual(response.body, snapshots);
     assert.deepEqual(queries, [{ seasonYear: '2026', limit: '1000' }]);

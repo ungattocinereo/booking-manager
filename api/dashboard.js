@@ -15,6 +15,19 @@ module.exports = async (req, res) => {
       await db.init();
     }
 
+    if (req.query.stats_only === '1') {
+      if (req.method && req.method !== 'GET') {
+        res.setHeader('Allow', 'GET');
+        return res.status(405).json({ error: 'Method not allowed' });
+      }
+      const snapshots = await db.getStatsSnapshots({
+        seasonYear: req.query.season_year,
+        limit: req.query.limit
+      });
+      res.setHeader('Cache-Control', 'private, no-store, max-age=0');
+      return res.status(200).json(snapshots);
+    }
+
     const today = todayInRome();
     const full = req.query.full === '1';
     const includeInactive = req.query.include_inactive === '1';

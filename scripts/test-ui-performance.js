@@ -205,16 +205,10 @@ function createServer(state = {
       }));
       return;
     }
-    if (url.pathname === '/api/dashboard') {
-      state.dashboardRequests++;
-      response.writeHead(200, { 'content-type': 'application/json' });
-      response.end(state.dashboardMode === 'empty' ? emptyDashboardPayload : dashboardPayload);
-      return;
-    }
-    if (url.pathname === '/api/stats-snapshots') {
+    if (url.pathname === '/api/dashboard' && url.searchParams.get('stats_only') === '1') {
       state.statsRequests++;
       state.statsPaths = state.statsPaths || [];
-      state.statsPaths.push(url.pathname);
+      state.statsPaths.push(`${url.pathname}?stats_only=1`);
       if (state.statsMode === 'auth') {
         response.writeHead(403, { 'content-type': 'text/html; charset=utf-8' });
         response.end('<!doctype html><html><head><title>Error · Cloudflare Access</title></head><body><h1>Forbidden</h1><p>You do not have permission to view this page.</p></body></html>');
@@ -222,6 +216,12 @@ function createServer(state = {
       }
       response.writeHead(200, { 'content-type': 'application/json' });
       response.end(JSON.stringify(statsSnapshots));
+      return;
+    }
+    if (url.pathname === '/api/dashboard') {
+      state.dashboardRequests++;
+      response.writeHead(200, { 'content-type': 'application/json' });
+      response.end(state.dashboardMode === 'empty' ? emptyDashboardPayload : dashboardPayload);
       return;
     }
     if (url.pathname === '/api/bookings' && url.searchParams.get('stats_snapshots') === '1') {
@@ -606,7 +606,7 @@ async function main() {
     const statsMobile = await inspectStatsPage(browser, baseUrl, { width: 390, height: 844 }, true);
     const statsWithoutChart = await inspectStatsWithoutChart(browser, baseUrl);
     assert.ok(serverState.statsRequests >= 3, `statistics history endpoint was requested only ${serverState.statsRequests} time(s)`);
-    assert.deepEqual([...new Set(serverState.statsPaths)], ['/api/stats-snapshots']);
+    assert.deepEqual([...new Set(serverState.statsPaths)], ['/api/dashboard?stats_only=1']);
     assert.equal(serverState.legacyStatsRequests, 0, 'browser still requested the service-token /api/bookings statistics route');
 
     const requestsBeforeAuthFallback = serverState.statsRequests;

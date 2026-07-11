@@ -41,6 +41,15 @@ app.get('/api/properties', async (req, res) => {
 
 app.get('/api/dashboard', async (req, res) => {
   try {
+    if (req.query.stats_only === '1') {
+      const snapshots = await db.getStatsSnapshots({
+        seasonYear: req.query.season_year,
+        limit: req.query.limit
+      });
+      res.set('Cache-Control', 'private, no-store, max-age=0');
+      return res.json(snapshots);
+    }
+
     const today = todayInRome();
     const full = req.query.full === '1';
     const includeInactive = req.query.include_inactive === '1';

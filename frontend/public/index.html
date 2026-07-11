@@ -5308,7 +5308,7 @@ function ensureStatsSnapshots({ force = false } = {}) {
   statsHistoryMeta = { state: 'loading', source: null, savedAt: null, error: null, quality: null, attemptedNetwork: true };
   renderStatsHistoryStatus();
 
-  statsSnapshotsPromise = fetchStatsHistoryResult(`${API}/stats-snapshots?season_year=${year}&limit=1000`)
+  statsSnapshotsPromise = fetchStatsHistoryResult(`${API}/dashboard?stats_only=1&season_year=${year}&limit=1000`)
     .then(result => {
       if (result.ok) {
         const canonical = canonicalizeStatsHistory(result.data, year);
