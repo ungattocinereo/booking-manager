@@ -9,7 +9,7 @@ COPY package*.json ./
 RUN npm install --production
 
 # Copy bot code
-COPY bot.js .
+COPY bot.js today.js ./
 
 # Run as non-root user
 RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001 && \

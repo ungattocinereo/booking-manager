@@ -324,8 +324,18 @@ async function syncAll() {
 
     // Store an aggregate statistics snapshot after the final booking state is known.
     const { recordBookingStatsSnapshot } = require('./stats-snapshots');
-    const snapshot = await recordBookingStatsSnapshot(db, { source: 'sync' });
-    console.log(`\n📈 Stats snapshot saved: ${snapshot.booking_count} bookings, ${snapshot.occupied_nights} nights`);
+    const snapshot = await recordBookingStatsSnapshot(db, {
+      source: 'sync',
+      syncStatus: failures.length ? 'partial' : 'success',
+      feedErrorCount: failures.length
+    });
+    if (snapshot.storage?.quarantined) {
+      console.log(`\n📈 Empty stats candidate quarantined for ${snapshot.snapshot_date}; waiting for a second successful sync`);
+    } else if (snapshot.storage?.skipped) {
+      console.log(`\n📈 Kept existing canonical stats snapshot for ${snapshot.snapshot_date}; incoming candidate was not stored`);
+    } else {
+      console.log(`\n📈 Stats snapshot saved: ${snapshot.booking_count} bookings, ${snapshot.occupied_nights} nights`);
+    }
 
     if (failures.length) {
       throw new Error(`${failures.length} calendar feed(s) failed`);

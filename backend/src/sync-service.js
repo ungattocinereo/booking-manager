@@ -29,8 +29,12 @@ async function executeSync(source) {
     const syncResult = await syncCalendars();
     const enrichResult = await enrichFromExports(db, Boolean(USE_POSTGRES));
     const tasksCount = await generateCleaningTasks();
-    const statsSnapshot = await recordBookingStatsSnapshot(db, { source });
     const failures = syncResult.failures || [];
+    const statsSnapshot = await recordBookingStatsSnapshot(db, {
+      source,
+      syncStatus: failures.length ? 'partial' : 'success',
+      feedErrorCount: failures.length
+    });
 
     const result = {
       success: true,
@@ -46,7 +50,8 @@ async function executeSync(source) {
         season_year: statsSnapshot.season_year,
         booking_count: statsSnapshot.booking_count,
         occupied_nights: statsSnapshot.occupied_nights,
-        occupancy_percent: statsSnapshot.occupancy_percent
+        occupancy_percent: statsSnapshot.occupancy_percent,
+        saved: statsSnapshot.storage?.saved !== false
       },
       timestamp: new Date().toISOString()
     };

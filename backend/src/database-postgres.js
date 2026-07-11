@@ -2,6 +2,13 @@ const { Pool } = require('pg');
 const fs = require('fs');
 const path = require('path');
 const { buildSyncHealth } = require('../../lib/sync-health');
+const {
+  canonicalizeStatsSnapshots,
+  isEmptyStatsSnapshot,
+  prepareEmptySnapshotWrite,
+  romeDateKey,
+  shouldReplaceDailySnapshot
+} = require('./stats-snapshots');
 
 const SCHEMA_PATH = path.join(__dirname, '../database/schema-postgres.sql');
 
@@ -496,8 +503,10 @@ class Database {
   // Statistics snapshot operations
   normalizeStatsSnapshot(row) {
     if (!row) return row;
+    const payload = parseJsonColumn(row.payload);
     return {
       ...row,
+      snapshot_date: String(row.snapshot_date || payload.snapshot_date || romeDateKey(row.captured_at)).slice(0, 10),
       season_year: Number(row.season_year),
       booking_count: Number(row.booking_count) || 0,
       occupied_nights: Number(row.occupied_nights) || 0,
@@ -508,36 +517,133 @@ class Database {
       monthly_bookings: parseJsonColumn(row.monthly_bookings),
       platform_counts: parseJsonColumn(row.platform_counts),
       country_counts: parseJsonColumn(row.country_counts),
-      payload: parseJsonColumn(row.payload)
+      payload
     };
   }
 
   async createStatsSnapshot(snapshot) {
-    return this.execute(
-      `INSERT INTO booking_stats_snapshots (
-        captured_at, source, season_year, booking_count, occupied_nights, guest_count,
-        occupancy_percent, avg_stay, monthly_nights, monthly_bookings,
-        platform_counts, country_counts, payload
-      ) VALUES (
-        COALESCE($1::timestamp, NOW()), $2, $3, $4, $5, $6, $7, $8,
-        $9::jsonb, $10::jsonb, $11::jsonb, $12::jsonb, $13::jsonb
-      )`,
-      [
-        snapshot.captured_at || null,
-        snapshot.source || 'sync',
-        snapshot.season_year,
-        snapshot.booking_count || 0,
-        snapshot.occupied_nights || 0,
-        snapshot.guest_count || 0,
-        snapshot.occupancy_percent || 0,
-        snapshot.avg_stay || 0,
-        stringifyJson(snapshot.monthly_nights),
-        stringifyJson(snapshot.monthly_bookings),
-        stringifyJson(snapshot.platform_counts),
-        stringifyJson(snapshot.country_counts),
-        stringifyJson(snapshot.payload)
-      ]
-    );
+    const capturedAt = snapshot.captured_at || new Date().toISOString();
+    const snapshotDate = String(snapshot.snapshot_date || snapshot.payload?.snapshot_date || romeDateKey(capturedAt)).slice(0, 10);
+    const payload = { ...(snapshot.payload || {}), snapshot_date: snapshotDate };
+    const baseIncoming = { ...snapshot, captured_at: capturedAt, snapshot_date: snapshotDate, payload };
+    const client = await this.pool.connect();
+
+    try {
+      await client.query('BEGIN');
+      await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`booking-stats:${snapshot.season_year}:${snapshotDate}`]);
+      const candidatesResult = await client.query(
+        `SELECT id, captured_at AT TIME ZONE 'UTC' AS captured_at, source,
+                season_year, booking_count, occupied_nights, guest_count,
+                occupancy_percent, avg_stay, monthly_nights, monthly_bookings,
+                platform_counts, country_counts, payload
+         FROM booking_stats_snapshots
+         WHERE season_year = $1
+         ORDER BY booking_stats_snapshots.captured_at DESC, id DESC
+         LIMIT 2000`,
+        [snapshot.season_year]
+      );
+      const sameDay = candidatesResult.rows
+        .map(row => this.normalizeStatsSnapshot(row))
+        .filter(row => row.snapshot_date === snapshotDate);
+      const existing = sameDay.reduce(
+        (best, row) => shouldReplaceDailySnapshot(best, row) ? row : best,
+        null
+      );
+      let incoming = baseIncoming;
+      const emptyPlan = prepareEmptySnapshotWrite(existing, incoming);
+      incoming = emptyPlan.snapshot;
+
+      if (existing && emptyPlan.quarantined && emptyPlan.existingPayload) {
+        await client.query('UPDATE booking_stats_snapshots SET payload = $1::jsonb WHERE id = $2', [
+          stringifyJson(emptyPlan.existingPayload),
+          existing.id
+        ]);
+        await client.query('COMMIT');
+        return {
+          rowCount: 0,
+          rows: [],
+          skipped: true,
+          quarantined: true,
+          existingId: existing.id,
+          snapshot: { ...existing, payload: emptyPlan.existingPayload }
+        };
+      }
+
+      if (existing && !emptyPlan.confirmed && !shouldReplaceDailySnapshot(existing, incoming)) {
+        let retained = existing;
+        const resetsEmptyCandidate = !isEmptyStatsSnapshot(incoming) ||
+          String(incoming.payload?.sync_status || '').toLowerCase() !== 'success' ||
+          Number(incoming.payload?.feed_error_count || 0) > 0;
+        if (existing.payload?.empty_candidate && resetsEmptyCandidate) {
+          const cleanPayload = { ...(existing.payload || {}) };
+          delete cleanPayload.empty_candidate;
+          await client.query('UPDATE booking_stats_snapshots SET payload = $1::jsonb WHERE id = $2', [
+            stringifyJson(cleanPayload),
+            existing.id
+          ]);
+          retained = { ...existing, payload: cleanPayload };
+        }
+        await client.query('COMMIT');
+        return { rowCount: 0, rows: [], skipped: true, existingId: existing.id, snapshot: retained };
+      }
+
+      const values = [
+        incoming.captured_at,
+        incoming.source || 'sync',
+        incoming.season_year,
+        incoming.booking_count || 0,
+        incoming.occupied_nights || 0,
+        incoming.guest_count || 0,
+        incoming.occupancy_percent || 0,
+        incoming.avg_stay || 0,
+        stringifyJson(incoming.monthly_nights),
+        stringifyJson(incoming.monthly_bookings),
+        stringifyJson(incoming.platform_counts),
+        stringifyJson(incoming.country_counts),
+        stringifyJson(incoming.payload)
+      ];
+
+      let result;
+      if (existing) {
+        result = await client.query(
+          `UPDATE booking_stats_snapshots
+           SET captured_at = ($1::timestamptz AT TIME ZONE 'UTC'), source = $2,
+               season_year = $3, booking_count = $4, occupied_nights = $5,
+               guest_count = $6, occupancy_percent = $7, avg_stay = $8,
+               monthly_nights = $9::jsonb, monthly_bookings = $10::jsonb,
+               platform_counts = $11::jsonb, country_counts = $12::jsonb,
+               payload = $13::jsonb
+           WHERE id = $14
+           RETURNING id`,
+          [...values, existing.id]
+        );
+      } else {
+        result = await client.query(
+          `INSERT INTO booking_stats_snapshots (
+            captured_at, source, season_year, booking_count, occupied_nights, guest_count,
+            occupancy_percent, avg_stay, monthly_nights, monthly_bookings,
+            platform_counts, country_counts, payload
+          ) VALUES (
+            ($1::timestamptz AT TIME ZONE 'UTC'), $2, $3, $4, $5, $6, $7, $8,
+            $9::jsonb, $10::jsonb, $11::jsonb, $12::jsonb, $13::jsonb
+          ) RETURNING id`,
+          values
+        );
+      }
+      await client.query('COMMIT');
+      return {
+        rowCount: result.rowCount,
+        rows: result.rows,
+        quarantined: emptyPlan.quarantined,
+        confirmed: emptyPlan.confirmed,
+        snapshot: incoming
+      };
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 
   async getStatsSnapshots(options = {}) {
@@ -552,18 +658,28 @@ class Database {
       params.push(Number(seasonYear));
     }
 
-    params.push(limit);
+    // Apply the API limit after daily canonicalization so duplicate legacy
+    // writes cannot displace older days from the history window.
+    const rawLimit = Math.min(10000, Math.max(2000, limit * 10));
+    params.push(rawLimit);
     const rows = await this.query(
       `SELECT * FROM (
-        SELECT * FROM booking_stats_snapshots
+        SELECT id, captured_at AT TIME ZONE 'UTC' AS captured_at, source,
+               season_year, booking_count, occupied_nights, guest_count,
+               occupancy_percent, avg_stay, monthly_nights, monthly_bookings,
+               platform_counts, country_counts, payload
+        FROM booking_stats_snapshots
         WHERE ${where}
-        ORDER BY captured_at DESC
+        ORDER BY booking_stats_snapshots.captured_at DESC
         LIMIT $${n}
       ) s ORDER BY captured_at ASC`,
       params
     );
 
-    return rows.map(row => this.normalizeStatsSnapshot(row));
+    return canonicalizeStatsSnapshots(
+      rows.map(row => this.normalizeStatsSnapshot(row)),
+      { limit }
+    );
   }
 
   async ping() {

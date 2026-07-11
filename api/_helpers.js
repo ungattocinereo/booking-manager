@@ -48,9 +48,18 @@ function formatCleaningTask(task) {
   };
 }
 
+function formatAvailabilityMarker(booking) {
+  return {
+    property_id: booking.property_id,
+    start_date: formatDate(booking.start_date),
+    end_date: formatDate(booking.end_date)
+  };
+}
+
 module.exports = {
   formatDate,
   todayInRome,
   formatBooking,
-  formatCleaningTask
+  formatCleaningTask,
+  formatAvailabilityMarker
 };

@@ -4,7 +4,21 @@ const USE_POSTGRES = process.env.POSTGRES_URL || process.env.DATABASE_URL;
 const db = USE_POSTGRES
   ? require('../backend/src/database-postgres')
   : require('../backend/src/database');
-const { formatBooking, formatCleaningTask, formatDate, todayInRome } = require('./_helpers');
+const { formatBooking, formatCleaningTask } = require('./_helpers');
+const {
+  PROPERTY_NAMES,
+  countryToFlag,
+  escapeHtml,
+  filterRealBookings,
+  fmtDate,
+  formatTodayArrivals,
+  formatTodayDetails,
+  getRomeDate,
+  nightsBetween,
+  parseCommand,
+  platformIcon,
+  pluralNights
+} = require('../telegram-bot/today');
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const FAMILY_CHAT_ID = process.env.FAMILY_CHAT_ID;
@@ -31,52 +45,13 @@ async function sendChatAction(chatId, action = 'typing') {
 // ── Helpers ──────────────────────────────────────────────
 
 function getDate(daysOffset = 0) {
-  const d = new Date(`${todayInRome()}T12:00:00`);
-  d.setDate(d.getDate() + daysOffset);
-  return formatDate(d);
-}
-
-function nightsBetween(start, end) {
-  return Math.round((new Date(end) - new Date(start)) / 86400000);
-}
-
-function fmtDate(iso) {
-  const d = new Date(iso);
-  const months = ['янв', 'фев', 'мар', 'апр', 'мая', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
-  return `${d.getDate()} ${months[d.getMonth()]}`;
-}
-
-function platformIcon(platform) {
-  if (!platform) return '⬜';
-  const p = platform.toLowerCase();
-  if (p.includes('airbnb')) return '🩷';
-  if (p.includes('booking')) return '🔵';
-  return '⬜';
-}
-
-function countryToFlag(code) {
-  if (!code) return '';
-  const c = code.toUpperCase();
-  return String.fromCodePoint(...[...c].map(ch => 0x1F1E6 + ch.charCodeAt(0) - 65));
+  return getRomeDate(daysOffset);
 }
 
 async function ensureDb() {
   if (!db.pool && !db.db) {
     await db.init();
   }
-}
-
-function filterRealBookings(bookings) {
-  return bookings.filter(b => {
-    const platform = (b.platform || '').toLowerCase();
-    if (platform === 'booking') return true;
-    if (platform === 'airbnb') {
-      const summary = b.raw_summary || '';
-      const isUnavailable = summary.includes('Not available') || summary.includes('CLOSED') || b.booking_type === 'blocked';
-      if (isUnavailable && !b.guest_name) return false;
-    }
-    return true;
-  });
 }
 
 async function fetchBookings(params = {}) {
@@ -101,14 +76,6 @@ async function fetchCleaningTasks(params = {}) {
   }
 }
 
-const PROPERTY_NAMES = {
-  orange: 'Orange Room', solo: 'Solo Room', youth: 'Youth Room',
-  vingtage: 'Vingtage Room', awesome: 'Awesome Apartments',
-  central: 'Central Room',
-  carina: 'Carina', harmony: 'Harmony', royal: 'Royal',
-  susy: 'Villa Susy', carmela: 'Carmela'
-};
-
 // ── Formatters ───────────────────────────────────────────
 
 function formatBookings(bookings, title) {
@@ -127,81 +94,12 @@ function formatBookings(bookings, title) {
       const name = PROPERTY_NAMES[b.property_id] || b.property_id;
       const icon = platformIcon(b.platform);
       const flag = countryToFlag(b.guest_country);
-      const guest = b.guest_name ? ` — ${b.guest_name}${flag ? ' ' + flag : ''}` : '';
-      lines.push(`${icon} ${name} (${nights} ${pluralNights(nights)}, → ${fmtDate(b.end_date)})${guest}`);
+      const guest = b.guest_name ? ` — ${escapeHtml(b.guest_name)}${flag ? ' ' + flag : ''}` : '';
+      lines.push(`${icon} ${escapeHtml(name)} (${nights} ${pluralNights(nights)}, → ${fmtDate(b.end_date)})${guest}`);
     }
     lines.push('');
   }
   return lines.join('\n').trim();
-}
-
-function pluralNights(nights) {
-  const abs = Math.abs(nights);
-  const lastTwo = abs % 100;
-  const last = abs % 10;
-  if (lastTwo >= 11 && lastTwo <= 14) return 'ночей';
-  if (last === 1) return 'ночь';
-  if (last >= 2 && last <= 4) return 'ночи';
-  return 'ночей';
-}
-
-function sortBookingsByProperty(bookings) {
-  return bookings.sort((a, b) => {
-    const aName = PROPERTY_NAMES[a.property_id] || a.property_id;
-    const bName = PROPERTY_NAMES[b.property_id] || b.property_id;
-    return aName.localeCompare(bName, 'ru');
-  });
-}
-
-function bookingGuestSuffix(booking) {
-  const flag = countryToFlag(booking.guest_country);
-  return booking.guest_name ? ` — ${booking.guest_name}${flag ? ' ' + flag : ''}` : '';
-}
-
-function formatTodayLine(booking, detail) {
-  const name = PROPERTY_NAMES[booking.property_id] || booking.property_id;
-  return `${platformIcon(booking.platform)} ${name} (${detail})${bookingGuestSuffix(booking)}`;
-}
-
-function formatTodaySection(title, bookings, lineFormatter, emptyText = 'Нет') {
-  const lines = [`<b>${title}</b>`];
-
-  if (!bookings || bookings.length === 0) {
-    lines.push(emptyText);
-    return lines.join('\n');
-  }
-
-  for (const booking of sortBookingsByProperty(bookings)) {
-    lines.push(lineFormatter(booking));
-  }
-
-  return lines.join('\n');
-}
-
-function formatTodayOverview(bookings, today) {
-  if (!bookings) return `🏠 Сегодня (${fmtDate(today)})\n\nНет бронирований`;
-
-  const arrivals = bookings.filter(b => b.start_date === today);
-  const checkouts = bookings.filter(b => b.end_date === today);
-  const staying = bookings.filter(b => b.start_date < today && b.end_date > today);
-
-  const sections = [
-    `🏠 <b>Сегодня (${fmtDate(today)})</b>`,
-    formatTodaySection('Заезды', arrivals, (b) => {
-      const nights = nightsBetween(b.start_date, b.end_date);
-      return formatTodayLine(b, `${nights} ${pluralNights(nights)}, выезд ${fmtDate(b.end_date)}`);
-    }, 'Заездов нет'),
-    formatTodaySection('Выезды', checkouts, (b) => {
-      const nights = nightsBetween(b.start_date, b.end_date);
-      return formatTodayLine(b, `с ${fmtDate(b.start_date)}, ${nights} ${pluralNights(nights)}`);
-    }, 'Выездов нет'),
-    formatTodaySection('Остаются', staying, (b) => {
-      const remainingNights = nightsBetween(today, b.end_date);
-      return formatTodayLine(b, `до ${fmtDate(b.end_date)}, еще ${remainingNights} ${pluralNights(remainingNights)}`);
-    }, 'Никто не остается')
-  ];
-
-  return sections.join('\n\n').trim();
 }
 
 function formatCleaning(tasks, title) {
@@ -269,10 +167,16 @@ async function handleWeek(chatId, arg) {
 
 async function handleToday(chatId) {
   const today = getDate(0);
-  let bookings = await fetchBookings({ from_date: today });
+  const bookings = await fetchBookings({ from_date: today });
   if (!bookings) return sendMessage(chatId, '❌ API недоступен');
-  bookings = bookings.filter(b => b.start_date <= today || b.end_date === today);
-  return sendMessage(chatId, formatTodayOverview(bookings, today));
+  return sendMessage(chatId, formatTodayArrivals(bookings, today));
+}
+
+async function handleTodayDetails(chatId) {
+  const today = getDate(0);
+  const bookings = await fetchBookings({ from_date: today });
+  if (!bookings) return sendMessage(chatId, '❌ API недоступен');
+  return sendMessage(chatId, formatTodayDetails(bookings, today));
 }
 
 async function handleTomorrow(chatId) {
@@ -317,7 +221,9 @@ async function handleHelp(chatId) {
 /bookings — бронирования на месяц
 /bookings orange — конкретный апартамент
 /week — бронирования на неделю
-/today — заезды, выезды и кто остается сегодня
+/today — только заезды сегодня
+/today-details — заезды, выезды и кто остается
+/today_details — та же команда, удобна для меню Telegram
 /tomorrow — заезды завтра
 /cleaning — уборки сегодня
 /cleaning tomorrow — уборки завтра
@@ -359,16 +265,16 @@ module.exports = async (req, res) => {
 
   try {
     // Route commands
-    const cmdMatch = text.match(/^\/(\w+)(?:@\w+)?(?:\s+(.+))?$/);
-    if (cmdMatch) {
+    const parsed = parseCommand(text);
+    if (parsed) {
       await sendChatAction(chatId);
-      const cmd = cmdMatch[1];
-      const arg = (cmdMatch[2] || '').trim().toLowerCase();
+      const { command: cmd, arg } = parsed;
 
       switch (cmd) {
         case 'bookings': await handleBookings(chatId, arg); break;
         case 'week': await handleWeek(chatId, arg); break;
         case 'today': await handleToday(chatId); break;
+        case 'today-details': case 'today_details': await handleTodayDetails(chatId); break;
         case 'tomorrow': await handleTomorrow(chatId); break;
         case 'cleaning': await handleCleaning(chatId, arg); break;
         case 'help': case 'start': await handleHelp(chatId); break;

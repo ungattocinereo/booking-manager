@@ -145,6 +145,7 @@ node bot.js
 | `/bookings orange` | Bookings for specific property |
 | `/week` | This week's bookings |
 | `/today` | Today's check-ins |
+| `/today-details` / `/today_details` | Today's check-ins, check-outs, and ongoing stays |
 | `/tomorrow` | Tomorrow's check-ins |
 | `/cleaning` | Today's cleaning tasks |
 | `/cleaning tomorrow` | Tomorrow's cleaning tasks |

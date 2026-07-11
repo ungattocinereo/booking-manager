@@ -2,6 +2,13 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs');
 const { buildSyncHealth } = require('../../lib/sync-health');
+const {
+  canonicalizeStatsSnapshots,
+  isEmptyStatsSnapshot,
+  prepareEmptySnapshotWrite,
+  romeDateKey,
+  shouldReplaceDailySnapshot
+} = require('./stats-snapshots');
 
 const DB_PATH = process.env.SQLITE_DB_PATH || path.join(__dirname, '../database/bookings.db');
 const SCHEMA_PATH = path.join(__dirname, '../database/schema.sql');
@@ -43,6 +50,7 @@ function staleBookingCutoffIso() {
 class Database {
   constructor() {
     this.db = null;
+    this.statsSnapshotWriteLocks = new Map();
   }
 
   async init() {
@@ -476,8 +484,10 @@ class Database {
   // Statistics snapshot operations
   normalizeStatsSnapshot(row) {
     if (!row) return row;
+    const payload = parseJsonColumn(row.payload);
     return {
       ...row,
+      snapshot_date: String(row.snapshot_date || payload.snapshot_date || romeDateKey(row.captured_at)).slice(0, 10),
       season_year: Number(row.season_year),
       booking_count: Number(row.booking_count) || 0,
       occupied_nights: Number(row.occupied_nights) || 0,
@@ -488,35 +498,118 @@ class Database {
       monthly_bookings: parseJsonColumn(row.monthly_bookings),
       platform_counts: parseJsonColumn(row.platform_counts),
       country_counts: parseJsonColumn(row.country_counts),
-      payload: parseJsonColumn(row.payload)
+      payload
     };
   }
 
   async createStatsSnapshot(snapshot) {
-    return this.run(
-      `INSERT INTO booking_stats_snapshots (
+    const capturedAt = snapshot.captured_at || new Date().toISOString();
+    const snapshotDate = String(snapshot.snapshot_date || snapshot.payload?.snapshot_date || romeDateKey(capturedAt)).slice(0, 10);
+    const lockKey = `${snapshot.season_year}:${snapshotDate}`;
+    const previous = this.statsSnapshotWriteLocks.get(lockKey) || Promise.resolve();
+    const write = previous.catch(() => {}).then(async () => {
+      const candidates = await this.all(
+        `SELECT *
+         FROM booking_stats_snapshots
+         WHERE season_year = ?
+         ORDER BY captured_at DESC, id DESC
+         LIMIT 2000`,
+        [snapshot.season_year]
+      );
+      const sameDay = candidates
+        .map(row => this.normalizeStatsSnapshot(row))
+        .filter(row => row.snapshot_date === snapshotDate);
+      const existing = sameDay.reduce(
+        (best, row) => shouldReplaceDailySnapshot(best, row) ? row : best,
+        null
+      );
+      let incoming = {
+        ...snapshot,
+        captured_at: capturedAt,
+        snapshot_date: snapshotDate,
+        payload: { ...(snapshot.payload || {}), snapshot_date: snapshotDate }
+      };
+      const emptyPlan = prepareEmptySnapshotWrite(existing, incoming);
+      incoming = emptyPlan.snapshot;
+
+      if (existing && emptyPlan.quarantined && emptyPlan.existingPayload) {
+        await this.run('UPDATE booking_stats_snapshots SET payload = ? WHERE id = ?', [
+          stringifyJson(emptyPlan.existingPayload),
+          existing.id
+        ]);
+        return {
+          lastID: existing.id,
+          changes: 0,
+          skipped: true,
+          quarantined: true,
+          snapshot: { ...existing, payload: emptyPlan.existingPayload }
+        };
+      }
+
+      if (existing && !emptyPlan.confirmed && !shouldReplaceDailySnapshot(existing, incoming)) {
+        let retained = existing;
+        const resetsEmptyCandidate = !isEmptyStatsSnapshot(incoming) ||
+          String(incoming.payload?.sync_status || '').toLowerCase() !== 'success' ||
+          Number(incoming.payload?.feed_error_count || 0) > 0;
+        if (existing.payload?.empty_candidate && resetsEmptyCandidate) {
+          const cleanPayload = { ...(existing.payload || {}) };
+          delete cleanPayload.empty_candidate;
+          await this.run('UPDATE booking_stats_snapshots SET payload = ? WHERE id = ?', [
+            stringifyJson(cleanPayload),
+            existing.id
+          ]);
+          retained = { ...existing, payload: cleanPayload };
+        }
+        return { lastID: existing.id, changes: 0, skipped: true, snapshot: retained };
+      }
+      const values = [
+        incoming.captured_at,
+        incoming.source || 'sync',
+        incoming.season_year,
+        incoming.booking_count || 0,
+        incoming.occupied_nights || 0,
+        incoming.guest_count || 0,
+        incoming.occupancy_percent || 0,
+        incoming.avg_stay || 0,
+        stringifyJson(incoming.monthly_nights),
+        stringifyJson(incoming.monthly_bookings),
+        stringifyJson(incoming.platform_counts),
+        stringifyJson(incoming.country_counts),
+        stringifyJson(incoming.payload)
+      ];
+
+      if (existing) {
+        const result = await this.run(
+          `UPDATE booking_stats_snapshots
+           SET captured_at = ?, source = ?, season_year = ?, booking_count = ?,
+               occupied_nights = ?, guest_count = ?, occupancy_percent = ?, avg_stay = ?,
+               monthly_nights = ?, monthly_bookings = ?, platform_counts = ?,
+               country_counts = ?, payload = ?
+          WHERE id = ?`,
+          [...values, existing.id]
+        );
+        return { ...result, confirmed: emptyPlan.confirmed, snapshot: incoming };
+      }
+
+      const result = await this.run(
+        `INSERT INTO booking_stats_snapshots (
         captured_at, source, season_year, booking_count, occupied_nights, guest_count,
         occupancy_percent, avg_stay, monthly_nights, monthly_bookings,
         platform_counts, country_counts, payload
-      ) VALUES (
-        COALESCE(?, CURRENT_TIMESTAMP), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-      )`,
-      [
-        snapshot.captured_at || null,
-        snapshot.source || 'sync',
-        snapshot.season_year,
-        snapshot.booking_count || 0,
-        snapshot.occupied_nights || 0,
-        snapshot.guest_count || 0,
-        snapshot.occupancy_percent || 0,
-        snapshot.avg_stay || 0,
-        stringifyJson(snapshot.monthly_nights),
-        stringifyJson(snapshot.monthly_bookings),
-        stringifyJson(snapshot.platform_counts),
-        stringifyJson(snapshot.country_counts),
-        stringifyJson(snapshot.payload)
-      ]
-    );
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        values
+      );
+      return { ...result, quarantined: emptyPlan.quarantined, confirmed: emptyPlan.confirmed, snapshot: incoming };
+    });
+
+    this.statsSnapshotWriteLocks.set(lockKey, write);
+    try {
+      return await write;
+    } finally {
+      if (this.statsSnapshotWriteLocks.get(lockKey) === write) {
+        this.statsSnapshotWriteLocks.delete(lockKey);
+      }
+    }
   }
 
   async getStatsSnapshots(options = {}) {
@@ -530,7 +623,10 @@ class Database {
       params.push(Number(seasonYear));
     }
 
-    params.push(limit);
+    // Apply the public limit after canonicalization so legacy duplicate rows do
+    // not crowd older calendar days out of the response.
+    const rawLimit = Math.min(10000, Math.max(2000, limit * 10));
+    params.push(rawLimit);
     const rows = await this.all(
       `SELECT * FROM (
         SELECT * FROM booking_stats_snapshots
@@ -541,7 +637,10 @@ class Database {
       params
     );
 
-    return rows.map(row => this.normalizeStatsSnapshot(row));
+    return canonicalizeStatsSnapshots(
+      rows.map(row => this.normalizeStatsSnapshot(row)),
+      { limit }
+    );
   }
 
   async ping() {

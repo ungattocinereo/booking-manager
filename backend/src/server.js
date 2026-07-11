@@ -7,8 +7,8 @@ const USE_POSTGRES = process.env.POSTGRES_URL || process.env.DATABASE_URL;
 const db = USE_POSTGRES 
   ? require('./database-postgres')
   : require('./database');
-const { formatBooking, formatCleaningTask, todayInRome } = require('../../api/_helpers');
-const { normalizeBookingsForDisplay } = require('../../lib/booking-normalization');
+const { formatBooking, formatCleaningTask, formatAvailabilityMarker, todayInRome } = require('../../api/_helpers');
+const { isUnavailableMarker, normalizeBookingsForDisplay } = require('../../lib/booking-normalization');
 const { checkApplicationHealth } = require('../../lib/health-check');
 const {
   normalizeCleanerName,
@@ -73,6 +73,7 @@ app.get('/api/dashboard', async (req, res) => {
       ? bookings
       : normalizedBookings;
     const formattedBookings = visibleBookings.map(formatBooking);
+    const availabilityMarkers = bookings.filter(isUnavailableMarker).map(formatAvailabilityMarker);
     const formattedTasks = cleaningTasks.map(formatCleaningTask);
     const latestSyncedAt = bookings.reduce((latest, booking) => {
       const value = booking.synced_at ? new Date(booking.synced_at).getTime() : 0;
@@ -107,6 +108,7 @@ app.get('/api/dashboard', async (req, res) => {
       properties,
       bookings: formattedBookings,
       bookings_by_property: byProperty,
+      availability_markers: availabilityMarkers,
       cleaning_tasks: formattedTasks,
       cleaners,
       stats_snapshots: statsSnapshots

@@ -1471,6 +1471,270 @@
       max-width: 1320px;
       margin: 0 auto;
     }
+    .stats-history-status {
+      position: relative;
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px 18px;
+      align-items: center;
+      margin-bottom: 12px;
+      padding: 13px 14px 11px;
+      border: 1px solid #ccfbf1;
+      border-radius: 8px;
+      background: linear-gradient(180deg, #f0fdfa, #ffffff);
+      color: #134e4a;
+    }
+    .stats-history-status[data-state="loading"] {
+      border-color: var(--border);
+      background: #fff;
+      color: var(--text);
+    }
+    .stats-history-status[data-state="cached"] {
+      border-color: #fde68a;
+      background: linear-gradient(180deg, #fffbeb, #ffffff);
+      color: #78350f;
+    }
+    .stats-history-status[data-state="warning"] {
+      border-color: #fde68a;
+      background: linear-gradient(180deg, #fffbeb, #ffffff);
+      color: #78350f;
+    }
+    .stats-history-status[data-state="error"] {
+      border-color: #fecaca;
+      background: linear-gradient(180deg, #fff1f2, #ffffff);
+      color: #881337;
+    }
+    .stats-history-copy {
+      min-width: 0;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .stats-history-icon {
+      flex: 0 0 auto;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(15,118,110,.1);
+    }
+    .stats-history-status[data-state="cached"] .stats-history-icon { background: rgba(217,119,6,.12); }
+    .stats-history-status[data-state="error"] .stats-history-icon { background: rgba(225,29,72,.1); }
+    .stats-history-title {
+      font-size: 13px;
+      line-height: 1.3;
+      font-weight: 800;
+    }
+    .stats-history-detail {
+      margin-top: 2px;
+      font-size: 11px;
+      line-height: 1.45;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+    .stats-history-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .stats-history-action {
+      min-height: 44px;
+      padding: 0 13px;
+      border: 1px solid currentColor;
+      border-radius: 8px;
+      background: rgba(255,255,255,.82);
+      color: inherit;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 800;
+      text-decoration: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .stats-history-action:focus-visible,
+    .stats-radar-period:focus-visible,
+    .stats-step-btn:focus-visible {
+      outline: 3px solid rgba(15,118,110,.24);
+      outline-offset: 2px;
+    }
+    .stats-quality-line {
+      grid-column: 1 / -1;
+      min-height: 5px;
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: #e5e7eb;
+    }
+    .stats-quality-segment {
+      flex: 1 1 0;
+      height: 5px;
+      min-width: 2px;
+      background: #14b8a6;
+    }
+    .stats-quality-segment.cached { background: #f59e0b; }
+    .stats-quality-segment.partial { background: #f59e0b; }
+    .stats-quality-segment.invalid { background: #fb7185; }
+    .stats-quality-segment.current { background: #0f766e; }
+    .stats-radar-card {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: linear-gradient(180deg, #ffffff, #fbfcfd);
+      box-shadow: var(--shadow-sm);
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .stats-radar-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 12px;
+    }
+    .stats-radar-title {
+      font-size: 15px;
+      line-height: 1.25;
+      font-weight: 800;
+      color: var(--text);
+    }
+    .stats-radar-sub {
+      margin-top: 2px;
+      color: var(--text-secondary);
+      font-size: 11px;
+      font-weight: 650;
+    }
+    .stats-radar-periods {
+      display: inline-grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 3px;
+      flex: 0 0 auto;
+      padding: 3px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #f3f4f6;
+    }
+    .stats-radar-period {
+      min-width: 66px;
+      min-height: 38px;
+      padding: 0 10px;
+      border: 0;
+      border-radius: 7px;
+      background: transparent;
+      color: var(--text-secondary);
+      font: inherit;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .stats-radar-period.active {
+      background: #fff;
+      color: #0f766e;
+      box-shadow: 0 1px 3px rgba(15,23,42,.12);
+    }
+    .stats-radar-grid {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .stats-radar-metric {
+      min-width: 0;
+      padding: 11px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #fff;
+    }
+    .stats-radar-metric.attention {
+      border-color: #fde68a;
+      background: #fffbeb;
+    }
+    .stats-radar-metric.critical {
+      border-color: #fecaca;
+      background: #fff1f2;
+    }
+    .stats-radar-label {
+      min-height: 30px;
+      color: var(--text-secondary);
+      font-size: 11px;
+      line-height: 1.35;
+      font-weight: 700;
+    }
+    .stats-radar-value {
+      margin-top: 2px;
+      color: var(--text);
+      font-size: 24px;
+      line-height: 1;
+      font-weight: 800;
+    }
+    .stats-radar-note {
+      margin-top: 10px;
+      color: var(--text-secondary);
+      font-size: 11px;
+      line-height: 1.45;
+      font-weight: 650;
+    }
+    .stats-radar-gaps {
+      margin-top: 12px;
+      padding-top: 11px;
+      border-top: 1px solid var(--border);
+    }
+    .stats-radar-gaps-title {
+      margin-bottom: 7px;
+      color: var(--text-secondary);
+      font-size: 11px;
+      font-weight: 800;
+    }
+    .stats-radar-gaps-list {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+      scrollbar-width: none;
+    }
+    .stats-radar-gaps-list::-webkit-scrollbar { display: none; }
+    .stats-radar-gap {
+      flex: 0 0 auto;
+      max-width: 240px;
+      padding: 7px 9px;
+      border: 1px solid #ccfbf1;
+      border-radius: 8px;
+      background: #f0fdfa;
+      color: #134e4a;
+      font-size: 11px;
+      line-height: 1.35;
+      font-weight: 750;
+    }
+    .stats-radar-gap strong { font-weight: 850; }
+    .stats-charts-status {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+      padding: 12px 14px;
+      border: 1px solid #fde68a;
+      border-radius: 8px;
+      background: #fffbeb;
+      color: #78350f;
+      font-size: 12px;
+      line-height: 1.45;
+      font-weight: 700;
+    }
+    .stats-charts-status[hidden] { display: none; }
+    .stats-dynamics-card[data-charts="unavailable"] .stats-dynamics-layout {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .stats-dynamics-card[data-charts="unavailable"] .stats-dynamics-chart {
+      display: none;
+    }
     .stats-dynamics-card {
       background:
         linear-gradient(135deg, rgba(15,118,110,.08), rgba(255,255,255,0) 44%),
@@ -1599,9 +1863,30 @@
       letter-spacing: 0;
       color: var(--text);
     }
+    .stats-metric-delta {
+      min-height: 16px;
+      margin-top: 4px;
+      color: var(--text-secondary);
+      font-size: 10px;
+      line-height: 1.3;
+      font-weight: 750;
+    }
+    .stats-metric-delta.positive { color: #047857; }
+    .stats-metric-delta.negative { color: #be123c; }
+    .stats-change-note {
+      min-height: 42px;
+      padding: 9px 11px;
+      border: 1px dashed #cbd5e1;
+      border-radius: 8px;
+      background: rgba(248,250,252,.78);
+      color: var(--text-secondary);
+      font-size: 11px;
+      line-height: 1.45;
+      font-weight: 650;
+    }
     .stats-timeline-control {
       display: grid;
-      grid-template-columns: 34px minmax(0, 1fr) 34px;
+      grid-template-columns: 44px minmax(0, 1fr) 44px;
       gap: 10px;
       align-items: center;
       margin-top: 16px;
@@ -1611,8 +1896,8 @@
       background: rgba(255,255,255,.72);
     }
     .stats-step-btn {
-      width: 34px;
-      height: 34px;
+      width: 44px;
+      height: 44px;
       border: 1px solid var(--border);
       border-radius: 8px;
       background: #fff;
@@ -1753,6 +2038,7 @@
       grid-template-columns: repeat(2, 1fr);
       gap: 16px;
     }
+    .stats-grid[hidden] { display: none; }
     .stats-chart-card {
       background: linear-gradient(180deg, #ffffff, #fbfcfd);
       border: 1px solid var(--border);
@@ -2283,6 +2569,41 @@
       }
 
       .stats-section { padding-top: 16px; }
+      .stats-history-status {
+        grid-template-columns: 1fr;
+        padding: 12px;
+      }
+      .stats-history-actions {
+        justify-content: stretch;
+      }
+      .stats-history-action {
+        flex: 1 1 140px;
+      }
+      .stats-radar-card {
+        padding: 13px;
+        margin-bottom: 12px;
+      }
+      .stats-radar-head {
+        align-items: center;
+      }
+      .stats-radar-period {
+        min-width: 58px;
+        min-height: 44px;
+      }
+      .stats-radar-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 7px;
+      }
+      .stats-radar-metric {
+        padding: 9px;
+      }
+      .stats-radar-label { min-height: 29px; }
+      .stats-radar-value { font-size: 21px; }
+      .stats-charts-status {
+        align-items: stretch;
+        flex-direction: column;
+      }
+      .stats-charts-status .stats-history-action { width: 100%; }
       .stats-dynamics-card {
         padding: 14px;
         margin-bottom: 12px;
@@ -2323,13 +2644,13 @@
         font-size: 17px;
       }
       .stats-timeline-control {
-        grid-template-columns: 32px minmax(0, 1fr) 32px;
+        grid-template-columns: 44px minmax(0, 1fr) 44px;
         gap: 8px;
         padding: 10px;
       }
       .stats-step-btn {
-        width: 32px;
-        height: 32px;
+        width: 44px;
+        height: 44px;
       }
       .stats-month-rail {
         grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -2460,6 +2781,13 @@
 
     @media (max-width: 420px) {
       .header h1 { max-width: 34vw; }
+      .stats-radar-head {
+        align-items: stretch;
+        flex-direction: column;
+      }
+      .stats-radar-periods { width: 100%; }
+      .stats-radar-period { min-width: 0; }
+      .stats-radar-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .nav-item {
         padding-left: 12px;
         padding-right: 12px;
@@ -2639,6 +2967,39 @@
 
   <!-- STATS TAB -->
   <div class="stats-section" id="statsTab" style="display:none">
+    <div class="stats-history-status" id="statsHistoryStatus" data-state="loading" role="status" aria-live="polite">
+      <div class="stats-history-copy">
+        <span class="stats-history-icon" id="statsHistoryIcon" aria-hidden="true">
+          <i data-lucide="loader-2" style="width:17px;height:17px;"></i>
+        </span>
+        <div>
+          <div class="stats-history-title" id="statsHistoryTitle">Проверяем историю статистики</div>
+          <div class="stats-history-detail" id="statsHistoryDetail">Загружаем ежедневные снимки сезона…</div>
+        </div>
+      </div>
+      <div class="stats-history-actions" id="statsHistoryActions"></div>
+      <div class="stats-quality-line" id="statsQualityLine" aria-hidden="true">
+        <span class="stats-quality-segment current"></span>
+      </div>
+    </div>
+
+    <section class="stats-radar-card" aria-labelledby="statsRadarTitle">
+      <div class="stats-radar-head">
+        <div>
+          <div class="stats-kicker"><i data-lucide="radar" style="width:13px;height:13px;"></i>Операционный радар</div>
+          <h2 class="stats-radar-title" id="statsRadarTitle">Что потребует внимания</h2>
+          <div class="stats-radar-sub" id="statsRadarRange">Ближайшие 7 дней</div>
+        </div>
+        <div class="stats-radar-periods" role="group" aria-label="Период операционного радара">
+          <button class="stats-radar-period active" id="statsRadar7" type="button" onclick="setStatsRadarDays(7)" aria-pressed="true">7 дней</button>
+          <button class="stats-radar-period" id="statsRadar30" type="button" onclick="setStatsRadarDays(30)" aria-pressed="false">30 дней</button>
+        </div>
+      </div>
+      <div class="stats-radar-grid" id="statsRadarGrid"></div>
+      <div class="stats-radar-gaps" id="statsRadarGaps"></div>
+      <div class="stats-radar-note" id="statsRadarNote"></div>
+    </section>
+
     <div class="stats-dynamics-card" id="statsDynamicsCard">
       <div class="stats-dynamics-top">
         <div>
@@ -2668,16 +3029,20 @@
             <div class="stats-mini-metric">
               <div class="label">Ночи</div>
               <div class="value" id="statsDynamicNights">0</div>
+              <div class="stats-metric-delta" id="statsDynamicNightsDelta">—</div>
             </div>
             <div class="stats-mini-metric">
               <div class="label">Занятость</div>
               <div class="value" id="statsDynamicOccupancy">0%</div>
+              <div class="stats-metric-delta" id="statsDynamicOccupancyDelta">—</div>
             </div>
             <div class="stats-mini-metric">
               <div class="label">Гости</div>
               <div class="value" id="statsDynamicGuests">0</div>
+              <div class="stats-metric-delta" id="statsDynamicGuestsDelta">—</div>
             </div>
           </div>
+          <div class="stats-change-note" id="statsDynamicChangeNote">Сравнение появится после второго ежедневного снимка.</div>
         </div>
       </div>
 
@@ -2702,6 +3067,12 @@
     </div>
 
     <div class="stats-summary-row" id="statsSummary"></div>
+    <div class="stats-charts-status" id="statsChartsStatus" role="status" hidden>
+      <span>Числовые показатели доступны, но модуль графиков не загрузился.</span>
+      <button class="stats-history-action" type="button" onclick="renderStats()">
+        <i data-lucide="refresh-cw" style="width:14px;height:14px;"></i>Повторить графики
+      </button>
+    </div>
     <div class="stats-grid" id="statsGrid">
       <div class="stats-chart-card">
         <div class="stats-chart-header">
@@ -2716,7 +3087,7 @@
         <div class="stats-chart-header">
           <div>
             <h3>Заполняемость апартаментов</h3>
-            <div class="stats-chart-sub">Доля занятых ночей в сезоне</div>
+            <div class="stats-chart-sub" id="statsOccupancySub">Доля занятых ночей в сезоне</div>
           </div>
         </div>
         <canvas id="chartOccupancy"></canvas>
@@ -2811,21 +3182,35 @@ const API = '/api';
 let properties = [];
 let bookings = [];
 let cleaners = [];
+let cleaningTasks = [];
+let cleaningTasksAvailable = false;
+let availabilityMarkers = [];
+let availabilityMarkersAvailable = false;
 let statsSnapshots = [];
 let statsSnapshotsLoaded = false;
 let statsSnapshotsPromise = null;
+let statsHistoryMeta = { state: 'idle', source: null, savedAt: null, error: null, quality: null, attemptedNetwork: false };
+let statsRadarDays = 7;
+let statsCurrentBookingKeys = [];
+let statsCurrentBookingKeysSignature = null;
+let statsCurrentBookingKeysPromise = null;
 let allAssignments = {};
 let allTaxBookings = [];
 let taxFocusTodayOnNextRender = false;
 
 const DASHBOARD_CACHE_KEY = 'atrani-dashboard-cache-v1';
 const DASHBOARD_VISIBLE_REFRESH_MIN_MS = 30 * 1000;
+const STATS_HISTORY_CACHE_PREFIX = 'atrani-stats-history-v2';
+const STATS_PRIMARY_ORIGIN = 'https://b.amalfi.day';
 
 let dashboardLoadSeq = 0;
 let dashboardLoadInFlight = false;
 let currentDashboardSignature = null;
 let lastDashboardLoadAt = 0;
 let lastDashboardRefreshRequestedAt = 0;
+let dashboardDataMeta = { source: null, savedAt: null };
+let pendingEmptyDashboardSignature = null;
+let retryEmptyDashboardConfirmation = false;
 let calendarResizeTimer = null;
 let calendarNeedsVisibleRender = false;
 
@@ -2986,6 +3371,10 @@ function dashboardPayloadFromResponse(dashboard) {
   const props = Array.isArray(dashboard?.properties) ? dashboard.properties : null;
   const bks = Array.isArray(dashboard?.bookings) ? dashboard.bookings : null;
   const cls = Array.isArray(dashboard?.cleaners) ? dashboard.cleaners : null;
+  const tasksIncluded = Array.isArray(dashboard?.cleaning_tasks);
+  const tasks = tasksIncluded ? dashboard.cleaning_tasks : [];
+  const markersIncluded = Array.isArray(dashboard?.availability_markers);
+  const markers = markersIncluded ? dashboard.availability_markers : [];
   const snapshots = Array.isArray(dashboard?.stats_snapshots) ? dashboard.stats_snapshots : [];
   const meta = dashboard?.meta && typeof dashboard.meta === 'object' ? dashboard.meta : {};
 
@@ -2994,6 +3383,10 @@ function dashboardPayloadFromResponse(dashboard) {
     properties: props,
     bookings: bks,
     cleaners: cls,
+    cleaningTasks: tasks,
+    cleaningTasksIncluded: tasksIncluded,
+    availabilityMarkers: markers,
+    availabilityMarkersIncluded: markersIncluded,
     statsSnapshots: snapshots,
     statsSnapshotsIncluded: meta.stats_included === true || snapshots.length > 0,
     meta
@@ -3005,6 +3398,8 @@ function dashboardPayloadSignature(payload) {
     properties: payload.properties,
     bookings: payload.bookings,
     cleaners: payload.cleaners,
+    cleaningTasks: payload.cleaningTasksIncluded ? payload.cleaningTasks : undefined,
+    availabilityMarkers: payload.availabilityMarkersIncluded ? payload.availabilityMarkers : undefined,
     statsSnapshots: payload.statsSnapshotsIncluded ? (payload.statsSnapshots || []) : undefined,
     range: payload.meta?.range || null,
     datasetVersion: payload.meta?.dataset_version || null
@@ -3032,6 +3427,8 @@ function writeCachedDashboard(payload) {
         properties: payload.properties,
         bookings: payload.bookings,
         cleaners: payload.cleaners,
+        availability_markers: payload.availabilityMarkersIncluded ? payload.availabilityMarkers : undefined,
+        cleaning_tasks: payload.cleaningTasksIncluded ? payload.cleaningTasks : undefined,
         stats_snapshots: payload.statsSnapshotsIncluded ? payload.statsSnapshots : [],
         meta: {
           ...(payload.meta || {}),
@@ -3051,14 +3448,39 @@ function cachedDashboardLabel(savedAt) {
 }
 
 function shouldPreserveExistingDashboard(payload) {
+  retryEmptyDashboardConfirmation = false;
   if (!hasLoadedOnce) return false;
-  if (payload.meta?.complete === true) return false;
   const wouldClearBookings = bookings.length > 0 && payload.bookings.length === 0;
   const wouldClearProperties = properties.length > 0 && payload.properties.length === 0;
-  return wouldClearBookings || wouldClearProperties;
+  if (wouldClearProperties) {
+    pendingEmptyDashboardSignature = null;
+    return true;
+  }
+  if (!wouldClearBookings) {
+    pendingEmptyDashboardSignature = null;
+    return false;
+  }
+
+  const health = payload.meta?.sync_health || {};
+  const authoritative = payload.meta?.complete === true && health.status === 'ok' && health.stale !== true;
+  const signature = String(payload.meta?.dataset_version || `empty:${payload.properties.length}`);
+  if (authoritative && pendingEmptyDashboardSignature === signature) {
+    pendingEmptyDashboardSignature = null;
+    payload.meta = { ...(payload.meta || {}), empty_confirmed_client: true };
+    return false;
+  }
+
+  pendingEmptyDashboardSignature = authoritative ? signature : null;
+  retryEmptyDashboardConfirmation = authoritative;
+  return true;
 }
 
 function markNetworkDashboardFresh(payload) {
+  dashboardDataMeta = {
+    source: 'network',
+    savedAt: Date.now(),
+    emptyConfirmed: payload?.meta?.empty_confirmed_client === true
+  };
   const lastSyncEl = document.getElementById('lastSync');
   lastSyncEl.textContent = 'Обновлено ' + new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
   lastDashboardLoadAt = Date.now();
@@ -3109,13 +3531,33 @@ function applyDashboardPayload(payload, {
   savedAt = null,
   signature = null
 } = {}) {
+  dashboardDataMeta = {
+    source,
+    savedAt: source === 'cache' ? savedAt : Date.now(),
+    emptyConfirmed: payload?.meta?.empty_confirmed_client === true
+  };
   currentDashboardSignature = signature || dashboardPayloadSignature(payload);
   properties = payload.properties;
   bookings = payload.bookings;
   cleaners = payload.cleaners;
+  cleaningTasks = payload.cleaningTasks || [];
+  cleaningTasksAvailable = Boolean(payload.cleaningTasksIncluded);
+  availabilityMarkers = payload.availabilityMarkers || [];
+  availabilityMarkersAvailable = Boolean(payload.availabilityMarkersIncluded);
   if (payload.statsSnapshotsIncluded) {
-    statsSnapshots = payload.statsSnapshots || [];
+    const year = todayLocal().getFullYear();
+    const canonical = canonicalizeStatsHistory(payload.statsSnapshots || [], year);
+    statsSnapshots = canonical.rows;
     statsSnapshotsLoaded = true;
+    statsHistoryMeta = {
+      state: source === 'cache' ? 'cached' : 'network',
+      source,
+      savedAt: source === 'cache' ? savedAt : Date.now(),
+      error: source === 'cache' ? { kind: 'network' } : null,
+      quality: canonical.quality,
+      attemptedNetwork: source !== 'cache'
+    };
+    if (source !== 'cache' && statsSnapshots.length) writeCachedStatsHistory(year, statsSnapshots);
   }
 
   rebuildAssignments();
@@ -3193,6 +3635,11 @@ async function loadData({ silent = false, attempt = 1, preserveCalendarScroll = 
         lastSyncEl.textContent = 'Ошибка загрузки';
         toast('Ошибка загрузки. Нажмите «Синхронизация».');
       }
+      dashboardDataMeta = {
+        ...dashboardDataMeta,
+        source: dashboardDataMeta.source === 'cache' ? 'cache' : 'stale',
+        savedAt: dashboardDataMeta.savedAt
+      };
       setFreshnessStatus({
         state: 'error',
         icon: 'circle-alert',
@@ -3200,18 +3647,35 @@ async function loadData({ silent = false, attempt = 1, preserveCalendarScroll = 
         detail: hasLoadedOnce ? 'На экране оставлена последняя загруженная версия' : 'Проверьте соединение и повторите попытку',
         retry: true
       });
+      if (document.getElementById('statsTab').style.display !== 'none') renderStats();
       return;
     }
 
     if (shouldPreserveExistingDashboard(payload)) {
+      const confirmationPending = retryEmptyDashboardConfirmation;
       console.warn('Ignored suspicious empty dashboard refresh; keeping the last rendered calendar.');
+      dashboardDataMeta = { ...dashboardDataMeta, source: dashboardDataMeta.source === 'cache' ? 'cache' : 'stale' };
       if (!silent) toast('Получен пустой ответ. Календарь оставлен без изменений.');
+      setFreshnessStatus({
+        state: 'warning',
+        icon: 'triangle-alert',
+        title: 'Получен подозрительно пустой ответ',
+        detail: confirmationPending
+          ? 'На экране оставлены последние непустые данные; выполняем контрольный запрос'
+          : 'На экране оставлены последние непустые данные; повторите обновление',
+        retry: true
+      });
+      if (document.getElementById('statsTab').style.display !== 'none') renderStats();
+      if (confirmationPending) {
+        setTimeout(() => loadData({ silent: true, preserveCalendarScroll }), 700);
+      }
       return;
     }
 
     const payloadSignature = dashboardPayloadSignature(payload);
     if (currentDashboardSignature && payloadSignature === currentDashboardSignature) {
       markNetworkDashboardFresh(payload);
+      if (document.getElementById('statsTab').style.display !== 'none') renderStats();
       return;
     }
 
@@ -4551,8 +5015,18 @@ function ensureChartJs() {
     script.src = CHART_JS_URL;
     script.async = true;
     script.dataset.chartJs = 'true';
-    script.onload = () => resolve();
-    script.onerror = () => reject(new Error('Не удалось загрузить модуль графиков'));
+    const timeout = setTimeout(() => {
+      script.remove();
+      reject(new Error('Модуль графиков не ответил вовремя'));
+    }, 8000);
+    script.onload = () => {
+      clearTimeout(timeout);
+      resolve();
+    };
+    script.onerror = () => {
+      clearTimeout(timeout);
+      reject(new Error('Не удалось загрузить модуль графиков'));
+    };
     document.head.appendChild(script);
   }).catch(error => {
     chartJsPromise = null;
@@ -4562,17 +5036,317 @@ function ensureChartJs() {
   return chartJsPromise;
 }
 
-function ensureStatsSnapshots() {
-  if (statsSnapshotsLoaded) return Promise.resolve(statsSnapshots);
+function statsHistoryCacheKey(year) {
+  return `${STATS_HISTORY_CACHE_PREFIX}:${year}`;
+}
+
+function readCachedStatsHistory(year) {
+  try {
+    const raw = localStorage.getItem(statsHistoryCacheKey(year));
+    if (!raw) return null;
+    const cached = JSON.parse(raw);
+    if (Number(cached?.seasonYear) !== Number(year) || !Array.isArray(cached?.rows)) return null;
+    return { rows: cached.rows, savedAt: Number(cached.savedAt) || 0 };
+  } catch {
+    return null;
+  }
+}
+
+function statsSnapshotWithoutOldKeys(snapshot, keepKeys) {
+  if (keepKeys) return snapshot;
+  const copy = { ...snapshot };
+  delete copy.booking_keys;
+  if (copy.payload && typeof copy.payload === 'object') {
+    copy.payload = { ...copy.payload };
+    delete copy.payload.booking_keys;
+  }
+  return copy;
+}
+
+function writeCachedStatsHistory(year, rows) {
+  const limitedRows = rows.slice(-260);
+  const compactRows = limitedRows.map((snapshot, index) =>
+    statsSnapshotWithoutOldKeys(snapshot, index >= limitedRows.length - 60)
+  );
+  try {
+    localStorage.setItem(statsHistoryCacheKey(year), JSON.stringify({
+      seasonYear: Number(year),
+      savedAt: Date.now(),
+      rows: compactRows
+    }));
+  } catch {
+    // History is an enhancement; the live aggregate statistics still remain available.
+  }
+}
+
+function statsHistoryErrorCopy(error) {
+  const status = Number(error?.status) || null;
+  switch (error?.kind) {
+    case 'auth':
+      return {
+        title: 'Сессия доступа истекла',
+        detail: `Сервер отклонил запрос${status ? ` (HTTP ${status})` : ''}. Обновите сессию и войдите снова.`
+      };
+    case 'wrong_origin':
+      return {
+        title: 'Статистика недоступна на адресе Vercel',
+        detail: 'Защищённая история открывается только на основном домене b.amalfi.day.'
+      };
+    case 'not_found':
+      return {
+        title: 'Маршрут истории не найден',
+        detail: `Сервер ответил HTTP 404. Откройте основной домен или повторите после обновления.`
+      };
+    case 'html':
+      return {
+        title: 'Сервер вернул страницу вместо данных',
+        detail: 'Вероятно, открылась страница входа или запрос попал на неверный маршрут.'
+      };
+    case 'server':
+      return {
+        title: 'Ошибка сервера статистики',
+        detail: `История временно недоступна${status ? ` (HTTP ${status})` : ''}. Текущие показатели продолжают рассчитываться.`
+      };
+    case 'timeout':
+      return {
+        title: 'Сервер статистики не ответил вовремя',
+        detail: 'Запрос прерван через 15 секунд. Проверьте соединение и повторите.'
+      };
+    case 'network':
+      return {
+        title: 'Нет соединения с историей статистики',
+        detail: 'Проверьте интернет или VPN. Текущие показатели продолжают рассчитываться.'
+      };
+    case 'invalid_payload':
+    case 'invalid_json':
+      return {
+        title: 'Получен некорректный ответ статистики',
+        detail: 'Формат данных не совпал с ожидаемым. Повторите запрос; если ошибка останется, нужен серверный аудит.'
+      };
+    default:
+      return {
+        title: 'Не удалось загрузить историю статистики',
+        detail: status ? `Сервер ответил HTTP ${status}.` : 'Повторите запрос через несколько секунд.'
+      };
+  }
+}
+
+async function fetchStatsHistoryResult(url) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+  try {
+    let response;
+    try {
+      response = await fetch(url, { cache: 'no-store', signal: controller.signal });
+    } catch (error) {
+      return {
+        ok: false,
+        error: { kind: error?.name === 'AbortError' ? 'timeout' : 'network', cause: error }
+      };
+    }
+
+    const status = response.status;
+    const contentType = String(response.headers.get('content-type') || '').toLowerCase();
+    const body = await response.text();
+    const looksLikeHtml = contentType.includes('text/html') || /^\s*(?:<!doctype\s+html|<html\b)/i.test(body);
+    const looksLikeLogin = response.redirected || /(?:cloudflare\s+access|sign[ -]?in|log[ -]?in|войти)/i.test(body.slice(0, 4000));
+
+    if (!response.ok) {
+      let kind = 'http';
+      if (status === 401 || status === 403) kind = 'auth';
+      else if (status === 404 && /(?:^|\.)vercel\.app$/i.test(location.hostname)) kind = 'wrong_origin';
+      else if (status === 404) kind = 'not_found';
+      else if (status >= 500) kind = 'server';
+      else if (looksLikeHtml) kind = looksLikeLogin ? 'auth' : 'html';
+      return { ok: false, error: { kind, status, contentType } };
+    }
+
+    if (looksLikeHtml) return { ok: false, error: { kind: looksLikeLogin ? 'auth' : 'html', status, contentType } };
+
+    let data;
+    try {
+      data = JSON.parse(body);
+    } catch (cause) {
+      return { ok: false, error: { kind: 'invalid_json', status, contentType, cause } };
+    }
+    if (!Array.isArray(data)) {
+      return { ok: false, error: { kind: 'invalid_payload', status, contentType } };
+    }
+    return { ok: true, data, status };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function statsHistoryActionsHtml(error, state) {
+  const actions = [];
+  if (error?.kind === 'auth' || error?.kind === 'html') {
+    actions.push('<button class="stats-history-action" type="button" onclick="window.location.reload()"><i data-lucide="log-in" style="width:14px;height:14px;"></i>Обновить сессию</button>');
+  }
+  if (error?.kind === 'wrong_origin' || error?.kind === 'not_found') {
+    actions.push(`<a class="stats-history-action" href="${STATS_PRIMARY_ORIGIN}/stats"><i data-lucide="external-link" style="width:14px;height:14px;"></i>Открыть b.amalfi.day</a>`);
+  }
+  if (state === 'cached' || state === 'error') {
+    actions.push('<button class="stats-history-action" type="button" onclick="retryStatsHistory()"><i data-lucide="refresh-cw" style="width:14px;height:14px;"></i>Повторить</button>');
+  }
+  return actions.join('');
+}
+
+function renderStatsQualityLine() {
+  const line = document.getElementById('statsQualityLine');
+  if (!line) return;
+  const rows = (statsSnapshots || []).slice(-90);
+  if (!rows.length) {
+    const className = statsHistoryMeta.state === 'error' ? 'invalid' : (statsHistoryMeta.state === 'cached' ? 'cached' : 'current');
+    line.innerHTML = `<span class="stats-quality-segment ${className}"></span>`;
+    return;
+  }
+  line.innerHTML = rows.map(snapshot => {
+    const invalid = snapshot?.payload?.data_quality?.valid === false;
+    const partial = String(snapshot?.payload?.sync_status || '').toLowerCase() === 'partial' ||
+      Number(snapshot?.payload?.feed_error_count) > 0;
+    const className = invalid
+      ? 'invalid'
+      : (statsHistoryMeta.state === 'cached' ? 'cached' : (partial ? 'partial' : (snapshot.source === 'current' ? 'current' : '')));
+    return `<span class="stats-quality-segment ${className}"></span>`;
+  }).join('');
+}
+
+function renderStatsHistoryStatus() {
+  const container = document.getElementById('statsHistoryStatus');
+  const icon = document.getElementById('statsHistoryIcon');
+  const title = document.getElementById('statsHistoryTitle');
+  const detail = document.getElementById('statsHistoryDetail');
+  const actions = document.getElementById('statsHistoryActions');
+  if (!container || !icon || !title || !detail || !actions) return;
+
+  const meta = statsHistoryMeta || {};
+  const quality = meta.quality || {};
+  let iconName = 'circle-check';
+  let titleText = 'История статистики актуальна';
+  let detailText = `${quality.canonical || statsSnapshots.length} ${pluralRu(quality.canonical || statsSnapshots.length, 'ежедневный снимок', 'ежедневных снимка', 'ежедневных снимков')}`;
+
+  if (meta.state === 'loading' || meta.state === 'idle') {
+    container.dataset.state = 'loading';
+    iconName = 'loader-2';
+    titleText = 'Проверяем историю статистики';
+    detailText = 'Загружаем ежедневные снимки сезона…';
+  } else if (meta.state === 'cached') {
+    container.dataset.state = 'cached';
+    iconName = 'database-backup';
+    const errorCopy = statsHistoryErrorCopy(meta.error);
+    titleText = 'Показана сохранённая история';
+    const savedLabel = meta.savedAt
+      ? new Date(meta.savedAt).toLocaleString('ru-RU', { timeZone: 'Europe/Rome', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).replace('.', '')
+      : 'неизвестное время';
+    detailText = `Копия от ${savedLabel}. ${errorCopy.title}: ${errorCopy.detail}`;
+  } else if (meta.state === 'error') {
+    container.dataset.state = 'error';
+    iconName = 'circle-alert';
+    const errorCopy = statsHistoryErrorCopy(meta.error);
+    titleText = errorCopy.title;
+    detailText = errorCopy.detail;
+  } else {
+    container.dataset.state = 'ok';
+    if (!statsSnapshots.length) {
+      iconName = 'calendar-clock';
+      titleText = 'История пока не накоплена';
+      detailText = 'Показан текущий расчёт. Ежедневная динамика появится после следующих синхронизаций.';
+    } else {
+      const latest = statsSnapshots[statsSnapshots.length - 1];
+      const latestPayload = statsJsonObject(latest?.payload);
+      const latestPartial = String(latestPayload.sync_status || '').toLowerCase() === 'partial' ||
+        Number(latestPayload.feed_error_count) > 0;
+      const dropped = Math.max(
+        0,
+        (Number(quality.input) || 0) - (Number(quality.canonical) || 0),
+        Number(quality.droppedDuplicates) || 0,
+        Number(quality.droppedInvalid) || 0
+      );
+      const latestLabel = latest ? formatStatsSnapshotDate(latest.captured_at) : '—';
+      detailText = `${statsSnapshots.length} ${pluralRu(statsSnapshots.length, 'ежедневный снимок', 'ежедневных снимка', 'ежедневных снимков')} · последний ${latestLabel}`;
+      if (dropped > 0) detailText += ` · исключено некорректных/повторных: ${dropped}`;
+      if (latestPartial) {
+        container.dataset.state = 'warning';
+        iconName = 'triangle-alert';
+        titleText = 'Последний снимок обновлён частично';
+        const feedErrors = Number(latestPayload.feed_error_count) || 0;
+        detailText += feedErrors ? ` · ошибок источников: ${feedErrors}` : ' · часть источников не обновилась';
+      }
+    }
+  }
+
+  container.setAttribute('role', meta.state === 'error' ? 'alert' : 'status');
+  icon.innerHTML = `<i data-lucide="${iconName}" style="width:17px;height:17px;${iconName === 'loader-2' ? 'animation:spin 1s linear infinite;' : ''}"></i>`;
+  title.textContent = titleText;
+  detail.textContent = detailText;
+  actions.innerHTML = statsHistoryActionsHtml(meta.error, meta.state);
+  renderStatsQualityLine();
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+function ensureStatsSnapshots({ force = false } = {}) {
+  if (statsSnapshotsLoaded && !force && (statsHistoryMeta.state !== 'cached' || statsHistoryMeta.attemptedNetwork)) {
+    renderStatsHistoryStatus();
+    return Promise.resolve(statsSnapshots);
+  }
   if (statsSnapshotsPromise) return statsSnapshotsPromise;
 
   const year = todayLocal().getFullYear();
-  statsSnapshotsPromise = fetchJsonOrNull(`${API}/bookings?stats_snapshots=1&season_year=${year}&limit=1000`)
-    .then(rows => {
-      if (!Array.isArray(rows)) throw new Error('Не удалось загрузить историю статистики');
-      statsSnapshots = rows;
+  const inMemoryFallback = statsSnapshots.length
+    ? { rows: statsSnapshots.slice(), savedAt: statsHistoryMeta.savedAt }
+    : null;
+  statsHistoryMeta = { state: 'loading', source: null, savedAt: null, error: null, quality: null, attemptedNetwork: true };
+  renderStatsHistoryStatus();
+
+  statsSnapshotsPromise = fetchStatsHistoryResult(`${API}/bookings?stats_snapshots=1&season_year=${year}&limit=1000`)
+    .then(result => {
+      if (result.ok) {
+        const canonical = canonicalizeStatsHistory(result.data, year);
+        statsSnapshots = canonical.rows;
+        statsSnapshotsLoaded = true;
+        statsHistoryMeta = {
+          state: 'network',
+          source: 'network',
+          savedAt: Date.now(),
+          error: null,
+          quality: canonical.quality,
+          attemptedNetwork: true
+        };
+        if (statsSnapshots.length) writeCachedStatsHistory(year, statsSnapshots);
+        renderStatsHistoryStatus();
+        return statsSnapshots;
+      }
+
+      const cached = readCachedStatsHistory(year) || inMemoryFallback;
+      if (cached) {
+        const canonical = canonicalizeStatsHistory(cached.rows, year);
+        statsSnapshots = canonical.rows;
+        statsSnapshotsLoaded = true;
+        statsHistoryMeta = {
+          state: 'cached',
+          source: 'cache',
+          savedAt: cached.savedAt,
+          error: result.error,
+          quality: canonical.quality,
+          attemptedNetwork: true
+        };
+        renderStatsHistoryStatus();
+        return statsSnapshots;
+      }
+
+      statsSnapshots = [];
       statsSnapshotsLoaded = true;
-      return rows;
+      statsHistoryMeta = {
+        state: 'error',
+        source: null,
+        savedAt: null,
+        error: result.error,
+        quality: { input: 0, canonical: 0, droppedDuplicates: 0, droppedInvalid: 0 },
+        attemptedNetwork: true
+      };
+      renderStatsHistoryStatus();
+      return statsSnapshots;
     })
     .finally(() => {
       statsSnapshotsPromise = null;
@@ -4581,17 +5355,42 @@ function ensureStatsSnapshots() {
   return statsSnapshotsPromise;
 }
 
+function retryStatsHistory() {
+  statsSnapshotsLoaded = false;
+  statsSnapshotsPromise = null;
+  statsSnapshotUserSelected = false;
+  renderStats();
+}
+
 async function renderStats() {
   const sequence = ++statsRenderSequence;
   const section = document.getElementById('statsTab');
   if (section) section.setAttribute('aria-busy', 'true');
 
   try {
-    await Promise.all([ensureChartJs(), ensureStatsSnapshots()]);
+    const year = todayLocal().getFullYear();
+    const chartsPromise = ensureChartJs().then(() => true).catch(() => false);
+    await Promise.all([
+      ensureStatsSnapshots(),
+      ensureCurrentStatsBookingKeys(year)
+    ]);
     if (sequence !== statsRenderSequence) return;
-    renderStatsNow();
+    const chartsAvailable = typeof Chart !== 'undefined';
+    renderStatsNow({ chartsAvailable });
+    if (!chartsAvailable) {
+      chartsPromise.then(loaded => {
+        const tabVisible = document.getElementById('statsTab')?.style.display !== 'none';
+        if (loaded && sequence === statsRenderSequence && tabVisible) renderStatsNow({ chartsAvailable: true });
+      });
+    }
   } catch (error) {
-    if (sequence === statsRenderSequence) toast(error.message || 'Ошибка загрузки статистики');
+    if (sequence === statsRenderSequence) {
+      toast(error.message || 'Ошибка загрузки статистики');
+      if (statsHistoryMeta.state === 'loading') {
+        statsHistoryMeta = { ...statsHistoryMeta, state: 'error', error: { kind: 'network' } };
+        renderStatsHistoryStatus();
+      }
+    }
   } finally {
     if (sequence === statsRenderSequence && section) section.removeAttribute('aria-busy');
   }
@@ -4640,7 +5439,9 @@ function statsSeasonRange(year) {
 
 function statsTimestampDate(value) {
   if (!value) return null;
-  const normalized = String(value).includes('T') ? String(value) : String(value).replace(' ', 'T');
+  const raw = String(value).trim();
+  let normalized = raw.includes('T') ? raw : raw.replace(' ', 'T');
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?$/.test(normalized)) normalized += 'Z';
   const date = new Date(normalized);
   return Number.isNaN(date.getTime()) ? null : date;
 }
@@ -4649,8 +5450,8 @@ function formatStatsSnapshotDate(value, mode = 'long') {
   const date = statsTimestampDate(value);
   if (!date) return 'Текущие данные';
   const options = mode === 'short'
-    ? { day: 'numeric', month: 'short' }
-    : { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' };
+    ? { timeZone: 'Europe/Rome', day: 'numeric', month: 'short' }
+    : { timeZone: 'Europe/Rome', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' };
   return date.toLocaleDateString('ru-RU', options).replace('.', '');
 }
 
@@ -4658,6 +5459,8 @@ function statsSourceLabel(source) {
   if (source === 'cron') return 'автосинк';
   if (source === 'manual') return 'ручной синк';
   if (source === 'current') return 'сейчас';
+  if (source === 'cached_current') return 'сохранённый dashboard';
+  if (source === 'stale_current') return 'последний dashboard';
   return 'синк';
 }
 
@@ -4671,6 +5474,86 @@ function formatStatsPercent(value) {
     ? String(Math.round(number))
     : number.toFixed(1);
   return `${formatted}%`;
+}
+
+function statsJsonObject(value) {
+  if (value && typeof value === 'object' && !Array.isArray(value)) return value;
+  if (typeof value !== 'string') return {};
+  try {
+    const parsed = JSON.parse(value);
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function statsBookingKey(booking) {
+  const explicit = booking?.stats_key || booking?.booking_key;
+  if (explicit) return String(explicit);
+  return [
+    booking?.property_id || '',
+    String(booking?.platform || 'other').toLowerCase(),
+    booking?.start_date || '',
+    booking?.end_date || ''
+  ].join('|');
+}
+
+async function hashStatsBookingKey(value) {
+  if (!window.crypto?.subtle || typeof TextEncoder === 'undefined') return null;
+  const digest = await window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
+  const hex = [...new Uint8Array(digest)].map(byte => byte.toString(16).padStart(2, '0')).join('');
+  return `b1_${hex.slice(0, 20)}`;
+}
+
+function ensureCurrentStatsBookingKeys(year) {
+  const keySources = [...new Set(getSeasonBookings(year).map(statsBookingKey).filter(Boolean))].sort();
+  const signature = keySources.join('\n');
+  if (statsCurrentBookingKeysSignature === signature) return Promise.resolve(statsCurrentBookingKeys);
+  if (statsCurrentBookingKeysPromise) {
+    return statsCurrentBookingKeysPromise.then(() =>
+      statsCurrentBookingKeysSignature === signature
+        ? statsCurrentBookingKeys
+        : ensureCurrentStatsBookingKeys(year)
+    );
+  }
+
+  statsCurrentBookingKeysPromise = Promise.all(keySources.map(hashStatsBookingKey))
+    .then(keys => {
+      statsCurrentBookingKeys = keys.filter(Boolean);
+      statsCurrentBookingKeysSignature = signature;
+      return statsCurrentBookingKeys;
+    })
+    .catch(() => {
+      statsCurrentBookingKeys = [];
+      statsCurrentBookingKeysSignature = signature;
+      return statsCurrentBookingKeys;
+    })
+    .finally(() => {
+      statsCurrentBookingKeysPromise = null;
+    });
+  return statsCurrentBookingKeysPromise;
+}
+
+function statsSnapshotBookingKeys(snapshot) {
+  const topLevel = Array.isArray(snapshot?.booking_keys) ? snapshot.booking_keys : null;
+  const payload = statsJsonObject(snapshot?.payload);
+  const nested = Array.isArray(payload.booking_keys) ? payload.booking_keys : null;
+  return new Set((topLevel || nested || []).map(String).filter(Boolean));
+}
+
+function statsSnapshotDayKey(snapshot) {
+  const explicit = String(snapshot?.snapshot_date || snapshot?.day_key || '').match(/^\d{4}-\d{2}-\d{2}/)?.[0];
+  if (explicit) return explicit;
+  const date = statsTimestampDate(snapshot?.captured_at);
+  if (!date) return null;
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Rome',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).formatToParts(date);
+  const values = Object.fromEntries(parts.map(part => [part.type, part.value]));
+  return `${values.year}-${values.month}-${values.day}`;
 }
 
 function pluralRu(count, one, few, many) {
@@ -4767,9 +5650,21 @@ function buildCurrentStatsSnapshot(year, seasonBookings, totalOccupiedNights, av
     }
   }
 
+  const dashboardIsStale = dashboardDataMeta.source !== 'network';
+  const capturedAt = dashboardIsStale && dashboardDataMeta.savedAt
+    ? new Date(dashboardDataMeta.savedAt).toISOString()
+    : new Date().toISOString();
+  const snapshotSource = dashboardDataMeta.source === 'cache'
+    ? 'cached_current'
+    : dashboardDataMeta.source === 'stale'
+      ? 'stale_current'
+      : 'current';
+  const emptyConfirmed = seasonBookings.length === 0 && dashboardDataMeta.emptyConfirmed === true;
+  const currentDataValid = seasonBookings.length > 0 || emptyConfirmed || statsSnapshots.length === 0;
+
   return {
-    captured_at: new Date().toISOString(),
-    source: 'current',
+    captured_at: capturedAt,
+    source: snapshotSource,
     season_year: year,
     booking_count: seasonBookings.length,
     occupied_nights: totalOccupiedNights,
@@ -4780,15 +5675,23 @@ function buildCurrentStatsSnapshot(year, seasonBookings, totalOccupiedNights, av
     monthly_bookings: monthlyBookings,
     platform_counts: platformCounts,
     country_counts: countryCounts,
-    payload: { monthly_guests: monthlyGuests }
+    payload: {
+      monthly_guests: monthlyGuests,
+      booking_keys: statsCurrentBookingKeys,
+      data_quality: {
+        valid: currentDataValid,
+        source: dashboardIsStale ? 'stale_dashboard' : 'live_dashboard',
+        empty_expected: emptyConfirmed
+      }
+    }
   };
 }
 
 function normalizeStatsSnapshot(snapshot, year) {
-  const monthlyNights = { ...(snapshot.monthly_nights || {}) };
-  const monthlyBookings = { ...(snapshot.monthly_bookings || {}) };
-  const payload = { ...(snapshot.payload || {}) };
-  const monthlyGuests = { ...(payload.monthly_guests || {}) };
+  const monthlyNights = { ...statsJsonObject(snapshot.monthly_nights) };
+  const monthlyBookings = { ...statsJsonObject(snapshot.monthly_bookings) };
+  const payload = { ...statsJsonObject(snapshot.payload) };
+  const monthlyGuests = { ...statsJsonObject(payload.monthly_guests) };
 
   for (const monthIndex of STATS_MONTH_INDICES) {
     const key = statsMonthKey(year, monthIndex);
@@ -4809,46 +5712,87 @@ function normalizeStatsSnapshot(snapshot, year) {
     avg_stay: Number(snapshot.avg_stay) || 0,
     monthly_nights: monthlyNights,
     monthly_bookings: monthlyBookings,
-    platform_counts: snapshot.platform_counts || {},
-    country_counts: snapshot.country_counts || {},
+    platform_counts: statsJsonObject(snapshot.platform_counts),
+    country_counts: statsJsonObject(snapshot.country_counts),
     payload: { ...payload, monthly_guests: monthlyGuests }
   };
 }
 
-function statsSnapshotsEquivalent(a, b, monthKeys) {
-  if (!a || !b) return false;
-  const sameTotals =
-    Number(a.booking_count) === Number(b.booking_count) &&
-    Number(a.occupied_nights) === Number(b.occupied_nights) &&
-    Number(a.guest_count) === Number(b.guest_count) &&
-    Number(a.occupancy_percent).toFixed(1) === Number(b.occupancy_percent).toFixed(1);
+function statsSnapshotIsMeaningful(snapshot) {
+  if (snapshot?.payload?.data_quality?.valid === false) return false;
+  if (['current', 'cached_current', 'stale_current'].includes(snapshot?.source)) return true;
+  if (snapshot?.payload?.data_quality?.valid === true) return true;
+  return Number(snapshot?.booking_count) > 0 ||
+    Number(snapshot?.occupied_nights) > 0 ||
+    Number(snapshot?.guest_count) > 0;
+}
 
-  if (!sameTotals) return false;
+function statsSnapshotPreference(snapshot) {
+  const payload = statsJsonObject(snapshot?.payload);
+  const syncStatus = String(payload.sync_status || '').toLowerCase();
+  const statusScore = syncStatus === 'success' ? 3 : syncStatus === 'partial' ? 1 : syncStatus === 'failed' ? 0 : 2;
+  const hasPositiveMetrics = Number(snapshot?.booking_count) > 0 ||
+    Number(snapshot?.occupied_nights) > 0 || Number(snapshot?.guest_count) > 0;
+  let score = statsSnapshotIsMeaningful(snapshot) ? 100 : 0;
+  if (hasPositiveMetrics) score += 50;
+  score += statusScore * 10;
+  if (payload.data_quality?.valid === true) score += 2;
+  if (snapshot?.snapshot_key || snapshot?.snapshot_date) score += 1;
+  if (snapshot?.source === 'current') score += 40;
+  if (snapshot?.source === 'cached_current' || snapshot?.source === 'stale_current') score += 1;
+  if (payload.data_quality?.empty_expected === true) score += 50;
+  const timestamp = statsTimestampDate(snapshot?.captured_at)?.getTime() || 0;
+  return score * 1e13 + timestamp;
+}
 
-  return monthKeys.every(key =>
-    Number(a.monthly_bookings?.[key] || 0) === Number(b.monthly_bookings?.[key] || 0) &&
-    Number(a.monthly_nights?.[key] || 0) === Number(b.monthly_nights?.[key] || 0)
-  );
+function canonicalizeStatsHistory(source, year) {
+  const normalized = (Array.isArray(source) ? source : [])
+    .filter(snapshot => Number(snapshot?.season_year) === Number(year))
+    .map(snapshot => normalizeStatsSnapshot(snapshot, year));
+  const byDay = new Map();
+  let droppedInvalid = 0;
+  let droppedDuplicates = 0;
+
+  for (const snapshot of normalized) {
+    const dayKey = statsSnapshotDayKey(snapshot);
+    if (!dayKey || !statsSnapshotIsMeaningful(snapshot)) {
+      droppedInvalid++;
+      continue;
+    }
+    const existing = byDay.get(dayKey);
+    if (!existing) {
+      byDay.set(dayKey, snapshot);
+      continue;
+    }
+    droppedDuplicates++;
+    if (statsSnapshotPreference(snapshot) >= statsSnapshotPreference(existing)) {
+      byDay.set(dayKey, snapshot);
+    }
+  }
+
+  const rows = [...byDay.values()].sort((a, b) => {
+    const dayCompare = String(statsSnapshotDayKey(a)).localeCompare(String(statsSnapshotDayKey(b)));
+    if (dayCompare !== 0) return dayCompare;
+    return (statsTimestampDate(a.captured_at)?.getTime() || 0) - (statsTimestampDate(b.captured_at)?.getTime() || 0);
+  });
+  const serverHistoryQuality = [...normalized]
+    .reverse()
+    .map(snapshot => statsJsonObject(snapshot?.payload?.history_quality))
+    .find(quality => Object.keys(quality).length) || {};
+  return {
+    rows,
+    quality: {
+      input: Number(serverHistoryQuality.raw_snapshots) || normalized.length,
+      canonical: rows.length,
+      droppedDuplicates: Math.max(droppedDuplicates, Number(serverHistoryQuality.collapsed_duplicates) || 0),
+      droppedInvalid: Math.max(droppedInvalid, Number(serverHistoryQuality.ignored_legacy_zero_snapshots) || 0)
+    }
+  };
 }
 
 function buildStatsTimeline(year, fallbackSnapshot) {
-  const monthKeys = STATS_MONTH_INDICES.map(monthIndex => statsMonthKey(year, monthIndex));
   const currentSnapshot = normalizeStatsSnapshot(fallbackSnapshot, year);
-  const snapshots = (statsSnapshots || [])
-    .filter(snapshot => Number(snapshot.season_year) === year)
-    .map(snapshot => normalizeStatsSnapshot(snapshot, year))
-    .sort((a, b) => {
-      const da = statsTimestampDate(a.captured_at)?.getTime() || 0;
-      const db = statsTimestampDate(b.captured_at)?.getTime() || 0;
-      return da - db;
-    });
-
-  const latestSaved = snapshots[snapshots.length - 1];
-  if (!latestSaved || !statsSnapshotsEquivalent(latestSaved, currentSnapshot, monthKeys)) {
-    snapshots.push(currentSnapshot);
-  }
-
-  return snapshots;
+  return canonicalizeStatsHistory([...(statsSnapshots || []), currentSnapshot], year).rows;
 }
 
 function statsChartDefaults() {
@@ -4929,6 +5873,77 @@ function renderStatsDelta(current, previous) {
   el.innerHTML = `<i data-lucide="${icon}" style="width:13px;height:13px;"></i><span>${label}</span>`;
 }
 
+function renderStatsMetricDelta(elementId, currentValue, previousValue, { percentPoints = false } = {}) {
+  const el = document.getElementById(elementId);
+  if (!el) return;
+  if (previousValue == null) {
+    el.className = 'stats-metric-delta';
+    el.textContent = 'первый снимок';
+    return;
+  }
+  const delta = Number(currentValue || 0) - Number(previousValue || 0);
+  const rounded = percentPoints ? Math.round(delta * 10) / 10 : Math.round(delta);
+  el.className = `stats-metric-delta ${rounded > 0 ? 'positive' : rounded < 0 ? 'negative' : ''}`;
+  if (Math.abs(rounded) < (percentPoints ? 0.05 : 0.5)) {
+    el.textContent = 'без изменений';
+    return;
+  }
+  const sign = rounded > 0 ? '+' : '−';
+  const value = percentPoints ? Math.abs(rounded).toLocaleString('ru-RU') : formatStatsNumber(Math.abs(rounded));
+  el.textContent = `${sign}${value}${percentPoints ? ' п.п.' : ''}`;
+}
+
+function statsOccupancyMethod(snapshot) {
+  const payload = statsJsonObject(snapshot?.payload);
+  if (payload.denominator === 'sellable_nights') return 'sellable_v2';
+  if (payload.denominator === 'gross_calendar_nights') return 'gross_v1';
+  if (Number(payload.calculation_version) >= 2) return 'sellable_v2';
+  return 'gross_v1';
+}
+
+function renderStatsOccupancyDelta(current, previous) {
+  const el = document.getElementById('statsDynamicOccupancyDelta');
+  if (!el) return;
+  if (previous && statsOccupancyMethod(current) !== statsOccupancyMethod(previous)) {
+    el.className = 'stats-metric-delta';
+    el.textContent = 'методика изменена';
+    return;
+  }
+  renderStatsMetricDelta(
+    'statsDynamicOccupancyDelta',
+    current?.occupancy_percent,
+    previous?.occupancy_percent,
+    { percentPoints: true }
+  );
+}
+
+function renderStatsBookingCompositionDelta(current, previous) {
+  const el = document.getElementById('statsDynamicChangeNote');
+  if (!el) return;
+  if (!previous) {
+    el.textContent = 'Это первый ежедневный снимок — сравнение появится после следующей синхронизации.';
+    return;
+  }
+
+  const currentKeys = statsSnapshotBookingKeys(current);
+  const previousKeys = statsSnapshotBookingKeys(previous);
+  const previousDate = formatStatsSnapshotDate(previous.captured_at, 'short');
+  if (!currentKeys.size || !previousKeys.size) {
+    el.textContent = `Сравнение с ${previousDate}. Детализация новых и снятых броней появится для снимков нового формата.`;
+    return;
+  }
+
+  let added = 0;
+  let removed = 0;
+  currentKeys.forEach(key => { if (!previousKeys.has(key)) added++; });
+  previousKeys.forEach(key => { if (!currentKeys.has(key)) removed++; });
+  if (!added && !removed) {
+    el.textContent = `Состав броней не изменился с ${previousDate}.`;
+    return;
+  }
+  el.textContent = `С ${previousDate}: +${added} новых, −${removed} снятых или изменённых броней.`;
+}
+
 function renderStatsMonthRail(snapshot) {
   const rail = document.getElementById('statsMonthRail');
   if (!rail) return;
@@ -4954,7 +5969,7 @@ function renderStatsMonthRail(snapshot) {
 }
 
 function renderStatsDynamicSnapshot() {
-  const { snapshots, monthKeys } = statsDynamicsState;
+  const { snapshots } = statsDynamicsState;
   if (!snapshots.length) return;
 
   const index = Math.max(0, Math.min(statsSnapshotIndex ?? snapshots.length - 1, snapshots.length - 1));
@@ -4976,7 +5991,11 @@ function renderStatsDynamicSnapshot() {
 
   const badgeText = document.querySelector('#statsSnapshotBadge span');
   if (badgeText) {
-    badgeText.textContent = `${formatStatsSnapshotDate(snapshot.captured_at)} · ${statsSourceLabel(snapshot.source)}`;
+    const staleSnapshot = snapshot.source === 'cached_current' || snapshot.source === 'stale_current';
+    const staleLabel = staleSnapshot || (statsHistoryMeta.state === 'cached' && snapshot.source !== 'current')
+      ? ' · сохранённая копия'
+      : '';
+    badgeText.textContent = `${formatStatsSnapshotDate(snapshot.captured_at)} · ${statsSourceLabel(snapshot.source)}${staleLabel}`;
   }
 
   const startEl = document.getElementById('statsRangeStart');
@@ -4991,13 +6010,23 @@ function renderStatsDynamicSnapshot() {
   document.getElementById('statsDynamicOccupancy').textContent = formatStatsPercent(snapshot.occupancy_percent);
   document.getElementById('statsDynamicGuests').textContent = formatStatsNumber(snapshot.guest_count);
   renderStatsDelta(snapshot, previous);
+  renderStatsMetricDelta('statsDynamicNightsDelta', snapshot.occupied_nights, previous?.occupied_nights);
+  renderStatsOccupancyDelta(snapshot, previous);
+  renderStatsMetricDelta('statsDynamicGuestsDelta', snapshot.guest_count, previous?.guest_count);
+  renderStatsBookingCompositionDelta(snapshot, previous);
   renderStatsMonthRail(snapshot);
 
   const chart = statsCharts.bookingDynamics;
   if (chart) {
-    chart.data.datasets[0].data = monthKeys.map(key => Number(snapshot.monthly_bookings?.[key]) || 0);
-    chart.data.datasets[1].data = monthKeys.map(key => Number(snapshot.monthly_nights?.[key]) || 0);
-    chart.update();
+    chart.data.labels = snapshots.map(item => formatStatsSnapshotDate(item.captured_at, 'short'));
+    chart.data.datasets[0].data = snapshots.map(item => Number(item.booking_count) || 0);
+    chart.data.datasets[1].data = snapshots.map(item => Number(item.occupied_nights) || 0);
+    chart.data.datasets.forEach(dataset => {
+      dataset.pointRadius = snapshots.map((_, pointIndex) => pointIndex === index ? 5 : 2);
+      dataset.pointHoverRadius = snapshots.map((_, pointIndex) => pointIndex === index ? 7 : 5);
+      dataset.pointBorderWidth = snapshots.map((_, pointIndex) => pointIndex === index ? 3 : 1);
+    });
+    chart.update('none');
   }
 
   if (typeof lucide !== 'undefined') lucide.createIcons();
@@ -5007,36 +6036,40 @@ function createStatsDynamicsChart() {
   const defaults = statsChartDefaults();
   const canvas = document.getElementById('chartBookingDynamics');
   if (!canvas) return;
+  const snapshots = statsDynamicsState.snapshots || [];
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce), (max-width: 768px)').matches;
 
   statsCharts.bookingDynamics = new Chart(canvas, {
+    type: 'line',
     data: {
-      labels: statsDynamicsState.monthLabels,
+      labels: snapshots.map(snapshot => formatStatsSnapshotDate(snapshot.captured_at, 'short')),
       datasets: [
         {
-          type: 'bar',
           label: 'Бронирования',
-          data: [],
-          backgroundColor: 'rgba(15,118,110,.82)',
-          hoverBackgroundColor: '#0f766e',
+          data: snapshots.map(snapshot => Number(snapshot.booking_count) || 0),
           borderColor: '#0f766e',
-          borderWidth: 1,
-          borderRadius: 7,
-          maxBarThickness: 44,
+          backgroundColor: 'rgba(15,118,110,.1)',
+          borderWidth: 2,
+          pointBackgroundColor: '#0f766e',
+          pointBorderColor: '#fff',
+          pointRadius: 2,
+          pointHoverRadius: 5,
+          fill: true,
+          tension: .22,
           yAxisID: 'y'
         },
         {
-          type: 'line',
           label: 'Занятые ночи',
-          data: [],
+          data: snapshots.map(snapshot => Number(snapshot.occupied_nights) || 0),
           borderColor: '#d97706',
-          backgroundColor: 'rgba(217,119,6,.12)',
+          backgroundColor: 'transparent',
           pointBackgroundColor: '#d97706',
           pointBorderColor: '#fff',
-          pointBorderWidth: 2,
-          pointRadius: 4,
-          pointHoverRadius: 6,
+          pointBorderWidth: 1,
+          pointRadius: 2,
+          pointHoverRadius: 5,
           fill: false,
-          tension: .36,
+          tension: .22,
           yAxisID: 'y1'
         }
       ]
@@ -5044,11 +6077,17 @@ function createStatsDynamicsChart() {
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      animation: { duration: 260 },
+      animation: reduceMotion ? false : { duration: 180 },
       interaction: { mode: 'index', intersect: false },
       plugins: defaults.plugins,
+      onClick: (_event, elements) => {
+        if (elements?.[0]) setStatsSnapshotIndex(elements[0].index);
+      },
       scales: {
-        x: defaults.scales.x,
+        x: {
+          ...defaults.scales.x,
+          ticks: { ...defaults.scales.x.ticks, autoSkip: true, maxTicksLimit: 8, maxRotation: 0 }
+        },
         y: {
           ...defaults.scales.y,
           title: { display: false }
@@ -5065,7 +6104,141 @@ function createStatsDynamicsChart() {
   });
 }
 
-function renderStatsNow() {
+function setStatsRadarDays(days) {
+  statsRadarDays = Number(days) === 30 ? 30 : 7;
+  renderStatsOperationalRadar();
+}
+
+function statsRadarDateLabel(date) {
+  return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }).replace('.', '');
+}
+
+function statsFreeIntervals(property, occupiedDates, rangeStart, rangeEnd) {
+  const intervals = [];
+  let intervalStart = null;
+  let nights = 0;
+
+  for (const day = new Date(rangeStart); day < rangeEnd; day.setDate(day.getDate() + 1)) {
+    const occupied = occupiedDates?.has(toLocalIso(day));
+    if (!occupied) {
+      if (!intervalStart) intervalStart = new Date(day);
+      nights++;
+      continue;
+    }
+    if (intervalStart) {
+      intervals.push({ property, start: intervalStart, end: new Date(day), nights });
+      intervalStart = null;
+      nights = 0;
+    }
+  }
+  if (intervalStart) intervals.push({ property, start: intervalStart, end: new Date(rangeEnd), nights });
+  return intervals;
+}
+
+function statsFreeIntervalLabel(interval) {
+  const lastNight = addCalendarDays(interval.end, -1);
+  const start = interval.start.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }).replace('.', '');
+  const end = lastNight.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }).replace('.', '');
+  const dates = toLocalIso(interval.start) === toLocalIso(lastNight) ? start : `${start} — ${end}`;
+  return `${dates} · ${interval.nights} ${pluralRu(interval.nights, 'ночь', 'ночи', 'ночей')}`;
+}
+
+function renderStatsOperationalRadar() {
+  const grid = document.getElementById('statsRadarGrid');
+  const gapsEl = document.getElementById('statsRadarGaps');
+  const rangeEl = document.getElementById('statsRadarRange');
+  const noteEl = document.getElementById('statsRadarNote');
+  if (!grid || !gapsEl || !rangeEl || !noteEl) return;
+
+  const days = statsRadarDays === 30 ? 30 : 7;
+  const start = todayLocal();
+  const end = addCalendarDays(start, days);
+  const lastDay = addCalendarDays(end, -1);
+  const startIso = toLocalIso(start);
+  const endIso = toLocalIso(end);
+  const realBookings = bookings.filter(booking => isRealGuestBooking(booking, bookings));
+  const inWindow = value => Boolean(value) && value >= startIso && value < endIso;
+  const arrivals = realBookings.filter(booking => inWindow(booking.start_date)).length;
+  const departures = realBookings.filter(booking => inWindow(booking.end_date)).length;
+  const actionableTasks = cleaningTasks.filter(task =>
+    inWindow(task.scheduled_date) &&
+    task.active !== false && task.active !== 0 &&
+    !['completed', 'cancelled'].includes(String(task.status || '').toLowerCase())
+  );
+  const unassignedTasks = actionableTasks.filter(task => !task.cleaner_id).length;
+  const unpaidTax = realBookings.filter(booking => inWindow(booking.end_date) && !booking.tax_paid).length;
+  const occupiedSets = buildStatsOccupiedNightSets(realBookings, start, end);
+  const unavailableSets = buildStatsOccupiedNightSets(availabilityMarkers, start, end);
+  const unavailableOrOccupiedSets = new Map();
+  for (const property of properties) {
+    unavailableOrOccupiedSets.set(property.id, new Set([
+      ...(occupiedSets.get(property.id) || []),
+      ...(unavailableSets.get(property.id) || [])
+    ]));
+  }
+  const occupiedNights = [...occupiedSets.values()].reduce((sum, dates) => sum + dates.size, 0);
+  const grossNights = properties.length * days;
+  const bookedPercent = grossNights > 0 ? (occupiedNights / grossNights) * 100 : 0;
+  const freeGrossNights = Math.max(0, grossNights - occupiedNights);
+
+  const metrics = [
+    { label: 'Заезды', value: formatStatsNumber(arrivals), tone: '' },
+    { label: 'Выезды', value: formatStatsNumber(departures), tone: '' },
+    {
+      label: 'Уборки',
+      value: cleaningTasksAvailable ? formatStatsNumber(actionableTasks.length) : '—',
+      tone: actionableTasks.length ? 'attention' : ''
+    },
+    {
+      label: 'Без уборщицы',
+      value: cleaningTasksAvailable ? formatStatsNumber(unassignedTasks) : '—',
+      tone: unassignedTasks > 0 ? 'critical' : ''
+    },
+    { label: 'Налог к сбору', value: formatStatsNumber(unpaidTax), tone: unpaidTax > 0 ? 'attention' : '' },
+    { label: 'Забронировано', value: formatStatsPercent(bookedPercent), tone: '' }
+  ];
+
+  grid.innerHTML = metrics.map(metric => `
+    <div class="stats-radar-metric ${metric.tone}">
+      <div class="stats-radar-label">${metric.label}</div>
+      <div class="stats-radar-value">${metric.value}</div>
+    </div>
+  `).join('');
+
+  const minimumGap = days === 7 ? 2 : 3;
+  const freeIntervals = properties
+    .flatMap(property => statsFreeIntervals(property, unavailableOrOccupiedSets.get(property.id), start, end))
+    .filter(interval => interval.nights >= minimumGap)
+    .sort((a, b) => b.nights - a.nights || a.start - b.start || String(a.property.name).localeCompare(String(b.property.name)))
+    .slice(0, 6);
+  const gapsHeading = availabilityMarkersAvailable
+    ? 'Окна без брони и технического закрытия'
+    : 'Окна без гостевых броней (данные закрытий недоступны)';
+  gapsEl.innerHTML = freeIntervals.length
+    ? `<div class="stats-radar-gaps-title">${gapsHeading}</div><div class="stats-radar-gaps-list">${freeIntervals.map(interval => `
+        <div class="stats-radar-gap"><strong>${escapeHtml(interval.property.name)}</strong><br>${escapeHtml(statsFreeIntervalLabel(interval))}</div>
+      `).join('')}</div>`
+    : `<div class="stats-radar-gaps-title">${gapsHeading}: окон на ${minimumGap}+ ночи нет</div>`;
+
+  rangeEl.textContent = `${statsRadarDateLabel(start)} — ${statsRadarDateLabel(lastDay)} · ${days} ${pluralRu(days, 'день', 'дня', 'дней')}`;
+  const taskNote = cleaningTasksAvailable
+    ? `${freeGrossNights} апартамент-ночей без брони в выбранном периоде.`
+    : 'Данные уборок отсутствуют в сохранённой копии; обновите dashboard.';
+  const markerNote = availabilityMarkersAvailable
+    ? 'Технические закрытия учтены только в списке окон.'
+    : 'Технические закрытия в сохранённой копии недоступны.';
+  noteEl.textContent = `${taskNote} ${markerNote} Процент «Забронировано» рассчитан от всех апартамент-ночей.`;
+
+  for (const period of [7, 30]) {
+    const button = document.getElementById(`statsRadar${period}`);
+    if (!button) continue;
+    const active = period === days;
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-pressed', active ? 'true' : 'false');
+  }
+}
+
+function renderStatsNow({ chartsAvailable = typeof Chart !== 'undefined' } = {}) {
   const year = todayLocal().getFullYear();
   const monthLabels = STATS_MONTH_LABELS;
   const monthIndices = STATS_MONTH_INDICES;
@@ -5074,6 +6247,7 @@ function renderStatsNow() {
 
   // Filter real bookings in season
   const seasonBookings = getSeasonBookings(year);
+  renderStatsOperationalRadar();
 
   // Destroy old charts
   statsChartObservers.forEach(observer => observer.disconnect());
@@ -5090,11 +6264,28 @@ function renderStatsNow() {
   const occupiedNightSets = buildStatsOccupiedNightSets(seasonBookings, seasonRange.start, seasonRange.end);
   const propNights = Object.fromEntries([...occupiedNightSets.entries()].map(([propertyId, dates]) => [propertyId, dates.size]));
   const totalOccupiedNights = Object.values(propNights).reduce((sum, nights) => sum + nights, 0);
-  const avgOccupancy = properties.length > 0
+  const grossAvgOccupancy = properties.length > 0
     ? Number(((totalOccupiedNights / (totalNightsSeason * properties.length)) * 100).toFixed(1))
     : 0;
+  const latestPersistedSnapshot = (statsSnapshots || [])[statsSnapshots.length - 1] || null;
+  const latestPersistedPayload = statsJsonObject(latestPersistedSnapshot?.payload);
+  const sellableNights = Number(latestPersistedPayload.sellable_nights) || 0;
+  const unavailableNights = Number(latestPersistedPayload.unavailable_nights) || 0;
+  const latestSnapshotIsCurrent = statsSnapshotDayKey(latestPersistedSnapshot) === toLocalIso(todayLocal());
+  const usesSellableDenominator = dashboardDataMeta.source === 'network' &&
+    statsHistoryMeta.state === 'network' && latestSnapshotIsCurrent && sellableNights > 0;
+  const avgOccupancy = usesSellableDenominator
+    ? Number(((totalOccupiedNights / sellableNights) * 100).toFixed(1))
+    : grossAvgOccupancy;
 
   const fallbackSnapshot = buildCurrentStatsSnapshot(year, seasonBookings, totalOccupiedNights, avgOccupancy);
+  fallbackSnapshot.payload = {
+    ...latestPersistedPayload,
+    ...fallbackSnapshot.payload,
+    booking_keys: statsCurrentBookingKeys,
+    calculation_version: usesSellableDenominator ? (Number(latestPersistedPayload.calculation_version) || 2) : 1,
+    denominator: usesSellableDenominator ? 'sellable_nights' : 'gross_calendar_nights'
+  };
   const timelineSnapshots = buildStatsTimeline(year, fallbackSnapshot);
   const statsYearChanged = statsDynamicsState.year !== year;
   if (statsYearChanged) statsSnapshotUserSelected = false;
@@ -5107,7 +6298,9 @@ function renderStatsNow() {
     statsSnapshotIndex = timelineSnapshots.length - 1;
   }
   statsDynamicsState = { year, snapshots: timelineSnapshots, monthLabels, monthKeys };
-  createStatsDynamicsChart();
+  const dynamicsCard = document.getElementById('statsDynamicsCard');
+  if (dynamicsCard) dynamicsCard.dataset.charts = chartsAvailable ? 'available' : 'unavailable';
+  if (chartsAvailable) createStatsDynamicsChart();
   renderStatsDynamicSnapshot();
 
   // Top country
@@ -5136,9 +6329,11 @@ function renderStatsNow() {
       <div class="sub">Апрель — Ноябрь ${year}</div>
     </div>
     <div class="stats-summary-card">
-      <div class="label">Средняя заполняемость</div>
+      <div class="label">Загрузка сезона (прогноз)</div>
       <div class="value">${formatStatsPercent(avgOccupancy)}</div>
-      <div class="sub">${properties.length} апартаментов</div>
+      <div class="sub">${usesSellableDenominator
+        ? `${formatStatsNumber(sellableNights)} продаваемых ночей${unavailableNights ? ` · ${formatStatsNumber(unavailableNights)} закрыто` : ''}`
+        : `${properties.length} апартаментов · все календарные ночи`}</div>
     </div>
     <div class="stats-summary-card">
       <div class="label">Топ страна</div>
@@ -5152,12 +6347,22 @@ function renderStatsNow() {
     </div>
   `;
 
+  const chartsStatus = document.getElementById('statsChartsStatus');
+  const statsGrid = document.getElementById('statsGrid');
+  if (chartsStatus) chartsStatus.hidden = chartsAvailable;
+  if (statsGrid) statsGrid.hidden = !chartsAvailable;
+  if (!chartsAvailable) {
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+    return;
+  }
+
   const chartDefaults = statsChartDefaults();
   const chartFont = chartDefaults.font;
+  const reduceStatsMotion = window.matchMedia('(prefers-reduced-motion: reduce), (max-width: 768px)').matches;
   const defaultOpts = {
     responsive: true,
     maintainAspectRatio: true,
-    animation: { duration: 420 },
+    animation: reduceStatsMotion ? false : { duration: 260 },
     interaction: { mode: 'index', intersect: false },
     plugins: chartDefaults.plugins,
     scales: chartDefaults.scales
@@ -5197,15 +6402,28 @@ function renderStatsNow() {
   });
 
   // ===== 2. OCCUPANCY BY PROPERTY (horizontal bar) =====
+  const propertySellableNights = usesSellableDenominator
+    ? statsJsonObject(latestPersistedPayload.property_sellable_nights)
+    : {};
   const occupancyRows = properties.map(p => {
     const nights = propNights[p.id] || 0;
+    const rawPropertyDenominator = Number(propertySellableNights[p.id]);
+    const propertyDenominator = Number.isFinite(rawPropertyDenominator) && rawPropertyDenominator >= 0
+      ? rawPropertyDenominator
+      : totalNightsSeason;
     return {
       id: p.id,
       label: p.name,
-      occupancy: Math.round((nights / totalNightsSeason) * 100),
+      occupancy: propertyDenominator > 0 ? Math.round((nights / propertyDenominator) * 100) : 0,
       color: (propertyConfig[p.id] || {}).color || '#6b7280'
     };
   }).sort((a, b) => b.occupancy - a.occupancy);
+  const occupancySub = document.getElementById('statsOccupancySub');
+  if (occupancySub) {
+    occupancySub.textContent = usesSellableDenominator
+      ? 'Занятые ночи / продаваемые ночи (закрытые даты исключены)'
+      : 'Занятые ночи / все календарные ночи (закрытые даты не исключены)';
+  }
   const propLabels = occupancyRows.map(row => row.label);
   const propOccupancy = occupancyRows.map(row => row.occupancy);
   const propColors = occupancyRows.map(row => row.color);
@@ -5259,7 +6477,7 @@ function renderStatsNow() {
       plugins: {
         ...defaultOpts.plugins,
         legend: {
-          position: 'right',
+          position: window.matchMedia('(max-width: 768px)').matches ? 'bottom' : 'right',
           labels: { ...defaultOpts.plugins.legend.labels, padding: 10, boxWidth: 8 }
         }
       }

@@ -4,8 +4,8 @@ const db = USE_POSTGRES
   ? require('../backend/src/database-postgres')
   : require('../backend/src/database');
 
-const { formatBooking, formatCleaningTask, todayInRome } = require('./_helpers');
-const { normalizeBookingsForDisplay } = require('../lib/booking-normalization');
+const { formatBooking, formatCleaningTask, formatAvailabilityMarker, todayInRome } = require('./_helpers');
+const { isUnavailableMarker, normalizeBookingsForDisplay } = require('../lib/booking-normalization');
 const { isDateOnly } = require('../lib/api-validation');
 
 module.exports = async (req, res) => {
@@ -49,6 +49,7 @@ module.exports = async (req, res) => {
       ? bookings
       : normalizedBookings;
     const formattedBookings = visibleBookings.map(formatBooking);
+    const availabilityMarkers = bookings.filter(isUnavailableMarker).map(formatAvailabilityMarker);
     const formattedTasks = cleaningTasks.map(formatCleaningTask);
     const latestSyncedAt = bookings.reduce((latest, booking) => {
       const value = booking.synced_at ? new Date(booking.synced_at).getTime() : 0;
@@ -87,6 +88,7 @@ module.exports = async (req, res) => {
       properties,
       bookings: formattedBookings,
       bookings_by_property: byProperty,
+      availability_markers: availabilityMarkers,
       cleaning_tasks: formattedTasks,
       cleaners,
       stats_snapshots: statsSnapshots
