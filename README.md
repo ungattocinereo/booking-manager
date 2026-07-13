@@ -8,7 +8,7 @@ Booking and cleaning calendar for vacation rental properties in Atrani, Italy. S
 
 ## Features
 
-- **Calendar sync** — hourly iCal sync from Airbnb + Booking.com (14 feeds, 10 properties)
+- **Calendar sync** — iCal sync from Airbnb + Booking.com every 30 minutes via GitHub Actions, with a daily Vercel fallback (14 feeds, 10 properties)
 - **Gantt timeline** — visual booking calendar with color-coded platforms, guest names, country flags
 - **Cleaning management** — auto-generated cleaning tasks on checkout dates, cleaner assignment
 - **Maid calendar** — mobile-first Italian-language page for each cleaner at `/maid/:slug`
@@ -39,7 +39,7 @@ Booking and cleaning calendar for vacation rental properties in Atrani, Italy. S
                         |  Booking.com    |
                         +--------+--------+
                                  |
-                          sync (hourly)
+                    sync (30 min; daily fallback)
                                  |
                     +------------v------------+
                     |      Sync Engine        |
@@ -96,7 +96,7 @@ Deploys automatically from `main`. Required environment variables:
 |----------|-------------|
 | `POSTGRES_URL` | Neon/Postgres connection string |
 | `ICAL_URLS` | JSON array of `{property, platform, url}` objects |
-| `CRON_SECRET` | Secret for hourly sync cron authentication |
+| `CRON_SECRET` | Secret for the protected scheduled sync trigger |
 | `TELEGRAM_BOT_TOKEN` | Telegram bot token |
 | `TELEGRAM_CHAT_ID` | Family group chat ID |
 | `FAMILY_CHAT_ID` | Family group chat ID used by the Telegram webhook/bot |
@@ -195,7 +195,7 @@ booking-manager/
 │   ├── dashboard.js
 │   ├── maid/[slug].js
 │   ├── properties.js
-│   ├── sync.js                   # Cron target (hourly)
+│   ├── sync.js                   # Protected scheduled sync target
 │   └── _helpers.js
 ├── backend/
 │   ├── config/calendars.json     # Property + iCal URL config

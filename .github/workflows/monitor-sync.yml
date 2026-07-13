@@ -41,6 +41,23 @@ jobs:
         working-directory: monitor-app
         run: npm install --no-audit --no-fund
 
+      - name: Trigger booking calendar sync
+        env:
+          BOOKING_MANAGER_SYNC_SECRET: ${{ secrets.BOOKING_MANAGER_SYNC_SECRET }}
+          BOOKING_MANAGER_CF_ACCESS_CLIENT_ID: ${{ secrets.BOOKING_MANAGER_CF_ACCESS_CLIENT_ID }}
+          BOOKING_MANAGER_CF_ACCESS_CLIENT_SECRET: ${{ secrets.BOOKING_MANAGER_CF_ACCESS_CLIENT_SECRET }}
+        run: |
+          curl --fail-with-body --silent --show-error \
+            --max-time 120 \
+            --retry 2 \
+            --retry-all-errors \
+            -H "Authorization: Bearer ${BOOKING_MANAGER_SYNC_SECRET}" \
+            -H "CF-Access-Client-Id: ${BOOKING_MANAGER_CF_ACCESS_CLIENT_ID}" \
+            -H "CF-Access-Client-Secret: ${BOOKING_MANAGER_CF_ACCESS_CLIENT_SECRET}" \
+            https://b.amalfi.day/api/sync \
+            > /tmp/booking-manager-sync.json
+          node -e "const r=require('/tmp/booking-manager-sync.json'); if(!r.success||r.partial) throw new Error(r.error||r.message||'Booking sync was not fully successful'); console.log('Booking sync ok: '+r.events_synced+' events, '+(r.feed_errors?.length||0)+' feed errors')"
+
       - name: Run sync
         working-directory: monitor-app
         env:

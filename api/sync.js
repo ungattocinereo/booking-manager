@@ -2,7 +2,7 @@
 const { runSync, SyncInProgressError } = require('../backend/src/sync-service');
 
 module.exports = async (req, res) => {
-  // Allow POST (manual) and GET (Vercel Cron)
+  // Allow POST (manual) and GET (scheduled automation/Vercel Cron)
   if (req.method === 'GET') {
     // Verify cron secret if set
     if (process.env.CRON_SECRET && req.headers['authorization'] !== `Bearer ${process.env.CRON_SECRET}`) {

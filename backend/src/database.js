@@ -234,34 +234,6 @@ class Database {
     return this.all(sql, params);
   }
 
-  async reactivateCurrentBookingReservations(propertyId, platform, feedKeys, today) {
-    if (platform !== 'booking' || feedKeys.length === 0) return { changes: 0 };
-    const coverageChecks = feedKeys.map(() => '(? <= ? AND ? > ?)').join(' OR ');
-    return this.run(
-      `UPDATE bookings
-       SET active = 1,
-           missing_since = NULL,
-           synced_at = CURRENT_TIMESTAMP
-       WHERE property_id = ?
-         AND platform = 'booking'
-         AND COALESCE(active, 1) = 0
-         AND start_date <= ?
-         AND end_date > ?
-         AND (
-           COALESCE(booking_type, 'reservation') = 'reservation' OR
-           COALESCE(NULLIF(TRIM(guest_name), ''), '') <> '' OR
-           COALESCE(guest_count, 0) > 0
-         )
-         AND (${coverageChecks})`,
-      [
-        propertyId,
-        today,
-        today,
-        ...feedKeys.flatMap(key => [key.startDate, today, key.endDate, today])
-      ]
-    );
-  }
-
   async archiveStaleBookings(propertyId, platform, feedKeys, today) {
     if (feedKeys.length === 0) return { changes: 0 };
     const protectedBooking = `platform = 'booking' AND (

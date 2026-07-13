@@ -42,7 +42,6 @@ async function executeSync(source) {
       message: failures.length ? `Sync completed with ${failures.length} feed error(s)` : 'Calendars synced successfully',
       events_synced: syncResult.totalEvents,
       stale_archived: syncResult.totalArchived || 0,
-      booking_reactivated: syncResult.totalReactivated || 0,
       stale_removed: 0,
       tasks_created: tasksCount,
       enriched: enrichResult,

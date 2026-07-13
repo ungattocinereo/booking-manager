@@ -161,7 +161,6 @@ async function syncPropertyCalendars(property) {
   const today = todayInRome();
   let totalEvents = 0;
   let totalArchived = 0;
-  let totalReactivated = 0;
   const failures = [];
 
   for (const calendar of property.calendars) {
@@ -197,20 +196,6 @@ async function syncPropertyCalendars(property) {
         feedKeys.push({ startDate: event.startDate, endDate: event.endDate });
       }
 
-      if (calendar.platform === 'booking' && typeof db.reactivateCurrentBookingReservations === 'function') {
-        const reactivated = await db.reactivateCurrentBookingReservations(
-          property.id,
-          calendar.platform,
-          feedKeys,
-          today
-        );
-        const reactivatedCount = reactivated.rowCount || reactivated.changes || 0;
-        if (reactivatedCount > 0) {
-          console.log(`  ♻️ Reactivated ${reactivatedCount} current Booking reservation(s)`);
-          totalReactivated += reactivatedCount;
-        }
-      }
-
       // Soft-archive future bookings that are no longer in the iCal feed.
       // Rows remain in the database for history/backups, but are hidden from active views.
       try {
@@ -234,7 +219,7 @@ async function syncPropertyCalendars(property) {
     }
   }
 
-  return { events: totalEvents, archived: totalArchived, reactivated: totalReactivated, deleted: 0, failures };
+  return { events: totalEvents, archived: totalArchived, deleted: 0, failures };
 }
 
 async function generateCleaningTasks() {
@@ -319,17 +304,15 @@ async function syncAll() {
     // Sync all property calendars
     let totalEvents = 0;
     let totalArchived = 0;
-    let totalReactivated = 0;
     const failures = [];
     for (const property of config.properties) {
       const result = await syncPropertyCalendars(property);
       totalEvents += result.events;
       totalArchived += result.archived || 0;
-      totalReactivated += result.reactivated || 0;
       failures.push(...(result.failures || []));
     }
 
-    console.log(`\n✅ Total events synced: ${totalEvents}, stale archived: ${totalArchived}, current Booking reactivated: ${totalReactivated}`);
+    console.log(`\n✅ Total events synced: ${totalEvents}, stale archived: ${totalArchived}`);
 
     // Enrich bookings from Airbnb CSV exports
     const { enrichFromExports } = require('./enrich-from-exports');
@@ -383,19 +366,17 @@ async function syncCalendars() {
   // Sync all property calendars
   let totalEvents = 0;
   let totalArchived = 0;
-  let totalReactivated = 0;
   const failures = [];
   for (const property of config.properties) {
     const result = await syncPropertyCalendars(property);
     totalEvents += result.events;
     totalArchived += result.archived || 0;
-    totalReactivated += result.reactivated || 0;
     failures.push(...(result.failures || []));
   }
 
-  console.log(`\n✅ Total events synced: ${totalEvents}, stale archived: ${totalArchived}, current Booking reactivated: ${totalReactivated}`);
+  console.log(`\n✅ Total events synced: ${totalEvents}, stale archived: ${totalArchived}`);
   if (failures.length) console.error(`⚠️ ${failures.length} calendar feed(s) failed`);
-  return { totalEvents, totalArchived, totalReactivated, totalDeleted: 0, failures };
+  return { totalEvents, totalArchived, totalDeleted: 0, failures };
 }
 
 module.exports = { syncAll, syncCalendars, generateCleaningTasks, fetchCalendar, parseICalData };
