@@ -24,7 +24,7 @@
 - Текущие Booking.com брони с гостем не архивируются до выезда; короткая неподтверждённая Booking-занятость показывается в операционных представлениях как fallback, но не попадает в статистику.
 - Production-синхронизация Booking/Airbnb теперь реально запускается каждые 30 минут через GitHub Actions; ежедневный Vercel Cron оставлен как резерв.
 - В десктопном календаре левая колонка апартаментов раскрывается после программного перехода к 90 дням/сезону и дальше сжимается/раскрывается по направлению горизонтального скролла.
-- Airbnb export enrichment распознает листинг Carmela как `The Sunrise Balcony • Amalfi Coast View` и новые телефонные страны BG/RO/UY/TN.
+- Airbnb export enrichment распознает листинг Carmela как `The Sunrise Balcony • Amalfi Coast View` и новое название `The Sunrise Terrace - Amalfi Coast View`, а также телефонные страны BG/RO/UY/TN.
 - Создана точка отката перед закрытием админки: `rollback/pre-cloudflare-access-2026-05-30` на `820a27a9e6e94f0ac8eec76590e287df0201cbc5`.
 - Добавлена кодовая страховка для Vercel: прямые `*.vercel.app` URL больше не открывают админку, публичные `/maid/:slug` и `/api/maid/:slug` остаются доступными без пароля.
 - Подготовлены машинные клиенты к Cloudflare Access service token для мониторинга и Telegram-бота.

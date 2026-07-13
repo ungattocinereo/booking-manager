@@ -29,13 +29,27 @@ function writeBookingXls(rows) {
   XLSX.writeFile(workbook, path.join(exportsDir, 'booking.xls'));
 }
 
+function writeAirbnbCsv() {
+  fs.writeFileSync(
+    path.join(exportsDir, 'airbnb.csv'),
+    [
+      '"Confirmation code","Status","Guest name","Contact","# of adults","# of children","# of infants","Start date","End date","# of nights","Booked","Listing","Earnings"',
+      '"TEST123","Confirmed","Terrace Guest","+39 333 000 0000","2","0","0","12/20/2026","12/23/2026","3","2026-07-13","The Sunrise Terrace - Amalfi Coast View","€300.00"',
+    ].join('\n')
+  );
+}
+
 async function main() {
   await db.init();
   await db.createProperty('solo', 'Solo Traveller room');
+  await db.createProperty('carmela', 'Carmela');
 
   await db.upsertBooking('solo', 'booking', '2026-07-05', '2026-07-08', 'Bauerly, Addison', {
     guestName: 'Bauerly, Addison',
     guestCountry: 'US',
+    bookingType: 'reservation',
+  });
+  await db.upsertBooking('carmela', 'airbnb', '2026-12-20', '2026-12-23', 'Reserved', {
     bookingType: 'reservation',
   });
   await db.upsertBooking('solo', 'booking', '2026-07-05', '2026-07-08', 'CLOSED - Not available', {
@@ -132,9 +146,10 @@ async function main() {
       Children: 0,
     },
   ]);
+  writeAirbnbCsv();
 
   const enrichResult = await enrichFromExports(db, false);
-  assert.strictEqual(enrichResult.updated, 1);
+  assert.strictEqual(enrichResult.updated, 2);
 
   const repairedBooking = await getBooking('solo', '2026-12-01', '2026-12-03');
   const staleExportBooking = await getBooking('solo', '2026-12-10', '2026-12-12');
@@ -143,6 +158,15 @@ async function main() {
   assert.strictEqual(repairedBooking.guest_name, 'Visible Guest');
   assert.strictEqual(repairedBooking.guest_country, 'US');
   assert.strictEqual(staleExportBooking, undefined);
+
+  const carmelaBooking = await db.get(
+    `SELECT * FROM bookings
+     WHERE property_id = 'carmela' AND platform = 'airbnb'
+       AND start_date = '2026-12-20' AND end_date = '2026-12-23'`
+  );
+  assert.strictEqual(carmelaBooking.guest_name, 'Terrace Guest');
+  assert.strictEqual(carmelaBooking.guest_country, 'IT');
+  assert.strictEqual(Number(carmelaBooking.guest_count), 2);
 
   console.log('Booking lifecycle tests passed');
 }

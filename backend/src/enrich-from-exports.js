@@ -14,6 +14,7 @@ const LISTING_MAP = {
   '2 Story Suite Carina Excellent Central Location': 'carina',
   'Carmela': 'carmela',
   'The Sunrise Balcony • Amalfi Coast View': 'carmela',
+  'The Sunrise Terrace - Amalfi Coast View': 'carmela',
   'The Adventure bunkbed room': 'youth',
   'Room for solo travelers': 'solo',
 };
