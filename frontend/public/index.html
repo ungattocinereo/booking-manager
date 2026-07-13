@@ -3941,6 +3941,10 @@ function isUnavailableMarker(b) {
   return isUnavailableBooking(b) && !hasGuestDetails(b);
 }
 
+function isOperationalBookingFallback(b) {
+  return b?.operational_fallback === true;
+}
+
 function isDirectBooking(b) {
   return String(b.platform || '').toLowerCase() === 'direct';
 }
@@ -3964,6 +3968,7 @@ function isGroupedBookingClosure(b, allBookings = bookings) {
   if (b.platform !== 'booking' || !isUnavailableMarker(b)) return false;
   const sameClosedRange = allBookings.filter(other =>
     other !== b &&
+    other.property_id === b.property_id &&
     other.platform === 'booking' &&
     other.start_date === b.start_date &&
     other.end_date === b.end_date &&
@@ -3990,10 +3995,11 @@ function hasOverlappingRealBooking(booking, allBookings = bookings) {
 }
 
 function shouldHideBookingForDisplay(b, allBookings = bookings) {
-  return isUnavailableMarker(b);
+  return isUnavailableMarker(b) && !isOperationalBookingFallback(b);
 }
 
 function isRealGuestBooking(b, allBookings = bookings) {
+  if (isOperationalBookingFallback(b)) return false;
   if (shouldHideBookingForDisplay(b, allBookings)) return false;
   if (isUnavailableMarker(b)) return false;
   return true;
@@ -4504,11 +4510,12 @@ function renderCalendar({ preserveScroll = false, focusDate = null, behavior = '
         if (visibleWidth <= 0) return;
 
         const isUnavailable = isUnavailableBooking(booking);
-        const isBlocked = isUnavailable && !hasGuestDetails(booking);
+        const isFallback = isOperationalBookingFallback(booking);
+        const isBlocked = isUnavailable && !hasGuestDetails(booking) && !isFallback;
         const isCompleted = end <= today;
         const platformClass = CALENDAR_PLATFORM_CLASS[booking.platform] || 'other';
         const hasPlatformLogo = Boolean(platformBrand(booking.platform)) && !isBlocked;
-        const barText = booking.guest_name || (isBlocked ? unavailableBookingLabel(booking) : platformLabel(booking.platform));
+        const barText = booking.guest_name || (isFallback ? 'Booking · без имени' : isBlocked ? unavailableBookingLabel(booking) : platformLabel(booking.platform));
         const fullLabelThreshold = hasPlatformLogo ? 124 : 104;
         const shortLabelThreshold = hasPlatformLogo ? 58 : 52;
         const shortLabel = visibleWidth > fullLabelThreshold ? barText : (visibleWidth > shortLabelThreshold ? String(barText).split(' ')[0] : '');
@@ -4641,7 +4648,7 @@ function renderMobileAgenda() {
   const [startDate, endDate] = agendaWindow();
   const startIso = toLocalIso(startDate);
   const endIso = toLocalIso(endDate);
-  const realBookings = bookings.filter(b => isRealGuestBooking(b, bookings));
+  const realBookings = bookings.filter(b => isRealGuestBooking(b, bookings) || isOperationalBookingFallback(b));
   const conflicts = detectBookingConflicts(bookings).filter(c =>
     (c.a.start_date <= endIso && c.a.end_date >= startIso) ||
     (c.b.start_date <= endIso && c.b.end_date >= startIso)
@@ -4714,7 +4721,7 @@ function renderMobileAgenda() {
         const booking = event.booking;
         const meta = propertyMeta(booking.property_id);
         const isCheckout = event.type === 'checkout';
-        const guest = booking.guest_name || platformLabel(booking.platform);
+        const guest = booking.guest_name || (isOperationalBookingFallback(booking) ? 'Booking · данные гостя не получены' : platformLabel(booking.platform));
         const flag = booking.guest_country ? ` ${countryToFlag(booking.guest_country)}` : '';
         const taxNote = isCheckout && isTaxableBooking(booking, bookings) && !booking.tax_paid ? ' · налог не отмечен' : '';
         const platformLogo = platformLogoHtml(booking.platform, 'agenda-platform-logo');
@@ -4757,13 +4764,14 @@ function openBookingPanel(bookingId) {
   const countryName = booking.guest_country ? (COUNTRY_NAMES[booking.guest_country.toLowerCase()] || booking.guest_country.toUpperCase()) : '—';
   const completed = parseLocalDate(booking.end_date) <= todayLocal();
   const unavailable = isUnavailableBooking(booking);
+  const fallback = isOperationalBookingFallback(booking);
   const taxable = isTaxableBooking(booking, bookings);
   const taxPaid = Boolean(booking.tax_paid);
   const platformClass = CALENDAR_PLATFORM_CLASS[booking.platform] || 'other';
   const nightWord = nights === 1 ? 'ночь' : (nights > 1 && nights < 5 ? 'ночи' : 'ночей');
 
-  kickerEl.textContent = completed ? 'Завершено' : unavailable ? 'Недоступность' : 'Бронирование';
-  titleEl.textContent = booking.guest_name || platformLabel(booking.platform);
+  kickerEl.textContent = completed ? 'Завершено' : fallback ? 'Booking без данных гостя' : unavailable ? 'Недоступность' : 'Бронирование';
+  titleEl.textContent = booking.guest_name || (fallback ? 'Booking · нужны детали' : platformLabel(booking.platform));
   bodyEl.innerHTML = `
     <div class="booking-detail-hero" style="--property-color:${meta.color};--property-bg:${meta.bg}">
       <div class="booking-night-badge" aria-label="${nights || 0} ${nightWord}">
@@ -4776,7 +4784,7 @@ function openBookingPanel(bookingId) {
       </div>
     </div>
     <div class="booking-status-note">
-      ${completed ? 'Эта бронь уже завершена.' : unavailable ? 'Это закрытый или недоступный период.' : 'Активная или будущая бронь.'}
+      ${completed ? 'Эта бронь уже завершена.' : fallback ? 'Booking.com подтверждает занятость, но имя гостя ещё не получено.' : unavailable ? 'Это закрытый или недоступный период.' : 'Активная или будущая бронь.'}
     </div>
     <div class="booking-detail-grid">
       <div class="booking-detail-card">

@@ -76,6 +76,7 @@ test('real-booking filter removes technical markers from every platform', () => 
     booking({ platform: 'airbnb', booking_type: 'blocked', raw_summary: 'Airbnb (Not available)', guest_name: null, guest_count: 0 }),
     booking({ booking_type: 'blocked', raw_summary: 'CLOSED - Not available', guest_name: 'Known guest' }),
     booking({ platform: 'airbnb', raw_summary: 'Reserved' }),
+    booking({ booking_type: 'blocked', raw_summary: 'CLOSED - Not available', guest_name: null, guest_count: 0, operational_fallback: true }),
     booking({ active: false }),
     booking({ start_date: TODAY, end_date: TODAY }),
     realOverlapA,
@@ -85,12 +86,13 @@ test('real-booking filter removes technical markers from every platform', () => 
 
   const result = filterRealBookings(rows);
 
-  assert.equal(result.length, 5);
+  assert.equal(result.length, 6);
   assert.ok(result.includes(realOverlapA));
   assert.ok(result.includes(realOverlapB));
   assert.ok(result.includes(legacyActiveNull));
   assert.ok(result.some(row => row.guest_name === 'Known guest'));
   assert.ok(result.some(row => row.platform === 'airbnb' && row.raw_summary === 'Reserved'));
+  assert.ok(result.some(row => row.operational_fallback === true));
 });
 
 test('today classification excludes false Orange markers and keeps real stays', () => {

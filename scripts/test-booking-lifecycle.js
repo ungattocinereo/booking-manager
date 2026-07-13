@@ -68,6 +68,24 @@ async function main() {
      ) VALUES (?, 'booking', ?, ?, ?, ?, ?, 'reservation', 1, NULL, CURRENT_TIMESTAMP)`,
     ['solo', '2026-08-05', '2026-08-08', 'Partially Covered Guest', 'Partially Covered Guest', 1]
   );
+  await db.run(
+    `INSERT INTO bookings (
+       property_id, platform, start_date, end_date, raw_summary,
+       guest_name, guest_count, booking_type, active, missing_since, created_at
+     ) VALUES (?, 'booking', ?, ?, ?, ?, ?, 'reservation', 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+    ['solo', '2026-07-10', '2026-07-14', 'Recover Current Guest', 'Recover Current Guest', 1]
+  );
+
+  const reactivated = await db.reactivateCurrentBookingReservations(
+    'solo',
+    'booking',
+    [{ startDate: '2026-07-12', endDate: '2026-07-15' }],
+    '2026-07-12'
+  );
+  const recoveredCurrentGuest = await getBooking('solo', '2026-07-10', '2026-07-14');
+  assert.strictEqual(reactivated.changes, 1);
+  assert.strictEqual(Number(recoveredCurrentGuest.active), 1);
+  assert.strictEqual(recoveredCurrentGuest.missing_since, null);
 
   await db.archiveStaleBookings(
     'solo',

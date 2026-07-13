@@ -106,12 +106,16 @@ function isUnavailableMarker(booking) {
   return unavailable && !hasGuestDetails(booking);
 }
 
+function isOperationalBookingFallback(booking) {
+  return booking?.operational_fallback === true;
+}
+
 function filterRealBookings(bookings = []) {
   return (Array.isArray(bookings) ? bookings : []).filter(booking => {
     if (!booking) return false;
     const active = booking.active;
     if (active === false || active === 0 || active === '0' || String(active).toLowerCase() === 'false') return false;
-    if (isUnavailableMarker(booking)) return false;
+    if (isUnavailableMarker(booking) && !isOperationalBookingFallback(booking)) return false;
     const start = String(booking.start_date || '').slice(0, 10);
     const end = String(booking.end_date || '').slice(0, 10);
     return Boolean(dateOnlyMs(start) != null && dateOnlyMs(end) != null && start < end);
@@ -212,6 +216,7 @@ module.exports = {
   formatTodayDetails,
   getRomeDate,
   isUnavailableMarker,
+  isOperationalBookingFallback,
   nightsBetween,
   parseCommand,
   platformIcon,

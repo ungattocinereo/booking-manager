@@ -5,6 +5,7 @@ const db = USE_POSTGRES
   ? require('../backend/src/database-postgres')
   : require('../backend/src/database');
 const { formatBooking, formatCleaningTask } = require('./_helpers');
+const { normalizeBookingsForDisplay } = require('../lib/booking-normalization');
 const {
   PROPERTY_NAMES,
   countryToFlag,
@@ -58,7 +59,7 @@ async function fetchBookings(params = {}) {
   try {
     await ensureDb();
     const rows = await db.getBookings(params.property_id, params.from_date);
-    return filterRealBookings(rows.map(formatBooking));
+    return filterRealBookings(normalizeBookingsForDisplay(rows.map(formatBooking)));
   } catch (e) {
     console.error('Database error:', e.message);
     return null;
