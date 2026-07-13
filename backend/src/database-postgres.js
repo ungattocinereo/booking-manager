@@ -120,13 +120,18 @@ class Database {
   async acquireSyncLock() {
     const client = await this.pool.connect();
     try {
-      const result = await client.query('SELECT pg_try_advisory_lock($1) AS acquired', [1729042026]);
+      // Keep the lock inside a transaction so it remains pinned to one
+      // PostgreSQL backend even when POSTGRES_URL uses transaction pooling.
+      await client.query('BEGIN');
+      const result = await client.query('SELECT pg_try_advisory_xact_lock($1) AS acquired', [1729042026]);
       if (!result.rows[0]?.acquired) {
+        await client.query('ROLLBACK');
         client.release();
         return null;
       }
       return client;
     } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
       client.release();
       throw error;
     }
@@ -135,7 +140,10 @@ class Database {
   async releaseSyncLock(client) {
     if (!client) return;
     try {
-      await client.query('SELECT pg_advisory_unlock($1)', [1729042026]);
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw error;
     } finally {
       client.release();
     }
