@@ -2,7 +2,7 @@ name: monitor-sync
 
 on:
   schedule:
-    - cron: "*/30 * * * *"
+    - cron: "7,37 * * * *"
   workflow_dispatch:
   push:
     branches: [monitor/nuove-prenotazioni]
@@ -33,6 +33,14 @@ jobs:
           fetch-depth: 1
           persist-credentials: true
 
+      - name: Check out production sync source
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: booking-manager-source
+          fetch-depth: 1
+          persist-credentials: false
+
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
@@ -41,22 +49,17 @@ jobs:
         working-directory: monitor-app
         run: npm install --no-audit --no-fund
 
-      - name: Trigger booking calendar sync
+      - name: Install booking sync dependencies
+        working-directory: booking-manager-source
+        run: npm ci --omit=dev --no-audit --no-fund
+
+      - name: Sync production booking calendars
+        working-directory: booking-manager-source
         env:
-          BOOKING_MANAGER_SYNC_SECRET: ${{ secrets.BOOKING_MANAGER_SYNC_SECRET }}
-          BOOKING_MANAGER_CF_ACCESS_CLIENT_ID: ${{ secrets.BOOKING_MANAGER_CF_ACCESS_CLIENT_ID }}
-          BOOKING_MANAGER_CF_ACCESS_CLIENT_SECRET: ${{ secrets.BOOKING_MANAGER_CF_ACCESS_CLIENT_SECRET }}
-        run: |
-          curl --fail-with-body --silent --show-error \
-            --max-time 120 \
-            --retry 2 \
-            --retry-all-errors \
-            -H "Authorization: Bearer ${BOOKING_MANAGER_SYNC_SECRET}" \
-            -H "CF-Access-Client-Id: ${BOOKING_MANAGER_CF_ACCESS_CLIENT_ID}" \
-            -H "CF-Access-Client-Secret: ${BOOKING_MANAGER_CF_ACCESS_CLIENT_SECRET}" \
-            https://b.amalfi.day/api/sync \
-            > /tmp/booking-manager-sync.json
-          node -e "const r=require('/tmp/booking-manager-sync.json'); if(!r.success||r.partial) throw new Error(r.error||r.message||'Booking sync was not fully successful'); console.log('Booking sync ok: '+r.events_synced+' events, '+(r.feed_errors?.length||0)+' feed errors')"
+          NODE_ENV: production
+          POSTGRES_URL: ${{ secrets.BOOKING_MANAGER_POSTGRES_URL }}
+          ICAL_URLS: ${{ secrets.BOOKING_MANAGER_ICAL_URLS }}
+        run: npm run sync
 
       - name: Run sync
         working-directory: monitor-app

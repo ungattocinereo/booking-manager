@@ -112,6 +112,8 @@ Run `npm run migrate:postgres` after schema changes. Runtime requests only conne
 
 The `ci` GitHub Actions workflow runs syntax checks, unit/lifecycle tests, the Playwright UI performance suite, and a production dependency audit for pull requests and pushes to `main`. Configure the `ci / test` check as required in GitHub branch protection before allowing merges to production.
 
+The scheduled `monitor-sync` workflow also runs the production calendar sync every 30 minutes. Keep its `BOOKING_MANAGER_POSTGRES_URL` and `BOOKING_MANAGER_ICAL_URLS` repository secrets aligned with the corresponding Vercel production variables.
+
 ### Local development
 
 ```bash
