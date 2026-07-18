@@ -1,7 +1,8 @@
 {
   "since": "2026-04-17",
-  "generated_at": "2026-07-18T04:07:12.391Z",
+  "generated_at": "2026-07-18T06:15:30.257Z",
   "available_dates": [
+    "2026-07-18",
     "2026-07-13",
     "2026-07-09",
     "2026-07-05",
@@ -928,8 +929,8 @@
           "guestCount": null,
           "confirmationCode": null,
           "firstSeenAt": "2026-05-31T07:45:34.472Z",
-          "status": "active",
-          "cancelledAt": null,
+          "status": "cancelled",
+          "cancelledAt": "2026-07-18T06:15:30.253Z",
           "link": "https://www.airbnb.com/hosting/reservations/details/HMMYHAT32A",
           "rawSummary": "Reserved",
           "bookingType": "reservation",
@@ -5019,6 +5020,24 @@
       "rawSummary": "Reserved",
       "bookingType": "reservation",
       "detectedAt": "2026-07-13T09:32:17.996Z"
+    },
+    {
+      "eventType": "cancelled",
+      "bookingKey": "royal|airbnb|2026-09-02|2026-09-06",
+      "propertyId": "royal",
+      "platform": "airbnb",
+      "startDate": "2026-09-02",
+      "endDate": "2026-09-06",
+      "guestName": null,
+      "guestCount": null,
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HMMYHAT32A",
+      "confirmationCode": null,
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync",
+      "bookingCreatedAt": "2026-05-31T07:45:34.472Z",
+      "rawSummary": "Reserved",
+      "bookingType": "reservation",
+      "detectedAt": "2026-07-18T06:15:30.253Z"
     }
   ],
   "imports_log": [
