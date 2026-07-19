@@ -3,6 +3,7 @@ const ICAL = require('ical.js');
 const fs = require('fs');
 const path = require('path');
 const { todayInRome } = require('../../api/_helpers');
+const calendarInventory = require('../config/calendar-inventory.json');
 
 // Use Postgres on Vercel, SQLite locally
 const USE_POSTGRES = process.env.POSTGRES_URL || process.env.DATABASE_URL;
@@ -38,7 +39,67 @@ function loadConfig() {
   }
 }
 
-const config = loadConfig();
+function validateCalendarConfig(config, inventory = calendarInventory) {
+  const configuredProperties = Array.isArray(config?.properties) ? config.properties : [];
+  const configuredById = new Map();
+  const errors = [];
+
+  for (const property of configuredProperties) {
+    const propertyId = String(property?.id || '').trim();
+    if (!propertyId) {
+      errors.push('property without an id');
+      continue;
+    }
+    if (configuredById.has(propertyId)) {
+      errors.push(`duplicate property ${propertyId}`);
+      continue;
+    }
+    configuredById.set(propertyId, property);
+  }
+
+  for (const expected of inventory.properties || []) {
+    const property = configuredById.get(expected.id);
+    if (!property) {
+      errors.push(`missing property ${expected.id}`);
+      continue;
+    }
+
+    const calendars = Array.isArray(property.calendars) ? property.calendars : [];
+    const configuredPlatforms = new Set();
+    for (const calendar of calendars) {
+      const platform = String(calendar?.platform || '').trim().toLowerCase();
+      if (!platform) continue;
+      if (configuredPlatforms.has(platform)) errors.push(`duplicate ${expected.id}/${platform} feed`);
+      configuredPlatforms.add(platform);
+      if (!/^https?:\/\//i.test(String(calendar?.url || ''))) {
+        errors.push(`invalid ${expected.id}/${platform} feed URL`);
+      }
+    }
+
+    for (const platform of expected.platforms || []) {
+      if (!configuredPlatforms.has(platform)) errors.push(`missing ${expected.id}/${platform} feed`);
+    }
+  }
+
+  if (errors.length) {
+    throw new Error(`Calendar configuration is incomplete: ${errors.join('; ')}`);
+  }
+  return config;
+}
+
+let configCache = null;
+
+function getConfig() {
+  if (!configCache) {
+    configCache = validateCalendarConfig(loadConfig());
+    const feedCount = configCache.properties.reduce(
+      (total, property) => total + (Array.isArray(property.calendars) ? property.calendars.length : 0),
+      0
+    );
+    console.log(`✅ Calendar configuration validated: ${configCache.properties.length} properties, ${feedCount} feeds`);
+  }
+  return configCache;
+}
 
 function nonNegativeInteger(value, fallback) {
   const number = Number(value);
@@ -284,6 +345,7 @@ async function syncAll() {
   console.log('🔄 Starting calendar sync...\n');
   
   try {
+    const config = getConfig();
     // Initialize database
     await db.init();
     
@@ -354,6 +416,7 @@ async function syncAll() {
 // Serverless-friendly sync (doesn't close connection)
 async function syncCalendars() {
   console.log('🔄 Starting calendar sync...\n');
+  const config = getConfig();
   
   // Initialize database
   await db.init();
@@ -379,7 +442,15 @@ async function syncCalendars() {
   return { totalEvents, totalArchived, totalDeleted: 0, failures };
 }
 
-module.exports = { syncAll, syncCalendars, generateCleaningTasks, fetchCalendar, parseICalData };
+module.exports = {
+  syncAll,
+  syncCalendars,
+  generateCleaningTasks,
+  fetchCalendar,
+  parseICalData,
+  loadConfig,
+  validateCalendarConfig
+};
 
 // Run the same protected service path used by the API when called directly.
 if (require.main === module) {

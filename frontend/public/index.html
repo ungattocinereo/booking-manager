@@ -3200,6 +3200,8 @@ let taxFocusTodayOnNextRender = false;
 
 const DASHBOARD_CACHE_KEY = 'atrani-dashboard-cache-v1';
 const DASHBOARD_VISIBLE_REFRESH_MIN_MS = 30 * 1000;
+const CALENDAR_AUTO_SYNC_INTERVAL_MS = 5 * 60 * 1000;
+const CALENDAR_AUTO_SYNC_STORAGE_KEY = 'atrani-calendar-auto-sync-v1';
 const STATS_HISTORY_CACHE_PREFIX = 'atrani-stats-history-v2';
 const STATS_PRIMARY_ORIGIN = 'https://b.amalfi.day';
 
@@ -3213,6 +3215,8 @@ let pendingEmptyDashboardSignature = null;
 let retryEmptyDashboardConfirmation = false;
 let calendarResizeTimer = null;
 let calendarNeedsVisibleRender = false;
+let calendarSyncInFlight = false;
+let lastAutoSyncAttemptAt = 0;
 
 const TAB_ROUTES = { '/stats': 'stats', '/maid': 'cleaners', '/tax': 'tax' };
 const ROUTE_TABS = { stats: '/stats', cleaners: '/maid', tax: '/tax' };
@@ -6609,6 +6613,11 @@ function renderStatsNow({ chartsAvailable = typeof Chart !== 'undefined' } = {})
 
 async function syncCalendars() {
   const btn = document.getElementById('syncBtn');
+  if (calendarSyncInFlight) {
+    toast('Синхронизация уже выполняется');
+    return;
+  }
+  calendarSyncInFlight = true;
   btn.disabled = true;
   btn.innerHTML = '<i data-lucide="loader-2" style="width:14px;height:14px;animation:spin 1s linear infinite;"></i>Синхронизация...';
   setFreshnessStatus({
@@ -6647,6 +6656,53 @@ async function syncCalendars() {
     });
     btn.disabled = false;
     btn.innerHTML = '<i data-lucide="refresh-cw" style="width:14px;height:14px;"></i>Синхронизация';
+  } finally {
+    calendarSyncInFlight = false;
+  }
+}
+
+function storedAutoSyncAttemptAt() {
+  try {
+    return Number(localStorage.getItem(CALENDAR_AUTO_SYNC_STORAGE_KEY)) || 0;
+  } catch {
+    return 0;
+  }
+}
+
+function rememberAutoSyncAttempt(timestamp) {
+  lastAutoSyncAttemptAt = timestamp;
+  try {
+    localStorage.setItem(CALENDAR_AUTO_SYNC_STORAGE_KEY, String(timestamp));
+  } catch {
+    // Private browsing can disable storage; the in-memory throttle still works.
+  }
+}
+
+async function autoSyncCalendars() {
+  if (document.hidden || document.visibilityState === 'hidden' || calendarSyncInFlight) return false;
+
+  const now = Date.now();
+  const latestAttempt = Math.max(lastAutoSyncAttemptAt, storedAutoSyncAttemptAt());
+  if (now - latestAttempt < CALENDAR_AUTO_SYNC_INTERVAL_MS) return false;
+
+  rememberAutoSyncAttempt(now);
+  calendarSyncInFlight = true;
+  try {
+    const res = await fetch(`${API}/sync`, { method: 'POST' });
+    const result = await res.json().catch(() => null);
+    if (res.status === 409 && result?.code === 'SYNC_IN_PROGRESS') return false;
+    if (!res.ok || result?.success === false || result?.partial) {
+      throw new Error(result?.error || result?.message || `HTTP ${res.status}`);
+    }
+    statsSnapshotsLoaded = false;
+    statsSnapshotsPromise = null;
+    return true;
+  } catch (error) {
+    console.warn('Automatic calendar sync failed:', error.message);
+    return false;
+  } finally {
+    calendarSyncInFlight = false;
+    await loadData({ silent: true, preserveCalendarScroll: true });
   }
 }
 
@@ -6700,6 +6756,7 @@ function refreshDashboardAfterReturn() {
   if (lastDashboardLoadAt && now - lastDashboardLoadAt < DASHBOARD_VISIBLE_REFRESH_MIN_MS) return;
   lastDashboardRefreshRequestedAt = now;
   loadData({ silent: true, preserveCalendarScroll: true });
+  autoSyncCalendars();
 }
 
 document.addEventListener('visibilitychange', () => {
@@ -6708,8 +6765,9 @@ document.addEventListener('visibilitychange', () => {
 window.addEventListener('focus', refreshDashboardAfterReturn);
 window.addEventListener('pageshow', refreshDashboardAfterReturn);
 
-loadData({ silent: bootstrappedFromCache, preserveCalendarScroll: bootstrappedFromCache });
-setInterval(() => loadData({ silent: true, preserveCalendarScroll: true }), 5 * 60 * 1000);
+loadData({ silent: bootstrappedFromCache, preserveCalendarScroll: bootstrappedFromCache })
+  .finally(() => autoSyncCalendars());
+setInterval(() => autoSyncCalendars(), CALENDAR_AUTO_SYNC_INTERVAL_MS);
 
 // ===== TAX (Tassa di Soggiorno) =====
 async function loadTaxData() {

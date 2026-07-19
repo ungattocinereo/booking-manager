@@ -1,0 +1,15 @@
+{
+  "properties": [
+    { "id": "vingtage", "name": "Vingtage Room", "platforms": ["booking", "airbnb"] },
+    { "id": "orange", "name": "Orange Room", "platforms": ["booking", "airbnb"] },
+    { "id": "solo", "name": "Solo Room", "platforms": ["booking", "airbnb"] },
+    { "id": "youth", "name": "Youth Room", "platforms": ["booking", "airbnb"] },
+    { "id": "central", "name": "Central Room", "platforms": ["booking"] },
+    { "id": "awesome", "name": "Awesome Apartments", "platforms": ["airbnb"] },
+    { "id": "carina", "name": "Carina", "platforms": ["airbnb"] },
+    { "id": "harmony", "name": "Harmony", "platforms": ["airbnb"] },
+    { "id": "royal", "name": "Royal", "platforms": ["airbnb"] },
+    { "id": "susy", "name": "Villa Susy", "platforms": ["booking"] },
+    { "id": "carmela", "name": "Carmela", "platforms": ["airbnb"] }
+  ]
+}

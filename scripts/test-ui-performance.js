@@ -182,7 +182,8 @@ function createServer(state = {
   statsPaths: [],
   legacyStatsRequests: 0,
   dashboardMode: 'normal',
-  dashboardRequests: 0
+  dashboardRequests: 0,
+  syncRequests: 0
 }) {
   return http.createServer((request, response) => {
     const url = new URL(request.url, 'http://127.0.0.1');
@@ -222,6 +223,12 @@ function createServer(state = {
       state.dashboardRequests++;
       response.writeHead(200, { 'content-type': 'application/json' });
       response.end(state.dashboardMode === 'empty' ? emptyDashboardPayload : dashboardPayload);
+      return;
+    }
+    if (url.pathname === '/api/sync' && request.method === 'POST') {
+      state.syncRequests++;
+      response.writeHead(200, { 'content-type': 'application/json' });
+      response.end(JSON.stringify({ success: true, partial: false }));
       return;
     }
     if (url.pathname === '/api/bookings' && url.searchParams.get('stats_snapshots') === '1') {
@@ -592,7 +599,8 @@ async function main() {
     statsPaths: [],
     legacyStatsRequests: 0,
     dashboardMode: 'normal',
-    dashboardRequests: 0
+    dashboardRequests: 0,
+    syncRequests: 0
   };
   const server = createServer(serverState);
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
@@ -605,6 +613,7 @@ async function main() {
     const statsDesktop = await inspectStatsPage(browser, baseUrl, { width: 1440, height: 1000 }, false);
     const statsMobile = await inspectStatsPage(browser, baseUrl, { width: 390, height: 844 }, true);
     const statsWithoutChart = await inspectStatsWithoutChart(browser, baseUrl);
+    assert.ok(serverState.syncRequests > 0, 'admin UI did not start automatic calendar sync');
     assert.ok(serverState.statsRequests >= 3, `statistics history endpoint was requested only ${serverState.statsRequests} time(s)`);
     assert.deepEqual([...new Set(serverState.statsPaths)], ['/api/dashboard?stats_only=1']);
     assert.equal(serverState.legacyStatsRequests, 0, 'browser still requested the service-token /api/bookings statistics route');
@@ -651,6 +660,7 @@ async function main() {
       legacyStatsRequests: serverState.legacyStatsRequests,
       statsRequests: serverState.statsRequests,
       dashboardRequests: serverState.dashboardRequests,
+      syncRequests: serverState.syncRequests,
       maidYearBoundary: true
     }, null, 2));
   } finally {
