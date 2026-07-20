@@ -1,7 +1,8 @@
 {
   "since": "2026-04-17",
-  "generated_at": "2026-07-19T23:00:28.176Z",
+  "generated_at": "2026-07-20T00:05:17.543Z",
   "available_dates": [
+    "2026-07-20",
     "2026-07-19",
     "2026-07-18",
     "2026-07-13",
@@ -1187,8 +1188,8 @@
           "guestName": "Dániel Kiss",
           "confirmationCode": "HMYHPXJ8MF",
           "firstSeenAt": "2026-03-28T19:32:10.982Z",
-          "status": "active",
-          "cancelledAt": null,
+          "status": "cancelled",
+          "cancelledAt": "2026-07-20T00:05:17.539Z",
           "link": "https://www.airbnb.com/hosting/reservations/details/HMYHPXJ8MF",
           "sources": [
             "upstream_api",
@@ -5113,6 +5114,21 @@
       "rawSummary": "Reserved",
       "bookingType": "reservation",
       "detectedAt": "2026-07-19T10:56:16.088Z"
+    },
+    {
+      "eventType": "cancelled",
+      "bookingKey": "royal|airbnb|2026-07-31|2026-08-07",
+      "propertyId": "royal",
+      "platform": "airbnb",
+      "startDate": "2026-07-31",
+      "endDate": "2026-08-07",
+      "guestName": "Dániel Kiss",
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HMYHPXJ8MF",
+      "confirmationCode": "HMYHPXJ8MF",
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync",
+      "bookingCreatedAt": "2026-03-28T19:32:10.982Z",
+      "detectedAt": "2026-07-20T00:05:17.539Z"
     }
   ],
   "imports_log": [
