@@ -13,6 +13,7 @@ process.env.BOOKING_EXPORTS_DIR = exportsDir;
 
 const db = require('../backend/src/database');
 const { enrichFromExports } = require('../backend/src/enrich-from-exports');
+const { buildTodayWidgetPayload } = require('../lib/widget-today');
 
 async function getBooking(propertyId, startDate, endDate) {
   return db.get(
@@ -60,6 +61,38 @@ async function main() {
   assert.strictEqual(protectedReservation.booking_type, 'reservation');
   assert.strictEqual(protectedReservation.guest_name, 'Bauerly, Addison');
   assert.strictEqual(Number(protectedReservation.active), 1);
+
+  await db.upsertBooking('solo', 'booking', '2026-07-19', '2026-07-22', 'CLOSED - Not available', {
+    bookingType: 'blocked',
+  });
+  await db.run(
+    `UPDATE bookings SET active = 0, missing_since = CURRENT_TIMESTAMP
+     WHERE property_id = 'solo' AND platform = 'booking'
+       AND start_date = '2026-07-19' AND end_date = '2026-07-22'`
+  );
+  await db.run(
+    `INSERT INTO bookings (
+       property_id, platform, start_date, end_date, raw_summary,
+       booking_type, active, missing_since, created_at
+     ) VALUES ('solo', 'booking', '2026-07-20', '2026-07-22', 'CLOSED - Not available', 'blocked', 1, NULL, CURRENT_TIMESTAMP)`
+  );
+
+  const reconciledMarker = await db.upsertBooking(
+    'solo',
+    'booking',
+    '2026-07-20',
+    '2026-07-22',
+    'CLOSED - Not available',
+    { bookingType: 'blocked' }
+  );
+  const originalMarker = await getBooking('solo', '2026-07-19', '2026-07-22');
+  const shiftedMarker = await getBooking('solo', '2026-07-20', '2026-07-22');
+  const july20Widget = await buildTodayWidgetPayload(db, '2026-07-20');
+  assert.strictEqual(reconciledMarker.canonicalStartDate, '2026-07-19');
+  assert.strictEqual(Number(originalMarker.active), 1);
+  assert.strictEqual(Number(shiftedMarker.active), 0);
+  assert.ok(july20Widget.occupied.some(item => item.property_id === 'solo' && item.start === '2026-07-19'));
+  assert.ok(!july20Widget.check_ins.some(item => item.property_id === 'solo'));
 
   await db.run(
     `INSERT INTO bookings (

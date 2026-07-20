@@ -150,15 +150,70 @@ class Database {
   }
 
   // Booking operations
+  async findOriginalBookingMarkerStart(propertyId, platform, startDate, endDate, bookingType) {
+    if (platform !== 'booking' || !['blocked', 'unavailable'].includes(String(bookingType || '').toLowerCase())) {
+      return startDate;
+    }
+
+    const original = await this.get(
+      `SELECT start_date
+       FROM bookings
+       WHERE property_id = ?
+         AND platform = 'booking'
+         AND end_date = ?
+         AND start_date < ?
+         AND (
+           COALESCE(booking_type, '') IN ('blocked', 'unavailable') OR
+           LOWER(COALESCE(raw_summary, '')) LIKE '%closed%' OR
+           LOWER(COALESCE(raw_summary, '')) LIKE '%not available%'
+         )
+         AND COALESCE(NULLIF(TRIM(guest_name), ''), '') = ''
+         AND COALESCE(guest_count, 0) = 0
+       ORDER BY start_date ASC
+       LIMIT 1`,
+      [propertyId, endDate, startDate]
+    );
+    return original?.start_date || startDate;
+  }
+
+  async archiveSupersededBookingMarkers(propertyId, canonicalStartDate, endDate) {
+    return this.run(
+      `UPDATE bookings
+       SET active = 0,
+           missing_since = COALESCE(missing_since, CURRENT_TIMESTAMP),
+           synced_at = CURRENT_TIMESTAMP
+       WHERE property_id = ?
+         AND platform = 'booking'
+         AND end_date = ?
+         AND start_date > ?
+         AND (
+           COALESCE(booking_type, '') IN ('blocked', 'unavailable') OR
+           LOWER(COALESCE(raw_summary, '')) LIKE '%closed%' OR
+           LOWER(COALESCE(raw_summary, '')) LIKE '%not available%'
+         )
+         AND COALESCE(NULLIF(TRIM(guest_name), ''), '') = ''
+         AND COALESCE(guest_count, 0) = 0`,
+      [propertyId, endDate, canonicalStartDate]
+    );
+  }
+
   async upsertBooking(propertyId, platform, startDate, endDate, rawSummary, extra = {}) {
     const { guestName, guestCountry, reservationUrl, phoneLast4, bookingType } = extra;
+    const canonicalStartDate = await this.findOriginalBookingMarkerStart(
+      propertyId,
+      platform,
+      startDate,
+      endDate,
+      bookingType
+    );
     // Check if booking exists
     const existing = await this.get(
       `SELECT id, booking_type, guest_name, guest_count, raw_summary FROM bookings
        WHERE property_id = ? AND platform = ? AND start_date = ? AND end_date = ?`,
-      [propertyId, platform, startDate, endDate]
+      [propertyId, platform, canonicalStartDate, endDate]
     );
 
+    let result;
     if (existing) {
       const protectedFromMarker = shouldProtectExistingBookingFromMarker(existing, platform, bookingType);
       const nextRawSummary = protectedFromMarker ? (existing.raw_summary || rawSummary) : rawSummary;
@@ -187,19 +242,19 @@ class Database {
         updateParams.push(nextBookingType);
       }
       updateParams.push(existing.id);
-      return this.run(
+      result = await this.run(
         `UPDATE bookings SET ${updateFields} WHERE id = ?`,
         updateParams
       );
     } else {
       // Insert
-      return this.run(
+      result = await this.run(
         `INSERT INTO bookings (property_id, platform, start_date, end_date, raw_summary, guest_name, guest_country, reservation_url, phone_last4, booking_type, active, missing_since, created_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, NULL, CURRENT_TIMESTAMP)`,
         [
           propertyId,
           platform,
-          startDate,
+          canonicalStartDate,
           endDate,
           rawSummary,
           guestName || null,
@@ -210,6 +265,11 @@ class Database {
         ]
       );
     }
+
+    if (platform === 'booking' && ['blocked', 'unavailable'].includes(String(bookingType || '').toLowerCase())) {
+      await this.archiveSupersededBookingMarkers(propertyId, canonicalStartDate, endDate);
+    }
+    return { ...result, canonicalStartDate };
   }
 
   async getBookings(propertyId = null, fromDate = null, options = {}) {

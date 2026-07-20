@@ -162,9 +162,63 @@ class Database {
   }
 
   // Booking operations
+  async findOriginalBookingMarkerStart(propertyId, platform, startDate, endDate, bookingType) {
+    if (platform !== 'booking' || !['blocked', 'unavailable'].includes(String(bookingType || '').toLowerCase())) {
+      return startDate;
+    }
+
+    const original = await this.queryOne(
+      `SELECT to_char(start_date, 'YYYY-MM-DD') AS start_date
+       FROM bookings
+       WHERE property_id = $1
+         AND platform = 'booking'
+         AND end_date = $2::date
+         AND start_date < $3::date
+         AND (
+           COALESCE(booking_type, '') IN ('blocked', 'unavailable') OR
+           LOWER(COALESCE(raw_summary, '')) LIKE '%closed%' OR
+           LOWER(COALESCE(raw_summary, '')) LIKE '%not available%'
+         )
+         AND COALESCE(NULLIF(TRIM(guest_name), ''), '') = ''
+         AND COALESCE(guest_count, 0) = 0
+       ORDER BY start_date ASC
+       LIMIT 1`,
+      [propertyId, endDate, startDate]
+    );
+    return original?.start_date || startDate;
+  }
+
+  async archiveSupersededBookingMarkers(propertyId, canonicalStartDate, endDate) {
+    return this.execute(
+      `UPDATE bookings
+       SET active = FALSE,
+           missing_since = COALESCE(missing_since, NOW()),
+           synced_at = NOW()
+       WHERE property_id = $1
+         AND platform = 'booking'
+         AND end_date = $2::date
+         AND start_date > $3::date
+         AND (
+           COALESCE(booking_type, '') IN ('blocked', 'unavailable') OR
+           LOWER(COALESCE(raw_summary, '')) LIKE '%closed%' OR
+           LOWER(COALESCE(raw_summary, '')) LIKE '%not available%'
+         )
+         AND COALESCE(NULLIF(TRIM(guest_name), ''), '') = ''
+         AND COALESCE(guest_count, 0) = 0`,
+      [propertyId, endDate, canonicalStartDate]
+    );
+  }
+
   async upsertBooking(propertyId, platform, startDate, endDate, rawSummary, extra = {}) {
     const { guestName, guestCountry, reservationUrl, phoneLast4, bookingType } = extra;
-    return this.execute(
+    const canonicalStartDate = await this.findOriginalBookingMarkerStart(
+      propertyId,
+      platform,
+      startDate,
+      endDate,
+      bookingType
+    );
+    const result = await this.execute(
       `INSERT INTO bookings (property_id, platform, start_date, end_date, raw_summary, guest_name, guest_country, reservation_url, phone_last4, booking_type, active, missing_since, synced_at)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, TRUE, NULL, NOW())
        ON CONFLICT (property_id, platform, start_date, end_date)
@@ -198,8 +252,12 @@ class Database {
          active = TRUE,
          missing_since = NULL,
          synced_at = NOW()`,
-      [propertyId, platform, startDate, endDate, rawSummary, guestName || null, guestCountry || null, reservationUrl || null, phoneLast4 || null, bookingType || 'reservation']
+      [propertyId, platform, canonicalStartDate, endDate, rawSummary, guestName || null, guestCountry || null, reservationUrl || null, phoneLast4 || null, bookingType || 'reservation']
     );
+    if (platform === 'booking' && ['blocked', 'unavailable'].includes(String(bookingType || '').toLowerCase())) {
+      await this.archiveSupersededBookingMarkers(propertyId, canonicalStartDate, endDate);
+    }
+    return { ...result, canonicalStartDate };
   }
 
   async getBookings(propertyId = null, fromDate = null, options = {}) {

@@ -241,7 +241,7 @@ async function syncPropertyCalendars(property) {
           bookingType = 'blocked';
         }
 
-        await db.upsertBooking(
+        const upsertResult = await db.upsertBooking(
           property.id,
           calendar.platform,
           event.startDate,
@@ -254,7 +254,11 @@ async function syncPropertyCalendars(property) {
           }
         );
 
-        feedKeys.push({ startDate: event.startDate, endDate: event.endDate });
+        const persistedStartDate = upsertResult?.canonicalStartDate || event.startDate;
+        if (persistedStartDate !== event.startDate) {
+          console.log(`  ↩️ Preserved original ${calendar.platform} start date for checkout ${event.endDate}`);
+        }
+        feedKeys.push({ startDate: persistedStartDate, endDate: event.endDate });
       }
 
       // Soft-archive future bookings that are no longer in the iCal feed.
