@@ -1,7 +1,8 @@
 {
   "since": "2026-04-17",
-  "generated_at": "2026-07-21T23:32:44.352Z",
+  "generated_at": "2026-07-22T00:59:39.040Z",
   "available_dates": [
+    "2026-07-22",
     "2026-07-20",
     "2026-07-19",
     "2026-07-18",
@@ -731,6 +732,25 @@
       "accent": "#1f3d8a",
       "icon": "crown",
       "events": [
+        {
+          "bookingKey": "royal|airbnb|2027-05-14|2027-05-18",
+          "propertyId": "royal",
+          "platform": "airbnb",
+          "startDate": "2027-05-14",
+          "endDate": "2027-05-18",
+          "guestName": null,
+          "guestCount": null,
+          "confirmationCode": null,
+          "firstSeenAt": "2026-07-22T00:59:29.351Z",
+          "status": "active",
+          "cancelledAt": null,
+          "link": "https://www.airbnb.com/hosting/reservations/details/HMDB3583RN",
+          "rawSummary": "Reserved",
+          "bookingType": "reservation",
+          "sources": [
+            "upstream_api"
+          ]
+        },
         {
           "bookingKey": "royal|airbnb|2026-09-01|2026-09-04",
           "propertyId": "royal",
@@ -1780,23 +1800,6 @@
           "status": "active",
           "cancelledAt": null,
           "link": "https://www.airbnb.com/hosting/reservations/details/HMFPDT3TZS",
-          "sources": [
-            "upstream_api",
-            "export_airbnb_csv"
-          ]
-        },
-        {
-          "bookingKey": "carina|airbnb|2026-07-18|2026-07-21",
-          "propertyId": "carina",
-          "platform": "airbnb",
-          "startDate": "2026-07-18",
-          "endDate": "2026-07-21",
-          "guestName": "Tom Burke",
-          "confirmationCode": "HM9SJH33W8",
-          "firstSeenAt": "2026-03-28T19:32:10.106Z",
-          "status": "active",
-          "cancelledAt": null,
-          "link": "https://www.airbnb.com/hosting/reservations/details/HM9SJH33W8",
           "sources": [
             "upstream_api",
             "export_airbnb_csv"
@@ -5129,6 +5132,24 @@
       "sourceRef": "hourly_sync",
       "bookingCreatedAt": "2026-03-28T19:32:10.982Z",
       "detectedAt": "2026-07-20T00:05:17.539Z"
+    },
+    {
+      "eventType": "created",
+      "bookingKey": "royal|airbnb|2027-05-14|2027-05-18",
+      "propertyId": "royal",
+      "platform": "airbnb",
+      "startDate": "2027-05-14",
+      "endDate": "2027-05-18",
+      "guestName": null,
+      "guestCount": null,
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HMDB3583RN",
+      "confirmationCode": null,
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync",
+      "bookingCreatedAt": "2026-07-22T00:59:29.351Z",
+      "rawSummary": "Reserved",
+      "bookingType": "reservation",
+      "detectedAt": "2026-07-22T00:59:39.036Z"
     }
   ],
   "imports_log": [
