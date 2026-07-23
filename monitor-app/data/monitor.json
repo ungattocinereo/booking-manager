@@ -1,6 +1,6 @@
 {
   "since": "2026-04-17",
-  "generated_at": "2026-07-22T23:11:28.063Z",
+  "generated_at": "2026-07-23T01:05:26.774Z",
   "available_dates": [
     "2026-07-22",
     "2026-07-20",
@@ -668,23 +668,6 @@
           "status": "cancelled",
           "cancelledAt": "2026-04-25T07:18:19.679Z",
           "link": "https://www.airbnb.com/hosting/reservations/details/HMMTTY4EYA",
-          "sources": [
-            "upstream_api",
-            "export_airbnb_csv"
-          ]
-        },
-        {
-          "bookingKey": "harmony|airbnb|2026-07-18|2026-07-22",
-          "propertyId": "harmony",
-          "platform": "airbnb",
-          "startDate": "2026-07-18",
-          "endDate": "2026-07-22",
-          "guestName": "Danny Leeson",
-          "confirmationCode": "HMZQ3HZNQH",
-          "firstSeenAt": "2026-03-28T19:32:10.514Z",
-          "status": "active",
-          "cancelledAt": null,
-          "link": "https://www.airbnb.com/hosting/reservations/details/HMZQ3HZNQH",
           "sources": [
             "upstream_api",
             "export_airbnb_csv"
