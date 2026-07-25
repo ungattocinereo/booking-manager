@@ -1,6 +1,6 @@
 {
   "since": "2026-04-17",
-  "generated_at": "2026-07-24T23:11:29.707Z",
+  "generated_at": "2026-07-25T01:04:16.107Z",
   "available_dates": [
     "2026-07-23",
     "2026-07-22",
@@ -1199,23 +1199,6 @@
             "upstream_api",
             "export_airbnb_csv"
           ]
-        },
-        {
-          "bookingKey": "royal|airbnb|2026-07-20|2026-07-24",
-          "propertyId": "royal",
-          "platform": "airbnb",
-          "startDate": "2026-07-20",
-          "endDate": "2026-07-24",
-          "guestName": "Laura Nees",
-          "confirmationCode": "HM25QAZY9C",
-          "firstSeenAt": "2026-03-28T19:32:10.978Z",
-          "status": "active",
-          "cancelledAt": null,
-          "link": "https://www.airbnb.com/hosting/reservations/details/HM25QAZY9C",
-          "sources": [
-            "upstream_api",
-            "export_airbnb_csv"
-          ]
         }
       ]
     },
@@ -1767,23 +1750,6 @@
           "status": "active",
           "cancelledAt": null,
           "link": "https://www.airbnb.com/hosting/reservations/details/HMHBBMT3SE",
-          "sources": [
-            "upstream_api",
-            "export_airbnb_csv"
-          ]
-        },
-        {
-          "bookingKey": "carina|airbnb|2026-07-21|2026-07-24",
-          "propertyId": "carina",
-          "platform": "airbnb",
-          "startDate": "2026-07-21",
-          "endDate": "2026-07-24",
-          "guestName": "Zeynep Kurtpınar",
-          "confirmationCode": "HMFPDT3TZS",
-          "firstSeenAt": "2026-03-28T19:32:10.110Z",
-          "status": "active",
-          "cancelledAt": null,
-          "link": "https://www.airbnb.com/hosting/reservations/details/HMFPDT3TZS",
           "sources": [
             "upstream_api",
             "export_airbnb_csv"
