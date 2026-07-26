@@ -1,7 +1,8 @@
 {
   "since": "2026-04-17",
-  "generated_at": "2026-07-26T06:44:22.150Z",
+  "generated_at": "2026-07-26T09:21:02.796Z",
   "available_dates": [
+    "2026-07-26",
     "2026-07-25",
     "2026-07-23",
     "2026-07-22",
@@ -717,6 +718,25 @@
       "accent": "#1f3d8a",
       "icon": "crown",
       "events": [
+        {
+          "bookingKey": "royal|airbnb|2026-07-31|2026-08-04",
+          "propertyId": "royal",
+          "platform": "airbnb",
+          "startDate": "2026-07-31",
+          "endDate": "2026-08-04",
+          "guestName": null,
+          "guestCount": null,
+          "confirmationCode": null,
+          "firstSeenAt": "2026-07-26T09:20:58.805Z",
+          "status": "active",
+          "cancelledAt": null,
+          "link": "https://www.airbnb.com/hosting/reservations/details/HMWBHK5WYH",
+          "rawSummary": "Reserved",
+          "bookingType": "reservation",
+          "sources": [
+            "upstream_api"
+          ]
+        },
         {
           "bookingKey": "royal|airbnb|2027-05-14|2027-05-18",
           "propertyId": "royal",
@@ -5156,6 +5176,24 @@
       "rawSummary": "Reserved",
       "bookingType": "reservation",
       "detectedAt": "2026-07-25T18:32:20.703Z"
+    },
+    {
+      "eventType": "created",
+      "bookingKey": "royal|airbnb|2026-07-31|2026-08-04",
+      "propertyId": "royal",
+      "platform": "airbnb",
+      "startDate": "2026-07-31",
+      "endDate": "2026-08-04",
+      "guestName": null,
+      "guestCount": null,
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HMWBHK5WYH",
+      "confirmationCode": null,
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync",
+      "bookingCreatedAt": "2026-07-26T09:20:58.805Z",
+      "rawSummary": "Reserved",
+      "bookingType": "reservation",
+      "detectedAt": "2026-07-26T09:21:02.792Z"
     }
   ],
   "imports_log": [
