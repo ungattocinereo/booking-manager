@@ -80,3 +80,32 @@ test('stores imported guest PII encrypted and marks a reviewed stay ready', asyn
     delete process.env.SQLITE_DB_PATH;
   }
 });
+
+test('syncUnits merges Royal into Harmony and archives the removed reporting unit', async () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'booking-reporting-units-'));
+  process.env.SQLITE_DB_PATH = path.join(tempDir, 'bookings.db');
+  delete require.cache[require.resolve('../backend/src/database')];
+  const db = require('../backend/src/database');
+  const { ReportingStore } = require('../backend/src/reporting/store');
+
+  try {
+    await db.init();
+    const store = new ReportingStore(db);
+    await store.syncUnits([
+      { id: 'harmony', name: 'Harmony', propertyIds: ['harmony'] },
+      { id: 'royal', name: 'Royal', propertyIds: ['royal'] }
+    ]);
+    await store.syncUnits([
+      { id: 'harmony', name: 'Harmony', propertyIds: ['harmony', 'royal'] }
+    ]);
+
+    const summaries = await store.unitSummaries();
+    assert.deepEqual(summaries.map(unit => unit.id), ['harmony']);
+    assert.deepEqual(summaries[0].property_ids, ['harmony', 'royal']);
+    assert.equal((await db.get('SELECT enabled FROM reporting_units WHERE id=?', ['royal'])).enabled, 0);
+  } finally {
+    await db.close();
+    fs.rmSync(tempDir, { recursive: true, force: true });
+    delete process.env.SQLITE_DB_PATH;
+  }
+});

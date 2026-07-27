@@ -21,7 +21,7 @@
     {
       "id": "harmony",
       "name": "Harmony",
-      "propertyIds": ["harmony"],
+      "propertyIds": ["harmony", "royal"],
       "envPrefix": "HARMONY"
     },
     {
@@ -29,12 +29,6 @@
       "name": "Carina",
       "propertyIds": ["carina"],
       "envPrefix": "CARINA"
-    },
-    {
-      "id": "royal",
-      "name": "Royal",
-      "propertyIds": ["royal"],
-      "envPrefix": "ROYAL"
     }
   ]
 }

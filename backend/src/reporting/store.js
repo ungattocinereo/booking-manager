@@ -44,13 +44,26 @@ class ReportingStore {
       await this.execute(
         `INSERT INTO reporting_units (id, name, property_ids, updated_at)
          VALUES ($1, $2, $3::jsonb, NOW())
-         ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, property_ids = EXCLUDED.property_ids, updated_at = NOW()`,
+         ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, property_ids = EXCLUDED.property_ids, enabled = TRUE, updated_at = NOW()`,
         `INSERT INTO reporting_units (id, name, property_ids, updated_at)
          VALUES (?, ?, ?, CURRENT_TIMESTAMP)
-         ON CONFLICT(id) DO UPDATE SET name = excluded.name, property_ids = excluded.property_ids, updated_at = CURRENT_TIMESTAMP`,
+         ON CONFLICT(id) DO UPDATE SET name = excluded.name, property_ids = excluded.property_ids, enabled = 1, updated_at = CURRENT_TIMESTAMP`,
         [unit.id, unit.name, propertyIds]
       );
     }
+
+    const ids = units.map(unit => unit.id);
+    const pgPlaceholders = ids.map((_, index) => `$${index + 1}`).join(', ');
+    const sqlitePlaceholders = ids.map(() => '?').join(', ');
+    await this.execute(
+      ids.length
+        ? `UPDATE reporting_units SET enabled = FALSE, updated_at = NOW() WHERE id NOT IN (${pgPlaceholders})`
+        : 'UPDATE reporting_units SET enabled = FALSE, updated_at = NOW()',
+      ids.length
+        ? `UPDATE reporting_units SET enabled = 0, updated_at = CURRENT_TIMESTAMP WHERE id NOT IN (${sqlitePlaceholders})`
+        : 'UPDATE reporting_units SET enabled = 0, updated_at = CURRENT_TIMESTAMP',
+      ids
+    );
   }
 
   async unitSummaries() {
@@ -61,6 +74,7 @@ class ReportingStore {
               MAX(gib.imported_at) AS last_imported_at
        FROM reporting_units ru
        LEFT JOIN guest_import_batches gib ON gib.reporting_unit_id = ru.id
+       WHERE ru.enabled = TRUE
        GROUP BY ru.id ORDER BY ru.name`,
       `SELECT ru.*,
               COUNT(DISTINCT gib.id) AS batch_count,
@@ -68,6 +82,7 @@ class ReportingStore {
               MAX(gib.imported_at) AS last_imported_at
        FROM reporting_units ru
        LEFT JOIN guest_import_batches gib ON gib.reporting_unit_id = ru.id
+       WHERE ru.enabled = 1
        GROUP BY ru.id ORDER BY ru.name`
     );
     return rows.map(row => ({
