@@ -43,3 +43,36 @@ test('Alloggiati SOAP client generates a token and parses row-level Test outcome
     await new Promise(resolve => server.close(resolve));
   }
 });
+
+test('Alloggiati SOAP client uses GestioneAppartamenti methods with the mapped apartment ID', async () => {
+  const requests = [];
+  const server = http.createServer((request, response) => {
+    let body = '';
+    request.setEncoding('utf8');
+    request.on('data', chunk => { body += chunk; });
+    request.on('end', () => {
+      requests.push(body);
+      response.writeHead(200, { 'content-type': 'application/soap+xml' });
+      if (body.includes('<GenerateToken ')) {
+        response.end(soap(`<GenerateTokenResponse xmlns="AlloggiatiService"><GenerateTokenResult><token>SAFE_TOKEN</token></GenerateTokenResult><result><esito>true</esito></result></GenerateTokenResponse>`));
+      } else {
+        response.end(soap(`<GestioneAppartamenti_TestResponse xmlns="AlloggiatiService"><GestioneAppartamenti_TestResult><esito>true</esito></GestioneAppartamenti_TestResult><result><SchedineValide>1</SchedineValide><Dettaglio><EsitoOperazioneServizio><esito>true</esito></EsitoOperazioneServizio></Dettaglio></result></GestioneAppartamenti_TestResponse>`));
+      }
+    });
+  });
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+
+  try {
+    const client = new AlloggiatiClient(
+      { user: 'USER', password: 'PASSWORD', wsKey: 'WSKEY', mode: 'apartments', apartmentId: 1 },
+      { endpoint: `http://127.0.0.1:${server.address().port}`, timeoutMs: 2000 }
+    );
+    const result = await client.test(['ROW1']);
+    assert.equal(result.ok, true);
+    assert.equal(result.validRecords, 1);
+    assert.ok(requests[1].includes('<GestioneAppartamenti_Test '));
+    assert.ok(requests[1].includes('<IdAppartamento>1</IdAppartamento>'));
+  } finally {
+    await new Promise(resolve => server.close(resolve));
+  }
+});

@@ -97,11 +97,17 @@ class AlloggiatiClient {
   async submit(action, lines) {
     const token = await this.token();
     const list = lines.map(line => `<string>${xmlEscape(line)}</string>`).join('');
-    const parsed = await this.call(action,
+    const apartmentMode = this.credentials.mode === 'apartments';
+    const soapAction = apartmentMode ? `GestioneAppartamenti_${action}` : action;
+    const apartmentXml = apartmentMode
+      ? `<IdAppartamento>${xmlEscape(this.credentials.apartmentId)}</IdAppartamento>`
+      : '';
+    const parsed = await this.call(soapAction,
       `<Utente>${xmlEscape(this.credentials.user)}</Utente>` +
-      `<token>${xmlEscape(token)}</token><ElencoSchedine>${list}</ElencoSchedine>`
+      `<token>${xmlEscape(token)}</token><ElencoSchedine>${list}</ElencoSchedine>` +
+      apartmentXml
     );
-    const status = operationResult(parsed, action);
+    const status = operationResult(parsed, soapAction);
     const result = findKey(parsed, 'result') || {};
     const rawDetails = asArray(findKey(findKey(result, 'Dettaglio'), 'EsitoOperazioneServizio'));
     const details = lines.map((_, index) => {
