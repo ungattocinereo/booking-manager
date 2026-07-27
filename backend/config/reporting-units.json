@@ -2,8 +2,8 @@
   "units": [
     {
       "id": "sansebastiano",
-      "name": "Sansebastiano",
-      "propertyIds": [],
+      "name": "San Sebastiano",
+      "propertyIds": ["awesome"],
       "envPrefix": "SANSEBASTIANO",
       "alloggiatiEnvPrefix": "CRISTALLPONT",
       "alloggiatiMode": "apartments",
@@ -12,7 +12,7 @@
     {
       "id": "dragone",
       "name": "Dragone",
-      "propertyIds": ["awesome", "central", "orange", "vingtage", "youth", "solo"],
+      "propertyIds": ["central", "orange", "vingtage", "youth", "solo"],
       "envPrefix": "DRAGONE",
       "alloggiatiEnvPrefix": "CRISTALLPONT",
       "alloggiatiMode": "apartments",
