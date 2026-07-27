@@ -26,6 +26,16 @@ function field(line, from, to) {
   return line.slice(from, to);
 }
 
+function istatOriginFromCitizenship(value) {
+  const match = String(value || '').trim().match(/^100000(\d{3})$/);
+  if (!match || match[1] === '100') return null;
+  return {
+    originKind: 'country',
+    originCode: match[1],
+    originLabel: 'citizenship'
+  };
+}
+
 function parseRecord(line, lineNumber) {
   if (line.length !== RECORD_LENGTH) {
     throw new Error(`Строка ${lineNumber}: ожидается ${RECORD_LENGTH} символов, получено ${line.length}`);
@@ -147,4 +157,4 @@ function publicRecord(record) {
   };
 }
 
-module.exports = { RECORD_LENGTH, parseRecord, parseAlloggiatiTxt, publicRecord, addDays };
+module.exports = { RECORD_LENGTH, parseRecord, parseAlloggiatiTxt, publicRecord, addDays, istatOriginFromCitizenship };

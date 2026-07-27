@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 
 process.env.NODE_ENV = 'test';
 
-const { parseAlloggiatiTxt, parseRecord } = require('../backend/src/reporting/parser');
+const { parseAlloggiatiTxt, parseRecord, istatOriginFromCitizenship } = require('../backend/src/reporting/parser');
 const { encryptRecord, decryptRecord, fingerprint } = require('../backend/src/reporting/crypto');
 
 const SAMPLE = [
@@ -29,6 +29,21 @@ test('parses Comune fixed-width TXT into one single stay and one family', () => 
 test('rejects malformed line length and orphaned family members', () => {
   assert.throws(() => parseRecord(SAMPLE[0].slice(1), 1), /168 символов/);
   assert.throws(() => parseAlloggiatiTxt(Buffer.from(SAMPLE[2], 'latin1')), /без соответствующей главной записи/);
+});
+
+test('derives foreign ISTAT country codes from Alloggiati citizenship', () => {
+  assert.deepEqual(istatOriginFromCitizenship('100000602'), {
+    originKind: 'country',
+    originCode: '602',
+    originLabel: 'citizenship'
+  });
+  assert.deepEqual(istatOriginFromCitizenship('100000701'), {
+    originKind: 'country',
+    originCode: '701',
+    originLabel: 'citizenship'
+  });
+  assert.equal(istatOriginFromCitizenship('100000100'), null);
+  assert.equal(istatOriginFromCitizenship('invalid'), null);
 });
 
 test('encrypts fixed records and uses a non-reversible stable fingerprint', () => {

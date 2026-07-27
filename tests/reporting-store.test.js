@@ -34,6 +34,9 @@ test('stores imported guest PII encrypted and marks a reviewed stay ready', asyn
 
     const raw = await db.get('SELECT encrypted_record FROM guest_records WHERE batch_id=?', [batch.id]);
     assert.ok(!raw.encrypted_record.includes('ALLAN'));
+    assert.equal(batch.stays[0].records[0].origin_kind, 'country');
+    assert.equal(batch.stays[0].records[0].origin_code, '701');
+    assert.equal(batch.stays[0].records[0].origin_label, 'citizenship');
     assert.equal((await store.duplicateRecordFingerprints('carina', [batch.stays[0].records[0].record_fingerprint])).length, 1);
 
     const service = new ReportingService(db);

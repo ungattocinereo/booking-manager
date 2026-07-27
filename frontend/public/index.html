@@ -2901,6 +2901,8 @@
     .reporting-records { margin-top:9px; display:grid; gap:6px; }
     .reporting-record { display:grid; grid-template-columns:minmax(130px,1fr) 100px minmax(120px,.8fr); gap:7px; align-items:center; font-size:11px; }
     .reporting-record .name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .reporting-origin-hint { display:block; margin-top:3px; color:var(--report-teal); font-size:9px; font-weight:750; white-space:normal; }
+    .reporting-origin-hint.manual { color:#b45309; }
     .reporting-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:13px; }
     .reporting-send-panel { margin-top:14px; padding:12px; border:1px solid #dce5ec; border-radius:13px; background:#f8fafc; }
     .reporting-send-target { display:flex; align-items:flex-start; gap:9px; margin-bottom:10px; color:#526579; font-size:11px; line-height:1.4; }
@@ -7170,7 +7172,13 @@ function renderReportingBatchDetail() {
           <div class="reporting-record" data-origin-record="${record.id}">
             <span class="name">${escapeHtml(record.pii ? `${record.pii.surname} ${record.pii.name}` : `Строка ${record.line_number}`)} · ${escapeHtml(record.pii?.document_number_masked || '')}</span>
             <select data-origin-kind ${editable ? '' : 'disabled'}><option value="country" ${record.origin_kind !== 'province' ? 'selected' : ''}>Страна</option><option value="province" ${record.origin_kind === 'province' ? 'selected' : ''}>Провинция</option></select>
-            <input data-origin-code list="reportingOriginCodes" placeholder="Код ISTAT" value="${escapeHtml(record.origin_code || '')}" ${editable ? '' : 'disabled'}>
+            <div><input data-origin-code list="reportingOriginCodes" placeholder="Код ISTAT" value="${escapeHtml(record.origin_code || '')}" ${editable ? '' : 'disabled'}>
+              ${record.origin_label === 'citizenship'
+                ? '<small class="reporting-origin-hint">Авто · страна из гражданства</small>'
+                : (!record.origin_code && record.pii?.citizenship_code === '100000100'
+                  ? '<small class="reporting-origin-hint manual">Италия · укажите провинцию проживания</small>'
+                  : '')}
+            </div>
           </div>`).join('')}</div>
         ${editable ? `<div class="reporting-actions"><button class="btn btn-secondary" type="button" onclick="saveReportingStay(${stay.id})">Сохранить группу для ${escapeHtml(unitName)}</button></div>` : ''}
       </section>`).join('')}</div>

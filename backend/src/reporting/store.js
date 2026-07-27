@@ -1,4 +1,5 @@
 const { encryptRecord, decryptRecord, fingerprint, sha256 } = require('./crypto');
+const { istatOriginFromCitizenship } = require('./parser');
 
 function isPostgres(db) {
   return Boolean(db.pool);
@@ -174,14 +175,21 @@ class ReportingStore {
 
       for (const record of group.records) {
         const encrypted = encryptRecord(record.raw);
+        const automaticOrigin = istatOriginFromCitizenship(record.citizenshipCode);
         await this.execute(
           `INSERT INTO guest_records
-            (batch_id, stay_id, line_number, record_type, arrival_date, departure_date, record_fingerprint, encrypted_record, encryption_key_version)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+            (batch_id, stay_id, line_number, record_type, arrival_date, departure_date, record_fingerprint, encrypted_record, encryption_key_version, origin_kind, origin_code, origin_label)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
           `INSERT INTO guest_records
-            (batch_id, stay_id, line_number, record_type, arrival_date, departure_date, record_fingerprint, encrypted_record, encryption_key_version)
-           VALUES (?,?,?,?,?,?,?,?,?)`,
-          [batchId, stayId, record.lineNumber, record.recordType, record.arrivalDate, record.departureDate, record.fingerprint, encrypted.value, encrypted.keyVersion]
+            (batch_id, stay_id, line_number, record_type, arrival_date, departure_date, record_fingerprint, encrypted_record, encryption_key_version, origin_kind, origin_code, origin_label)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
+          [
+            batchId, stayId, record.lineNumber, record.recordType, record.arrivalDate,
+            record.departureDate, record.fingerprint, encrypted.value, encrypted.keyVersion,
+            automaticOrigin?.originKind || null,
+            automaticOrigin?.originCode || null,
+            automaticOrigin?.originLabel || null
+          ]
         );
       }
     }
