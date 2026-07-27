@@ -7,8 +7,12 @@ const db = USE_POSTGRES
 const { formatBooking, formatCleaningTask, formatAvailabilityMarker, todayInRome } = require('./_helpers');
 const { isUnavailableMarker, normalizeBookingsForDisplay } = require('../lib/booking-normalization');
 const { isDateOnly } = require('../lib/api-validation');
+const { handleReportingRequest } = require('../backend/src/reporting/http-handlers');
 
 module.exports = async (req, res) => {
+  if (req.query.reporting_route) {
+    return handleReportingRequest(req.query.reporting_route, req, res, db);
+  }
   try {
     // Initialize database connection
     if (!db.pool && !db.db) {

@@ -5,9 +5,15 @@
     }
   },
   "crons": [
-    { "path": "/api/sync", "schedule": "0 6 * * *" }
+    { "path": "/api/sync", "schedule": "0 6 * * *" },
+    { "path": "/api/reporting/maintenance", "schedule": "30 6 * * *" }
   ],
   "rewrites": [
+    { "source": "/api/reporting", "destination": "/api/dashboard?reporting_route=dashboard" },
+    { "source": "/api/reporting/imports", "destination": "/api/dashboard?reporting_route=imports" },
+    { "source": "/api/reporting/alloggiati", "destination": "/api/dashboard?reporting_route=alloggiati" },
+    { "source": "/api/reporting/istat", "destination": "/api/dashboard?reporting_route=istat" },
+    { "source": "/api/reporting/maintenance", "destination": "/api/dashboard?reporting_route=maintenance" },
     { "source": "/favicon.ico", "destination": "/frontend/public/favicon.ico" },
     { "source": "/favicon-16.png", "destination": "/frontend/public/favicon-16.png" },
     { "source": "/favicon-32.png", "destination": "/frontend/public/favicon-32.png" },
@@ -24,6 +30,7 @@
     { "source": "/stats", "destination": "/frontend/public/index.html" },
     { "source": "/maid", "destination": "/frontend/public/index.html" },
     { "source": "/tax", "destination": "/frontend/public/index.html" },
+    { "source": "/reporting", "destination": "/frontend/public/index.html" },
     { "source": "/", "destination": "/frontend/public/index.html" }
   ]
 }

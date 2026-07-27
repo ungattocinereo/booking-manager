@@ -59,6 +59,10 @@ function isAllowedMachinePath(pathname: string, request: Request) {
     return hasBearerSecret(request, process.env.CRON_SECRET || '');
   }
 
+  if (pathname === '/api/reporting/maintenance') {
+    return hasBearerSecret(request, process.env.CRON_SECRET || '');
+  }
+
   if (pathname === '/api/telegram') {
     return hasTelegramSecret(request);
   }
