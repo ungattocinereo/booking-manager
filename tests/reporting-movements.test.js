@@ -52,6 +52,8 @@ test('auto-selects a unique booking by dates and leader surname', () => {
 
 test('normalizes Sinfonia dates and movement ordering for read-back verification', () => {
   assert.equal(italianDateToIso('31072026'), '2026-07-31');
+  assert.equal(italianDateToIso('31/07/2026'), '2026-07-31');
+  assert.equal(italianDateToIso('2026-07-31'), null);
   const canonical = canonicalIstatDays([{ dataRilevazione: '01072026', camereOccupate: '1', movimentazioni: [
     { codiceNazione: '701', arrivi: 0, presentiNottePrecedente: 1, partenze: 1 },
     { codiceProvincia: 63, arrivi: 1, presentiNottePrecedente: 0, partenze: 0 }

@@ -20,3 +20,12 @@ test('reporting upload snapshots its destination while unit switching is locked'
   assert.match(html, /reportingState\.uploading = true/);
   assert.match(html, /reportingState\.uploading \? 'disabled' : ''/);
 });
+
+test('reporting UI keeps Alloggiati as step three and ISTAT as a monthly ledger', () => {
+  assert.match(html, /Шаг 3 · Alloggiati Web/);
+  assert.doesNotMatch(html, /Шаг 3 · статистика/);
+  assert.match(html, /Какие данные у меня уже внесены в Институт статистики/);
+  assert.match(html, /action=status/);
+  assert.match(html, /class="reporting-istat-table"/);
+  assert.match(html, /до 4-го числа/);
+});

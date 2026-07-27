@@ -2920,6 +2920,30 @@
     .reporting-config { display:flex; gap:5px; flex-wrap:wrap; margin-top:7px; }
     .reporting-config span { font-size:10px; border-radius:999px; padding:4px 7px; background:#f1f5f9; color:#64748b; }
     .reporting-config span.ok { background:#ecfdf5; color:#047857; }
+    .reporting-istat-ledger { position:relative; margin-top:22px; overflow:hidden; border-color:#bfdbfe; box-shadow:0 12px 34px rgba(30,64,175,.08); }
+    .reporting-istat-ledger::before { position:absolute; top:0; right:0; left:0; height:4px; background:linear-gradient(90deg,#1d4ed8,#38bdf8); content:""; }
+    .reporting-istat-header { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:20px; align-items:start; padding-top:5px; }
+    .reporting-istat-header h3 { margin:3px 0 5px; font-size:19px; color:#172554; }
+    .reporting-istat-header p { max-width:680px; margin:0; color:#64748b; font-size:12px; line-height:1.55; }
+    .reporting-ledger-kicker { color:#1d4ed8; font-size:9px; font-weight:850; letter-spacing:.11em; text-transform:uppercase; }
+    .reporting-istat-remote { min-width:225px; padding:11px 13px; border:1px solid #bfdbfe; border-radius:12px; background:#eff6ff; color:#1e3a8a; }
+    .reporting-istat-remote span { display:block; font-size:9px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
+    .reporting-istat-remote strong { display:block; margin-top:3px; font-size:16px; }
+    .reporting-istat-remote small { display:block; margin-top:3px; color:#64748b; font-size:10px; }
+    .reporting-istat-toolbar { display:flex; justify-content:space-between; align-items:center; gap:12px; margin:16px 0 5px; padding-top:14px; border-top:1px solid #dbeafe; }
+    .reporting-istat-deadline { display:flex; align-items:center; gap:9px; min-height:36px; padding:7px 10px; border-radius:10px; background:#eff6ff; color:#1e40af; font-size:11px; font-weight:750; }
+    .reporting-istat-deadline.complete { background:#ecfdf5; color:#047857; }
+    .reporting-istat-deadline.overdue { background:#fff1f2; color:#be123c; }
+    .reporting-istat-note { margin-top:11px; padding:10px 12px; border-radius:10px; background:#f8fafc; color:#526579; font-size:11px; line-height:1.45; }
+    .reporting-istat-table-wrap { max-height:410px; margin-top:11px; overflow:auto; border:1px solid #dbe5ef; border-radius:12px; }
+    .reporting-istat-table { width:100%; min-width:650px; border-collapse:collapse; font-size:11px; }
+    .reporting-istat-table th { position:sticky; top:0; z-index:1; padding:9px 11px; background:#f1f5f9; color:#475569; font-size:9px; letter-spacing:.05em; text-align:left; text-transform:uppercase; }
+    .reporting-istat-table td { padding:8px 11px; border-top:1px solid #e8eef5; color:#334155; }
+    .reporting-istat-table tbody tr.has-data { background:#f8fbff; }
+    .reporting-istat-table tbody tr:hover { background:#eff6ff; }
+    .reporting-istat-day { color:#172554; font-variant-numeric:tabular-nums; font-weight:750; }
+    .reporting-istat-zero { color:#94a3b8; }
+    .reporting-istat-movement { color:#1d4ed8; font-weight:750; }
     @media (prefers-reduced-motion:reduce) { .reporting-unit,.reporting-dropzone { transition:none; } }
     @media (max-width:1000px) { .reporting-destination { grid-template-columns:1fr; gap:12px; } }
     @media (max-width:900px) { .reporting-grid { grid-template-columns:1fr; } }
@@ -2937,6 +2961,9 @@
       .reporting-metrics { grid-template-columns:1fr; }
       .reporting-card-head { align-items:flex-start; }
       .reporting-istat-head { flex-direction:column; }
+      .reporting-istat-header { grid-template-columns:1fr; }
+      .reporting-istat-remote { min-width:0; }
+      .reporting-istat-toolbar { align-items:stretch; flex-direction:column; }
       .reporting-month { width:100%; }
       .reporting-month input { flex:1; min-width:0; }
       .reporting-card-target { max-width:145px; }
@@ -3291,7 +3318,7 @@
       <div>
         <div class="reporting-kicker">Alloggiati Web · Sinfonia Turismo SMART</div>
         <h2>Гости и отчётность</h2>
-        <p>Выберите структуру, загрузите TXT из Comune и проверьте назначение перед каждой отправкой. Выбранная структура действует одновременно для Alloggiati и ISTAT.</p>
+        <p>Ежедневно загрузите TXT из Comune и отправьте гостей в Alloggiati Web. Данные для ISTAT будут накапливаться отдельно — одним месячным отчётом.</p>
       </div>
     </div>
     <div class="reporting-picker">
@@ -3307,7 +3334,7 @@
       <div>
         <section class="reporting-card">
           <div class="reporting-card-head">
-            <div><span class="reporting-step">Шаг 2 · гости</span><h3>Alloggiati Web</h3></div>
+            <div><span class="reporting-step">Шаг 2 · импорт и сверка</span><h3>Гости из Comune</h3></div>
             <span class="reporting-card-target" id="reportingUnitStatus"><i data-lucide="map-pin" style="width:12px;height:12px"></i><span>—</span></span>
           </div>
           <label class="reporting-dropzone" id="reportingDropzone">
@@ -3318,18 +3345,27 @@
           </label>
           <div class="reporting-list" id="reportingBatchList"></div>
         </section>
-        <section class="reporting-card">
-          <div class="reporting-card-head reporting-istat-head">
-            <div><span class="reporting-step">Шаг 3 · статистика</span><h3 id="reportingIstatTitle">ISTAT за месяц</h3></div>
-            <div class="reporting-month"><input type="month" id="reportingMonth" aria-label="Месяц отчёта ISTAT"><button class="btn btn-secondary" id="reportingIstatCheck" type="button" onclick="loadIstatPreview()">Проверить</button></div>
-          </div>
-          <div id="reportingIstatPreview" class="reporting-detail-empty">Выберите месяц для предварительной проверки.</div>
-        </section>
       </div>
       <aside class="reporting-card" id="reportingBatchDetail">
-        <div class="reporting-detail-empty">Выберите импортированный TXT для проверки.</div>
+        <div class="reporting-card-head"><div><span class="reporting-step">Шаг 3 · Alloggiati Web</span><h3>Проверка и отправка</h3></div></div>
+        <div class="reporting-detail-empty">Выберите импортированный TXT, проверьте гостей и отправьте их в Alloggiati Web.</div>
       </aside>
     </div>
+    <section class="reporting-card reporting-istat-ledger" aria-labelledby="reportingIstatTitle">
+      <div class="reporting-istat-header">
+        <div>
+          <span class="reporting-ledger-kicker">Ежемесячная статистика · до 4-го числа</span>
+          <h3 id="reportingIstatTitle">Какие данные у меня уже внесены в Институт статистики</h3>
+          <p>Каждый загруженный TXT пополняет черновик автоматически. ISTAT отправляется отдельно, один раз в месяц, когда таблица готова.</p>
+        </div>
+        <div class="reporting-istat-remote" id="reportingIstatRemote" aria-live="polite"><span>В ISTAT внесено по</span><strong>Проверяем…</strong></div>
+      </div>
+      <div class="reporting-istat-toolbar">
+        <div class="reporting-istat-deadline" id="reportingIstatDeadline"><i data-lucide="calendar-clock" style="width:16px;height:16px"></i><span>Считаем срок отправки…</span></div>
+        <div class="reporting-month"><input type="month" id="reportingMonth" aria-label="Месяц отчёта ISTAT" onchange="renderIstatStatus()"><button class="btn btn-secondary" id="reportingIstatCheck" type="button" onclick="loadIstatPreview()">Обновить таблицу</button></div>
+      </div>
+      <div id="reportingIstatPreview" class="reporting-detail-empty">Готовим месячную таблицу…</div>
+    </section>
     <datalist id="reportingOriginCodes"></datalist>
   </div>
 
@@ -3369,7 +3405,7 @@ let statsCurrentBookingKeysPromise = null;
 let allAssignments = {};
 let allTaxBookings = [];
 let taxFocusTodayOnNextRender = false;
-let reportingState = { loaded: false, externalSendEnabled: false, units: [], unitId: null, batches: [], batch: null, istatPreview: null, uploading: false };
+let reportingState = { loaded: false, externalSendEnabled: false, units: [], unitId: null, batches: [], batch: null, istatPreview: null, istatStatus: null, uploading: false };
 
 const DASHBOARD_CACHE_KEY = 'atrani-dashboard-cache-v1';
 const DASHBOARD_VISIBLE_REFRESH_MIN_MS = 30 * 1000;
@@ -6964,6 +7000,63 @@ function previousMonthValue() {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 }
 
+function italianReportingDateToIso(value) {
+  const match = String(value || '').match(/^(\d{2})\/?(\d{2})\/?(\d{4})$/);
+  return match ? `${match[3]}-${match[2]}-${match[1]}` : null;
+}
+
+function formatReportingDate(iso) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(iso || ''))) return 'дата пока не найдена';
+  return new Intl.DateTimeFormat('ru-RU', { day:'numeric', month:'long', year:'numeric', timeZone:'UTC' }).format(new Date(`${iso}T00:00:00Z`));
+}
+
+function istatMonthDates(month) {
+  const match = String(month || '').match(/^(\d{4})-(\d{2})$/);
+  if (!match) return null;
+  const year = Number(match[1]);
+  const monthIndex = Number(match[2]) - 1;
+  const monthEnd = new Date(Date.UTC(year, monthIndex + 1, 0));
+  const deadline = new Date(Date.UTC(year, monthIndex + 1, 4));
+  return {
+    monthEndIso: monthEnd.toISOString().slice(0, 10),
+    deadlineIso: deadline.toISOString().slice(0, 10),
+    deadlineLabel: new Intl.DateTimeFormat('ru-RU', { day:'numeric', month:'long', year:'numeric', timeZone:'UTC' }).format(deadline)
+  };
+}
+
+function renderIstatStatus() {
+  const remote = document.getElementById('reportingIstatRemote');
+  const deadline = document.getElementById('reportingIstatDeadline');
+  if (!remote || !deadline) return;
+  const dates = istatMonthDates(document.getElementById('reportingMonth').value);
+  const latest = reportingState.istatStatus?.latest_date || null;
+  const configured = reportingState.istatStatus?.configured !== false;
+
+  remote.innerHTML = !reportingState.istatStatus
+    ? '<span>В ISTAT внесено по</span><strong>Проверяем…</strong><small>Читаем последнюю дату из Sinfonia</small>'
+    : (configured
+      ? `<span>В ISTAT внесено по</span><strong>${escapeHtml(formatReportingDate(latest))}</strong><small>${latest ? 'Последняя дата, подтверждённая Sinfonia' : 'Sinfonia пока не вернула последнюю дату'}</small>`
+      : '<span>Связь с ISTAT</span><strong>Не настроена</strong><small>Добавьте реквизиты этой структуры</small>');
+  if (!dates) return;
+
+  const todayIso = new Date().toLocaleDateString('sv-SE', { timeZone:'Europe/Rome' });
+  let className = '';
+  let copy = `Отправить этот месяц до ${dates.deadlineLabel}`;
+  let icon = 'calendar-clock';
+  if (latest && latest >= dates.monthEndIso) {
+    className = 'complete';
+    copy = 'Этот месяц уже полностью внесён в ISTAT';
+    icon = 'badge-check';
+  } else if (todayIso > dates.deadlineIso) {
+    className = 'overdue';
+    copy = `Срок был ${dates.deadlineLabel} — подготовьте отчёт сейчас`;
+    icon = 'circle-alert';
+  }
+  deadline.className = `reporting-istat-deadline ${className}`.trim();
+  deadline.innerHTML = `<i data-lucide="${icon}" style="width:16px;height:16px"></i><span>${escapeHtml(copy)}</span>`;
+  refreshLucideIcons();
+}
+
 async function loadReportingDashboard({ force = false } = {}) {
   if (reportingState.loaded && !force) return;
   const unitsEl = document.getElementById('reportingUnits');
@@ -6982,7 +7075,7 @@ async function loadReportingDashboard({ force = false } = {}) {
     const month = document.getElementById('reportingMonth');
     if (!month.value) month.value = previousMonthValue();
     renderReportingUnits();
-    await Promise.all([loadReportingBatches(), loadReportingCodes()]);
+    await Promise.all([loadReportingBatches(), loadReportingCodes(), loadIstatStatus(), loadIstatPreview()]);
   } catch (error) {
     unitsEl.innerHTML = `<div class="reporting-alert">${escapeHtml(error.message)}</div>`;
   }
@@ -7033,21 +7126,21 @@ function renderReportingUnits() {
       </div>
     </div>
     <div class="reporting-route" aria-label="Маршрут данных для ${escapeHtml(unit.name)}">
-      <div class="reporting-route-item"><span>TXT из Comune</span><i class="reporting-route-arrow" data-lucide="arrow-right" style="width:15px;height:15px"></i><strong>Alloggiati · ${escapeHtml(unit.name)}</strong></div>
-      <div class="reporting-route-item"><span>Итоги месяца</span><i class="reporting-route-arrow" data-lucide="arrow-right" style="width:15px;height:15px"></i><strong>ISTAT · ${escapeHtml(unit.name)}</strong></div>
+      <div class="reporting-route-item"><span>TXT ежедневно</span><i class="reporting-route-arrow" data-lucide="arrow-right" style="width:15px;height:15px"></i><strong>Alloggiati · ${escapeHtml(unit.name)}</strong></div>
+      <div class="reporting-route-item"><span>Итоги месяца</span><i class="reporting-route-arrow" data-lucide="arrow-right" style="width:15px;height:15px"></i><strong>ISTAT · до 4-го</strong></div>
     </div>` : '<div class="reporting-detail-empty">Нет доступных структур отчётности.</div>';
   const alert = document.getElementById('reportingAlert');
   const warnings = [];
   if (!reportingState.externalSendEnabled) warnings.push('Безопасный режим: реальные отправки пока отключены. Можно импортировать, заполнять и выполнять Test.');
   if (unit && !config.mapping) warnings.push('Для этой структуры ещё не задана связь с календарными объектами.');
-  if (new Date().getDate() >= 4 && new Date().getDate() <= 10) warnings.push('Проверьте отчёт ISTAT за предыдущий месяц.');
   alert.hidden = warnings.length === 0;
   alert.innerHTML = warnings.length ? `<i data-lucide="triangle-alert" style="width:16px;height:16px;flex:none"></i><span>${warnings.map(escapeHtml).join(' ')}</span>` : '';
   document.getElementById('reportingUnitStatus').innerHTML = `<i data-lucide="map-pin" style="width:12px;height:12px"></i><span>Для: ${escapeHtml(unit?.name || '—')}</span>`;
   document.getElementById('reportingDropzoneTitle').textContent = unit ? `Загрузить TXT для ${unit.name}` : 'Загрузить TXT из Comune';
   document.getElementById('reportingDropzoneHint').textContent = unit ? `Будет привязан к структуре «${unit.name}» · до 256 KB` : 'Сначала выберите структуру';
-  document.getElementById('reportingIstatTitle').textContent = unit ? `ISTAT · ${unit.name}` : 'ISTAT за месяц';
-  document.getElementById('reportingIstatCheck').textContent = unit ? `Проверить ${unit.name}` : 'Проверить';
+  document.getElementById('reportingIstatTitle').textContent = unit ? `Какие данные у меня уже внесены в ISTAT · ${unit.name}` : 'Какие данные у меня уже внесены в Институт статистики';
+  document.getElementById('reportingIstatCheck').textContent = unit ? `Обновить · ${unit.name}` : 'Обновить таблицу';
+  renderIstatStatus();
   refreshLucideIcons();
 }
 
@@ -7057,10 +7150,11 @@ async function selectReportingUnit(unitId) {
   localStorage.setItem('reportingUnitId', unitId);
   reportingState.batch = null;
   reportingState.istatPreview = null;
+  reportingState.istatStatus = null;
   renderReportingUnits();
-  document.getElementById('reportingBatchDetail').innerHTML = '<div class="reporting-detail-empty">Выберите импортированный TXT для проверки.</div>';
-  document.getElementById('reportingIstatPreview').innerHTML = `<div class="reporting-detail-empty">Нажмите «Проверить ${escapeHtml(currentReportingUnit()?.name || '')}» для предварительной сверки.</div>`;
-  await loadReportingBatches();
+  document.getElementById('reportingBatchDetail').innerHTML = '<div class="reporting-card-head"><div><span class="reporting-step">Шаг 3 · Alloggiati Web</span><h3>Проверка и отправка</h3></div></div><div class="reporting-detail-empty">Выберите импортированный TXT, проверьте гостей и отправьте их в Alloggiati Web.</div>';
+  document.getElementById('reportingIstatPreview').innerHTML = `<div class="reporting-detail-empty">Готовим таблицу для «${escapeHtml(currentReportingUnit()?.name || '')}»…</div>`;
+  await Promise.all([loadReportingBatches(), loadIstatStatus(), loadIstatPreview()]);
 }
 
 async function loadReportingBatches() {
@@ -7158,7 +7252,7 @@ function renderReportingBatchDetail() {
   const editable = !['sent', 'pii_purged'].includes(batch.status);
   detail.innerHTML = `
     <div class="reporting-card-head">
-      <div><h3>${escapeHtml(batch.filename)}</h3><div class="reporting-stay-meta">${batch.record_count} гостей · версия ${batch.version}</div></div>
+      <div><span class="reporting-step">Шаг 3 · Alloggiati Web</span><h3>${escapeHtml(batch.filename)}</h3><div class="reporting-stay-meta">${batch.record_count} гостей · версия ${batch.version}</div></div>
       <span class="reporting-status ${escapeHtml(batch.status)}">${escapeHtml(REPORTING_STATUS_LABELS[batch.status] || batch.status)}</span>
     </div>
     <div>${batch.stays.map(stay => `
@@ -7247,28 +7341,73 @@ async function loadReportingCodes() {
   } catch (_) { /* Manual code entry remains available when the regional reference endpoint is offline. */ }
 }
 
+async function loadIstatStatus() {
+  if (!reportingState.unitId) return;
+  const requestedUnitId = reportingState.unitId;
+  reportingState.istatStatus = null;
+  renderIstatStatus();
+  try {
+    const status = await reportingFetch(`${API}/reporting/istat?action=status&unit_id=${encodeURIComponent(requestedUnitId)}`);
+    if (requestedUnitId !== reportingState.unitId) return;
+    reportingState.istatStatus = status;
+    renderIstatStatus();
+  } catch (error) {
+    if (requestedUnitId !== reportingState.unitId) return;
+    reportingState.istatStatus = { configured:true, latest_date:null };
+    renderIstatStatus();
+    document.getElementById('reportingIstatRemote').innerHTML = `<span>Последняя дата ISTAT</span><strong>Не удалось проверить</strong><small>${escapeHtml(error.message)}</small>`;
+  }
+}
+
 async function loadIstatPreview() {
   if (!reportingState.unitId) return;
-  const month = document.getElementById('reportingMonth').value;
+  const requestedUnitId = reportingState.unitId;
+  const monthInput = document.getElementById('reportingMonth');
+  if (!monthInput.value) monthInput.value = previousMonthValue();
+  const month = monthInput.value;
   const target = document.getElementById('reportingIstatPreview');
   target.innerHTML = `<div class="reporting-detail-empty">Считаем движения по дням для «${escapeHtml(currentReportingUnit()?.name || 'структуры')}»…</div>`;
+  renderIstatStatus();
   try {
-    const preview = await reportingFetch(`${API}/reporting/istat?unit_id=${encodeURIComponent(reportingState.unitId)}&month=${encodeURIComponent(month)}`);
+    const preview = await reportingFetch(`${API}/reporting/istat?unit_id=${encodeURIComponent(requestedUnitId)}&month=${encodeURIComponent(month)}`);
+    if (requestedUnitId !== reportingState.unitId || month !== monthInput.value) return;
     reportingState.istatPreview = preview;
     const totals = preview.giornate.reduce((acc, day) => {
       acc.rooms += Number(day.camereOccupate) || 0;
       for (const move of day.movimentazioni || []) { acc.arrivals += move.arrivi || 0; acc.departures += move.partenze || 0; }
       return acc;
     }, { arrivals:0, departures:0, rooms:0 });
+    const dayRows = preview.giornate.map(day => {
+      const daily = (day.movimentazioni || []).reduce((acc, move) => {
+        acc.arrivals += Number(move.arrivi) || 0;
+        acc.present += Number(move.presentiNottePrecedente) || 0;
+        acc.departures += Number(move.partenze) || 0;
+        return acc;
+      }, { arrivals:0, present:0, departures:0 });
+      const hasData = daily.arrivals || daily.present || daily.departures || Number(day.camereOccupate) || day.strutturaChiusa;
+      const iso = italianReportingDateToIso(day.dataRilevazione);
+      return `<tr class="${hasData ? 'has-data' : ''}">
+        <td class="reporting-istat-day">${escapeHtml(formatReportingDate(iso))}</td>
+        <td class="${daily.arrivals ? 'reporting-istat-movement' : 'reporting-istat-zero'}">${daily.arrivals}</td>
+        <td class="${daily.present ? 'reporting-istat-movement' : 'reporting-istat-zero'}">${daily.present}</td>
+        <td class="${daily.departures ? 'reporting-istat-movement' : 'reporting-istat-zero'}">${daily.departures}</td>
+        <td>${Number(day.camereOccupate) || 0}</td>
+        <td>${day.strutturaChiusa ? 'Закрыто' : (hasData ? 'Есть данные' : '<span class="reporting-istat-zero">Нулевой день</span>')}</td>
+      </tr>`;
+    }).join('');
     target.innerHTML = `
       <div class="reporting-metrics"><div class="reporting-metric"><strong>${totals.arrivals}</strong><span>прибытий</span></div><div class="reporting-metric"><strong>${totals.departures}</strong><span>отъездов</span></div><div class="reporting-metric"><strong>${totals.rooms}</strong><span>комнато-дней</span></div></div>
-      ${preview.errors.length ? `<ul class="reporting-errors">${preview.errors.map(error => `<li>${escapeHtml(error)}</li>`).join('')}</ul>` : '<div class="reporting-alert" style="margin-top:10px;border-color:#a7f3d0;background:#ecfdf5;color:#047857">Месяц прошёл локальную проверку.</div>'}
+      ${preview.errors.length ? `<ul class="reporting-errors">${preview.errors.map(error => `<li>${escapeHtml(error)}</li>`).join('')}</ul>` : '<div class="reporting-alert" style="margin-top:10px;border-color:#a7f3d0;background:#ecfdf5;color:#047857">Месячная таблица готова к отправке.</div>'}
+      <div class="reporting-istat-note">Это черновик из ежедневных импортов. Нулевые дни тоже входят в отчёт; перед месячной отправкой проверьте весь период.</div>
+      <div class="reporting-istat-table-wrap"><table class="reporting-istat-table"><thead><tr><th>Дата</th><th>Прибыло</th><th>Осталось</th><th>Уехало</th><th>Комнат</th><th>Состояние</th></tr></thead><tbody>${dayRows}</tbody></table></div>
       <div class="reporting-send-panel">
         <div class="reporting-send-target"><i data-lucide="route" style="width:17px;height:17px;flex:none;color:#0f766e"></i><span><strong>Назначение: ISTAT · ${escapeHtml(currentReportingUnit()?.name || '—')}</strong>Квартиры: ${escapeHtml(reportingPropertySummary())} · период ${escapeHtml(preview.month)}</span></div>
         <div class="reporting-actions"><button class="btn reporting-action-send" type="button" onclick="sendIstatMonth()" ${preview.ready && reportingState.externalSendEnabled ? '' : 'disabled'}><i data-lucide="send" style="width:14px;height:14px"></i> Отправить ISTAT · ${escapeHtml(currentReportingUnit()?.name || '—')}</button></div>
       </div>`;
     refreshLucideIcons();
-  } catch (error) { target.innerHTML = `<div class="reporting-alert">${escapeHtml(error.message)}</div>`; }
+  } catch (error) {
+    if (requestedUnitId === reportingState.unitId && month === monthInput.value) target.innerHTML = `<div class="reporting-alert">${escapeHtml(error.message)}</div>`;
+  }
 }
 
 async function sendIstatMonth() {
@@ -7287,6 +7426,7 @@ async function sendIstatMonth() {
       body:JSON.stringify({ unit_id:reportingState.unitId, month:preview.month, expected_hash:preview.payload_hash, confirmed:true, replace:false })
     });
     toast(result.verified ? `ISTAT для «${unit?.name || 'структуры'}» отправлен и проверен` : `ISTAT для «${unit?.name || 'структуры'}» отправлен; нужна сверка`);
+    await Promise.all([loadIstatStatus(), loadIstatPreview()]);
   } catch (error) { toast(error.message); }
 }
 

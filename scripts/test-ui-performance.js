@@ -246,6 +246,30 @@ function createServer(state = {
       response.end(JSON.stringify({ province: [{ codiceIstat: '063', descrizione: 'Napoli' }], nazioni: [{ codiceIstat: '536', descrizione: 'Regno Unito' }] }));
       return;
     }
+    if (url.pathname === '/api/reporting/istat' && url.searchParams.get('action') === 'status') {
+      response.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store' });
+      response.end(JSON.stringify({ configured: true, latest_date: '2026-06-30' }));
+      return;
+    }
+    if (url.pathname === '/api/reporting/istat') {
+      const month = url.searchParams.get('month') || '2026-06';
+      const [year, monthNumber] = month.split('-').map(Number);
+      const days = new Date(Date.UTC(year, monthNumber, 0)).getUTCDate();
+      response.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store' });
+      response.end(JSON.stringify({
+        month,
+        ready: true,
+        errors: [],
+        payload_hash: 'SAFE_HASH',
+        giornate: Array.from({ length: days }, (_, index) => ({
+          dataRilevazione: `${String(index + 1).padStart(2, '0')}${String(monthNumber).padStart(2, '0')}${year}`,
+          camereOccupate: 0,
+          strutturaChiusa: false,
+          movimentazioni: []
+        }))
+      }));
+      return;
+    }
     if (url.pathname === '/api/sync' && request.method === 'POST') {
       state.syncRequests++;
       response.writeHead(200, { 'content-type': 'application/json' });
@@ -335,6 +359,12 @@ async function inspectReportingPage(browser, baseUrl) {
   assert.match(await page.locator('#reportingUnits').innerText(), /Dragone/);
   assert.match(await page.locator('#reportingAlert').innerText(), /отправки пока отключены/i);
   assert.match(await page.locator('#reportingBatchList').innerText(), /ещё не загружались/i);
+  assert.match(await page.locator('#reportingBatchDetail').innerText(), /Шаг 3 · Alloggiati Web/i);
+  assert.match(await page.locator('#reportingIstatTitle').innerText(), /Какие данные у меня уже внесены в ISTAT/i);
+  const istatMonth = await page.locator('#reportingMonth').inputValue();
+  const [istatYear, istatMonthNumber] = istatMonth.split('-').map(Number);
+  assert.equal(await page.locator('.reporting-istat-table tbody tr').count(), new Date(Date.UTC(istatYear, istatMonthNumber, 0)).getUTCDate());
+  assert.match(await page.locator('#reportingIstatDeadline').innerText(), /ISTAT|месяц|Срок/i);
   assert.deepEqual(errors, []);
   await context.close();
   return { units: 2, externalSendDisabled: true };

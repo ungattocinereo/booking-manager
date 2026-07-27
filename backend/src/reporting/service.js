@@ -12,7 +12,7 @@ function operatorEmail(req) {
 }
 
 function italianDateToIso(value) {
-  const match = String(value || '').match(/^(\d{2})(\d{2})(\d{4})$/);
+  const match = String(value || '').trim().match(/^(\d{2})\/?(\d{2})\/?(\d{4})$/);
   return match ? `${match[3]}-${match[2]}-${match[1]}` : null;
 }
 
@@ -196,6 +196,21 @@ class ReportingService {
     const stays = await this.store.staysForMonth(unitId, month);
     const preview = aggregateIstatMonth({ month, stays });
     return { unit: publicReportingUnit(unit), ...preview };
+  }
+
+  async istatStatus(unitId) {
+    await this.init();
+    const unit = getReportingUnit(unitId);
+    if (!unit) throw Object.assign(new Error('Неизвестная отчётная структура'), { status: 400 });
+    if (!unit.configured.istat) {
+      return { unit: publicReportingUnit(unit), configured: false, latest_date: null };
+    }
+    const latest = await new this.IstatClient(unit.istat).latest();
+    return {
+      unit: publicReportingUnit(unit),
+      configured: true,
+      latest_date: italianDateToIso(latest?.dataUltimaRilevazione)
+    };
   }
 
   async sendIstat({ unitId, month, expectedHash, confirmed, replace, operator }) {

@@ -98,6 +98,9 @@ async function istat(req, res, db) {
   try {
     const service = new ReportingService(db);
     if (req.method === 'GET') {
+      if (req.query.action === 'status') {
+        return res.status(200).json(await service.istatStatus(req.query.unit_id));
+      }
       if (req.query.action === 'codes') {
         const unit = getReportingUnit(req.query.unit_id) || { istat: {} };
         return res.status(200).json(await new IstatClient(unit.istat).codes());
