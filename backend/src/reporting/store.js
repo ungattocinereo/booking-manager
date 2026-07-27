@@ -25,6 +25,14 @@ function normalizeBatch(row) {
   };
 }
 
+function assertBatchCanBeDeleted(batch, sendAttempts) {
+  if (!batch) throw Object.assign(new Error('Пакет не найден'), { status: 404 });
+  const protectedStatuses = new Set(['sent', 'partial', 'unknown', 'pii_purged']);
+  if (batch.alloggiati_sent_at || protectedStatuses.has(batch.status) || Number(sendAttempts) > 0) {
+    throw Object.assign(new Error('Нельзя удалить TXT после попытки отправки в Alloggiati'), { status: 409 });
+  }
+}
+
 class ReportingStore {
   constructor(db) {
     this.db = db;
@@ -199,6 +207,48 @@ class ReportingStore {
     return this.getBatch(batchId, { includePii: true });
   }
 
+  async deleteUnsentBatch(batchId) {
+    const id = Number(batchId);
+    if (!Number.isInteger(id) || id < 1) throw Object.assign(new Error('Некорректный номер пакета'), { status: 400 });
+
+    if (isPostgres(this.db)) {
+      const client = await this.db.pool.connect();
+      try {
+        await client.query('BEGIN');
+        const batch = (await client.query('SELECT * FROM guest_import_batches WHERE id=$1 FOR UPDATE', [id])).rows[0] || null;
+        const attempts = batch
+          ? Number((await client.query("SELECT COUNT(*)::int AS count FROM alloggiati_submissions WHERE batch_id=$1 AND operation='send'", [id])).rows[0]?.count) || 0
+          : 0;
+        assertBatchCanBeDeleted(batch, attempts);
+        await client.query('UPDATE alloggiati_submissions SET batch_id=NULL WHERE batch_id=$1', [id]);
+        await client.query('DELETE FROM guest_import_batches WHERE id=$1', [id]);
+        await client.query('COMMIT');
+        return { deleted: true, batch_id: id, filename: batch.filename, reporting_unit_id: batch.reporting_unit_id };
+      } catch (error) {
+        await client.query('ROLLBACK').catch(() => {});
+        throw error;
+      } finally {
+        client.release();
+      }
+    }
+
+    await this.db.run('BEGIN IMMEDIATE');
+    try {
+      const batch = await this.db.get('SELECT * FROM guest_import_batches WHERE id=?', [id]);
+      const attempts = batch
+        ? Number((await this.db.get("SELECT COUNT(*) AS count FROM alloggiati_submissions WHERE batch_id=? AND operation='send'", [id]))?.count) || 0
+        : 0;
+      assertBatchCanBeDeleted(batch, attempts);
+      await this.db.run('UPDATE alloggiati_submissions SET batch_id=NULL WHERE batch_id=?', [id]);
+      await this.db.run('DELETE FROM guest_import_batches WHERE id=?', [id]);
+      await this.db.run('COMMIT');
+      return { deleted: true, batch_id: id, filename: batch.filename, reporting_unit_id: batch.reporting_unit_id };
+    } catch (error) {
+      await this.db.run('ROLLBACK').catch(() => {});
+      throw error;
+    }
+  }
+
   async duplicateRecordFingerprints(unitId, recordFingerprints) {
     if (!recordFingerprints.length) return [];
     if (isPostgres(this.db)) {
@@ -350,6 +400,35 @@ class ReportingStore {
        (reporting_unit_id,batch_id,operation,payload_fingerprint,status,valid_records,total_records,response_summary,operator_email)
        VALUES (?,?,?,?,?,?,?,?,?)`,
       [unitId, batchId, operation, payloadFingerprint, status, validRecords, totalRecords, summary, operatorEmail]
+    );
+  }
+
+  async startAlloggiatiSend({ unitId, batchId, payloadFingerprint, totalRecords, operatorEmail }) {
+    const params = [unitId, batchId, payloadFingerprint, totalRecords, operatorEmail];
+    if (isPostgres(this.db)) {
+      const row = await this.db.queryOne(
+        `INSERT INTO alloggiati_submissions
+         (reporting_unit_id,batch_id,operation,payload_fingerprint,status,total_records,response_summary,operator_email)
+         VALUES ($1,$2,'send',$3,'started',$4,'{}'::jsonb,$5) RETURNING id`,
+        params
+      );
+      return Number(row.id);
+    }
+    const result = await this.db.run(
+      `INSERT INTO alloggiati_submissions
+       (reporting_unit_id,batch_id,operation,payload_fingerprint,status,total_records,response_summary,operator_email)
+       VALUES (?,?,'send',?,'started',?,'{}',?)`,
+      params
+    );
+    return Number(result.lastID);
+  }
+
+  async finishAlloggiatiSend(submissionId, { status, validRecords, totalRecords, responseSummary }) {
+    const summary = JSON.stringify(responseSummary || {});
+    await this.execute(
+      'UPDATE alloggiati_submissions SET status=$1,valid_records=$2,total_records=$3,response_summary=$4::jsonb WHERE id=$5',
+      'UPDATE alloggiati_submissions SET status=?,valid_records=?,total_records=?,response_summary=? WHERE id=?',
+      [status, validRecords, totalRecords, summary, submissionId]
     );
   }
 

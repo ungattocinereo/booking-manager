@@ -154,3 +154,43 @@ test('getBatch converts PostgreSQL DATE objects to stable ISO day strings', asyn
   assert.equal(batch.stays[0].departure_date, '2026-07-28');
   assert.equal(batch.stays[0].records[0].arrival_date, '2026-07-25');
 });
+
+test('deletes an unsent TXT, preserves its Test audit and allows the same file to be imported again', async () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'booking-reporting-delete-'));
+  process.env.SQLITE_DB_PATH = path.join(tempDir, 'bookings.db');
+  delete require.cache[require.resolve('../backend/src/database')];
+  const db = require('../backend/src/database');
+  const { ReportingStore } = require('../backend/src/reporting/store');
+  const { parseAlloggiatiTxt } = require('../backend/src/reporting/parser');
+  const unit = { id: 'carina', name: 'Carina', propertyIds: ['carina'] };
+
+  try {
+    await db.init();
+    await db.createProperty('carina', 'Carina');
+    const store = new ReportingStore(db);
+    await store.syncUnits([unit]);
+    const parsed = parseAlloggiatiTxt(Buffer.from(SAMPLE, 'latin1'));
+    const first = await store.createBatch({ unit, filename:'clemente.txt', parsed, operatorEmail:'test@example.com' });
+    await store.addAlloggiatiSubmission({
+      unitId:'carina', batchId:first.id, operation:'test', payloadFingerprint:'safe-test', status:'passed', totalRecords:1, responseSummary:{ ok:true }, operatorEmail:'test@example.com'
+    });
+
+    const deleted = await store.deleteUnsentBatch(first.id);
+    assert.equal(deleted.deleted, true);
+    assert.equal(await db.get('SELECT id FROM guest_import_batches WHERE id=?', [first.id]), undefined);
+    assert.equal((await db.get('SELECT COUNT(*) AS count FROM guest_records WHERE batch_id=?', [first.id])).count, 0);
+    assert.equal((await db.get("SELECT batch_id FROM alloggiati_submissions WHERE payload_fingerprint='safe-test'")).batch_id, null);
+
+    const replacement = await store.createBatch({ unit, filename:'clemente-fixed.txt', parsed, operatorEmail:'test@example.com' });
+    assert.notEqual(replacement.id, first.id);
+    await store.addAlloggiatiSubmission({
+      unitId:'carina', batchId:replacement.id, operation:'send', payloadFingerprint:'safe-send', status:'failed', totalRecords:1, responseSummary:{ ok:false }, operatorEmail:'test@example.com'
+    });
+    await assert.rejects(store.deleteUnsentBatch(replacement.id), /после попытки отправки/);
+    assert.ok(await db.get('SELECT id FROM guest_import_batches WHERE id=?', [replacement.id]));
+  } finally {
+    await db.close();
+    fs.rmSync(tempDir, { recursive:true, force:true });
+    delete process.env.SQLITE_DB_PATH;
+  }
+});

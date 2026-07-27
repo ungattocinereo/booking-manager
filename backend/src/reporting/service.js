@@ -144,6 +144,11 @@ class ReportingService {
     return this.store.getBatch(batchId, { includePii: true });
   }
 
+  async deleteImport(batchId) {
+    await this.init();
+    return this.store.deleteUnsentBatch(batchId);
+  }
+
   async alloggiatiAction({ batchId, action, expectedVersion, confirmed, operator }) {
     await this.init();
     const batch = await this.store.getBatch(batchId, { includePii: false });
@@ -163,15 +168,23 @@ class ReportingService {
     const lines = await this.store.decryptedLines(batchId);
     const payloadFingerprint = fingerprint(lines.join('\r\n'));
     const client = new this.AlloggiatiClient(unit.alloggiati);
+    const sendSubmissionId = action === 'send'
+      ? await this.store.startAlloggiatiSend({
+        unitId: unit.id, batchId, payloadFingerprint, totalRecords: lines.length, operatorEmail: operator
+      })
+      : null;
     let result;
     try {
       result = action === 'test' ? await client.test(lines) : await client.send(lines);
     } catch (error) {
       const ambiguous = action === 'send' && ['ALLOGGIATI_TIMEOUT', 'ECONNRESET', 'ETIMEDOUT'].includes(error.code);
-      await this.store.addAlloggiatiSubmission({
-        unitId: unit.id, batchId, operation: action, payloadFingerprint,
+      const submission = {
         status: ambiguous ? 'unknown' : 'failed', totalRecords: lines.length,
-        responseSummary: { code: error.code || null, message: error.message }, operatorEmail: operator
+        responseSummary: { code: error.code || null, message: error.message }
+      };
+      if (sendSubmissionId) await this.store.finishAlloggiatiSend(sendSubmissionId, submission);
+      else await this.store.addAlloggiatiSubmission({
+        unitId: unit.id, batchId, operation: action, payloadFingerprint, ...submission, operatorEmail: operator
       });
       if (ambiguous) await this.store.markBatchSent(batchId, 'unknown', []);
       throw error;
@@ -180,12 +193,14 @@ class ReportingService {
     const allValid = result.ok && result.validRecords === lines.length && result.details.every(item => item.ok);
     if (action === 'test') await this.store.markBatchTested(batchId, allValid, result.details);
     else await this.store.markBatchSent(batchId, allValid ? 'sent' : 'partial', result.details);
-    await this.store.addAlloggiatiSubmission({
-      unitId: unit.id, batchId, operation: action, payloadFingerprint,
+    const submission = {
       status: allValid ? (action === 'test' ? 'passed' : 'sent') : 'partial',
       validRecords: result.validRecords, totalRecords: result.totalRecords,
-      responseSummary: { ok: result.ok, code: result.code, description: result.description, details: result.details },
-      operatorEmail: operator
+      responseSummary: { ok: result.ok, code: result.code, description: result.description, details: result.details }
+    };
+    if (sendSubmissionId) await this.store.finishAlloggiatiSend(sendSubmissionId, submission);
+    else await this.store.addAlloggiatiSubmission({
+      unitId: unit.id, batchId, operation: action, payloadFingerprint, ...submission, operatorEmail: operator
     });
     return { result, batch: await this.store.getBatch(batchId, { includePii: true }) };
   }

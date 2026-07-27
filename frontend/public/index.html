@@ -2909,7 +2909,11 @@
     .reporting-send-target strong { display:block; color:var(--report-ink); font-size:12px; }
     .reporting-action-test { border-color:#8dcac2!important; background:var(--report-sea)!important; color:var(--report-teal)!important; font-weight:800!important; }
     .reporting-action-send { background:var(--report-ink)!important; color:#fff!important; font-weight:850!important; box-shadow:0 7px 16px rgba(23,50,77,.17); }
-    .reporting-action-send:disabled,.reporting-action-test:disabled { box-shadow:none; opacity:.46; }
+    .reporting-action-delete { border-color:#fecaca!important; background:#fff!important; color:#b42318!important; font-weight:800!important; }
+    .reporting-action-delete:hover:not(:disabled) { border-color:#fca5a5!important; background:#fff1f2!important; }
+    .reporting-action-send:disabled,.reporting-action-test:disabled,.reporting-action-delete:disabled { box-shadow:none; opacity:.46; }
+    .reporting-delete-row { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:13px; padding-top:12px; border-top:1px solid #e2e8f0; }
+    .reporting-delete-row span { color:#64748b; font-size:10px; line-height:1.4; }
     .reporting-month { display:flex; gap:8px; align-items:center; }
     .reporting-month input { min-height:36px; border:1px solid var(--border); border-radius:9px; padding:6px 9px; }
     .reporting-metrics { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:12px; }
@@ -2969,6 +2973,7 @@
       .reporting-card-target { max-width:145px; }
       .reporting-send-panel .reporting-actions { display:grid; grid-template-columns:1fr; }
       .reporting-send-panel .btn { justify-content:center; width:100%; }
+      .reporting-delete-row { align-items:stretch; flex-direction:column; }
     }
     @media (max-width:380px) { .reporting-units { grid-template-columns:1fr; } }
   </style>
@@ -3405,7 +3410,7 @@ let statsCurrentBookingKeysPromise = null;
 let allAssignments = {};
 let allTaxBookings = [];
 let taxFocusTodayOnNextRender = false;
-let reportingState = { loaded: false, externalSendEnabled: false, units: [], unitId: null, batches: [], batch: null, istatPreview: null, istatStatus: null, uploading: false };
+let reportingState = { loaded: false, externalSendEnabled: false, units: [], unitId: null, batches: [], batch: null, istatPreview: null, istatStatus: null, uploading: false, deleting: false };
 
 const DASHBOARD_CACHE_KEY = 'atrani-dashboard-cache-v1';
 const DASHBOARD_VISIBLE_REFRESH_MIN_MS = 30 * 1000;
@@ -7110,7 +7115,7 @@ function renderReportingUnits() {
     const active = unit.id === reportingState.unitId;
     const attention = Number(unit.open_batches) || 0;
     return `
-    <button class="reporting-unit ${active ? 'active' : ''}" type="button" role="listitem" aria-pressed="${active}" aria-label="Выбрать ${escapeHtml(unit.name)}: ${escapeHtml(reportingPropertySummary(unit))}" onclick="selectReportingUnit('${escapeHtml(unit.id)}')" ${reportingState.uploading ? 'disabled' : ''}>
+    <button class="reporting-unit ${active ? 'active' : ''}" type="button" role="listitem" aria-pressed="${active}" aria-label="Выбрать ${escapeHtml(unit.name)}: ${escapeHtml(reportingPropertySummary(unit))}" onclick="selectReportingUnit('${escapeHtml(unit.id)}')" ${reportingState.uploading || reportingState.deleting ? 'disabled' : ''}>
       <span class="reporting-unit-mark">${escapeHtml(unit.name.slice(0, 1).toUpperCase())}</span>
       <span class="reporting-unit-copy"><strong>${escapeHtml(unit.name)}</strong><small>${escapeHtml(reportingPropertySummary(unit))}</small></span>
       <span class="reporting-unit-check"><i data-lucide="check" style="width:12px;height:12px"></i></span>
@@ -7154,7 +7159,7 @@ function renderReportingUnits() {
 }
 
 async function selectReportingUnit(unitId) {
-  if (reportingState.uploading || unitId === reportingState.unitId) return;
+  if (reportingState.uploading || reportingState.deleting || unitId === reportingState.unitId) return;
   reportingState.unitId = unitId;
   localStorage.setItem('reportingUnitId', unitId);
   reportingState.batch = null;
@@ -7204,7 +7209,7 @@ async function uploadReportingFiles(fileList) {
   const files = Array.from(fileList || []);
   const targetUnit = currentReportingUnit();
   const targetUnitId = targetUnit?.id;
-  if (!files.length || !targetUnitId || reportingState.uploading) return;
+  if (!files.length || !targetUnitId || reportingState.uploading || reportingState.deleting) return;
   const dropzone = document.getElementById('reportingDropzone');
   reportingState.uploading = true;
   dropzone.classList.add('busy');
@@ -7258,7 +7263,8 @@ function renderReportingBatchDetail() {
   const unitName = unit?.name || 'неизвестная структура';
   const propertySummary = reportingPropertySummary(unit);
   const detail = document.getElementById('reportingBatchDetail');
-  const editable = !['sent', 'pii_purged'].includes(batch.status);
+  const editable = !reportingState.deleting && !['sent', 'partial', 'unknown', 'pii_purged'].includes(batch.status);
+  const deletable = !batch.alloggiati_sent_at && !['sent', 'partial', 'unknown', 'pii_purged'].includes(batch.status);
   detail.innerHTML = `
     <div class="reporting-card-head">
       <div><span class="reporting-step">Шаг 3 · Alloggiati Web</span><h3>${escapeHtml(batch.filename)}</h3><div class="reporting-stay-meta">${batch.record_count} гостей · версия ${batch.version}</div></div>
@@ -7288,10 +7294,11 @@ function renderReportingBatchDetail() {
     <div class="reporting-send-panel">
       <div class="reporting-send-target"><i data-lucide="route" style="width:17px;height:17px;flex:none;color:#0f766e"></i><span><strong>Назначение: Alloggiati Web · ${escapeHtml(unitName)}</strong>Квартиры: ${escapeHtml(propertySummary)} · ${batch.record_count} гостей</span></div>
       <div class="reporting-actions">
-        <button class="btn reporting-action-test" type="button" onclick="runAlloggiatiAction('test')" ${batch.status === 'ready' || batch.status === 'tested' ? '' : 'disabled'}><i data-lucide="scan-line" style="width:14px;height:14px"></i> Проверить для ${escapeHtml(unitName)}</button>
-        <button class="btn reporting-action-send" type="button" onclick="runAlloggiatiAction('send')" ${batch.status === 'tested' && reportingState.externalSendEnabled ? '' : 'disabled'}><i data-lucide="send" style="width:14px;height:14px"></i> Отправить в Alloggiati · ${escapeHtml(unitName)}</button>
+        <button class="btn reporting-action-test" type="button" onclick="runAlloggiatiAction('test')" ${!reportingState.deleting && (batch.status === 'ready' || batch.status === 'tested') ? '' : 'disabled'}><i data-lucide="scan-line" style="width:14px;height:14px"></i> Проверить для ${escapeHtml(unitName)}</button>
+        <button class="btn reporting-action-send" type="button" onclick="runAlloggiatiAction('send')" ${!reportingState.deleting && batch.status === 'tested' && reportingState.externalSendEnabled ? '' : 'disabled'}><i data-lucide="send" style="width:14px;height:14px"></i> Отправить в Alloggiati · ${escapeHtml(unitName)}</button>
         ${batch.receipt_received_at && batch.alloggiati_sent_at ? `<a class="btn btn-secondary" href="${API}/reporting/alloggiati?unit_id=${encodeURIComponent(batch.reporting_unit_id)}&date=${encodeURIComponent(String(batch.alloggiati_sent_at).slice(0,10))}" target="_blank"><i data-lucide="file-check-2" style="width:14px;height:14px"></i> Квитанция</a>` : ''}
       </div>
+      ${deletable ? `<div class="reporting-delete-row"><span>TXT ещё не отправлен. Его можно удалить вместе с гостями и загрузить заново.</span><button class="btn reporting-action-delete" type="button" onclick="deleteReportingBatch()" ${reportingState.deleting ? 'disabled' : ''}><i data-lucide="trash-2" style="width:14px;height:14px"></i> ${reportingState.deleting ? 'Удаляем…' : 'Удалить TXT'}</button></div>` : ''}
     </div>`;
   refreshLucideIcons();
 }
@@ -7317,9 +7324,40 @@ async function saveReportingStay(stayId) {
   } catch (error) { toast(error.message); }
 }
 
+async function deleteReportingBatch() {
+  const batch = reportingState.batch;
+  const unit = currentReportingUnit();
+  if (!batch || reportingState.deleting) return;
+  const confirmed = window.confirm(
+    `Удалить загруженный TXT?\n\n` +
+    `Файл: ${batch.filename}\n` +
+    `Структура: ${unit?.name || '—'}\n` +
+    `Гостей: ${batch.record_count}\n\n` +
+    `Гости исчезнут и из черновика ISTAT. После удаления этот TXT можно загрузить заново.`
+  );
+  if (!confirmed) return;
+
+  reportingState.deleting = true;
+  renderReportingBatchDetail();
+  try {
+    await reportingFetch(`${API}/reporting/imports?batch_id=${encodeURIComponent(batch.id)}`, { method:'DELETE' });
+    reportingState.batch = null;
+    document.getElementById('reportingBatchDetail').innerHTML = '<div class="reporting-card-head"><div><span class="reporting-step">Шаг 3 · Alloggiati Web</span><h3>TXT удалён</h3></div></div><div class="reporting-detail-empty">Теперь этот файл можно загрузить заново.</div>';
+    toast(`TXT «${batch.filename}» удалён`);
+    await Promise.all([loadReportingBatches(), loadIstatPreview()]);
+    if (unit) unit.open_batches = reportingState.batches.filter(item => ['needs_review', 'ready', 'tested'].includes(item.status)).length;
+    renderReportingUnits();
+  } catch (error) {
+    toast(error.message);
+  } finally {
+    reportingState.deleting = false;
+    if (reportingState.batch) renderReportingBatchDetail();
+  }
+}
+
 async function runAlloggiatiAction(action) {
   const batch = reportingState.batch;
-  if (!batch) return;
+  if (!batch || reportingState.deleting) return;
   const unit = currentReportingUnit();
   const confirmed = action !== 'send' || window.confirm(
     `Проверьте назначение перед отправкой\n\n` +

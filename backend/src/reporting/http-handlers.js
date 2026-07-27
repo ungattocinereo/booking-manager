@@ -46,7 +46,12 @@ async function imports(req, res, db) {
       if (!Number.isInteger(stayId) || !Number.isInteger(batchId)) return res.status(400).json({ error: 'stay_id and batch_id are required' });
       return res.status(200).json(await service.updateStay(stayId, { ...req.body, batch_id: batchId }));
     }
-    res.setHeader('Allow', 'GET, POST, PATCH');
+    if (req.method === 'DELETE') {
+      const batchId = Number(req.query.batch_id || req.body?.batch_id);
+      if (!Number.isInteger(batchId)) return res.status(400).json({ error: 'batch_id is required' });
+      return res.status(200).json(await service.deleteImport(batchId));
+    }
+    res.setHeader('Allow', 'GET, POST, PATCH, DELETE');
     return res.status(405).json({ error: 'Method not allowed' });
   } catch (error) {
     const status = error.status || (error.code === 'DUPLICATE_IMPORT' ? 409 : 500);

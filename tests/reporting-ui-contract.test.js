@@ -19,7 +19,7 @@ test('reporting upload snapshots its destination while unit switching is locked'
   assert.match(html, /const targetUnitId = targetUnit\?\.id/);
   assert.match(html, /unit_id: targetUnitId/);
   assert.match(html, /reportingState\.uploading = true/);
-  assert.match(html, /reportingState\.uploading \? 'disabled' : ''/);
+  assert.match(html, /reportingState\.uploading \|\| reportingState\.deleting \? 'disabled' : ''/);
 });
 
 test('reporting UI keeps Alloggiati as step three and ISTAT as a monthly ledger', () => {
@@ -43,4 +43,12 @@ test('reporting dates accept PostgreSQL ISO timestamps and never render Invalid 
     formatTaxDate('25072026')
   ]`);
   assert.equal(values.every(value => value.includes('25') && !value.includes('Invalid')), true);
+});
+
+test('reporting UI deletes only an unsubmitted TXT after explicit confirmation', () => {
+  assert.match(html, /Удалить TXT/);
+  assert.match(html, /function deleteReportingBatch\(\)/);
+  assert.match(html, /method:'DELETE'/);
+  assert.match(html, /Гости исчезнут и из черновика ISTAT/);
+  assert.match(html, /!\['sent', 'partial', 'unknown', 'pii_purged'\]\.includes\(batch\.status\)/);
 });
