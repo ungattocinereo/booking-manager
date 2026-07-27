@@ -216,6 +216,20 @@ CREATE TABLE IF NOT EXISTS alloggiati_receipts (
   UNIQUE (reporting_unit_id, receipt_date)
 );
 
+CREATE TABLE IF NOT EXISTS istat_baseline_stays (
+  id BIGSERIAL PRIMARY KEY,
+  reporting_unit_id VARCHAR(50) NOT NULL REFERENCES reporting_units(id),
+  source_key VARCHAR(160) NOT NULL,
+  property_id VARCHAR(50) REFERENCES properties(id),
+  arrival_date DATE NOT NULL,
+  departure_date DATE NOT NULL,
+  rooms_occupied INTEGER NOT NULL DEFAULT 1,
+  origins JSONB NOT NULL DEFAULT '[]'::jsonb,
+  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (reporting_unit_id, source_key)
+);
+
 CREATE TABLE IF NOT EXISTS istat_month_submissions (
   id BIGSERIAL PRIMARY KEY,
   reporting_unit_id VARCHAR(50) NOT NULL REFERENCES reporting_units(id),
@@ -237,4 +251,5 @@ CREATE INDEX IF NOT EXISTS idx_guest_stays_dates ON guest_stays(arrival_date, de
 CREATE INDEX IF NOT EXISTS idx_guest_records_origin ON guest_records(origin_kind, origin_code);
 CREATE INDEX IF NOT EXISTS idx_alloggiati_submissions_batch ON alloggiati_submissions(batch_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_alloggiati_receipts_date ON alloggiati_receipts(receipt_date DESC);
+CREATE INDEX IF NOT EXISTS idx_istat_baseline_unit_dates ON istat_baseline_stays(reporting_unit_id, arrival_date, departure_date);
 CREATE INDEX IF NOT EXISTS idx_istat_month_unit ON istat_month_submissions(reporting_unit_id, month DESC);

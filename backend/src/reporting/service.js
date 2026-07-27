@@ -17,6 +17,22 @@ function italianDateToIso(value) {
   return match ? `${match[3]}-${match[2]}-${match[1]}` : null;
 }
 
+function istatMonthWindow(month) {
+  const match = String(month || '').match(/^(\d{4})-(\d{2})$/);
+  if (!match) throw Object.assign(new Error('month must be YYYY-MM'), { status: 400 });
+  const year = Number(match[1]);
+  const monthNumber = Number(match[2]);
+  const days = new Date(Date.UTC(year, monthNumber, 0)).getUTCDate();
+  if (monthNumber < 1 || monthNumber > 12 || !Number.isInteger(days)) {
+    throw Object.assign(new Error('Invalid month'), { status: 400 });
+  }
+  return {
+    start: `01${match[2]}${match[1]}`,
+    days,
+    endDate: `${match[1]}-${match[2]}-${String(days).padStart(2, '0')}`
+  };
+}
+
 function canonicalIstatDays(days) {
   return (Array.isArray(days) ? days : []).map(day => ({
     dataRilevazione: String(day.dataRilevazione || ''),
@@ -29,6 +45,61 @@ function canonicalIstatDays(days) {
       partenze: Number(move.partenze) || 0
     })).sort((a, b) => String(a.codiceProvincia || a.codiceNazione).localeCompare(String(b.codiceProvincia || b.codiceNazione)))
   })).sort((a, b) => a.dataRilevazione.localeCompare(b.dataRilevazione));
+}
+
+function dayHasIstatData(day) {
+  return Boolean(
+    day?.strutturaChiusa ||
+    Number(day?.camereOccupate) ||
+    (Array.isArray(day?.movimentazioni) && day.movimentazioni.some(move =>
+      Number(move.arrivi) || Number(move.presentiNottePrecedente) || Number(move.partenze)
+    ))
+  );
+}
+
+function addIstatDay(remote, local) {
+  const movements = new Map();
+  for (const move of [...(remote?.movimentazioni || []), ...(local?.movimentazioni || [])]) {
+    const province = move.codiceProvincia != null;
+    const code = String(province ? move.codiceProvincia : (move.codiceNazione || ''));
+    const key = `${province ? 'province' : 'country'}:${code}`;
+    const current = movements.get(key) || {
+      ...(province ? { codiceProvincia: code } : { codiceNazione: code }),
+      arrivi: 0,
+      presentiNottePrecedente: 0,
+      partenze: 0
+    };
+    current.arrivi += Number(move.arrivi) || 0;
+    current.presentiNottePrecedente += Number(move.presentiNottePrecedente) || 0;
+    current.partenze += Number(move.partenze) || 0;
+    movements.set(key, current);
+  }
+  return {
+    dataRilevazione: local?.dataRilevazione || remote?.dataRilevazione,
+    camereOccupate: (Number(remote?.camereOccupate) || 0) + (Number(local?.camereOccupate) || 0),
+    strutturaChiusa: remote?.strutturaChiusa === true || local?.strutturaChiusa === true,
+    movimentazioni: [...movements.values()]
+  };
+}
+
+function mergeIstatDays(localDays, remoteDays, latestDate, monthEndDate) {
+  const remoteByDate = new Map((Array.isArray(remoteDays) ? remoteDays : []).map(day => [italianDateToIso(day.dataRilevazione), day]));
+  return (Array.isArray(localDays) ? localDays : []).map(day => {
+    const iso = italianDateToIso(day.dataRilevazione);
+    if (!latestDate || !iso || iso > latestDate || !remoteByDate.has(iso)) return day;
+    if (monthEndDate && latestDate >= monthEndDate) return remoteByDate.get(iso);
+    return addIstatDay(remoteByDate.get(iso), day);
+  });
+}
+
+function istatPendingDates(localDays, latestDate, monthEndDate) {
+  if (latestDate && monthEndDate && latestDate >= monthEndDate) return [];
+  return (Array.isArray(localDays) ? localDays : [])
+    .filter(day => {
+      const iso = italianDateToIso(day.dataRilevazione);
+      return !latestDate || iso > latestDate || (iso <= latestDate && dayHasIstatData(day));
+    })
+    .map(day => italianDateToIso(day.dataRilevazione));
 }
 
 class ReportingService {
@@ -214,23 +285,55 @@ class ReportingService {
     return { unit: publicReportingUnit(unit), ...preview };
   }
 
-  async istatStatus(unitId) {
+  async istatLedger(unitId, month) {
+    const preview = await this.istatPreview(unitId, month);
+    if (!preview.unit.configured.istat) {
+      return { ...preview, latest_date: null, remote_days: [] };
+    }
+    const status = await this.istatStatus(unitId, month);
+    const window = istatMonthWindow(month);
+    const pendingDates = istatPendingDates(preview.giornate, status.latest_date, window.endDate);
+    return {
+      ...preview,
+      giornate: mergeIstatDays(preview.giornate, status.remote_days, status.latest_date, window.endDate),
+      latest_date: status.latest_date,
+      remote_days: status.remote_days,
+      pending_dates: pendingDates
+    };
+  }
+
+  async istatStatus(unitId, month = null) {
     await this.init();
     const unit = getReportingUnit(unitId);
     if (!unit) throw Object.assign(new Error('Неизвестная отчётная структура'), { status: 400 });
     if (!unit.configured.istat) {
-      return { unit: publicReportingUnit(unit), configured: false, latest_date: null };
+      return { unit: publicReportingUnit(unit), configured: false, latest_date: null, month, remote_days: [] };
     }
-    const latest = await new this.IstatClient(unit.istat).latest();
+    const client = new this.IstatClient(unit.istat);
+    const latest = await client.latest();
+    const latestDate = italianDateToIso(latest?.dataUltimaRilevazione);
+    let remoteDays = [];
+    if (month) {
+      const window = istatMonthWindow(month);
+      if (latestDate && latestDate >= `${month}-01`) {
+        const remote = await client.movements(window.start, window.days);
+        remoteDays = (Array.isArray(remote?.giornate) ? remote.giornate : []).filter(day => {
+          const iso = italianDateToIso(day.dataRilevazione);
+          return iso && iso.startsWith(`${month}-`) && iso <= latestDate;
+        });
+      }
+    }
     return {
       unit: publicReportingUnit(unit),
       configured: true,
-      latest_date: italianDateToIso(latest?.dataUltimaRilevazione)
+      latest_date: latestDate,
+      month,
+      remote_days: remoteDays
     };
   }
 
   async sendIstat({ unitId, month, expectedHash, confirmed, replace, operator }) {
-    const preview = await this.istatPreview(unitId, month);
+    const preview = await this.istatLedger(unitId, month);
     if (!preview.ready) throw Object.assign(new Error('ISTAT preview содержит блокирующие ошибки'), { status: 409, details: preview.errors });
     const unit = getReportingUnit(unitId);
     if (!unit.configured.istat) throw Object.assign(new Error('ISTAT credentials are not configured'), { status: 503 });
@@ -239,13 +342,14 @@ class ReportingService {
     const payloadHash = sha256(JSON.stringify(payload));
     if (!confirmed || expectedHash !== payloadHash) throw Object.assign(new Error('Preview изменился; повторите подтверждение'), { status: 409 });
     const client = new this.IstatClient(unit.istat);
+    const window = istatMonthWindow(month);
     let response;
     try {
       const latest = await client.latest();
       const latestIso = italianDateToIso(latest?.dataUltimaRilevazione);
       let existingRemote = null;
       if (latestIso && latestIso >= `${month}-01`) {
-        existingRemote = await client.movements(`${month.slice(5, 7)}01${month.slice(0, 4)}`, 1);
+        existingRemote = await client.movements(window.start, window.days);
         const localCanonical = canonicalIstatDays(payload.giornate);
         const remoteCanonical = canonicalIstatDays(existingRemote?.giornate);
         if (remoteCanonical.length && JSON.stringify(remoteCanonical) === JSON.stringify(localCanonical)) {
@@ -264,7 +368,7 @@ class ReportingService {
       await this.store.saveIstatSubmission({ unitId, month, payload, status: error.status === 409 ? 'conflict' : (error.code === 'ISTAT_TIMEOUT' ? 'unknown' : 'failed'), remoteSnapshot: error.response, operatorEmail: operator });
       throw error;
     }
-    const remote = await client.movements(`${month.slice(5, 7)}01${month.slice(0, 4)}`, 1);
+    const remote = await client.movements(window.start, window.days);
     const verified = JSON.stringify(canonicalIstatDays(remote?.giornate)) === JSON.stringify(canonicalIstatDays(payload.giornate));
     await this.store.saveIstatSubmission({ unitId, month, payload, status: verified ? 'verified' : 'submitted', remoteSnapshot: remote, operatorEmail: operator, verified });
     return { verified, payload_hash: payloadHash, response, remote };
@@ -294,4 +398,12 @@ class ReportingService {
   }
 }
 
-module.exports = { ReportingService, operatorEmail, canonicalIstatDays, italianDateToIso };
+module.exports = {
+  ReportingService,
+  operatorEmail,
+  canonicalIstatDays,
+  italianDateToIso,
+  istatMonthWindow,
+  mergeIstatDays,
+  istatPendingDates
+};

@@ -11,6 +11,7 @@
     "audit:data": "node scripts/audit-production-data.js",
     "backup:data": "node scripts/backup-production-data.js",
     "migrate:postgres": "node scripts/migrate-postgres.js",
+    "seed:istat-harmony": "node scripts/seed-harmony-istat-history.js",
     "test": "npm run test:unit && npm run test:booking-lifecycle",
     "test:unit": "node --test tests/*.test.js",
     "test:booking-lifecycle": "node scripts/test-booking-lifecycle.js",

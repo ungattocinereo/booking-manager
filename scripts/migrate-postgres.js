@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('dotenv').config({ path: process.env.ENV_FILE || '.env' });
 process.env.POSTGRES_AUTO_MIGRATE = 'false';
 
 const db = require('../backend/src/database-postgres');

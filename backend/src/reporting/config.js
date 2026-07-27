@@ -2,6 +2,10 @@ const path = require('node:path');
 
 const CONFIG_PATH = path.join(__dirname, '../../config/reporting-units.json');
 
+function envValue(name) {
+  return String(process.env[name] || '').trim();
+}
+
 function loadReportingUnits() {
   delete require.cache[require.resolve(CONFIG_PATH)];
   const config = require(CONFIG_PATH);
@@ -13,15 +17,15 @@ function loadReportingUnits() {
       ? Number(unit.alloggiatiApartmentId)
       : null;
     const alloggiati = {
-      user: process.env[`ALLOGGIATI_${alloggiatiPrefix}_USER`] || '',
-      password: process.env[`ALLOGGIATI_${alloggiatiPrefix}_PASSWORD`] || '',
-      wsKey: process.env[`ALLOGGIATI_${alloggiatiPrefix}_WSKEY`] || '',
+      user: envValue(`ALLOGGIATI_${alloggiatiPrefix}_USER`),
+      password: envValue(`ALLOGGIATI_${alloggiatiPrefix}_PASSWORD`),
+      wsKey: envValue(`ALLOGGIATI_${alloggiatiPrefix}_WSKEY`),
       mode: alloggiatiMode,
       apartmentId: alloggiatiApartmentId
     };
     const istat = {
-      cusr: process.env[`ISTAT_${prefix}_CUSR`] || '',
-      apiKey: process.env[`ISTAT_${prefix}_API_KEY`] || ''
+      cusr: envValue(`ISTAT_${prefix}_CUSR`),
+      apiKey: envValue(`ISTAT_${prefix}_API_KEY`)
     };
     return {
       id: unit.id,

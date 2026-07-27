@@ -524,6 +524,65 @@ class ReportingStore {
     );
   }
 
+  async upsertIstatBaselineStays(stays) {
+    const items = Array.isArray(stays) ? stays : [];
+    if (!items.length) return { upserted: 0 };
+    const valuesFor = item => [
+      item.unitId,
+      item.sourceKey,
+      item.propertyId,
+      item.arrivalDate,
+      item.departureDate,
+      Number(item.roomsOccupied) || 1,
+      JSON.stringify(item.origins || [])
+    ];
+
+    if (isPostgres(this.db)) {
+      const client = await this.db.pool.connect();
+      try {
+        await client.query('BEGIN');
+        for (const item of items) {
+          await client.query(
+            `INSERT INTO istat_baseline_stays
+             (reporting_unit_id,source_key,property_id,arrival_date,departure_date,rooms_occupied,origins)
+             VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb)
+             ON CONFLICT (reporting_unit_id,source_key) DO UPDATE SET
+             property_id=EXCLUDED.property_id,arrival_date=EXCLUDED.arrival_date,departure_date=EXCLUDED.departure_date,
+             rooms_occupied=EXCLUDED.rooms_occupied,origins=EXCLUDED.origins,updated_at=NOW()`,
+            valuesFor(item)
+          );
+        }
+        await client.query('COMMIT');
+      } catch (error) {
+        await client.query('ROLLBACK').catch(() => {});
+        throw error;
+      } finally {
+        client.release();
+      }
+      return { upserted: items.length };
+    }
+
+    await this.db.run('BEGIN IMMEDIATE');
+    try {
+      for (const item of items) {
+        await this.db.run(
+          `INSERT INTO istat_baseline_stays
+           (reporting_unit_id,source_key,property_id,arrival_date,departure_date,rooms_occupied,origins)
+           VALUES (?,?,?,?,?,?,?)
+           ON CONFLICT(reporting_unit_id,source_key) DO UPDATE SET
+           property_id=excluded.property_id,arrival_date=excluded.arrival_date,departure_date=excluded.departure_date,
+           rooms_occupied=excluded.rooms_occupied,origins=excluded.origins,updated_at=CURRENT_TIMESTAMP`,
+          valuesFor(item)
+        );
+      }
+      await this.db.run('COMMIT');
+    } catch (error) {
+      await this.db.run('ROLLBACK').catch(() => {});
+      throw error;
+    }
+    return { upserted: items.length };
+  }
+
   async staysForMonth(unitId, month) {
     const start = `${month}-01`;
     const next = new Date(`${start}T00:00:00Z`);
@@ -557,7 +616,37 @@ class ReportingStore {
         departure_date: dateOnly(record.departure_date)
       }));
     }
-    return stays;
+    const baselineRows = await this.rows(
+      `SELECT * FROM istat_baseline_stays
+       WHERE reporting_unit_id=$1 AND arrival_date < $3::date AND departure_date >= $2::date
+       ORDER BY arrival_date,id`,
+      `SELECT * FROM istat_baseline_stays
+       WHERE reporting_unit_id=? AND arrival_date < ? AND departure_date >= ?
+       ORDER BY arrival_date,id`,
+      isPostgres(this.db) ? [unitId, start, end] : [unitId, end, start]
+    );
+    const baselineStays = baselineRows.map(row => {
+      const origins = parseJson(row.origins, []);
+      const arrivalDate = dateOnly(row.arrival_date);
+      const departureDate = dateOnly(row.departure_date);
+      return {
+        id: `baseline:${row.id}`,
+        property_id: row.property_id,
+        booking_id: null,
+        arrival_date: arrivalDate,
+        departure_date: departureDate,
+        rooms_occupied: Number(row.rooms_occupied) || 1,
+        origin_confirmed: origins.length > 0 && origins.every(origin => origin.origin_kind && origin.origin_code),
+        records: origins.map((origin, index) => ({
+          id: `baseline:${row.id}:${index + 1}`,
+          origin_kind: origin.origin_kind,
+          origin_code: String(origin.origin_code || ''),
+          arrival_date: arrivalDate,
+          departure_date: departureDate
+        }))
+      };
+    });
+    return [...stays, ...baselineStays].sort((a, b) => a.arrival_date.localeCompare(b.arrival_date));
   }
 
   async saveIstatSubmission({ unitId, month, payload, status, remoteSnapshot, operatorEmail, verified = false }) {

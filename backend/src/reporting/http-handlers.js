@@ -104,13 +104,13 @@ async function istat(req, res, db) {
     const service = new ReportingService(db);
     if (req.method === 'GET') {
       if (req.query.action === 'status') {
-        return res.status(200).json(await service.istatStatus(req.query.unit_id));
+        return res.status(200).json(await service.istatStatus(req.query.unit_id, req.query.month || null));
       }
       if (req.query.action === 'codes') {
         const unit = getReportingUnit(req.query.unit_id) || { istat: {} };
         return res.status(200).json(await new IstatClient(unit.istat).codes());
       }
-      const preview = await service.istatPreview(req.query.unit_id, req.query.month);
+      const preview = await service.istatLedger(req.query.unit_id, req.query.month);
       const payload = { giornate: preview.giornate };
       return res.status(200).json({ ...preview, payload_hash: sha256(JSON.stringify(payload)) });
     }

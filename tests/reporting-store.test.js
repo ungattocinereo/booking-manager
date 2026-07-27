@@ -194,3 +194,34 @@ test('deletes an unsent TXT, preserves its Test audit and allows the same file t
     delete process.env.SQLITE_DB_PATH;
   }
 });
+
+test('stores non-PII ISTAT baseline stays idempotently outside the TXT inbox', async () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'booking-reporting-baseline-'));
+  process.env.SQLITE_DB_PATH = path.join(tempDir, 'bookings.db');
+  delete require.cache[require.resolve('../backend/src/database')];
+  const db = require('../backend/src/database');
+  const { ReportingStore } = require('../backend/src/reporting/store');
+  const item = {
+    unitId:'harmony', sourceKey:'legacy-2026-07-18-harmony', propertyId:'harmony',
+    arrivalDate:'2026-07-18', departureDate:'2026-07-22', roomsOccupied:1,
+    origins:[{ origin_kind:'country', origin_code:'701' }, { origin_kind:'country', origin_code:'701' }]
+  };
+
+  try {
+    await db.init();
+    await db.createProperty('harmony', 'Harmony');
+    const store = new ReportingStore(db);
+    await store.syncUnits([{ id:'harmony', name:'Harmony', propertyIds:['harmony'] }]);
+    await store.upsertIstatBaselineStays([item]);
+    await store.upsertIstatBaselineStays([item]);
+    const stays = await store.staysForMonth('harmony', '2026-07');
+    assert.equal(stays.length, 1);
+    assert.equal(stays[0].records.length, 2);
+    assert.equal(stays[0].origin_confirmed, true);
+    assert.equal((await db.get('SELECT COUNT(*) AS count FROM guest_import_batches')).count, 0);
+  } finally {
+    await db.close();
+    fs.rmSync(tempDir, { recursive:true, force:true });
+    delete process.env.SQLITE_DB_PATH;
+  }
+});

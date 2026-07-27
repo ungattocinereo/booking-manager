@@ -2944,10 +2944,19 @@
     .reporting-istat-table th { position:sticky; top:0; z-index:1; padding:9px 11px; background:#f1f5f9; color:#475569; font-size:9px; letter-spacing:.05em; text-align:left; text-transform:uppercase; }
     .reporting-istat-table td { padding:8px 11px; border-top:1px solid #e8eef5; color:#334155; }
     .reporting-istat-table tbody tr.has-data { background:#f8fbff; }
+    .reporting-istat-table tbody tr.istat-sent { background:#f7fcfa; }
+    .reporting-istat-table tbody tr.istat-update { background:#fffaf0; }
     .reporting-istat-table tbody tr:hover { background:#eff6ff; }
     .reporting-istat-day { color:#172554; font-variant-numeric:tabular-nums; font-weight:750; }
     .reporting-istat-zero { color:#94a3b8; }
     .reporting-istat-movement { color:#1d4ed8; font-weight:750; }
+    .reporting-istat-progress { display:flex; flex-wrap:wrap; gap:8px; margin-top:11px; }
+    .reporting-istat-progress span { display:inline-flex; align-items:center; gap:5px; min-height:28px; padding:5px 9px; border:1px solid #dbe5ef; border-radius:999px; background:#fff; color:#526579; font-size:10px; }
+    .reporting-istat-progress strong { color:#172554; font-size:12px; }
+    .reporting-istat-state { display:inline-flex; align-items:center; gap:5px; min-height:25px; padding:4px 8px; border:1px solid transparent; border-radius:999px; font-size:9px; font-weight:800; white-space:nowrap; }
+    .reporting-istat-state.sent { border-color:#a7f3d0; background:#ecfdf5; color:#047857; }
+    .reporting-istat-state.pending { border-color:#fed7aa; background:#fff7ed; color:#b45309; }
+    .reporting-istat-state.update { border-color:#fcd34d; background:#fffbeb; color:#a16207; }
     @media (prefers-reduced-motion:reduce) { .reporting-unit,.reporting-dropzone { transition:none; } }
     @media (max-width:1000px) { .reporting-destination { grid-template-columns:1fr; gap:12px; } }
     @media (max-width:900px) { .reporting-grid { grid-template-columns:1fr; } }
@@ -7089,7 +7098,8 @@ async function loadReportingDashboard({ force = false } = {}) {
     const month = document.getElementById('reportingMonth');
     if (!month.value) month.value = previousMonthValue();
     renderReportingUnits();
-    await Promise.all([loadReportingBatches(), loadReportingCodes(), loadIstatStatus(), loadIstatPreview()]);
+    await Promise.all([loadReportingBatches(), loadReportingCodes()]);
+    await loadIstatPreview();
   } catch (error) {
     unitsEl.innerHTML = `<div class="reporting-alert">${escapeHtml(error.message)}</div>`;
   }
@@ -7168,7 +7178,8 @@ async function selectReportingUnit(unitId) {
   renderReportingUnits();
   document.getElementById('reportingBatchDetail').innerHTML = '<div class="reporting-card-head"><div><span class="reporting-step">Шаг 3 · Alloggiati Web</span><h3>Проверка и отправка</h3></div></div><div class="reporting-detail-empty">Выберите импортированный TXT, проверьте гостей и отправьте их в Alloggiati Web.</div>';
   document.getElementById('reportingIstatPreview').innerHTML = `<div class="reporting-detail-empty">Готовим таблицу для «${escapeHtml(currentReportingUnit()?.name || '')}»…</div>`;
-  await Promise.all([loadReportingBatches(), loadIstatStatus(), loadIstatPreview()]);
+  await loadReportingBatches();
+  await loadIstatPreview();
 }
 
 async function loadReportingBatches() {
@@ -7388,14 +7399,14 @@ async function loadReportingCodes() {
   } catch (_) { /* Manual code entry remains available when the regional reference endpoint is offline. */ }
 }
 
-async function loadIstatStatus() {
+async function loadIstatStatus(month = document.getElementById('reportingMonth').value) {
   if (!reportingState.unitId) return;
   const requestedUnitId = reportingState.unitId;
   reportingState.istatStatus = null;
   renderIstatStatus();
   try {
-    const status = await reportingFetch(`${API}/reporting/istat?action=status&unit_id=${encodeURIComponent(requestedUnitId)}`);
-    if (requestedUnitId !== reportingState.unitId) return;
+    const status = await reportingFetch(`${API}/reporting/istat?action=status&unit_id=${encodeURIComponent(requestedUnitId)}&month=${encodeURIComponent(month)}`);
+    if (requestedUnitId !== reportingState.unitId || month !== document.getElementById('reportingMonth').value) return;
     reportingState.istatStatus = status;
     renderIstatStatus();
   } catch (error) {
@@ -7419,6 +7430,18 @@ async function loadIstatPreview() {
     const preview = await reportingFetch(`${API}/reporting/istat?unit_id=${encodeURIComponent(requestedUnitId)}&month=${encodeURIComponent(month)}`);
     if (requestedUnitId !== reportingState.unitId || month !== monthInput.value) return;
     reportingState.istatPreview = preview;
+    reportingState.istatStatus = {
+      configured: preview.unit?.configured?.istat !== false,
+      latest_date: preview.latest_date || null,
+      month,
+      remote_days: preview.remote_days || []
+    };
+    renderIstatStatus();
+    const latest = preview.latest_date || null;
+    const pendingDates = new Set(preview.pending_dates || []);
+    let sentDays = 0;
+    let updateDays = 0;
+    let pendingDays = 0;
     const totals = preview.giornate.reduce((acc, day) => {
       acc.rooms += Number(day.camereOccupate) || 0;
       for (const move of day.movimentazioni || []) { acc.arrivals += move.arrivi || 0; acc.departures += move.partenze || 0; }
@@ -7433,23 +7456,32 @@ async function loadIstatPreview() {
       }, { arrivals:0, present:0, departures:0 });
       const hasData = daily.arrivals || daily.present || daily.departures || Number(day.camereOccupate) || day.strutturaChiusa;
       const iso = italianReportingDateToIso(day.dataRilevazione);
-      return `<tr class="${hasData ? 'has-data' : ''}">
+      const needsUpdate = Boolean(latest && iso <= latest && pendingDates.has(iso));
+      const sent = Boolean(latest && iso <= latest && !needsUpdate);
+      if (sent) sentDays++;
+      else if (needsUpdate) updateDays++;
+      else pendingDays++;
+      const stateClass = sent ? 'sent' : (needsUpdate ? 'update' : 'pending');
+      const stateLabel = sent ? 'Отправлено в ISTAT' : (needsUpdate ? 'Нужно обновить' : 'Ожидает отправки');
+      const rowClass = sent ? 'istat-sent' : (needsUpdate ? 'istat-update' : (hasData ? 'has-data' : ''));
+      return `<tr class="${rowClass}">
         <td class="reporting-istat-day">${escapeHtml(formatReportingDate(iso))}</td>
         <td class="${daily.arrivals ? 'reporting-istat-movement' : 'reporting-istat-zero'}">${daily.arrivals}</td>
         <td class="${daily.present ? 'reporting-istat-movement' : 'reporting-istat-zero'}">${daily.present}</td>
         <td class="${daily.departures ? 'reporting-istat-movement' : 'reporting-istat-zero'}">${daily.departures}</td>
         <td>${Number(day.camereOccupate) || 0}</td>
-        <td>${day.strutturaChiusa ? 'Закрыто' : (hasData ? 'Есть данные' : '<span class="reporting-istat-zero">Нулевой день</span>')}</td>
+        <td><span class="reporting-istat-state ${stateClass}">${stateLabel}</span></td>
       </tr>`;
     }).join('');
     target.innerHTML = `
       <div class="reporting-metrics"><div class="reporting-metric"><strong>${totals.arrivals}</strong><span>прибытий</span></div><div class="reporting-metric"><strong>${totals.departures}</strong><span>отъездов</span></div><div class="reporting-metric"><strong>${totals.rooms}</strong><span>комнато-дней</span></div></div>
+      <div class="reporting-istat-progress"><span><strong>${sentDays}</strong> дней отправлено</span>${updateDays ? `<span><strong>${updateDays}</strong> ${updateDays === 1 ? 'день нужно обновить' : 'дней нужно обновить'}</span>` : ''}<span><strong>${pendingDays}</strong> дней ожидают отправки</span></div>
       ${preview.errors.length ? `<ul class="reporting-errors">${preview.errors.map(error => `<li>${escapeHtml(error)}</li>`).join('')}</ul>` : '<div class="reporting-alert" style="margin-top:10px;border-color:#a7f3d0;background:#ecfdf5;color:#047857">Месячная таблица готова к отправке.</div>'}
       <div class="reporting-istat-note">Это черновик из ежедневных импортов. Нулевые дни тоже входят в отчёт; перед месячной отправкой проверьте весь период.</div>
       <div class="reporting-istat-table-wrap"><table class="reporting-istat-table"><thead><tr><th>Дата</th><th>Прибыло</th><th>Осталось</th><th>Уехало</th><th>Комнат</th><th>Состояние</th></tr></thead><tbody>${dayRows}</tbody></table></div>
       <div class="reporting-send-panel">
         <div class="reporting-send-target"><i data-lucide="route" style="width:17px;height:17px;flex:none;color:#0f766e"></i><span><strong>Назначение: ISTAT · ${escapeHtml(currentReportingUnit()?.name || '—')}</strong>Квартиры: ${escapeHtml(reportingPropertySummary())} · период ${escapeHtml(preview.month)}</span></div>
-        <div class="reporting-actions"><button class="btn reporting-action-send" type="button" onclick="sendIstatMonth()" ${preview.ready && reportingState.externalSendEnabled ? '' : 'disabled'}><i data-lucide="send" style="width:14px;height:14px"></i> Отправить ISTAT · ${escapeHtml(currentReportingUnit()?.name || '—')}</button></div>
+        <div class="reporting-actions"><button class="btn reporting-action-send" type="button" onclick="sendIstatMonth()" ${preview.ready && reportingState.externalSendEnabled ? '' : 'disabled'}><i data-lucide="send" style="width:14px;height:14px"></i> ${latest && latest >= `${preview.month}-01` ? 'Обновить' : 'Отправить'} ISTAT · ${escapeHtml(currentReportingUnit()?.name || '—')}</button></div>
       </div>`;
     refreshLucideIcons();
   } catch (error) {
@@ -7460,20 +7492,23 @@ async function loadIstatPreview() {
 async function sendIstatMonth() {
   const preview = reportingState.istatPreview;
   const unit = currentReportingUnit();
+  const replace = Boolean(preview?.latest_date && preview.latest_date >= `${preview.month}-01`);
   if (!preview || !window.confirm(
     `Проверьте назначение перед отправкой\n\n` +
     `Структура: ${unit?.name || '—'}\n` +
     `Квартиры: ${reportingPropertySummary(unit)}\n` +
     `Период ISTAT: ${preview.month}\n\n` +
-    `Отправить месячный отчёт?`
+    (replace
+      ? `В ISTAT уже есть данные по ${formatReportingDate(preview.latest_date)}. Обновить период, сохранив подтверждённые дни?`
+      : `Отправить месячный отчёт?`)
   )) return;
   try {
     const result = await reportingFetch(`${API}/reporting/istat`, {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({ unit_id:reportingState.unitId, month:preview.month, expected_hash:preview.payload_hash, confirmed:true, replace:false })
+      body:JSON.stringify({ unit_id:reportingState.unitId, month:preview.month, expected_hash:preview.payload_hash, confirmed:true, replace })
     });
     toast(result.verified ? `ISTAT для «${unit?.name || 'структуры'}» отправлен и проверен` : `ISTAT для «${unit?.name || 'структуры'}» отправлен; нужна сверка`);
-    await Promise.all([loadIstatStatus(), loadIstatPreview()]);
+    await loadIstatPreview();
   } catch (error) { toast(error.message); }
 }
 

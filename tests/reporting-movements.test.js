@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 
 const { aggregateIstatMonth } = require('../backend/src/reporting/istat-movements');
 const { chooseBookingSuggestion } = require('../backend/src/reporting/matcher');
-const { canonicalIstatDays, italianDateToIso } = require('../backend/src/reporting/service');
+const { canonicalIstatDays, italianDateToIso, istatMonthWindow, mergeIstatDays, istatPendingDates } = require('../backend/src/reporting/service');
 
 test('builds daily ISTAT movements for a one-night stay', () => {
   const result = aggregateIstatMonth({
@@ -73,4 +73,33 @@ test('normalizes Sinfonia dates and movement ordering for read-back verification
   ] }]);
   assert.equal(canonical[0].camereOccupate, 1);
   assert.deepEqual(canonical[0].movimentazioni.map(item => item.codiceProvincia || item.codiceNazione), ['63', '701']);
+});
+
+test('reads a complete ISTAT month using the regional DDMMYYYY window', () => {
+  assert.deepEqual(istatMonthWindow('2026-07'), { start:'01072026', days:31, endDate:'2026-07-31' });
+  assert.deepEqual(istatMonthWindow('2028-02'), { start:'01022028', days:29, endDate:'2028-02-29' });
+});
+
+test('keeps confirmed ISTAT movements and adds a late local arrival at the open boundary', () => {
+  const remote = [{ dataRilevazione:'14072026', camereOccupate:1, strutturaChiusa:false, movimentazioni:[
+    { codiceNazione:'221', arrivi:0, presentiNottePrecedente:2, partenze:0 }
+  ] }];
+  const local = [{ dataRilevazione:'14072026', camereOccupate:2, strutturaChiusa:false, movimentazioni:[
+    { codiceNazione:'219', arrivi:1, presentiNottePrecedente:0, partenze:0 }
+  ] }];
+  const openMonth = mergeIstatDays(local, remote, '2026-07-14', '2026-07-31')[0];
+  assert.equal(openMonth.camereOccupate, 3);
+  assert.equal(openMonth.movimentazioni.length, 2);
+  const completeMonth = mergeIstatDays(local, remote, '2026-07-31', '2026-07-31')[0];
+  assert.deepEqual(completeMonth, remote[0]);
+});
+
+test('marks a late arrival on the latest remote day and every later day as pending', () => {
+  const days = [
+    { dataRilevazione:'13072026', camereOccupate:0, movimentazioni:[] },
+    { dataRilevazione:'14072026', camereOccupate:1, movimentazioni:[{ codiceNazione:'219', arrivi:1 }] },
+    { dataRilevazione:'15072026', camereOccupate:0, movimentazioni:[] }
+  ];
+  assert.deepEqual(istatPendingDates(days, '2026-07-14', '2026-07-31'), ['2026-07-14', '2026-07-15']);
+  assert.deepEqual(istatPendingDates(days, '2026-07-31', '2026-07-31'), []);
 });

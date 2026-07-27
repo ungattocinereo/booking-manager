@@ -52,3 +52,12 @@ test('reporting UI deletes only an unsubmitted TXT after explicit confirmation',
   assert.match(html, /Гости исчезнут и из черновика ISTAT/);
   assert.match(html, /!\['sent', 'partial', 'unknown', 'pii_purged'\]\.includes\(batch\.status\)/);
 });
+
+test('ISTAT ledger distinguishes confirmed, pending and late-update days', () => {
+  assert.match(html, /Отправлено в ISTAT/);
+  assert.match(html, /Ожидает отправки/);
+  assert.match(html, /Нужно обновить/);
+  assert.match(html, /preview\.pending_dates/);
+  assert.match(html, /preview\.latest_date/);
+  assert.match(html, /replace = Boolean/);
+});
