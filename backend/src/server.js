@@ -403,11 +403,12 @@ app.get('/reporting', (req, res) => {
 
 // ===== GUEST REPORTING (ALLOGGIATI / ISTAT) =====
 
-app.all('/api/reporting', require('../../api/reporting'));
-app.all('/api/reporting/imports', require('../../api/reporting/imports'));
-app.all('/api/reporting/alloggiati', require('../../api/reporting/alloggiati'));
-app.all('/api/reporting/istat', require('../../api/reporting/istat'));
-app.all('/api/reporting/maintenance', require('../../api/reporting/maintenance'));
+const { handleReportingRequest } = require('./reporting/http-handlers');
+app.all('/api/reporting', (req, res) => handleReportingRequest('dashboard', req, res, db));
+app.all('/api/reporting/imports', (req, res) => handleReportingRequest('imports', req, res, db));
+app.all('/api/reporting/alloggiati', (req, res) => handleReportingRequest('alloggiati', req, res, db));
+app.all('/api/reporting/istat', (req, res) => handleReportingRequest('istat', req, res, db));
+app.all('/api/reporting/maintenance', (req, res) => handleReportingRequest('maintenance', req, res, db));
 
 // ===== TAX (TASSA DI SOGGIORNO) =====
 

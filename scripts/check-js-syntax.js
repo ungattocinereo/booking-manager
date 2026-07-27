@@ -1,4 +1,5 @@
 const { execFileSync, spawnSync } = require('node:child_process');
+const { existsSync } = require('node:fs');
 
 const files = execFileSync(
   'git',
@@ -7,7 +8,7 @@ const files = execFileSync(
 )
   .split('\n')
   .map(file => file.trim())
-  .filter(Boolean);
+  .filter(file => file && existsSync(file));
 
 for (const file of files) {
   const result = spawnSync(process.execPath, ['--check', file], { encoding: 'utf8' });
