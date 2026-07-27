@@ -4265,7 +4265,16 @@ function taxAmountLabel(booking) {
 
 function formatTaxDate(iso) {
   if (!iso) return '—';
-  return new Date(iso + 'T12:00:00').toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+  const value = String(iso).trim();
+  const isoMatch = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  const italianMatch = value.match(/^(\d{2})\/?(\d{2})\/?(\d{4})$/);
+  const day = isoMatch
+    ? `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`
+    : (italianMatch ? `${italianMatch[3]}-${italianMatch[2]}-${italianMatch[1]}` : null);
+  if (!day) return 'Дата не определена';
+  const date = new Date(`${day}T12:00:00Z`);
+  if (Number.isNaN(date.getTime())) return 'Дата не определена';
+  return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', timeZone: 'UTC' });
 }
 
 function taxStayLabel(booking) {

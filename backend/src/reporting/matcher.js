@@ -1,3 +1,5 @@
+const { dateOnly } = require('../../../lib/booking-normalization');
+
 function normalized(value) {
   return String(value || '')
     .normalize('NFD')
@@ -11,8 +13,8 @@ function suggestBookings(group, bookings, propertyIds) {
   const surname = normalized(group.head.surname);
   const exactDates = bookings.filter(booking =>
     propertyIds.includes(booking.property_id) &&
-    String(booking.start_date).slice(0, 10) === group.head.arrivalDate &&
-    String(booking.end_date).slice(0, 10) === group.head.departureDate
+    dateOnly(booking.start_date) === group.head.arrivalDate &&
+    dateOnly(booking.end_date) === group.head.departureDate
   );
   return exactDates.map(booking => {
     const guest = normalized(booking.guest_name || booking.raw_summary);

@@ -112,3 +112,45 @@ test('syncUnits merges Royal into Harmony and archives the removed reporting uni
     delete process.env.SQLITE_DB_PATH;
   }
 });
+
+test('getBatch converts PostgreSQL DATE objects to stable ISO day strings', async () => {
+  const { ReportingStore } = require('../backend/src/reporting/store');
+  const db = {
+    pool: {},
+    async queryOne() {
+      return {
+        id: 14,
+        version: 1,
+        record_count: 2,
+        stay_count: 1,
+        arrival_from: new Date(2026, 6, 25),
+        arrival_to: new Date(2026, 6, 25)
+      };
+    },
+    async query(sql) {
+      if (sql.includes('FROM guest_stays')) return [{
+        id: 21,
+        booking_id: 7,
+        guest_count: 2,
+        rooms_occupied: 1,
+        origin_confirmed: false,
+        arrival_date: new Date(2026, 6, 25),
+        departure_date: new Date(2026, 6, 28)
+      }];
+      if (sql.includes('FROM guest_records')) return [{
+        id: 31,
+        stay_id: 21,
+        line_number: 1,
+        arrival_date: new Date(2026, 6, 25),
+        departure_date: new Date(2026, 6, 28),
+        encrypted_record: null
+      }];
+      return [];
+    }
+  };
+  const batch = await new ReportingStore(db).getBatch(14);
+  assert.equal(batch.arrival_from, '2026-07-25');
+  assert.equal(batch.stays[0].arrival_date, '2026-07-25');
+  assert.equal(batch.stays[0].departure_date, '2026-07-28');
+  assert.equal(batch.stays[0].records[0].arrival_date, '2026-07-25');
+});

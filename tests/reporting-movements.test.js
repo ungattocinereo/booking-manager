@@ -50,6 +50,19 @@ test('auto-selects a unique booking by dates and leader surname', () => {
   assert.equal(result.suggestions[0].score, 100);
 });
 
+test('auto-selects a booking when PostgreSQL returns DATE values as Date objects', () => {
+  const group = { head: { arrivalDate: '2026-07-25', departureDate: '2026-07-28', surname: 'Clemente' } };
+  const result = chooseBookingSuggestion(group, [{
+    id: 7,
+    property_id: 'carina',
+    start_date: new Date(2026, 6, 25),
+    end_date: new Date(2026, 6, 28),
+    guest_name: 'Clemente Jeremy Christian'
+  }], ['carina']);
+  assert.equal(result.selected.id, 7);
+  assert.equal(result.suggestions[0].score, 100);
+});
+
 test('normalizes Sinfonia dates and movement ordering for read-back verification', () => {
   assert.equal(italianDateToIso('31072026'), '2026-07-31');
   assert.equal(italianDateToIso('31/07/2026'), '2026-07-31');

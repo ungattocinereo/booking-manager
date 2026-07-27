@@ -1,6 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const {
+  dateOnly,
   isRealGuestBooking,
   normalizeBookingsForDisplay
 } = require('../lib/booking-normalization');
@@ -21,6 +22,13 @@ function row(overrides = {}) {
     ...overrides
   };
 }
+
+test('normalizes database, ISO timestamp and Italian reporting dates to one day key', () => {
+  assert.equal(dateOnly(new Date(2026, 6, 25)), '2026-07-25');
+  assert.equal(dateOnly('2026-07-25T00:00:00.000Z'), '2026-07-25');
+  assert.equal(dateOnly('25/07/2026'), '2026-07-25');
+  assert.equal(dateOnly('25072026'), '2026-07-25');
+});
 
 test('keeps only unmatched short Booking markers as operational fallbacks', () => {
   const fallback = row();

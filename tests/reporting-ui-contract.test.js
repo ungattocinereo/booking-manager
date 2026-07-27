@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const vm = require('node:vm');
 
 const html = fs.readFileSync(path.join(__dirname, '../frontend/public/index.html'), 'utf8');
 
@@ -28,4 +29,18 @@ test('reporting UI keeps Alloggiati as step three and ISTAT as a monthly ledger'
   assert.match(html, /action=status/);
   assert.match(html, /class="reporting-istat-table"/);
   assert.match(html, /до 4-го числа/);
+});
+
+test('reporting dates accept PostgreSQL ISO timestamps and never render Invalid Date', () => {
+  assert.match(html, /const isoMatch = value\.match/);
+  assert.match(html, /const italianMatch = value\.match/);
+  assert.match(html, /Дата не определена/);
+  const source = html.match(/function formatTaxDate\(iso\) \{[\s\S]*?\n\}/)?.[0];
+  assert.ok(source);
+  const values = vm.runInNewContext(`${source}; [
+    formatTaxDate('2026-07-25T00:00:00.000Z'),
+    formatTaxDate('25/07/2026'),
+    formatTaxDate('25072026')
+  ]`);
+  assert.equal(values.every(value => value.includes('25') && !value.includes('Invalid')), true);
 });

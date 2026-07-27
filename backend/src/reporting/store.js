@@ -1,5 +1,6 @@
 const { encryptRecord, decryptRecord, fingerprint, sha256 } = require('./crypto');
 const { istatOriginFromCitizenship } = require('./parser');
+const { dateOnly } = require('../../../lib/booking-normalization');
 
 function isPostgres(db) {
   return Boolean(db.pool);
@@ -18,7 +19,9 @@ function normalizeBatch(row) {
     id: Number(row.id),
     version: Number(row.version),
     record_count: Number(row.record_count),
-    stay_count: Number(row.stay_count)
+    stay_count: Number(row.stay_count),
+    arrival_from: dateOnly(row.arrival_from),
+    arrival_to: dateOnly(row.arrival_to)
   };
 }
 
@@ -258,6 +261,8 @@ class ReportingStore {
         id: Number(record.id),
         stay_id: Number(record.stay_id),
         line_number: Number(record.line_number),
+        arrival_date: dateOnly(record.arrival_date),
+        departure_date: dateOnly(record.departure_date),
         pii
       };
       if (!byStay.has(normalized.stay_id)) byStay.set(normalized.stay_id, []);
@@ -272,6 +277,8 @@ class ReportingStore {
         guest_count: Number(stay.guest_count),
         rooms_occupied: Number(stay.rooms_occupied),
         origin_confirmed: Boolean(stay.origin_confirmed),
+        arrival_date: dateOnly(stay.arrival_date),
+        departure_date: dateOnly(stay.departure_date),
         records: byStay.get(Number(stay.id)) || []
       }))
     };
@@ -458,11 +465,18 @@ class ReportingStore {
       stay.id = Number(stay.id);
       stay.rooms_occupied = Number(stay.rooms_occupied);
       stay.origin_confirmed = Boolean(stay.origin_confirmed);
+      stay.arrival_date = dateOnly(stay.arrival_date);
+      stay.departure_date = dateOnly(stay.departure_date);
       stay.records = await this.rows(
         `SELECT id, origin_kind, origin_code, arrival_date::text, departure_date::text FROM guest_records WHERE stay_id=$1`,
         `SELECT id, origin_kind, origin_code, arrival_date, departure_date FROM guest_records WHERE stay_id=?`,
         [stay.id]
       );
+      stay.records = stay.records.map(record => ({
+        ...record,
+        arrival_date: dateOnly(record.arrival_date),
+        departure_date: dateOnly(record.departure_date)
+      }));
     }
     return stays;
   }

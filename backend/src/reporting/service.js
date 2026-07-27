@@ -6,6 +6,7 @@ const { AlloggiatiClient } = require('./alloggiati-client');
 const { IstatClient } = require('./istat-client');
 const { aggregateIstatMonth } = require('./istat-movements');
 const { fingerprint, sha256 } = require('./crypto');
+const { dateOnly } = require('../../../lib/booking-normalization');
 
 function operatorEmail(req) {
   return String(req.headers?.['cf-access-authenticated-user-email'] || req.headers?.['x-reporting-operator'] || 'local-operator').slice(0, 255);
@@ -128,7 +129,7 @@ class ReportingService {
       if (!Number.isInteger(bookingId) || !propertyId) throw Object.assign(new Error('Некорректная связь с бронью'), { status: 400 });
       const bookings = await this.db.getBookings(propertyId, stay.arrival_date, { includeInactive: false });
       const booking = bookings.find(item => Number(item.id) === bookingId);
-      if (!booking || String(booking.start_date).slice(0, 10) !== stay.arrival_date || String(booking.end_date).slice(0, 10) !== stay.departure_date) {
+      if (!booking || dateOnly(booking.start_date) !== dateOnly(stay.arrival_date) || dateOnly(booking.end_date) !== dateOnly(stay.departure_date)) {
         throw Object.assign(new Error('Бронь не совпадает с объектом и датами проживания'), { status: 409 });
       }
     }
