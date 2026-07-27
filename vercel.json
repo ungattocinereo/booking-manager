@@ -5,7 +5,8 @@
     }
   },
   "crons": [
-    { "path": "/api/sync", "schedule": "0 6 * * *" }
+    { "path": "/api/sync", "schedule": "0 6 * * *" },
+    { "path": "/api/reporting/maintenance", "schedule": "30 6 * * *" }
   ],
   "rewrites": [
     { "source": "/favicon.ico", "destination": "/frontend/public/favicon.ico" },
@@ -24,6 +25,7 @@
     { "source": "/stats", "destination": "/frontend/public/index.html" },
     { "source": "/maid", "destination": "/frontend/public/index.html" },
     { "source": "/tax", "destination": "/frontend/public/index.html" },
+    { "source": "/reporting", "destination": "/frontend/public/index.html" },
     { "source": "/", "destination": "/frontend/public/index.html" }
   ]
 }

@@ -14,6 +14,7 @@ Booking and cleaning calendar for vacation rental properties in Atrani, Italy. S
 - **Maid calendar** — mobile-first Italian-language page for each cleaner at `/maid/:slug`
 - **Statistics** — season analytics (Apr-Nov) with Chart.js: monthly bookings, occupancy, countries, check-in patterns, stay duration, guest counts
 - **Telegram bot** — family group chat with booking queries and cleaning schedules
+- **Guest reporting** — protected Comune TXT review, Alloggiati Web submission workflow, receipts, and monthly ISTAT preview at `/reporting`
 - **Dual deployment** — runs locally with SQLite or on Vercel with Postgres
 
 ## Properties
@@ -74,6 +75,7 @@ Booking and cleaning calendar for vacation rental properties in Atrani, Italy. S
 | `/stats` | Statistics — season charts and analytics | Russian |
 | `/maid` | Cleaning management — cleaner assignments, slug links | Russian |
 | `/maid/:slug` | Maid calendar — check-ins/check-outs for specific cleaner | Italian |
+| `/reporting` | Guest registration and Alloggiati/ISTAT reporting | Russian |
 
 ## Access Control
 
@@ -107,6 +109,10 @@ Deploys automatically from `main`. Required environment variables:
 | `ICAL_FETCH_RETRIES` | Transient iCal retry count, default `2` |
 | `BOOKING_STALE_GRACE_HOURS` | Quarantine before a missing booking is hidden, default `6` |
 | `HEALTH_SYNC_STALE_MINUTES` | Maximum healthy sync age, default `1560` (26 hours) |
+| `REPORTING_PII_ENCRYPTION_KEY` | 32-byte base64/hex key used to encrypt fixed-width guest records |
+| `REPORTING_EXTERNAL_SEND_ENABLED` | Safety flag; keep `false` until external test/shadow checks pass |
+| `ALLOGGIATI_<UNIT>_*` | Per-unit Alloggiati user, password, and WSKEY |
+| `ISTAT_<UNIT>_*` | Per-unit CUSR and Sinfonia API key |
 
 Run `npm run migrate:postgres` after schema changes. Runtime requests only connect to Postgres; they do not execute DDL unless `POSTGRES_AUTO_MIGRATE=true` is explicitly set for a fresh environment.
 
@@ -181,6 +187,13 @@ node bot.js
 - `POST /api/cleaning-tasks` — Create manual task
 - `POST /api/cleaning-tasks/:id/complete` — Mark completed
 - `POST /api/cleaning-tasks/:id/assign` — Assign cleaner
+
+### Guest Reporting
+- `GET /api/reporting` — Reporting units and integration readiness
+- `GET|POST|PATCH /api/reporting/imports` — List, import, and review Comune TXT batches
+- `GET|POST /api/reporting/alloggiati` — Download receipts or run Alloggiati `Test`/`Send`
+- `GET|POST /api/reporting/istat` — ISTAT codes, monthly preview, and confirmed submission
+- `GET /api/reporting/maintenance` — Protected daily receipt/purge cron
 
 ### System
 - `GET /api/sync` — Sync calendars (cron, requires `CRON_SECRET`)

@@ -2823,6 +2823,67 @@
         align-items: center;
       }
     }
+    /* Guest reporting */
+    .reporting-section { display:none; padding:24px 28px 48px; max-width:1440px; margin:0 auto; }
+    .reporting-hero { display:flex; align-items:flex-start; justify-content:space-between; gap:18px; margin-bottom:18px; }
+    .reporting-hero h2 { margin:3px 0 6px; font-size:25px; letter-spacing:-.03em; }
+    .reporting-hero p { margin:0; color:var(--text-secondary); font-size:13px; max-width:720px; }
+    .reporting-kicker { color:#0f766e; text-transform:uppercase; letter-spacing:.11em; font-size:11px; font-weight:800; }
+    .reporting-alert { display:flex; gap:10px; align-items:flex-start; padding:12px 14px; border:1px solid #fde68a; border-radius:12px; background:#fffbeb; color:#92400e; font-size:12px; margin-bottom:16px; }
+    .reporting-units { display:flex; gap:8px; overflow-x:auto; padding-bottom:7px; margin-bottom:16px; scrollbar-width:none; }
+    .reporting-unit { flex:0 0 auto; border:1px solid var(--border); border-radius:12px; background:#fff; padding:10px 13px; cursor:pointer; text-align:left; min-width:150px; }
+    .reporting-unit.active { border-color:#0f766e; box-shadow:0 0 0 2px rgba(15,118,110,.1); background:#f0fdfa; }
+    .reporting-unit strong { display:block; font-size:13px; }
+    .reporting-unit small { color:var(--text-secondary); font-size:11px; }
+    .reporting-grid { display:grid; grid-template-columns:minmax(0,1.25fr) minmax(320px,.75fr); gap:16px; align-items:start; }
+    .reporting-card { background:#fff; border:1px solid var(--border); border-radius:15px; padding:16px; box-shadow:0 5px 18px rgba(15,23,42,.04); }
+    .reporting-card + .reporting-card { margin-top:16px; }
+    .reporting-card-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:13px; }
+    .reporting-card h3 { margin:0; font-size:16px; }
+    .reporting-dropzone { border:1.5px dashed #94a3b8; border-radius:13px; padding:20px; text-align:center; background:#f8fafc; cursor:pointer; display:block; }
+    .reporting-dropzone:hover { border-color:#0f766e; background:#f0fdfa; }
+    .reporting-dropzone input { display:none; }
+    .reporting-dropzone strong { display:block; margin:7px 0 3px; }
+    .reporting-dropzone span { color:var(--text-secondary); font-size:12px; }
+    .reporting-list { display:grid; gap:9px; margin-top:14px; }
+    .reporting-batch { width:100%; display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px; text-align:left; border:1px solid var(--border); border-radius:11px; padding:11px 12px; background:#fff; cursor:pointer; }
+    .reporting-batch:hover { border-color:#94a3b8; }
+    .reporting-batch strong { display:block; font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .reporting-batch small { display:block; color:var(--text-secondary); margin-top:3px; font-size:11px; }
+    .reporting-status { align-self:start; border-radius:999px; padding:4px 8px; font-size:10px; font-weight:800; background:#f1f5f9; color:#475569; }
+    .reporting-status.ready,.reporting-status.tested { background:#ecfdf5; color:#047857; }
+    .reporting-status.sent,.reporting-status.pii_purged { background:#e0f2fe; color:#0369a1; }
+    .reporting-status.partial,.reporting-status.unknown { background:#fff1f2; color:#be123c; }
+    .reporting-detail-empty { color:var(--text-secondary); text-align:center; padding:44px 10px; font-size:13px; }
+    .reporting-stay { border:1px solid var(--border); border-radius:12px; padding:13px; margin-top:10px; }
+    .reporting-stay-head { display:flex; justify-content:space-between; gap:8px; margin-bottom:10px; }
+    .reporting-stay-title { font-weight:800; font-size:13px; }
+    .reporting-stay-meta { color:var(--text-secondary); font-size:11px; margin-top:2px; }
+    .reporting-form-grid { display:grid; grid-template-columns:1.3fr .7fr; gap:8px; }
+    .reporting-field label { display:block; color:var(--text-secondary); font-size:10px; font-weight:700; margin:0 0 4px 2px; }
+    .reporting-field select,.reporting-field input { width:100%; min-height:35px; border:1px solid var(--border); border-radius:9px; padding:7px 9px; background:#fff; color:var(--text-primary); }
+    .reporting-records { margin-top:9px; display:grid; gap:6px; }
+    .reporting-record { display:grid; grid-template-columns:minmax(130px,1fr) 100px minmax(120px,.8fr); gap:7px; align-items:center; font-size:11px; }
+    .reporting-record .name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .reporting-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:13px; }
+    .reporting-month { display:flex; gap:8px; align-items:center; }
+    .reporting-month input { min-height:36px; border:1px solid var(--border); border-radius:9px; padding:6px 9px; }
+    .reporting-metrics { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:12px; }
+    .reporting-metric { border:1px solid var(--border); border-radius:10px; padding:10px; }
+    .reporting-metric strong { display:block; font-size:19px; }
+    .reporting-metric span { color:var(--text-secondary); font-size:10px; }
+    .reporting-errors { margin:10px 0 0; padding-left:18px; color:#be123c; font-size:11px; }
+    .reporting-config { display:flex; gap:6px; flex-wrap:wrap; }
+    .reporting-config span { font-size:10px; border-radius:999px; padding:4px 7px; background:#f1f5f9; color:#64748b; }
+    .reporting-config span.ok { background:#ecfdf5; color:#047857; }
+    @media (max-width:900px) { .reporting-grid { grid-template-columns:1fr; } }
+    @media (max-width:600px) {
+      .reporting-section { padding:16px 12px 40px; }
+      .reporting-hero { display:block; }
+      .reporting-grid,.reporting-form-grid { grid-template-columns:1fr; }
+      .reporting-record { grid-template-columns:1fr; border-top:1px solid var(--border); padding-top:7px; }
+      .reporting-metrics { grid-template-columns:1fr; }
+    }
   </style>
 </head>
 <body>
@@ -2856,6 +2917,9 @@
     </button>
     <button type="button" class="nav-item" data-tab="tax" onclick="switchTab('tax')">
       <i data-lucide="receipt" style="width:16px;height:16px;"></i>Налоги
+    </button>
+    <button type="button" class="nav-item" data-tab="reporting" onclick="switchTab('reporting')">
+      <i data-lucide="shield-check" style="width:16px;height:16px;"></i>Гости
     </button>
   </nav>
 
@@ -3161,6 +3225,42 @@
     <div id="taxList" class="tax-list"></div>
   </div>
 
+  <!-- GUEST REPORTING TAB -->
+  <div class="reporting-section" id="reportingTab">
+    <div class="reporting-hero">
+      <div>
+        <div class="reporting-kicker">Alloggiati Web · Sinfonia Turismo SMART</div>
+        <h2>Гости и отчётность</h2>
+        <p>Импортируйте TXT из Comune, проверьте связь с бронями и подготовьте обязательные отправки без повторного ввода паспортов.</p>
+      </div>
+      <div class="reporting-config" id="reportingConfig"></div>
+    </div>
+    <div class="reporting-alert" id="reportingAlert" hidden></div>
+    <div class="reporting-units" id="reportingUnits"></div>
+    <div class="reporting-grid">
+      <div>
+        <section class="reporting-card">
+          <div class="reporting-card-head"><h3>Alloggiati Web</h3><span class="reporting-status" id="reportingUnitStatus">—</span></div>
+          <label class="reporting-dropzone" id="reportingDropzone">
+            <input id="reportingFiles" type="file" accept=".txt,text/plain" multiple onchange="uploadReportingFiles(this.files)">
+            <i data-lucide="file-up" style="width:22px;height:22px;color:#0f766e;"></i>
+            <strong>Загрузить TXT из Comune</strong>
+            <span>До 256 KB · можно выбрать несколько файлов</span>
+          </label>
+          <div class="reporting-list" id="reportingBatchList"></div>
+        </section>
+        <section class="reporting-card">
+          <div class="reporting-card-head"><h3>ISTAT за месяц</h3><div class="reporting-month"><input type="month" id="reportingMonth"><button class="btn btn-secondary" type="button" onclick="loadIstatPreview()">Проверить</button></div></div>
+          <div id="reportingIstatPreview" class="reporting-detail-empty">Выберите месяц для предварительной проверки.</div>
+        </section>
+      </div>
+      <aside class="reporting-card" id="reportingBatchDetail">
+        <div class="reporting-detail-empty">Выберите импортированный TXT для проверки.</div>
+      </aside>
+    </div>
+    <datalist id="reportingOriginCodes"></datalist>
+  </div>
+
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <div class="booking-panel-backdrop" id="bookingPanelBackdrop" onclick="closeBookingPanel()"></div>
   <aside class="booking-panel" id="bookingPanel" aria-hidden="true">
@@ -3197,6 +3297,7 @@ let statsCurrentBookingKeysPromise = null;
 let allAssignments = {};
 let allTaxBookings = [];
 let taxFocusTodayOnNextRender = false;
+let reportingState = { loaded: false, externalSendEnabled: false, units: [], unitId: null, batches: [], batch: null, istatPreview: null };
 
 const DASHBOARD_CACHE_KEY = 'atrani-dashboard-cache-v1';
 const DASHBOARD_VISIBLE_REFRESH_MIN_MS = 30 * 1000;
@@ -3218,8 +3319,8 @@ let calendarNeedsVisibleRender = false;
 let calendarSyncInFlight = false;
 let lastAutoSyncAttemptAt = 0;
 
-const TAB_ROUTES = { '/stats': 'stats', '/maid': 'cleaners', '/tax': 'tax' };
-const ROUTE_TABS = { stats: '/stats', cleaners: '/maid', tax: '/tax' };
+const TAB_ROUTES = { '/stats': 'stats', '/maid': 'cleaners', '/tax': 'tax', '/reporting': 'reporting' };
+const ROUTE_TABS = { stats: '/stats', cleaners: '/maid', tax: '/tax', reporting: '/reporting' };
 
 function switchTab(tab, pushState = true) {
   document.querySelectorAll('.nav-item').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
@@ -3227,6 +3328,7 @@ function switchTab(tab, pushState = true) {
   document.getElementById('cleanersTab').style.display = tab === 'cleaners' ? 'block' : 'none';
   document.getElementById('statsTab').style.display = tab === 'stats' ? 'block' : 'none';
   document.getElementById('taxTab').style.display = tab === 'tax' ? 'block' : 'none';
+  document.getElementById('reportingTab').style.display = tab === 'reporting' ? 'block' : 'none';
   document.getElementById('statsBar').style.display = tab === 'calendar' ? 'flex' : 'none';
   document.getElementById('legend').style.display = tab === 'calendar' ? 'flex' : 'none';
   if (tab !== 'calendar') closeBookingPanel();
@@ -3243,6 +3345,7 @@ function switchTab(tab, pushState = true) {
     taxFocusTodayOnNextRender = true;
     loadTaxData();
   }
+  if (tab === 'reporting') loadReportingDashboard();
   if (pushState) {
     const url = ROUTE_TABS[tab] || '/';
     history.pushState({ tab }, '', url);
@@ -6731,7 +6834,7 @@ window.addEventListener('load', refreshLucideIcons);
 const bootstrappedFromCache = hydrateDashboardFromCache();
 
 // Route-based tab on page load
-const TAB_ROUTE_MAP = { '/stats': 'stats', '/maid': 'cleaners', '/tax': 'tax' };
+const TAB_ROUTE_MAP = { '/stats': 'stats', '/maid': 'cleaners', '/tax': 'tax', '/reporting': 'reporting' };
 const initTab = TAB_ROUTE_MAP[location.pathname] || 'calendar';
 if (initTab !== 'calendar') switchTab(initTab, false);
 
@@ -6768,6 +6871,276 @@ window.addEventListener('pageshow', refreshDashboardAfterReturn);
 loadData({ silent: bootstrappedFromCache, preserveCalendarScroll: bootstrappedFromCache })
   .finally(() => autoSyncCalendars());
 setInterval(() => autoSyncCalendars(), CALENDAR_AUTO_SYNC_INTERVAL_MS);
+
+// ===== GUEST REPORTING (Alloggiati / ISTAT) =====
+const REPORTING_STATUS_LABELS = {
+  needs_review: 'Нужна проверка', ready: 'Готов к Test', tested: 'Test пройден',
+  sent: 'Отправлено', partial: 'Частично', unknown: 'Проверить вручную', pii_purged: 'Архив'
+};
+
+async function reportingFetch(url, options = {}) {
+  const response = await fetch(url, { cache: 'no-store', ...options });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(body.error || `HTTP ${response.status}`);
+  return body;
+}
+
+function previousMonthValue() {
+  const date = new Date();
+  date.setDate(1);
+  date.setMonth(date.getMonth() - 1);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+}
+
+async function loadReportingDashboard({ force = false } = {}) {
+  if (reportingState.loaded && !force) return;
+  const unitsEl = document.getElementById('reportingUnits');
+  unitsEl.innerHTML = '<span class="reporting-status">Загрузка…</span>';
+  try {
+    const dashboard = await reportingFetch(`${API}/reporting`);
+    reportingState.loaded = true;
+    reportingState.externalSendEnabled = dashboard.external_send_enabled === true;
+    reportingState.units = dashboard.units || [];
+    if (!reportingState.unitId || !reportingState.units.some(unit => unit.id === reportingState.unitId)) {
+      reportingState.unitId = reportingState.units[0]?.id || null;
+    }
+    const month = document.getElementById('reportingMonth');
+    if (!month.value) month.value = previousMonthValue();
+    renderReportingUnits();
+    await Promise.all([loadReportingBatches(), loadReportingCodes()]);
+  } catch (error) {
+    unitsEl.innerHTML = `<div class="reporting-alert">${escapeHtml(error.message)}</div>`;
+  }
+}
+
+function currentReportingUnit() {
+  return reportingState.units.find(unit => unit.id === reportingState.unitId) || null;
+}
+
+function renderReportingUnits() {
+  const unitsEl = document.getElementById('reportingUnits');
+  unitsEl.innerHTML = reportingState.units.map(unit => `
+    <button class="reporting-unit ${unit.id === reportingState.unitId ? 'active' : ''}" type="button" onclick="selectReportingUnit('${escapeHtml(unit.id)}')">
+      <strong>${escapeHtml(unit.name)}</strong>
+      <small>${unit.open_batches || 0} требуют внимания</small>
+    </button>`).join('');
+  const unit = currentReportingUnit();
+  const config = unit?.configured || {};
+  document.getElementById('reportingConfig').innerHTML = [
+    `<span class="${config.mapping ? 'ok' : ''}">${config.mapping ? '✓' : '○'} календарь</span>`,
+    `<span class="${config.alloggiati ? 'ok' : ''}">${config.alloggiati ? '✓' : '○'} Alloggiati</span>`,
+    `<span class="${config.istat ? 'ok' : ''}">${config.istat ? '✓' : '○'} ISTAT</span>`
+  ].join('');
+  const alert = document.getElementById('reportingAlert');
+  const warnings = [];
+  if (!reportingState.externalSendEnabled) warnings.push('Реальные внешние отправки пока отключены до контрольной сверки и настройки секретов.');
+  if (unit && !config.mapping) warnings.push('Для этой структуры ещё не задана связь с календарными объектами.');
+  if (new Date().getDate() >= 4 && new Date().getDate() <= 10) warnings.push('Проверьте отчёт ISTAT за предыдущий месяц.');
+  alert.hidden = warnings.length === 0;
+  alert.innerHTML = warnings.length ? `<i data-lucide="triangle-alert" style="width:16px;height:16px;flex:none"></i><span>${warnings.map(escapeHtml).join(' ')}</span>` : '';
+  document.getElementById('reportingUnitStatus').textContent = unit?.name || '—';
+  refreshLucideIcons();
+}
+
+async function selectReportingUnit(unitId) {
+  reportingState.unitId = unitId;
+  reportingState.batch = null;
+  reportingState.istatPreview = null;
+  renderReportingUnits();
+  document.getElementById('reportingBatchDetail').innerHTML = '<div class="reporting-detail-empty">Выберите импортированный TXT для проверки.</div>';
+  document.getElementById('reportingIstatPreview').innerHTML = '<div class="reporting-detail-empty">Нажмите «Проверить» для нового профиля.</div>';
+  await loadReportingBatches();
+}
+
+async function loadReportingBatches() {
+  if (!reportingState.unitId) return;
+  const list = document.getElementById('reportingBatchList');
+  list.innerHTML = '<div class="reporting-detail-empty" style="padding:18px">Загрузка…</div>';
+  try {
+    reportingState.batches = await reportingFetch(`${API}/reporting/imports?unit_id=${encodeURIComponent(reportingState.unitId)}`);
+    renderReportingBatches();
+  } catch (error) {
+    list.innerHTML = `<div class="reporting-alert">${escapeHtml(error.message)}</div>`;
+  }
+}
+
+function renderReportingBatches() {
+  const list = document.getElementById('reportingBatchList');
+  if (!reportingState.batches.length) {
+    list.innerHTML = '<div class="reporting-detail-empty" style="padding:22px">TXT ещё не загружались.</div>';
+    return;
+  }
+  list.innerHTML = reportingState.batches.map(batch => `
+    <button class="reporting-batch" type="button" onclick="openReportingBatch(${Number(batch.id)})">
+      <span><strong>${escapeHtml(batch.filename)}</strong><small>${formatTaxDate(batch.arrival_from)} · ${batch.record_count} гостей · ${batch.stay_count} заездов</small></span>
+      <span class="reporting-status ${escapeHtml(batch.status)}">${escapeHtml(REPORTING_STATUS_LABELS[batch.status] || batch.status)}</span>
+    </button>`).join('');
+}
+
+function arrayBufferToBase64(buffer) {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (let offset = 0; offset < bytes.length; offset += 8192) {
+    binary += String.fromCharCode(...bytes.subarray(offset, offset + 8192));
+  }
+  return btoa(binary);
+}
+
+async function uploadReportingFiles(fileList) {
+  const files = Array.from(fileList || []);
+  if (!files.length || !reportingState.unitId) return;
+  const dropzone = document.getElementById('reportingDropzone');
+  dropzone.style.pointerEvents = 'none';
+  try {
+    for (const file of files) {
+      if (file.size > 256 * 1024) throw new Error(`${file.name}: файл больше 256 KB`);
+      const content = arrayBufferToBase64(await file.arrayBuffer());
+      const result = await reportingFetch(`${API}/reporting/imports`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ unit_id: reportingState.unitId, filename: file.name, content_base64: content })
+      });
+      reportingState.batch = result.batch;
+    }
+    toast('TXT импортирован');
+    await loadReportingBatches();
+    if (reportingState.batch) renderReportingBatchDetail();
+  } catch (error) {
+    toast(error.message);
+  } finally {
+    dropzone.style.pointerEvents = '';
+    document.getElementById('reportingFiles').value = '';
+  }
+}
+
+async function openReportingBatch(batchId) {
+  const detail = document.getElementById('reportingBatchDetail');
+  detail.innerHTML = '<div class="reporting-detail-empty">Расшифровываем защищённые данные…</div>';
+  try {
+    reportingState.batch = await reportingFetch(`${API}/reporting/imports?batch_id=${batchId}`);
+    renderReportingBatchDetail();
+  } catch (error) {
+    detail.innerHTML = `<div class="reporting-alert">${escapeHtml(error.message)}</div>`;
+  }
+}
+
+function reportingPropertyOptions(selected) {
+  const ids = currentReportingUnit()?.property_ids || [];
+  return '<option value="">Выберите жильё</option>' + ids.map(id => {
+    const meta = propertyMeta(id);
+    return `<option value="${escapeHtml(id)}" ${id === selected ? 'selected' : ''}>${escapeHtml(meta.name)}</option>`;
+  }).join('');
+}
+
+function renderReportingBatchDetail() {
+  const batch = reportingState.batch;
+  if (!batch) return;
+  const detail = document.getElementById('reportingBatchDetail');
+  const editable = !['sent', 'pii_purged'].includes(batch.status);
+  detail.innerHTML = `
+    <div class="reporting-card-head">
+      <div><h3>${escapeHtml(batch.filename)}</h3><div class="reporting-stay-meta">${batch.record_count} гостей · версия ${batch.version}</div></div>
+      <span class="reporting-status ${escapeHtml(batch.status)}">${escapeHtml(REPORTING_STATUS_LABELS[batch.status] || batch.status)}</span>
+    </div>
+    <div>${batch.stays.map(stay => `
+      <section class="reporting-stay" data-reporting-stay="${stay.id}" data-batch-id="${batch.id}" data-booking-id="${stay.booking_id || ''}">
+        <div class="reporting-stay-head"><div><div class="reporting-stay-title">${escapeHtml(stay.records[0]?.pii ? `${stay.records[0].pii.surname} ${stay.records[0].pii.name}` : `Группа ${stay.group_index}`)}</div><div class="reporting-stay-meta">${formatTaxDate(stay.arrival_date)} → ${formatTaxDate(stay.departure_date)} · ${stay.guest_count} чел.</div></div><span class="reporting-status ${stay.review_status === 'ready' ? 'ready' : ''}">${stay.review_status === 'ready' ? 'Готово' : 'Заполнить'}</span></div>
+        <div class="reporting-form-grid">
+          <div class="reporting-field"><label>Жильё / бронь</label><select data-field="property_id" ${editable ? '' : 'disabled'}>${reportingPropertyOptions(stay.property_id)}</select></div>
+          <div class="reporting-field"><label>Занято комнат</label><input data-field="rooms_occupied" type="number" min="1" max="99" value="${Number(stay.rooms_occupied) || 1}" ${editable ? '' : 'disabled'}></div>
+        </div>
+        <div class="reporting-records">${stay.records.map(record => `
+          <div class="reporting-record" data-origin-record="${record.id}">
+            <span class="name">${escapeHtml(record.pii ? `${record.pii.surname} ${record.pii.name}` : `Строка ${record.line_number}`)} · ${escapeHtml(record.pii?.document_number_masked || '')}</span>
+            <select data-origin-kind ${editable ? '' : 'disabled'}><option value="country" ${record.origin_kind !== 'province' ? 'selected' : ''}>Страна</option><option value="province" ${record.origin_kind === 'province' ? 'selected' : ''}>Провинция</option></select>
+            <input data-origin-code list="reportingOriginCodes" placeholder="Код ISTAT" value="${escapeHtml(record.origin_code || '')}" ${editable ? '' : 'disabled'}>
+          </div>`).join('')}</div>
+        ${editable ? `<div class="reporting-actions"><button class="btn btn-secondary" type="button" onclick="saveReportingStay(${stay.id})">Сохранить</button></div>` : ''}
+      </section>`).join('')}</div>
+    <div class="reporting-actions">
+      <button class="btn btn-secondary" type="button" onclick="runAlloggiatiAction('test')" ${batch.status === 'ready' || batch.status === 'tested' ? '' : 'disabled'}><i data-lucide="scan-line" style="width:14px;height:14px"></i> Test</button>
+      <button class="btn btn-primary" type="button" onclick="runAlloggiatiAction('send')" ${batch.status === 'tested' && reportingState.externalSendEnabled ? '' : 'disabled'}><i data-lucide="send" style="width:14px;height:14px"></i> Отправить</button>
+      ${batch.receipt_received_at && batch.alloggiati_sent_at ? `<a class="btn btn-secondary" href="${API}/reporting/alloggiati?unit_id=${encodeURIComponent(batch.reporting_unit_id)}&date=${encodeURIComponent(String(batch.alloggiati_sent_at).slice(0,10))}" target="_blank"><i data-lucide="file-check-2" style="width:14px;height:14px"></i> Квитанция</a>` : ''}
+    </div>`;
+  refreshLucideIcons();
+}
+
+async function saveReportingStay(stayId) {
+  const stayEl = document.querySelector(`[data-reporting-stay="${stayId}"]`);
+  const propertyId = stayEl.querySelector('[data-field="property_id"]').value;
+  const records = Array.from(stayEl.querySelectorAll('[data-origin-record]')).map(row => ({
+    id: Number(row.dataset.originRecord),
+    origin_kind: row.querySelector('[data-origin-kind]').value,
+    origin_code: row.querySelector('[data-origin-code]').value.trim(),
+    origin_label: row.querySelector('[data-origin-code]').value.trim()
+  }));
+  try {
+    reportingState.batch = await reportingFetch(`${API}/reporting/imports`, {
+      method:'PATCH', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ batch_id:reportingState.batch.id, stay_id:stayId, property_id:propertyId, booking_id:Number(stayEl.dataset.bookingId) || null, rooms_occupied:Number(stayEl.querySelector('[data-field="rooms_occupied"]').value), records })
+    });
+    toast('Группа сохранена');
+    renderReportingBatchDetail();
+    await loadReportingBatches();
+  } catch (error) { toast(error.message); }
+}
+
+async function runAlloggiatiAction(action) {
+  const batch = reportingState.batch;
+  if (!batch) return;
+  const confirmed = action !== 'send' || window.confirm(`Отправить ${batch.record_count} гостей в Alloggiati Web для ${currentReportingUnit()?.name}?`);
+  if (!confirmed) return;
+  try {
+    const result = await reportingFetch(`${API}/reporting/alloggiati`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ action, batch_id:batch.id, expected_version:batch.version, confirmed })
+    });
+    reportingState.batch = result.batch;
+    toast(action === 'test' ? 'Alloggiati Test завершён' : 'Отправка завершена');
+    renderReportingBatchDetail();
+    await loadReportingBatches();
+  } catch (error) { toast(error.message); }
+}
+
+async function loadReportingCodes() {
+  if (!reportingState.unitId || document.getElementById('reportingOriginCodes').children.length) return;
+  try {
+    const codes = await reportingFetch(`${API}/reporting/istat?action=codes&unit_id=${encodeURIComponent(reportingState.unitId)}`);
+    const items = [...(codes.province || []), ...(codes.nazioni || [])];
+    document.getElementById('reportingOriginCodes').innerHTML = items.map(item => `<option value="${escapeHtml(item.codiceIstat)}">${escapeHtml(item.descrizione)}</option>`).join('');
+  } catch (_) { /* Manual code entry remains available when the regional reference endpoint is offline. */ }
+}
+
+async function loadIstatPreview() {
+  if (!reportingState.unitId) return;
+  const month = document.getElementById('reportingMonth').value;
+  const target = document.getElementById('reportingIstatPreview');
+  target.innerHTML = '<div class="reporting-detail-empty">Считаем движения по дням…</div>';
+  try {
+    const preview = await reportingFetch(`${API}/reporting/istat?unit_id=${encodeURIComponent(reportingState.unitId)}&month=${encodeURIComponent(month)}`);
+    reportingState.istatPreview = preview;
+    const totals = preview.giornate.reduce((acc, day) => {
+      acc.rooms += Number(day.camereOccupate) || 0;
+      for (const move of day.movimentazioni || []) { acc.arrivals += move.arrivi || 0; acc.departures += move.partenze || 0; }
+      return acc;
+    }, { arrivals:0, departures:0, rooms:0 });
+    target.innerHTML = `
+      <div class="reporting-metrics"><div class="reporting-metric"><strong>${totals.arrivals}</strong><span>прибытий</span></div><div class="reporting-metric"><strong>${totals.departures}</strong><span>отъездов</span></div><div class="reporting-metric"><strong>${totals.rooms}</strong><span>комнато-дней</span></div></div>
+      ${preview.errors.length ? `<ul class="reporting-errors">${preview.errors.map(error => `<li>${escapeHtml(error)}</li>`).join('')}</ul>` : '<div class="reporting-alert" style="margin-top:10px;border-color:#a7f3d0;background:#ecfdf5;color:#047857">Месяц прошёл локальную проверку.</div>'}
+      <div class="reporting-actions"><button class="btn btn-primary" type="button" onclick="sendIstatMonth()" ${preview.ready && reportingState.externalSendEnabled ? '' : 'disabled'}>Отправить месяц</button></div>`;
+  } catch (error) { target.innerHTML = `<div class="reporting-alert">${escapeHtml(error.message)}</div>`; }
+}
+
+async function sendIstatMonth() {
+  const preview = reportingState.istatPreview;
+  if (!preview || !window.confirm(`Отправить ISTAT за ${preview.month} для ${currentReportingUnit()?.name}?`)) return;
+  try {
+    const result = await reportingFetch(`${API}/reporting/istat`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ unit_id:reportingState.unitId, month:preview.month, expected_hash:preview.payload_hash, confirmed:true, replace:false })
+    });
+    toast(result.verified ? 'ISTAT отправлен и проверен' : 'ISTAT отправлен; нужна сверка');
+  } catch (error) { toast(error.message); }
+}
 
 // ===== TAX (Tassa di Soggiorno) =====
 async function loadTaxData() {

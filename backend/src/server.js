@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -23,7 +25,7 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '512kb' }));
 
 // Serve frontend
 app.use(express.static(path.join(__dirname, '../../frontend/public')));
@@ -395,6 +397,17 @@ app.get('/maid', (req, res) => {
 app.get('/tax', (req, res) => {
   res.sendFile(path.join(__dirname, '../../frontend/public/index.html'));
 });
+app.get('/reporting', (req, res) => {
+  res.sendFile(path.join(__dirname, '../../frontend/public/index.html'));
+});
+
+// ===== GUEST REPORTING (ALLOGGIATI / ISTAT) =====
+
+app.all('/api/reporting', require('../../api/reporting'));
+app.all('/api/reporting/imports', require('../../api/reporting/imports'));
+app.all('/api/reporting/alloggiati', require('../../api/reporting/alloggiati'));
+app.all('/api/reporting/istat', require('../../api/reporting/istat'));
+app.all('/api/reporting/maintenance', require('../../api/reporting/maintenance'));
 
 // ===== TAX (TASSA DI SOGGIORNO) =====
 

@@ -225,6 +225,27 @@ function createServer(state = {
       response.end(state.dashboardMode === 'empty' ? emptyDashboardPayload : dashboardPayload);
       return;
     }
+    if (url.pathname === '/api/reporting') {
+      response.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store' });
+      response.end(JSON.stringify({
+        external_send_enabled: false,
+        units: [
+          { id: 'dragone', name: 'Dragone', property_ids: ['awesome', 'central', 'orange', 'vingtage', 'youth', 'solo'], configured: { mapping: true, alloggiati: false, istat: false }, batch_count: 0, open_batches: 0 },
+          { id: 'carina', name: 'Carina', property_ids: ['carina'], configured: { mapping: true, alloggiati: false, istat: false }, batch_count: 0, open_batches: 0 }
+        ]
+      }));
+      return;
+    }
+    if (url.pathname === '/api/reporting/imports') {
+      response.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store' });
+      response.end('[]');
+      return;
+    }
+    if (url.pathname === '/api/reporting/istat' && url.searchParams.get('action') === 'codes') {
+      response.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store' });
+      response.end(JSON.stringify({ province: [{ codiceIstat: '063', descrizione: 'Napoli' }], nazioni: [{ codiceIstat: '536', descrizione: 'Regno Unito' }] }));
+      return;
+    }
     if (url.pathname === '/api/sync' && request.method === 'POST') {
       state.syncRequests++;
       response.writeHead(200, { 'content-type': 'application/json' });
@@ -243,7 +264,7 @@ function createServer(state = {
       return;
     }
 
-    const relativePath = url.pathname === '/'
+    const relativePath = url.pathname === '/' || url.pathname === '/reporting'
       ? 'index.html'
       : url.pathname === '/maid/test-cleaner'
         ? 'maid.html'
@@ -280,7 +301,7 @@ async function inspectPage(browser, baseUrl, viewport, isMobile) {
   }));
 
   assert.equal(metrics.cells, 0);
-  assert.equal(metrics.navButtons, 4);
+  assert.equal(metrics.navButtons, 5);
   assert.equal(metrics.chartLoaded, false);
   assert.equal(metrics.freshnessState, 'ok');
   assert.match(metrics.freshnessTitle, /актуальны/i);
@@ -300,6 +321,23 @@ async function inspectPage(browser, baseUrl, viewport, isMobile) {
 
   await context.close();
   return metrics;
+}
+
+async function inspectReportingPage(browser, baseUrl) {
+  const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  await context.route(/^https:/, route => route.abort());
+  const page = await context.newPage();
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto(`${baseUrl}reporting`, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => document.querySelectorAll('#reportingUnits .reporting-unit').length === 2);
+  assert.equal(await page.locator('#reportingTab').isVisible(), true);
+  assert.match(await page.locator('#reportingUnits').innerText(), /Dragone/);
+  assert.match(await page.locator('#reportingAlert').innerText(), /отправки пока отключены/i);
+  assert.match(await page.locator('#reportingBatchList').innerText(), /ещё не загружались/i);
+  assert.deepEqual(errors, []);
+  await context.close();
+  return { units: 2, externalSendDisabled: true };
 }
 
 async function installStatsBrowserMocks(context, cachedHistory = null) {
@@ -613,6 +651,7 @@ async function main() {
     const statsDesktop = await inspectStatsPage(browser, baseUrl, { width: 1440, height: 1000 }, false);
     const statsMobile = await inspectStatsPage(browser, baseUrl, { width: 390, height: 844 }, true);
     const statsWithoutChart = await inspectStatsWithoutChart(browser, baseUrl);
+    const reporting = await inspectReportingPage(browser, baseUrl);
     assert.ok(serverState.syncRequests > 0, 'admin UI did not start automatic calendar sync');
     assert.ok(serverState.statsRequests >= 3, `statistics history endpoint was requested only ${serverState.statsRequests} time(s)`);
     assert.deepEqual([...new Set(serverState.statsPaths)], ['/api/dashboard?stats_only=1']);
@@ -654,6 +693,7 @@ async function main() {
       statsDesktop,
       statsMobile,
       statsWithoutChart,
+      reporting,
       cachedAuthFallback,
       confirmedEmptyDashboard,
       statsEndpoint: [...new Set(serverState.statsPaths)],

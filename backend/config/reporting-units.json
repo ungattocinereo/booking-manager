@@ -1,0 +1,34 @@
+{
+  "units": [
+    {
+      "id": "sansebastiano",
+      "name": "Sansebastiano",
+      "propertyIds": [],
+      "envPrefix": "SANSEBASTIANO"
+    },
+    {
+      "id": "dragone",
+      "name": "Dragone",
+      "propertyIds": ["awesome", "central", "orange", "vingtage", "youth", "solo"],
+      "envPrefix": "DRAGONE"
+    },
+    {
+      "id": "harmony",
+      "name": "Harmony",
+      "propertyIds": ["harmony"],
+      "envPrefix": "HARMONY"
+    },
+    {
+      "id": "carina",
+      "name": "Carina",
+      "propertyIds": ["carina"],
+      "envPrefix": "CARINA"
+    },
+    {
+      "id": "royal",
+      "name": "Royal",
+      "propertyIds": ["royal"],
+      "envPrefix": "ROYAL"
+    }
+  ]
+}

@@ -22,6 +22,13 @@ const TABLES = [
   'cleaning_tasks',
   'booking_stats_snapshots',
   'sync_runs',
+  'reporting_units',
+  'guest_import_batches',
+  'guest_stays',
+  'guest_records',
+  'alloggiati_submissions',
+  'alloggiati_receipts',
+  'istat_month_submissions',
 ];
 
 function timestamp() {
