@@ -54,8 +54,9 @@ class IstatClient {
       method: 'POST',
       body: JSON.stringify({ cusr: this.credentials.cusr, apiKey: this.credentials.apiKey })
     }, false);
-    if (!body?.accessToken) throw new Error('Sinfonia returned an empty access token');
-    this.accessToken = body.accessToken;
+    const accessToken = body?.accessToken || body?.token;
+    if (!accessToken) throw new Error('Sinfonia returned an empty access token');
+    this.accessToken = accessToken;
     return body;
   }
 
