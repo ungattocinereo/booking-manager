@@ -29,7 +29,9 @@ async function imports(req, res, db) {
         if (!batch) return res.status(404).json({ error: 'Пакет не найден' });
         return res.status(200).json(batch);
       }
-      return res.status(200).json(await service.store.listBatches(req.query.unit_id || null, req.query.limit));
+      const view = req.query.view || 'all';
+      if (!['all', 'open', 'sent'].includes(view)) return res.status(400).json({ error: 'Неизвестный вид списка импортов' });
+      return res.status(200).json(await service.store.listBatches(req.query.unit_id || null, req.query.limit, view));
     }
     if (req.method === 'POST') {
       const result = await service.importTxt({
@@ -46,7 +48,10 @@ async function imports(req, res, db) {
       if (!Number.isInteger(stayId) || !Number.isInteger(batchId)) return res.status(400).json({ error: 'stay_id and batch_id are required' });
       return res.status(200).json(await service.updateStay(stayId, { ...req.body, batch_id: batchId }));
     }
-    res.setHeader('Allow', 'GET, POST, PATCH');
+    if (req.method === 'DELETE') {
+      return res.status(200).json(await service.deleteImport(Number(req.query.batch_id)));
+    }
+    res.setHeader('Allow', 'GET, POST, PATCH, DELETE');
     return res.status(405).json({ error: 'Method not allowed' });
   } catch (error) {
     const status = error.status || (error.code === 'DUPLICATE_IMPORT' ? 409 : 500);
