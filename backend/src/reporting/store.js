@@ -29,7 +29,7 @@ function assertBatchCanBeDeleted(batch, sendAttempts) {
   if (!batch) throw Object.assign(new Error('Пакет не найден'), { status: 404 });
   const protectedStatuses = new Set(['sent', 'partial', 'unknown', 'pii_purged']);
   if (batch.alloggiati_sent_at || protectedStatuses.has(batch.status) || Number(sendAttempts) > 0) {
-    throw Object.assign(new Error('Нельзя удалить TXT после попытки отправки в Alloggiati'), { status: 409 });
+    throw Object.assign(new Error('Нельзя удалить TXT после попытки отправки в Alloggiati'), { status: 409, code: 'BATCH_NOT_DELETABLE' });
   }
 }
 
@@ -82,7 +82,7 @@ class ReportingStore {
     const rows = await this.rows(
       `SELECT ru.*,
               COUNT(DISTINCT gib.id)::int AS batch_count,
-              COUNT(DISTINCT gib.id) FILTER (WHERE gib.status IN ('needs_review', 'ready', 'tested'))::int AS open_batches,
+              COUNT(DISTINCT gib.id) FILTER (WHERE gib.status IN ('needs_review', 'ready', 'tested', 'sending', 'partial', 'unknown'))::int AS open_batches,
               MAX(gib.imported_at) AS last_imported_at
        FROM reporting_units ru
        LEFT JOIN guest_import_batches gib ON gib.reporting_unit_id = ru.id
@@ -90,7 +90,7 @@ class ReportingStore {
        GROUP BY ru.id ORDER BY ru.name`,
       `SELECT ru.*,
               COUNT(DISTINCT gib.id) AS batch_count,
-              COUNT(DISTINCT CASE WHEN gib.status IN ('needs_review', 'ready', 'tested') THEN gib.id END) AS open_batches,
+              COUNT(DISTINCT CASE WHEN gib.status IN ('needs_review', 'ready', 'tested', 'sending', 'partial', 'unknown') THEN gib.id END) AS open_batches,
               MAX(gib.imported_at) AS last_imported_at
        FROM reporting_units ru
        LEFT JOIN guest_import_batches gib ON gib.reporting_unit_id = ru.id
@@ -105,15 +105,23 @@ class ReportingStore {
     }));
   }
 
-  async listBatches(unitId, limit = 100) {
+  async listBatches(unitId, limit = 100, view = 'all') {
     const safeLimit = Math.min(200, Math.max(1, Number(limit) || 100));
+    const viewClause = view === 'sent'
+      ? " AND status IN ('sent','pii_purged')"
+      : view === 'open'
+        ? " AND status IN ('needs_review','ready','tested','sending','partial','unknown')"
+        : '';
+    const orderClause = view === 'sent'
+      ? 'ORDER BY alloggiati_sent_at DESC, id DESC'
+      : 'ORDER BY imported_at DESC, id DESC';
     const rows = await this.rows(
       `SELECT * FROM guest_import_batches
-       WHERE ($1::text IS NULL OR reporting_unit_id = $1)
-       ORDER BY imported_at DESC, id DESC LIMIT $2`,
+       WHERE ($1::text IS NULL OR reporting_unit_id = $1)${viewClause}
+       ${orderClause} LIMIT $2`,
       `SELECT * FROM guest_import_batches
-       WHERE (? IS NULL OR reporting_unit_id = ?)
-       ORDER BY imported_at DESC, id DESC LIMIT ?`,
+       WHERE (? IS NULL OR reporting_unit_id = ?)${viewClause}
+       ${orderClause} LIMIT ?`,
       isPostgres(this.db) ? [unitId || null, safeLimit] : [unitId || null, unitId || null, safeLimit]
     );
     return rows.map(normalizeBatch);
@@ -137,16 +145,16 @@ class ReportingStore {
     if (isPostgres(this.db)) {
       const inserted = await this.db.execute(
         `INSERT INTO guest_import_batches
-          (reporting_unit_id, filename, content_fingerprint, record_count, stay_count, arrival_from, arrival_to, imported_by)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id`,
+          (reporting_unit_id, filename, content_fingerprint, status, record_count, stay_count, arrival_from, arrival_to, imported_by)
+         VALUES ($1,$2,$3,'ready',$4,$5,$6,$7,$8) RETURNING id`,
         [unit.id, filename, contentFingerprint, parsed.recordCount, parsed.stayCount, parsed.arrivalFrom, parsed.arrivalTo, operatorEmail]
       );
       batchId = Number(inserted.rows[0].id);
     } else {
       const inserted = await this.db.run(
         `INSERT INTO guest_import_batches
-          (reporting_unit_id, filename, content_fingerprint, record_count, stay_count, arrival_from, arrival_to, imported_by)
-         VALUES (?,?,?,?,?,?,?,?)`,
+          (reporting_unit_id, filename, content_fingerprint, status, record_count, stay_count, arrival_from, arrival_to, imported_by)
+         VALUES (?,?,?,'ready',?,?,?,?,?)`,
         [unit.id, filename, contentFingerprint, parsed.recordCount, parsed.stayCount, parsed.arrivalFrom, parsed.arrivalTo, operatorEmail]
       );
       batchId = Number(inserted.lastID);
@@ -360,24 +368,6 @@ class ReportingStore {
        origin_confirmed=?, review_status=? WHERE id=?`,
       [input.booking_id || null, input.property_id || null, input.rooms_occupied, originsComplete, originsComplete && input.property_id ? 'ready' : 'needs_review', stayId]
     );
-    const stay = await this.one('SELECT batch_id FROM guest_stays WHERE id=$1', 'SELECT batch_id FROM guest_stays WHERE id=?', [stayId]);
-    if (stay) await this.refreshBatchStatus(stay.batch_id);
-  }
-
-  async refreshBatchStatus(batchId) {
-    const row = await this.one(
-      `SELECT COUNT(*)::int AS total, COUNT(*) FILTER (WHERE review_status='ready')::int AS ready
-       FROM guest_stays WHERE batch_id=$1`,
-      `SELECT COUNT(*) AS total, SUM(CASE WHEN review_status='ready' THEN 1 ELSE 0 END) AS ready
-       FROM guest_stays WHERE batch_id=?`,
-      [batchId]
-    );
-    const ready = Number(row?.total) > 0 && Number(row.total) === Number(row.ready);
-    await this.execute(
-      `UPDATE guest_import_batches SET status=$1, version=version+1, alloggiati_tested_at=NULL WHERE id=$2 AND alloggiati_sent_at IS NULL`,
-      `UPDATE guest_import_batches SET status=?, version=version+1, alloggiati_tested_at=NULL WHERE id=? AND alloggiati_sent_at IS NULL`,
-      [ready ? 'ready' : 'needs_review', batchId]
-    );
   }
 
   async decryptedLines(batchId) {
@@ -388,6 +378,68 @@ class ReportingStore {
     );
     if (rows.some(row => !row.encrypted_record)) throw new Error('PII этого пакета уже удалены');
     return rows.map(row => decryptRecord(row.encrypted_record));
+  }
+
+  async deleteBatch(batchId) {
+    const batch = normalizeBatch(await this.one(
+      'SELECT * FROM guest_import_batches WHERE id=$1',
+      'SELECT * FROM guest_import_batches WHERE id=?',
+      [batchId]
+    ));
+    if (!batch) return null;
+
+    const deletableStatuses = new Set(['needs_review', 'ready', 'tested']);
+    if (batch.alloggiati_sent_at || !deletableStatuses.has(batch.status)) return false;
+
+    const claimed = await this.execute(
+      `UPDATE guest_import_batches SET status='deleting'
+       WHERE id=$1 AND alloggiati_sent_at IS NULL AND status IN ('needs_review','ready','tested')`,
+      `UPDATE guest_import_batches SET status='deleting'
+       WHERE id=? AND alloggiati_sent_at IS NULL AND status IN ('needs_review','ready','tested')`,
+      [batchId]
+    );
+    const changed = isPostgres(this.db) ? claimed.rowCount : claimed.changes;
+    if (Number(changed) !== 1) return false;
+
+    try {
+      await this.execute(
+        'UPDATE alloggiati_submissions SET batch_id=NULL WHERE batch_id=$1',
+        'UPDATE alloggiati_submissions SET batch_id=NULL WHERE batch_id=?',
+        [batchId]
+      );
+      await this.execute(
+        'DELETE FROM guest_import_batches WHERE id=$1 AND status=\'deleting\'',
+        "DELETE FROM guest_import_batches WHERE id=? AND status='deleting'",
+        [batchId]
+      );
+      return batch;
+    } catch (error) {
+      await this.execute(
+        'UPDATE guest_import_batches SET status=$1 WHERE id=$2 AND status=\'deleting\'',
+        "UPDATE guest_import_batches SET status=? WHERE id=? AND status='deleting'",
+        [batch.status, batchId]
+      ).catch(() => {});
+      throw error;
+    }
+  }
+
+  async claimBatchForSend(batchId, expectedVersion) {
+    const result = await this.execute(
+      `UPDATE guest_import_batches SET status='sending', version=version+1
+       WHERE id=$1 AND version=$2 AND status='tested' AND alloggiati_sent_at IS NULL`,
+      `UPDATE guest_import_batches SET status='sending', version=version+1
+       WHERE id=? AND version=? AND status='tested' AND alloggiati_sent_at IS NULL`,
+      [batchId, expectedVersion]
+    );
+    return Number(isPostgres(this.db) ? result.rowCount : result.changes) === 1;
+  }
+
+  async releaseBatchAfterSendFailure(batchId) {
+    await this.execute(
+      "UPDATE guest_import_batches SET status='tested' WHERE id=$1 AND status='sending'",
+      "UPDATE guest_import_batches SET status='tested' WHERE id=? AND status='sending'",
+      [batchId]
+    );
   }
 
   async addAlloggiatiSubmission({ unitId, batchId, operation, payloadFingerprint, status, validRecords, totalRecords, responseSummary, operatorEmail }) {
