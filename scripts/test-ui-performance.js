@@ -41,6 +41,37 @@ for (let propertyIndex = 0; propertyIndex < propertyIds.length; propertyIndex++)
   }
 }
 
+const turnoverStart = new Date(today);
+turnoverStart.setDate(turnoverStart.getDate() + 42);
+const turnoverDate = new Date(turnoverStart);
+turnoverDate.setDate(turnoverDate.getDate() + 3);
+const turnoverEnd = new Date(turnoverDate);
+turnoverEnd.setDate(turnoverEnd.getDate() + 4);
+bookings.push(
+  {
+    id: bookingId++,
+    property_id: 'orange',
+    platform: 'airbnb',
+    start_date: toIso(turnoverStart),
+    end_date: toIso(turnoverDate),
+    raw_summary: 'Reservation',
+    guest_name: 'Turnover departure',
+    booking_type: 'reservation',
+    tax_paid: false
+  },
+  {
+    id: bookingId++,
+    property_id: 'orange',
+    platform: 'booking',
+    start_date: toIso(turnoverDate),
+    end_date: toIso(turnoverEnd),
+    raw_summary: 'Reservation',
+    guest_name: 'Turnover arrival',
+    booking_type: 'reservation',
+    tax_paid: false
+  }
+);
+
 function dateFromToday(offsetDays, hour = 12) {
   const date = new Date(today);
   date.setDate(date.getDate() + offsetDays);
@@ -313,16 +344,35 @@ async function inspectPage(browser, baseUrl, viewport, isMobile) {
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => document.querySelectorAll('.agenda-item,.booking-bar').length > 0);
 
-  const metrics = await page.evaluate(() => ({
-    nodes: document.getElementsByTagName('*').length,
-    cells: document.querySelectorAll('.cal-cell').length,
-    dayColumns: document.querySelectorAll('.cal-day-column').length,
-    bookingBars: document.querySelectorAll('.booking-bar').length,
-    navButtons: document.querySelectorAll('nav .nav-item[type="button"]').length,
-    chartLoaded: Boolean(document.querySelector('script[data-chart-js]')),
-    freshnessState: document.getElementById('freshnessStatus')?.dataset.state,
-    freshnessTitle: document.getElementById('freshnessTitle')?.textContent
-  }));
+  const metrics = await page.evaluate(expectedHandoverDate => {
+    const outgoing = document.querySelector(`.booking-bar[data-property-id="orange"][data-end-date="${expectedHandoverDate}"]`);
+    const incoming = document.querySelector(`.booking-bar[data-property-id="orange"][data-start-date="${expectedHandoverDate}"]`);
+    const marker = document.querySelector(`.calendar-handover-marker[data-property-id="orange"][data-handover-date="${expectedHandoverDate}"]`);
+    let handover = null;
+    if (outgoing && incoming && marker) {
+      const outgoingRect = outgoing.getBoundingClientRect();
+      const incomingRect = incoming.getBoundingClientRect();
+      const markerRect = marker.getBoundingClientRect();
+      const markerCenter = markerRect.left + markerRect.width / 2;
+      handover = {
+        gap: incomingRect.left - outgoingRect.right,
+        outgoingToMarker: outgoingRect.right - markerCenter,
+        incomingToMarker: incomingRect.left - markerCenter
+      };
+    }
+    return {
+      nodes: document.getElementsByTagName('*').length,
+      cells: document.querySelectorAll('.cal-cell').length,
+      dayColumns: document.querySelectorAll('.cal-day-column').length,
+      bookingBars: document.querySelectorAll('.booking-bar').length,
+      handoverMarkers: document.querySelectorAll('.calendar-handover-marker').length,
+      handover,
+      navButtons: document.querySelectorAll('nav .nav-item[type="button"]').length,
+      chartLoaded: Boolean(document.querySelector('script[data-chart-js]')),
+      freshnessState: document.getElementById('freshnessStatus')?.dataset.state,
+      freshnessTitle: document.getElementById('freshnessTitle')?.textContent
+    };
+  }, toIso(turnoverDate));
 
   assert.equal(metrics.cells, 0);
   assert.equal(metrics.navButtons, 5);
@@ -341,6 +391,11 @@ async function inspectPage(browser, baseUrl, viewport, isMobile) {
   } else {
     assert.ok(metrics.dayColumns > 0 && metrics.dayColumns <= 250);
     assert.ok(metrics.nodes < 1800, `desktop DOM budget exceeded: ${metrics.nodes}`);
+    assert.ok(metrics.handoverMarkers > 0, 'desktop timeline did not render handover markers');
+    assert.ok(metrics.handover, 'test checkout/check-in handover was not found');
+    assert.ok(Math.abs(metrics.handover.gap) <= 0.01, `handover bars have a ${metrics.handover.gap}px gap`);
+    assert.ok(Math.abs(metrics.handover.outgoingToMarker) <= 0.01, 'checkout does not end at the handover marker');
+    assert.ok(Math.abs(metrics.handover.incomingToMarker) <= 0.01, 'check-in does not start at the handover marker');
   }
 
   await context.close();
