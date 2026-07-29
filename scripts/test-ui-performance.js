@@ -401,6 +401,60 @@ async function inspectPage(browser, baseUrl, viewport, isMobile) {
       assert.ok(Math.abs(rect.right - shellRects[0].right) <= 0.5, 'desktop shells do not share a right edge');
     }
     assert.ok(Math.abs(metrics.shellLayout.statsTrailingSpace) <= 0.5, 'calendar summary cards leave unused horizontal space');
+
+    const fullMovementLists = await page.evaluate(({ todayIso, pastIso, futureIso }) => {
+      const movementProperties = ['awesome', 'central', 'orange', 'vingtage', 'youth'];
+      movementProperties.forEach((propertyId, index) => {
+        bookings.push({
+          id: 900000 + index,
+          property_id: propertyId,
+          platform: 'airbnb',
+          start_date: todayIso,
+          end_date: futureIso,
+          raw_summary: 'Reservation',
+          guest_name: `Complete arrival ${index}`,
+          guest_count: 2,
+          guest_country: 'it',
+          booking_type: 'reservation'
+        });
+        bookings.push({
+          id: 910000 + index,
+          property_id: propertyId,
+          platform: 'booking',
+          start_date: pastIso,
+          end_date: todayIso,
+          raw_summary: 'Reservation',
+          guest_name: `Complete departure ${index}`,
+          guest_count: 2,
+          guest_country: 'it',
+          booking_type: 'reservation'
+        });
+      });
+      updateStats();
+      const groups = Array.from(document.querySelectorAll('#statTodayList .stat-movement-group')).map(group => ({
+        type: group.dataset.movement,
+        declared: Number(group.querySelector('.stat-movement-count')?.textContent || 0),
+        rendered: group.querySelectorAll('.stat-checkin-item').length
+      }));
+      return {
+        groups,
+        hiddenSummaries: document.querySelectorAll('#statTodayList .stat-checkin-more, #statNextList .stat-checkin-more, #statNext2List .stat-checkin-more').length,
+        todayLabel: document.getElementById('statTodayCount')?.textContent || ''
+      };
+    }, {
+      todayIso: toIso(today),
+      pastIso: toIso(dateFromToday(-2)),
+      futureIso: toIso(dateFromToday(2))
+    });
+    assert.equal(fullMovementLists.groups.length, 2, 'today card does not show both arrivals and departures');
+    for (const group of fullMovementLists.groups) {
+      assert.ok(group.declared >= 5, `test did not create enough ${group.type} events`);
+      assert.equal(group.rendered, group.declared, `${group.type} list hides operational events`);
+    }
+    assert.equal(fullMovementLists.hiddenSummaries, 0, 'operational cards still collapse events behind a summary');
+    assert.match(fullMovementLists.todayLabel, /заезд/i);
+    assert.match(fullMovementLists.todayLabel, /выезд/i);
+    await captureUiScreenshot(page, 'orbit-calendar-complete-movements');
   }
 
   await context.close();
