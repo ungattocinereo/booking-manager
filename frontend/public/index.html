@@ -346,7 +346,7 @@
       gap: 8px;
     }
     .stat-card.stat-day-card { min-width: 300px; }
-    .stat-card.stat-day-card[data-empty="true"] { background: rgba(255,255,255,.58); }
+    .stat-card.stat-day-card[data-empty="true"] { background: transparent; }
     .stat-card.stat-day-card[data-empty="true"] .stat-value { color: var(--text-secondary); }
     .stat-checkin-item {
       display: flex;
@@ -3156,28 +3156,64 @@
       margin-left: auto;
       margin-right: auto;
     }
-    .stats-bar { padding: 16px 0 12px; gap: 10px; }
+    .stats-bar {
+      padding: 20px 0 18px;
+      align-items: stretch;
+      gap: 0;
+    }
     .stat-card {
+      position: relative;
       flex-grow: 1;
       min-width: 175px;
-      padding: 15px 18px;
-      border-color: var(--border);
-      border-radius: 20px;
-      background: rgba(255,255,255,.88);
+      padding: 4px 24px 8px;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+    }
+    .stat-card + .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 2px;
+      bottom: 2px;
+      left: 0;
+      width: 1px;
+      background: linear-gradient(180deg, transparent 0%, #c9cede 13%, #c9cede 87%, transparent 100%);
     }
     .stat-card:first-child {
-      color: #fff;
-      border-color: var(--accent);
-      background: var(--accent);
+      padding-left: 4px;
+      color: var(--text);
+      background: transparent;
     }
-    .stat-card:first-child .stat-label { color: rgba(255,255,255,.7); }
-    .stat-card:first-child .stat-breakdown span { color: #fff; }
-    .stat-card .stat-label { font-size: 10px; font-weight: 700; letter-spacing: .08em; }
+    .stat-card:first-child .stat-value {
+      color: var(--accent);
+      font-size: 34px;
+    }
+    .stat-card .stat-label {
+      margin-bottom: 7px;
+      color: var(--accent);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: .11em;
+    }
     .stat-card .stat-value {
       font-family: 'IBM Plex Mono', monospace;
-      font-size: 26px;
+      font-size: 21px;
       font-weight: 600;
+      line-height: 1.15;
+      letter-spacing: -.035em;
     }
+    .stat-card.stat-day-card[data-empty="true"] { background: transparent; }
+    .stat-card.stat-day-card[data-empty="true"] .stat-value {
+      color: #697087;
+      font-size: 17px;
+    }
+    .stat-checkin-list { margin-top: 10px; gap: 7px; }
+    .stat-card--conflict .stat-label,
+    .stat-card--conflict .stat-value,
+    .stat-card--conflict .stat-checkin-props { color: var(--danger); }
+    .stat-card--recent { min-width: 280px; }
+    .stat-card--recent .stat-label,
+    .stat-card--recent .stat-value { color: var(--accent); }
     .legend { padding: 2px 0 14px; gap: 18px; }
     .legend-item { white-space: nowrap; }
     .legend-dot { height: 9px; border-radius: 999px; }
@@ -3630,27 +3666,27 @@
     </div>
     <div class="stat-card stat-day-card" id="statTodayCard">
       <div class="stat-label">Сегодня</div>
-      <div class="stat-value" id="statTodayCount" style="font-size:20px;">—</div>
+      <div class="stat-value" id="statTodayCount">—</div>
       <div class="stat-checkin-list" id="statTodayList"></div>
     </div>
-    <div class="stat-card stat-day-card" style="min-width:300px;">
+    <div class="stat-card stat-day-card">
       <div class="stat-label" id="statNextLabel">Завтра</div>
-      <div class="stat-value" id="statNextDate" style="font-size:16px;">—</div>
+      <div class="stat-value" id="statNextDate">—</div>
       <div class="stat-checkin-list" id="statNextList"></div>
     </div>
-    <div class="stat-card stat-day-card" style="min-width:300px;">
+    <div class="stat-card stat-day-card">
       <div class="stat-label" id="statNext2Label">Ближайшие заезды</div>
-      <div class="stat-value" id="statNext2Date" style="font-size:16px;">—</div>
+      <div class="stat-value" id="statNext2Date">—</div>
       <div class="stat-checkin-list" id="statNext2List"></div>
     </div>
-    <div class="stat-card" id="statConflictCard" style="display:none; border-color:var(--danger); background:#fef2f2;">
-      <div class="stat-label" style="color:var(--danger);">Конфликты</div>
-      <div class="stat-value" id="statConflicts" style="color:var(--danger);">0</div>
-      <div class="stat-checkin-props" id="statConflictsDetail" style="color:var(--danger); font-size:11px;"></div>
+    <div class="stat-card stat-card--conflict" id="statConflictCard" style="display:none;">
+      <div class="stat-label">Конфликты</div>
+      <div class="stat-value" id="statConflicts">0</div>
+      <div class="stat-checkin-props" id="statConflictsDetail" style="font-size:11px;"></div>
     </div>
-    <div class="stat-card" id="statRecentCard" style="display:none; min-width:280px; border-color:#a5b4fc; background:#eef2ff;">
-      <div class="stat-label" style="color:var(--accent);">Новые за 24ч</div>
-      <div class="stat-value" id="statRecentCount" style="color:var(--accent);">0</div>
+    <div class="stat-card stat-card--recent" id="statRecentCard" style="display:none;">
+      <div class="stat-label">Новые за 24ч</div>
+      <div class="stat-value" id="statRecentCount">0</div>
       <div class="stat-checkin-list" id="statRecentList"></div>
     </div>
   </div>

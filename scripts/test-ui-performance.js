@@ -347,6 +347,25 @@ async function inspectPage(browser, baseUrl, viewport, isMobile) {
       chartLoaded: Boolean(document.querySelector('script[data-chart-js]')),
       freshnessState: document.getElementById('freshnessStatus')?.dataset.state,
       freshnessTitle: document.getElementById('freshnessTitle')?.textContent,
+      summaryPresentation: (() => {
+        const cards = Array.from(document.querySelectorAll('#statsBar .stat-card'))
+          .filter(card => getComputedStyle(card).display !== 'none');
+        const divider = cards[1] ? getComputedStyle(cards[1], '::before') : null;
+        return {
+          cards: cards.map(card => {
+            const style = getComputedStyle(card);
+            return {
+              backgroundColor: style.backgroundColor,
+              borderTopWidth: style.borderTopWidth,
+              borderRadius: style.borderRadius
+            };
+          }),
+          divider: divider ? {
+            width: divider.width,
+            backgroundImage: divider.backgroundImage
+          } : null
+        };
+      })(),
       shellLayout: (() => {
         const readRect = selector => {
           const rect = document.querySelector(selector)?.getBoundingClientRect();
@@ -401,6 +420,14 @@ async function inspectPage(browser, baseUrl, viewport, isMobile) {
       assert.ok(Math.abs(rect.right - shellRects[0].right) <= 0.5, 'desktop shells do not share a right edge');
     }
     assert.ok(Math.abs(metrics.shellLayout.statsTrailingSpace) <= 0.5, 'calendar summary cards leave unused horizontal space');
+    assert.ok(metrics.summaryPresentation.cards.length >= 4, 'calendar summary lost operational sections');
+    for (const card of metrics.summaryPresentation.cards) {
+      assert.equal(card.backgroundColor, 'rgba(0, 0, 0, 0)', 'calendar summary section still has a card background');
+      assert.equal(card.borderTopWidth, '0px', 'calendar summary section still has a card border');
+      assert.equal(card.borderRadius, '0px', 'calendar summary section still has rounded corners');
+    }
+    assert.equal(metrics.summaryPresentation.divider?.width, '1px', 'calendar summary divider is missing');
+    assert.notEqual(metrics.summaryPresentation.divider?.backgroundImage, 'none', 'calendar summary divider has no visual treatment');
 
     const completeArrivalLists = await page.evaluate(({ todayIso, tomorrowIso, pastIso, nearestIso, nearestEndIso }) => {
       bookings = bookings.filter(booking => booking.start_date !== tomorrowIso);
