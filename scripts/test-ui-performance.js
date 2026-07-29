@@ -346,7 +346,25 @@ async function inspectPage(browser, baseUrl, viewport, isMobile) {
       navButtons: document.querySelectorAll('nav .nav-item[type="button"]').length,
       chartLoaded: Boolean(document.querySelector('script[data-chart-js]')),
       freshnessState: document.getElementById('freshnessStatus')?.dataset.state,
-      freshnessTitle: document.getElementById('freshnessTitle')?.textContent
+      freshnessTitle: document.getElementById('freshnessTitle')?.textContent,
+      shellLayout: (() => {
+        const readRect = selector => {
+          const rect = document.querySelector(selector)?.getBoundingClientRect();
+          return rect ? { left: rect.left, right: rect.right, width: rect.width } : null;
+        };
+        const visibleCards = Array.from(document.querySelectorAll('#statsBar .stat-card'))
+          .filter(card => getComputedStyle(card).display !== 'none');
+        const lastCardRect = visibleCards.at(-1)?.getBoundingClientRect();
+        return {
+          topbar: readRect('.orbit-topbar'),
+          hero: readRect('.orbit-hero'),
+          stats: readRect('#statsBar'),
+          calendar: readRect('#calendarTab'),
+          statsTrailingSpace: lastCardRect
+            ? document.getElementById('statsBar').getBoundingClientRect().right - lastCardRect.right
+            : null
+        };
+      })()
     };
   }, toIso(turnoverDate));
 
@@ -372,10 +390,67 @@ async function inspectPage(browser, baseUrl, viewport, isMobile) {
     assert.ok(Math.abs(metrics.handover.gap) <= 0.01, `handover bars have a ${metrics.handover.gap}px gap`);
     assert.ok(Math.abs(metrics.handover.outgoingToMarker) <= 0.01, 'checkout does not end at the handover marker');
     assert.ok(Math.abs(metrics.handover.incomingToMarker) <= 0.01, 'check-in does not start at the handover marker');
+    const shellRects = [
+      metrics.shellLayout.topbar,
+      metrics.shellLayout.hero,
+      metrics.shellLayout.stats,
+      metrics.shellLayout.calendar
+    ];
+    for (const rect of shellRects.slice(1)) {
+      assert.ok(Math.abs(rect.left - shellRects[0].left) <= 0.5, 'desktop shells do not share a left edge');
+      assert.ok(Math.abs(rect.right - shellRects[0].right) <= 0.5, 'desktop shells do not share a right edge');
+    }
+    assert.ok(Math.abs(metrics.shellLayout.statsTrailingSpace) <= 0.5, 'calendar summary cards leave unused horizontal space');
   }
 
   await context.close();
   return metrics;
+}
+
+async function inspectWideSectionLayouts(browser, baseUrl) {
+  const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
+  await context.route(/^https:/, route => route.abort());
+  const page = await context.newPage();
+  const errors = collectPageErrors(page);
+  await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => document.getElementById('freshnessStatus')?.dataset.state === 'ok');
+
+  const readSection = async selector => page.locator(selector).evaluate(element => {
+    const rect = element.getBoundingClientRect();
+    return { left: rect.left, right: rect.right, width: rect.width };
+  });
+  const topbar = await readSection('.orbit-topbar');
+
+  await page.getByRole('button', { name: /Налоги/ }).click();
+  await page.waitForFunction(() => document.querySelectorAll('#taxList .tax-date-group').length > 1);
+  const tax = await readSection('#taxTab');
+  const taxColumns = await page.locator('#taxList').evaluate(element =>
+    getComputedStyle(element).gridTemplateColumns.split(' ').filter(Boolean).length
+  );
+  await captureUiScreenshot(page, 'orbit-tax-wide');
+
+  await page.getByRole('button', { name: /Гости/ }).click();
+  await page.waitForFunction(() => document.querySelectorAll('#reportingUnits .reporting-unit').length === 2);
+  const reporting = await readSection('#reportingTab');
+  const reportingColumns = await page.locator('.reporting-stack').evaluate(element =>
+    getComputedStyle(element).gridTemplateColumns.split(' ').filter(Boolean).length
+  );
+  await captureUiScreenshot(page, 'orbit-reporting-wide');
+
+  for (const section of [tax, reporting]) {
+    assert.ok(Math.abs(section.left - topbar.left) <= 0.5, 'wide section does not share the shell left edge');
+    assert.ok(Math.abs(section.right - topbar.right) <= 0.5, 'wide section does not share the shell right edge');
+  }
+  assert.equal(taxColumns, 2, 'wide tax list should use two columns');
+  assert.equal(reportingColumns, 2, 'wide guest-reporting workspace should use two columns');
+  const overflow = await readHorizontalOverflow(page);
+  assert.ok(overflow.document <= 1, `wide layout document overflows horizontally by ${overflow.document}px`);
+  assert.ok(overflow.body <= 1, `wide layout body overflows horizontally by ${overflow.body}px`);
+  assert.deepEqual(errors.pageErrors, []);
+  assert.deepEqual(errors.consoleErrors, []);
+
+  await context.close();
+  return { topbar, tax, reporting, taxColumns, reportingColumns, overflow };
 }
 
 async function inspectReportingPage(browser, baseUrl) {
@@ -491,6 +566,13 @@ function collectPageErrors(page) {
     consoleErrors.push(text);
   });
   return { pageErrors, consoleErrors };
+}
+
+async function captureUiScreenshot(page, name) {
+  if (!process.env.UI_SCREENSHOT_DIR) return;
+  const outputDir = path.resolve(process.env.UI_SCREENSHOT_DIR);
+  fs.mkdirSync(outputDir, { recursive: true });
+  await page.screenshot({ path: path.join(outputDir, `${name}.png`), fullPage: true });
 }
 
 async function waitForStatsReady(page, expectedState) {
@@ -719,6 +801,7 @@ async function main() {
     const statsMobile = await inspectStatsPage(browser, baseUrl, { width: 390, height: 844 }, true);
     const statsWithoutChart = await inspectStatsWithoutChart(browser, baseUrl);
     const reporting = await inspectReportingPage(browser, baseUrl);
+    const wideLayouts = await inspectWideSectionLayouts(browser, baseUrl);
     assert.ok(serverState.syncRequests > 0, 'admin UI did not start automatic calendar sync');
     assert.ok(serverState.statsRequests >= 3, `statistics history endpoint was requested only ${serverState.statsRequests} time(s)`);
     assert.deepEqual([...new Set(serverState.statsPaths)], ['/api/dashboard?stats_only=1']);
@@ -761,6 +844,7 @@ async function main() {
       statsMobile,
       statsWithoutChart,
       reporting,
+      wideLayouts,
       cachedAuthFallback,
       confirmedEmptyDashboard,
       statsEndpoint: [...new Set(serverState.statsPaths)],
