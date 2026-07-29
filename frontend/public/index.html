@@ -620,6 +620,7 @@
       --calendar-property-rail-width: var(--calendar-property-col-expanded-width);
       --calendar-day-width: 30px;
       --calendar-today-width: 48px;
+      --calendar-month-rail-height: 26px;
       --calendar-row-height: 46px;
       --calendar-booking-height: 26px;
       --calendar-grid-line: #e1e7ef;
@@ -670,9 +671,17 @@
     .calendar-scroll-wrapper.is-property-collapsed {
       --calendar-property-rail-width: var(--calendar-property-col-collapsed-width);
     }
-    .cal-property-header {
+    .cal-property-month-spacer {
       position: sticky;
       top: 0;
+      z-index: 29;
+      min-height: var(--calendar-month-rail-height);
+      background: #f5f5f9;
+      border-bottom: 1px solid var(--calendar-grid-line);
+    }
+    .cal-property-header {
+      position: sticky;
+      top: var(--calendar-month-rail-height);
       z-index: 28;
       padding: 12px 16px;
       min-height: 54px;
@@ -716,7 +725,7 @@
     }
     .cal-day-header {
       position: sticky;
-      top: 0;
+      top: var(--calendar-month-rail-height);
       z-index: 16;
       min-height: 54px;
       padding: 8px 0 7px;
@@ -741,9 +750,7 @@
     .cal-day-header.today {
       min-width: var(--calendar-today-width);
       background: linear-gradient(180deg, #dff1ee 0%, #f4fbfa 100%);
-      border-left: 1px solid #89ccc2;
-      border-right: 1px solid #89ccc2;
-      box-shadow: inset 0 -3px 0 var(--accent), 0 8px 18px rgba(15,118,110,.12);
+      box-shadow: none;
     }
     .cal-day-header.today .day-num {
       color: var(--accent);
@@ -764,23 +771,36 @@
       background: linear-gradient(180deg, #dff1ee 0%, #f4fbfa 100%);
     }
     .cal-day-header.today.weekend .day-name { color: #0f766e; }
-    .cal-day-header.month-start { border-left: 2px solid var(--accent); }
-    .cal-month-label {
-      position: absolute;
-      top: 0;
-      min-width: 58px;
-      font-size: 10px;
-      font-weight: 800;
+    .cal-month-band {
+      position: relative;
+      z-index: 18;
+      min-height: var(--calendar-month-rail-height);
+      display: flex;
+      align-items: center;
+      padding-left: 10px;
       color: var(--accent);
-      text-transform: uppercase;
-      letter-spacing: .08em;
-      padding: 3px 8px;
-      background: #dff1ee;
-      border: 1px solid #b8ded8;
-      border-top: 0;
-      border-radius: 0 0 8px 8px;
-      z-index: 20;
+      background: #f5f5f9;
+      border-bottom: 1px solid var(--calendar-grid-line);
+      white-space: nowrap;
+      overflow: visible;
       pointer-events: none;
+    }
+    .cal-month-band::before {
+      content: '';
+      width: 2px;
+      height: 12px;
+      margin-right: 7px;
+      border-radius: 999px;
+      background: currentColor;
+      opacity: .42;
+    }
+    .cal-month-band span {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px;
+      font-weight: 600;
+      line-height: 1;
+      letter-spacing: .11em;
+      text-transform: uppercase;
     }
     .cal-group-header {
       padding: 0 16px;
@@ -836,27 +856,15 @@
     .cal-day-column.today {
       min-width: var(--calendar-today-width);
       background: linear-gradient(180deg, rgba(15,118,110,.11), rgba(15,118,110,.045));
-      box-shadow: inset 1px 0 rgba(15,118,110,.28), inset -1px 0 rgba(15,118,110,.24);
+      box-shadow: none;
     }
-    .cal-day-column.today::after {
-      content: "";
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      left: 50%;
-      width: 3px;
-      transform: translateX(-50%);
-      background: var(--accent);
-      border-radius: 999px;
-      opacity: .55;
-    }
+    .cal-day-column.today::after { display: none; }
     .cal-day-column.past { background: #f7f7f8; }
     .cal-day-column.weekend { background: #fffaf2; }
     .cal-day-column.past.weekend { background: #f2f3f5; }
     .cal-day-column.today.weekend {
       background: linear-gradient(180deg, rgba(15,118,110,.11), rgba(15,118,110,.045));
     }
-    .cal-day-column.month-start { border-left: 2px solid var(--accent); }
     .cal-row-layer {
       position: relative;
       z-index: 2;
@@ -3166,6 +3174,7 @@
       font-size: 15px;
     }
     .orbit-date {
+      position: relative;
       width: 110px;
       height: 110px;
       border: 1px solid #c9bdfa;
@@ -3176,6 +3185,23 @@
       justify-content: center;
       color: #fff;
       background: var(--accent);
+    }
+    .orbit-date-arrivals {
+      position: absolute;
+      top: -7px;
+      right: -9px;
+      width: 42px;
+      height: 42px;
+      border: 4px solid var(--bg);
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      color: var(--violet-deep);
+      background: #f7f5ff;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 19px;
+      font-weight: 600;
+      line-height: 1;
     }
     .orbit-date span {
       font-family: 'IBM Plex Mono', monospace;
@@ -3307,22 +3333,22 @@
     .calendar-scroll-wrapper::-webkit-scrollbar-thumb { background: #bcbfce; border-color: #f2f2f7; }
     .calendar-property-rail-grid { border-right-color: var(--border); box-shadow: none; }
     .cal-property-header, .cal-day-header { background: #fafafd; }
+    .cal-property-month-spacer, .cal-month-band { background: #f1f2f7; }
     .cal-group-header, .cal-row-layer.group { background: #f0f1f6; }
     .cal-day-header.today,
     .cal-day-header.today.weekend {
-      border-color: #c5b6fa;
-      background: var(--accent-light);
-      box-shadow: inset 0 -3px 0 var(--accent);
+      border-color: var(--calendar-grid-line);
+      background: #e9e3ff;
+      box-shadow: none;
     }
     .cal-day-header.today .day-num,
     .cal-day-header.today .day-name { color: var(--accent); }
-    .cal-month-label { color: var(--violet-deep); border-color: #d5ccfa; background: var(--accent-light); }
     .cal-day-column.today,
     .cal-day-column.today.weekend {
-      background: rgba(109,44,252,.065);
-      box-shadow: inset 1px 0 rgba(109,44,252,.2), inset -1px 0 rgba(109,44,252,.2);
+      background: rgba(109,44,252,.09);
+      box-shadow: none;
     }
-    .cal-day-column.today::after { width: 2px; background: var(--accent); opacity: .65; }
+    .cal-day-column.today::after { display: none; }
     .cal-day-column.weekend { background: #fbf8f4; }
     .cal-day-column.past { background: #f6f6f8; }
     .booking-bar {
@@ -3358,15 +3384,39 @@
       position: relative;
       z-index: 26;
       width: 8px;
-      height: 8px;
-      align-self: center;
+      height: auto;
+      align-self: stretch;
       justify-self: start;
       margin-left: -4px;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      transform: none;
+      pointer-events: none;
+    }
+    .calendar-handover-marker::before {
+      content: '';
+      position: absolute;
+      top: 3px;
+      bottom: 3px;
+      left: 50%;
+      width: 1px;
+      background: rgba(255,255,255,.94);
+      box-shadow: 0 0 0 1px rgba(109,44,252,.16);
+      transform: translateX(-50%);
+    }
+    .calendar-handover-marker::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 8px;
+      height: 8px;
       border: 2px solid #fff;
       border-radius: 2px;
+      box-sizing: border-box;
       background: var(--accent);
-      transform: rotate(45deg);
-      pointer-events: none;
+      transform: translate(-50%, -50%) rotate(45deg);
     }
     .booking-bar.completed { color: #7a7d8e; border-color: #b9bbc7; background: #f8f8fa !important; }
     .booking-bar.completed .bar-label { color: #646778; }
@@ -3621,6 +3671,14 @@
       .orbit-date { width: 70px; height: 70px; }
       .orbit-date span { font-size: 28px; }
       .orbit-date small { margin-top: 4px; font-size: 8px; }
+      .orbit-date-arrivals {
+        top: -6px;
+        right: -7px;
+        width: 31px;
+        height: 31px;
+        border-width: 3px;
+        font-size: 14px;
+      }
       .freshness-status { grid-column: 1 / -1; min-height: 60px; margin: 8px 0 0; border-radius: 18px; }
       .freshness-detail { white-space: normal; }
       .stats-bar, .legend { display: none !important; }
@@ -3706,6 +3764,7 @@
     <div class="orbit-date" aria-label="Сегодня">
       <span id="orbitDateDay">—</span>
       <small id="orbitDateMonth">—</small>
+      <strong class="orbit-date-arrivals" id="orbitDateArrivals" aria-label="Заезды сегодня">—</strong>
     </div>
   <section class="freshness-status" id="freshnessStatus" data-state="loading" role="status" aria-live="polite" aria-atomic="true">
     <div class="freshness-icon" aria-hidden="true">
@@ -4449,10 +4508,8 @@ function shouldMountCalendarGrid() {
 function unmountCalendarGrid() {
   const grid = document.getElementById('calendarGrid');
   const propertyRail = document.getElementById('calendarPropertyRailGrid');
-  const scroll = document.getElementById('calendarScroll');
   if (grid) grid.innerHTML = '';
   if (propertyRail) propertyRail.innerHTML = '';
-  if (scroll) scroll.querySelectorAll('.cal-month-label').forEach(label => label.remove());
 }
 
 function renderCalendarWhenVisible(options = {}) {
@@ -4698,9 +4755,14 @@ function updateStats() {
   // Today card
   const todayCheckins = checkinDates[today] || [];
   const todayCard = document.getElementById('statTodayCard');
+  const orbitArrivals = document.getElementById('orbitDateArrivals');
   todayCard.dataset.empty = String(todayCheckins.length === 0);
   document.getElementById('statTodayCount').textContent = checkinCountLabel(todayCheckins.length, 'Сегодня заездов нет');
   document.getElementById('statTodayList').innerHTML = renderCheckinList(todayCheckins);
+  if (orbitArrivals) {
+    orbitArrivals.textContent = String(todayCheckins.length);
+    orbitArrivals.setAttribute('aria-label', checkinCountLabel(todayCheckins.length, 'Сегодня заездов нет'));
+  }
 
   // Tomorrow is always shown, even when there are no arrivals.
   const tomorrowCheckins = checkinDates[tomorrow] || [];
@@ -5400,42 +5462,56 @@ function renderCalendar({ preserveScroll = false, focusDate = null, behavior = '
   grid.style.width = `calc(var(--calendar-property-col-width) + ${formatCalendarPx(dayMetrics.totalWidth)})`;
   grid.innerHTML = '';
   propertyRail.innerHTML = '';
-  scroll.querySelectorAll('.cal-month-label').forEach(label => label.remove());
 
   const dayNames = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
-  const monthNames = ['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'];
+  const monthNames = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+
+  const propertyMonthSpacer = document.createElement('div');
+  propertyMonthSpacer.className = 'cal-property-month-spacer';
+  propertyMonthSpacer.style.gridRow = '1';
+  propertyRail.appendChild(propertyMonthSpacer);
 
   const propHeader = document.createElement('div');
   propHeader.className = 'cal-property-header';
   propHeader.innerHTML = '<span class="cal-property-header-icon"><i data-lucide="home" style="width:15px;height:15px;"></i></span><span class="cal-property-header-title">Апартаменты</span>';
-  propHeader.style.gridRow = '1';
+  propHeader.style.gridRow = '2';
   propertyRail.appendChild(propHeader);
+
+  const monthSegments = [];
+  days.forEach((day, index) => {
+    const key = `${day.getFullYear()}-${day.getMonth()}`;
+    const current = monthSegments.at(-1);
+    if (!current || current.key !== key) {
+      monthSegments.push({ key, start: index, end: index + 1, date: day });
+    } else {
+      current.end = index + 1;
+    }
+  });
+  monthSegments.forEach(segment => {
+    const band = document.createElement('div');
+    band.className = 'cal-month-band';
+    band.style.gridRow = '1';
+    band.style.gridColumn = `${segment.start + 2} / ${segment.end + 2}`;
+    band.innerHTML = `<span>${monthNames[segment.date.getMonth()]} ${segment.date.getFullYear()}</span>`;
+    grid.appendChild(band);
+  });
 
   days.forEach((day, i) => {
     const col = i + 2;
     const isToday = day.getTime() === today.getTime();
     const isPast = day < today;
     const isWeekend = day.getDay() === 0 || day.getDay() === 6;
-    const isMonthStart = day.getDate() === 1;
 
     const el = document.createElement('div');
-    el.className = 'cal-day-header' + (isToday ? ' today' : '') + (isPast ? ' past' : '') + (isWeekend ? ' weekend' : '') + (isMonthStart ? ' month-start' : '');
-    el.style.gridRow = '1';
+    el.className = 'cal-day-header' + (isToday ? ' today' : '') + (isPast ? ' past' : '') + (isWeekend ? ' weekend' : '');
+    el.style.gridRow = '2';
     el.style.gridColumn = col;
     el.style.minWidth = formatCalendarPx(dayMetrics.widths[i]);
     el.innerHTML = `<div class="day-num">${day.getDate()}</div><div class="day-name">${dayNames[day.getDay()]}</div>`;
     grid.appendChild(el);
-
-    if (isMonthStart || i === 0) {
-      const label = document.createElement('div');
-      label.className = 'cal-month-label';
-      label.textContent = `${monthNames[day.getMonth()]} ${day.getFullYear()}`;
-      label.style.left = `calc(var(--calendar-property-col-width) + ${formatCalendarPx(dayMetrics.offsets[i] || 0)})`;
-      scroll.appendChild(label);
-    }
   });
 
-  let currentRow = 2;
+  let currentRow = 3;
   let visiblePropertyCount = 0;
   const groups = getCalendarGroupsForRender();
 
@@ -5547,10 +5623,9 @@ function renderCalendar({ preserveScroll = false, focusDate = null, behavior = '
       const isToday = day.getTime() === today.getTime();
       const isPast = day < today;
       const isWeekend = day.getDay() === 0 || day.getDay() === 6;
-      const isMonthStart = day.getDate() === 1;
       const column = document.createElement('div');
-      column.className = 'cal-day-column' + (isToday ? ' today' : '') + (isPast ? ' past' : '') + (isWeekend ? ' weekend' : '') + (isMonthStart ? ' month-start' : '');
-      column.style.gridRow = `2 / ${currentRow}`;
+      column.className = 'cal-day-column' + (isToday ? ' today' : '') + (isPast ? ' past' : '') + (isWeekend ? ' weekend' : '');
+      column.style.gridRow = `3 / ${currentRow}`;
       column.style.gridColumn = dayIdx + 2;
       column.style.minWidth = formatCalendarPx(dayMetrics.widths[dayIdx]);
       grid.appendChild(column);
