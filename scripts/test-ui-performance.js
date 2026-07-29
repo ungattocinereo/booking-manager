@@ -426,7 +426,8 @@ async function inspectPage(browser, baseUrl, viewport, isMobile) {
     }
     assert.ok(Math.abs(metrics.shellLayout.statsTrailingSpace) <= 0.5, 'calendar summary cards leave unused horizontal space');
 
-    const fullMovementLists = await page.evaluate(({ todayIso, pastIso, futureIso }) => {
+    const completeArrivalLists = await page.evaluate(({ todayIso, tomorrowIso, pastIso, nearestIso, nearestEndIso }) => {
+      bookings = bookings.filter(booking => booking.start_date !== tomorrowIso);
       const movementProperties = ['awesome', 'central', 'orange', 'vingtage', 'youth'];
       movementProperties.forEach((propertyId, index) => {
         bookings.push({
@@ -434,7 +435,7 @@ async function inspectPage(browser, baseUrl, viewport, isMobile) {
           property_id: propertyId,
           platform: 'airbnb',
           start_date: todayIso,
-          end_date: futureIso,
+          end_date: nearestIso,
           raw_summary: 'Reservation',
           guest_name: `Complete arrival ${index}`,
           guest_count: 2,
@@ -454,31 +455,50 @@ async function inspectPage(browser, baseUrl, viewport, isMobile) {
           booking_type: 'reservation'
         });
       });
+      bookings.push({
+        id: 920000,
+        property_id: 'royal',
+        platform: 'airbnb',
+        start_date: nearestIso,
+        end_date: nearestEndIso,
+        raw_summary: 'Reservation',
+        guest_name: 'Nearest future arrival',
+        guest_count: 2,
+        guest_country: 'it',
+        booking_type: 'reservation'
+      });
       updateStats();
-      const groups = Array.from(document.querySelectorAll('#statTodayList .stat-movement-group')).map(group => ({
-        type: group.dataset.movement,
-        declared: Number(group.querySelector('.stat-movement-count')?.textContent || 0),
-        rendered: group.querySelectorAll('.stat-checkin-item').length
-      }));
+      const expectedToday = bookings.filter(booking =>
+        isRealGuestBooking(booking, bookings) && booking.start_date === todayIso
+      ).length;
       return {
-        groups,
+        expectedToday,
+        renderedToday: document.querySelectorAll('#statTodayList .stat-checkin-item').length,
+        renderedTomorrow: document.querySelectorAll('#statNextList .stat-checkin-item').length,
+        renderedNearest: document.querySelectorAll('#statNext2List .stat-checkin-item').length,
         hiddenSummaries: document.querySelectorAll('#statTodayList .stat-checkin-more, #statNextList .stat-checkin-more, #statNext2List .stat-checkin-more').length,
-        todayLabel: document.getElementById('statTodayCount')?.textContent || ''
+        todayLabel: document.getElementById('statTodayCount')?.textContent || '',
+        tomorrowLabel: document.getElementById('statNextDate')?.textContent || '',
+        nearestLabel: document.getElementById('statNext2Date')?.textContent || '',
+        topBarText: document.getElementById('statsBar')?.innerText || ''
       };
     }, {
       todayIso: toIso(today),
+      tomorrowIso: toIso(dateFromToday(1)),
       pastIso: toIso(dateFromToday(-2)),
-      futureIso: toIso(dateFromToday(2))
+      nearestIso: toIso(dateFromToday(2)),
+      nearestEndIso: toIso(dateFromToday(4))
     });
-    assert.equal(fullMovementLists.groups.length, 2, 'today card does not show both arrivals and departures');
-    for (const group of fullMovementLists.groups) {
-      assert.ok(group.declared >= 5, `test did not create enough ${group.type} events`);
-      assert.equal(group.rendered, group.declared, `${group.type} list hides operational events`);
-    }
-    assert.equal(fullMovementLists.hiddenSummaries, 0, 'operational cards still collapse events behind a summary');
-    assert.match(fullMovementLists.todayLabel, /заезд/i);
-    assert.match(fullMovementLists.todayLabel, /выезд/i);
-    await captureUiScreenshot(page, 'orbit-calendar-complete-movements');
+    assert.ok(completeArrivalLists.expectedToday >= 5, 'test did not create enough today arrivals');
+    assert.equal(completeArrivalLists.renderedToday, completeArrivalLists.expectedToday, 'today card hides arrivals');
+    assert.equal(completeArrivalLists.renderedTomorrow, 0, 'tomorrow card shows arrivals after they were removed');
+    assert.equal(completeArrivalLists.tomorrowLabel, 'Завтра заездов нет');
+    assert.ok(completeArrivalLists.renderedNearest >= 1, 'nearest future arrival day is not shown');
+    assert.match(completeArrivalLists.nearestLabel, /·\s*\d+$/);
+    assert.equal(completeArrivalLists.hiddenSummaries, 0, 'arrival cards still collapse events behind a summary');
+    assert.match(completeArrivalLists.todayLabel, /заезд/i);
+    assert.doesNotMatch(completeArrivalLists.topBarText, /выезд/i);
+    await captureUiScreenshot(page, 'orbit-calendar-arrivals-only');
   }
 
   await context.close();
