@@ -325,6 +325,7 @@ async function inspectPage(browser, baseUrl, viewport, isMobile) {
     const incoming = document.querySelector(`.booking-bar[data-property-id="orange"][data-start-date="${expectedHandoverDate}"]`);
     const marker = document.querySelector(`.calendar-handover-marker[data-property-id="orange"][data-handover-date="${expectedHandoverDate}"]`);
     let handover = null;
+    let handoverDivider = null;
     if (outgoing && incoming && marker) {
       const outgoingRect = outgoing.getBoundingClientRect();
       const incomingRect = incoming.getBoundingClientRect();
@@ -335,6 +336,17 @@ async function inspectPage(browser, baseUrl, viewport, isMobile) {
         outgoingToMarker: outgoingRect.right - markerCenter,
         incomingToMarker: incomingRect.left - markerCenter
       };
+      const dividerStyle = getComputedStyle(marker, '::before');
+      const diamondStyle = getComputedStyle(marker, '::after');
+      handoverDivider = {
+        markerHeight: markerRect.height,
+        bookingHeight: outgoingRect.height,
+        dividerHeight: parseFloat(dividerStyle.height),
+        dividerBackground: dividerStyle.backgroundColor,
+        dividerShadow: dividerStyle.boxShadow,
+        diamondWidth: parseFloat(diamondStyle.width),
+        diamondBackground: diamondStyle.backgroundColor
+      };
     }
     return {
       nodes: document.getElementsByTagName('*').length,
@@ -343,6 +355,7 @@ async function inspectPage(browser, baseUrl, viewport, isMobile) {
       bookingBars: document.querySelectorAll('.booking-bar').length,
       handoverMarkers: document.querySelectorAll('.calendar-handover-marker').length,
       handover,
+      handoverDivider,
       navButtons: document.querySelectorAll('nav .nav-item[type="button"]').length,
       chartLoaded: Boolean(document.querySelector('script[data-chart-js]')),
       freshnessState: document.getElementById('freshnessStatus')?.dataset.state,
@@ -371,6 +384,40 @@ async function inspectPage(browser, baseUrl, viewport, isMobile) {
         return {
           airbnb: inspectBar('.booking-bar.airbnb:not(.completed):not(.not-available)'),
           booking: inspectBar('.booking-bar.booking:not(.completed):not(.not-available)')
+        };
+      })(),
+      todayTreatment: (() => {
+        const column = document.querySelector('.cal-day-column.today');
+        const normalColumn = document.querySelector('.cal-day-column:not(.today)');
+        const header = document.querySelector('.cal-day-header.today');
+        if (!column || !normalColumn || !header) return null;
+        const style = getComputedStyle(column);
+        const headerStyle = getComputedStyle(header);
+        return {
+          width: column.getBoundingClientRect().width,
+          normalWidth: normalColumn.getBoundingClientRect().width,
+          background: style.backgroundColor,
+          normalBackground: getComputedStyle(normalColumn).backgroundColor,
+          boxShadow: style.boxShadow,
+          centerDividerDisplay: getComputedStyle(column, '::after').display,
+          headerBoxShadow: headerStyle.boxShadow
+        };
+      })(),
+      monthRail: (() => {
+        const header = document.querySelector('.cal-day-header');
+        const bands = Array.from(document.querySelectorAll('.cal-month-band')).map(band => {
+          const rect = band.getBoundingClientRect();
+          return {
+            text: band.textContent.trim(),
+            top: rect.top,
+            bottom: rect.bottom,
+            height: rect.height,
+            whiteSpace: getComputedStyle(band).whiteSpace
+          };
+        });
+        return {
+          bands,
+          headerTop: header?.getBoundingClientRect().top ?? null
         };
       })(),
       summaryPresentation: (() => {
@@ -435,6 +482,26 @@ async function inspectPage(browser, baseUrl, viewport, isMobile) {
     assert.ok(Math.abs(metrics.handover.gap) <= 0.01, `handover bars have a ${metrics.handover.gap}px gap`);
     assert.ok(Math.abs(metrics.handover.outgoingToMarker) <= 0.01, 'checkout does not end at the handover marker');
     assert.ok(Math.abs(metrics.handover.incomingToMarker) <= 0.01, 'check-in does not start at the handover marker');
+    assert.ok(metrics.handoverDivider, 'handover divider styling was not rendered');
+    assert.ok(metrics.handoverDivider.markerHeight > metrics.handoverDivider.bookingHeight, 'handover divider does not extend beyond the booking bar');
+    assert.ok(metrics.handoverDivider.dividerHeight > metrics.handoverDivider.bookingHeight, 'handover divider line is not taller than the booking bar');
+    assert.notEqual(metrics.handoverDivider.dividerBackground, 'rgba(0, 0, 0, 0)', 'handover divider line is transparent');
+    assert.notEqual(metrics.handoverDivider.dividerShadow, 'none', 'handover divider lacks its light outline');
+    assert.equal(metrics.handoverDivider.diamondWidth, 8, 'handover diamond changed size');
+    assert.equal(metrics.handoverDivider.diamondBackground, 'rgb(109, 44, 252)', 'handover diamond lost the Orbit accent');
+    assert.ok(metrics.todayTreatment, 'today column was not rendered');
+    assert.ok(metrics.todayTreatment.width > metrics.todayTreatment.normalWidth, 'today column is no longer intentionally wide');
+    assert.notEqual(metrics.todayTreatment.background, metrics.todayTreatment.normalBackground, 'today column has no color distinction');
+    assert.equal(metrics.todayTreatment.boxShadow, 'none', 'today column still has a strong edge treatment');
+    assert.equal(metrics.todayTreatment.centerDividerDisplay, 'none', 'today column still has a central divider');
+    assert.equal(metrics.todayTreatment.headerBoxShadow, 'none', 'today header still has a strong underline or shadow');
+    assert.ok(metrics.monthRail.bands.length >= 2, 'calendar month rail did not render visible months');
+    assert.ok(metrics.monthRail.bands.some(band => band.text === 'Август 2026'), 'new month is missing from the month rail');
+    for (const band of metrics.monthRail.bands) {
+      assert.equal(band.whiteSpace, 'nowrap', 'month label can wrap onto two lines');
+      assert.ok(band.height <= 27, `month rail is too tall: ${band.height}px`);
+      assert.ok(Math.abs(band.bottom - metrics.monthRail.headerTop) <= 0.5, 'month label overlaps calendar day cells');
+    }
     assert.equal(metrics.timelineContrast.airbnb?.background, 'rgb(199, 47, 82)', 'Airbnb timeline bar is not using its solid fill');
     assert.equal(metrics.timelineContrast.booking?.background, 'rgb(18, 87, 168)', 'Booking timeline bar is not using its solid fill');
     for (const [platform, contrast] of Object.entries(metrics.timelineContrast)) {
@@ -515,6 +582,7 @@ async function inspectPage(browser, baseUrl, viewport, isMobile) {
         todayLabel: document.getElementById('statTodayCount')?.textContent || '',
         tomorrowLabel: document.getElementById('statNextDate')?.textContent || '',
         nearestLabel: document.getElementById('statNext2Date')?.textContent || '',
+        orbitArrivals: document.getElementById('orbitDateArrivals')?.textContent || '',
         topBarText: document.getElementById('statsBar')?.innerText || ''
       };
     }, {
@@ -526,6 +594,7 @@ async function inspectPage(browser, baseUrl, viewport, isMobile) {
     });
     assert.ok(completeArrivalLists.expectedToday >= 5, 'test did not create enough today arrivals');
     assert.equal(completeArrivalLists.renderedToday, completeArrivalLists.expectedToday, 'today card hides arrivals');
+    assert.equal(Number(completeArrivalLists.orbitArrivals), completeArrivalLists.expectedToday, 'hero arrival badge does not match today arrivals');
     assert.equal(completeArrivalLists.renderedTomorrow, 0, 'tomorrow card shows arrivals after they were removed');
     assert.equal(completeArrivalLists.tomorrowLabel, 'Завтра заездов нет');
     assert.ok(completeArrivalLists.renderedNearest >= 1, 'nearest future arrival day is not shown');
