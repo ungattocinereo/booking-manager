@@ -2961,6 +2961,10 @@
       --airbnb-light: #fff1f5;
       --booking: #155bb3;
       --booking-light: #eef5ff;
+      --timeline-airbnb: #c72f52;
+      --timeline-airbnb-border: #aa2443;
+      --timeline-booking: #1257a8;
+      --timeline-booking-border: #0b468c;
       --direct: #157a5b;
       --direct-light: #edf8f3;
       --success: #157a5b;
@@ -3217,8 +3221,8 @@
     .legend { padding: 2px 0 14px; gap: 18px; }
     .legend-item { white-space: nowrap; }
     .legend-dot { height: 9px; border-radius: 999px; }
-    .legend-dot.airbnb { background: var(--airbnb-light); border: 1px solid var(--airbnb); }
-    .legend-dot.booking { background: var(--booking-light); border: 1px solid var(--booking); }
+    .legend-dot.airbnb { background: var(--timeline-airbnb); border: 1px solid var(--timeline-airbnb-border); }
+    .legend-dot.booking { background: var(--timeline-booking); border: 1px solid var(--timeline-booking-border); }
     .legend-dot.direct { background: var(--direct-light); border: 1px solid var(--direct); }
 
     .calendar-section { padding: 0 0 36px; }
@@ -3282,11 +3286,21 @@
       transition: background .15s ease, border-color .15s ease;
     }
     .booking-bar:hover, .booking-bar:focus-visible { transform: none; opacity: 1; box-shadow: none; filter: brightness(.98); }
-    .booking-bar.airbnb { color: var(--airbnb); background: var(--airbnb-light); }
-    .booking-bar.booking { color: var(--booking); background: var(--booking-light); }
+    .booking-bar.airbnb {
+      color: #fff;
+      border-color: var(--timeline-airbnb-border);
+      background: var(--timeline-airbnb);
+    }
+    .booking-bar.booking {
+      color: #fff;
+      border-color: var(--timeline-booking-border);
+      background: var(--timeline-booking);
+    }
     .booking-bar.direct { color: var(--direct); background: var(--direct-light); }
     .booking-bar.other { color: #596074; background: #f0f1f5; }
     .booking-bar .bar-label { color: var(--text); }
+    .booking-bar.airbnb .bar-label,
+    .booking-bar.booking .bar-label { color: #fff; }
     .booking-bar.handover-start { border-top-left-radius: 1px; border-bottom-left-radius: 1px; }
     .booking-bar.handover-end { border-top-right-radius: 1px; border-bottom-right-radius: 1px; }
     .calendar-handover-marker {
@@ -3304,7 +3318,9 @@
       pointer-events: none;
     }
     .booking-bar.completed { color: #7a7d8e; border-color: #b9bbc7; background: #f8f8fa !important; }
+    .booking-bar.completed .bar-label { color: #646778; }
     .booking-bar.not-available { color: #626578; border-color: #b9bbc7; background-color: #f1f2f5; box-shadow: none; }
+    .booking-bar.not-available .bar-label { color: #626578; }
     .booking-tooltip { font-family: 'Golos Text', sans-serif; border-radius: 14px; box-shadow: none; }
 
     .mobile-agenda-card, .agenda-item { box-shadow: none; }
