@@ -138,7 +138,14 @@ class ReportingService {
     if (!unit) throw Object.assign(new Error('Неизвестная отчётная структура'), { status: 400 });
     if (!contentBase64 || typeof contentBase64 !== 'string') throw Object.assign(new Error('content_base64 is required'), { status: 400 });
     const buffer = Buffer.from(contentBase64, 'base64');
-    const parsed = parseAlloggiatiTxt(buffer);
+    let parsed;
+    try {
+      parsed = parseAlloggiatiTxt(buffer);
+    } catch (error) {
+      error.status = 400;
+      error.code = 'INVALID_TXT';
+      throw error;
+    }
     const duplicateRecords = await this.store.duplicateRecordFingerprints(unit.id, parsed.records.map(record => record.fingerprint));
     if (duplicateRecords.length) {
       const error = new Error(`TXT содержит ${duplicateRecords.length} ранее импортированных записей`);
@@ -173,7 +180,8 @@ class ReportingService {
     const batchId = Number(body.batch_id);
     const batch = await this.store.getBatch(batchId, { includePii: false });
     if (!batch) throw Object.assign(new Error('Пакет не найден'), { status: 404 });
-    if (batch.alloggiati_sent_at) throw Object.assign(new Error('Уже отправленный пакет нельзя редактировать'), { status: 409 });
+    if (batch.status === 'sending') throw Object.assign(new Error('Дождитесь завершения отправки Alloggiati'), { status: 409 });
+    if (batch.status === 'pii_purged') throw Object.assign(new Error('Персональные данные этого пакета уже удалены'), { status: 409 });
     const stay = batch.stays.find(item => item.id === Number(stayId));
     if (!stay) throw Object.assign(new Error('Группа гостей не принадлежит этому пакету'), { status: 409 });
 
@@ -232,32 +240,47 @@ class ReportingService {
       throw Object.assign(new Error('Сначала выполните Test и подтвердите отправку'), { status: 409 });
     }
     if (!['test', 'send'].includes(action)) throw Object.assign(new Error('Unknown Alloggiati action'), { status: 400 });
-    if (action === 'test' && !['ready', 'tested'].includes(batch.status)) {
-      throw Object.assign(new Error('Сначала завершите проверку всех групп гостей'), { status: 409 });
+    if (action === 'test' && !['needs_review', 'ready', 'tested'].includes(batch.status)) {
+      throw Object.assign(new Error('Этот пакет нельзя проверить в текущем состоянии'), { status: 409 });
     }
 
-    const lines = await this.store.decryptedLines(batchId);
-    const payloadFingerprint = fingerprint(lines.join('\r\n'));
-    const client = new this.AlloggiatiClient(unit.alloggiati);
-    const sendSubmissionId = action === 'send'
-      ? await this.store.startAlloggiatiSend({
-        unitId: unit.id, batchId, payloadFingerprint, totalRecords: lines.length, operatorEmail: operator
-      })
-      : null;
+    if (action === 'send') {
+      const claimed = await this.store.claimBatchForSend(batchId, expectedVersion);
+      if (!claimed) throw Object.assign(new Error('Отправка уже началась или пакет изменился; обновите страницу'), { status: 409 });
+    }
+
+    let lines = [];
+    let payloadFingerprint = '';
+    let sendSubmissionId = null;
     let result;
     try {
+      lines = await this.store.decryptedLines(batchId);
+      payloadFingerprint = fingerprint(lines.join('\r\n'));
+      const client = new this.AlloggiatiClient(unit.alloggiati);
+      if (action === 'send') {
+        sendSubmissionId = await this.store.startAlloggiatiSend({
+          unitId: unit.id, batchId, payloadFingerprint, totalRecords: lines.length, operatorEmail: operator
+        });
+      }
       result = action === 'test' ? await client.test(lines) : await client.send(lines);
     } catch (error) {
       const ambiguous = action === 'send' && ['ALLOGGIATI_TIMEOUT', 'ECONNRESET', 'ETIMEDOUT'].includes(error.code);
       const submission = {
-        status: ambiguous ? 'unknown' : 'failed', totalRecords: lines.length,
+        status: ambiguous ? 'unknown' : 'failed', totalRecords: lines.length || batch.record_count,
         responseSummary: { code: error.code || null, message: error.message }
       };
-      if (sendSubmissionId) await this.store.finishAlloggiatiSend(sendSubmissionId, submission);
-      else await this.store.addAlloggiatiSubmission({
-        unitId: unit.id, batchId, operation: action, payloadFingerprint, ...submission, operatorEmail: operator
-      });
-      if (ambiguous) await this.store.markBatchSent(batchId, 'unknown', []);
+      if (action === 'send') {
+        if (ambiguous) await this.store.markBatchSent(batchId, 'unknown', []);
+        else await this.store.releaseBatchAfterSendFailure(batchId);
+      }
+      try {
+        if (sendSubmissionId) await this.store.finishAlloggiatiSend(sendSubmissionId, submission);
+        else await this.store.addAlloggiatiSubmission({
+          unitId: unit.id, batchId, operation: action, payloadFingerprint, ...submission, operatorEmail: operator
+        });
+      } catch (logError) {
+        console.error('Alloggiati submission log error:', logError.message);
+      }
       throw error;
     }
 

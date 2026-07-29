@@ -6,26 +6,29 @@ const vm = require('node:vm');
 
 const html = fs.readFileSync(path.join(__dirname, '../frontend/public/index.html'), 'utf8');
 
-test('reporting UI keeps the selected destination visible throughout the workflow', () => {
-  assert.match(html, /id="reportingDestination" aria-live="polite"/);
-  assert.match(html, /aria-pressed="\$\{active\}"/);
-  assert.match(html, /Сейчас выбрана структура/);
-  assert.match(html, /Назначение: Alloggiati Web/);
-  assert.match(html, /Назначение: ISTAT/);
-  assert.match(html, /Отправить в Alloggiati ·/);
+test('reporting UI keeps apartment context visible with a distinct icon', () => {
+  assert.match(html, /id="reportingCurrentUnitIcon"/);
+  assert.match(html, /id="reportingCurrentUnitName"/);
+  assert.match(html, /class="reporting-unit-icon"/);
+  assert.match(html, /function reportingUnitMeta/);
+  assert.match(html, /reportingUploadTitle'\)\.textContent = `Выбрать TXT для \$\{name\}`/);
+  assert.match(html, /reportingHistoryTitle'\)\.textContent = `Последние отправки · \$\{name\}`/);
+  assert.match(html, /reportingIstatTitle'\)\.textContent = `ISTAT · \$\{name\}`/);
 });
 
-test('reporting upload snapshots its destination while unit switching is locked', () => {
-  assert.match(html, /const targetUnitId = targetUnit\?\.id/);
-  assert.match(html, /unit_id: targetUnitId/);
-  assert.match(html, /reportingState\.uploading = true/);
-  assert.match(html, /reportingState\.uploading \|\| reportingState\.deleting \? 'disabled' : ''/);
+test('reporting upload snapshots its apartment even if the visible selection changes', () => {
+  assert.match(html, /const requestedUnitId = reportingState\.unitId/);
+  assert.match(html, /unit_id: requestedUnitId/);
+  assert.match(html, /requestedUnitId !== reportingState\.unitId/);
+  assert.match(html, /reportingState\.actionInFlight \|\| unitId === reportingState\.unitId/);
 });
 
-test('reporting UI keeps Alloggiati as step three and ISTAT as a monthly ledger', () => {
-  assert.match(html, /Шаг 3 · Alloggiati Web/);
-  assert.doesNotMatch(html, /Шаг 3 · статистика/);
-  assert.match(html, /Какие данные у меня уже внесены в Институт статистики/);
+test('reporting UI keeps the two-click Alloggiati flow and a folded ISTAT ledger', () => {
+  assert.match(html, /const labels = \['TXT', 'Проверка', 'Отправка'\]/);
+  assert.match(html, /runAlloggiatiAction\('test'\)/);
+  assert.match(html, /runAlloggiatiAction\('send'\)/);
+  assert.doesNotMatch(html, /action !== 'send' \|\| window\.confirm/);
+  assert.match(html, /<details class="reporting-fold" id="reportingIstatFold"/);
   assert.match(html, /action=status/);
   assert.match(html, /class="reporting-istat-table"/);
   assert.match(html, /до 4-го числа/);
@@ -46,11 +49,11 @@ test('reporting dates accept PostgreSQL ISO timestamps and never render Invalid 
 });
 
 test('reporting UI deletes only an unsubmitted TXT after explicit confirmation', () => {
-  assert.match(html, /Удалить TXT/);
-  assert.match(html, /function deleteReportingBatch\(\)/);
+  assert.match(html, /title="Удалить файл"/);
+  assert.match(html, /function deleteReportingBatch\(batchId\)/);
   assert.match(html, /method:'DELETE'/);
-  assert.match(html, /Гости исчезнут и из черновика ISTAT/);
-  assert.match(html, /!\['sent', 'partial', 'unknown', 'pii_purged'\]\.includes\(batch\.status\)/);
+  assert.match(html, /Персональные данные этого файла будут удалены/);
+  assert.match(html, /\['needs_review', 'ready', 'tested'\]\.includes\(batch\.status\)/);
 });
 
 test('ISTAT ledger distinguishes confirmed, pending and late-update days', () => {

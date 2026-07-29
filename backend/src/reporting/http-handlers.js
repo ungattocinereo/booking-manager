@@ -29,7 +29,9 @@ async function imports(req, res, db) {
         if (!batch) return res.status(404).json({ error: 'Пакет не найден' });
         return res.status(200).json(batch);
       }
-      return res.status(200).json(await service.store.listBatches(req.query.unit_id || null, req.query.limit));
+      const view = req.query.view || 'all';
+      if (!['all', 'open', 'sent'].includes(view)) return res.status(400).json({ error: 'Неизвестный вид списка импортов' });
+      return res.status(200).json(await service.store.listBatches(req.query.unit_id || null, req.query.limit, view));
     }
     if (req.method === 'POST') {
       const result = await service.importTxt({
