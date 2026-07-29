@@ -371,6 +371,32 @@ async function inspectPage(browser, baseUrl, viewport, isMobile) {
       chartLoaded: Boolean(document.querySelector('script[data-chart-js]')),
       freshnessState: document.getElementById('freshnessStatus')?.dataset.state,
       freshnessTitle: document.getElementById('freshnessTitle')?.textContent,
+      timelineContrast: (() => {
+        const parseRgb = value => (value.match(/[\d.]+/g) || []).slice(0, 3).map(Number);
+        const luminance = value => {
+          const channels = parseRgb(value).map(channel => {
+            const normalized = channel / 255;
+            return normalized <= .04045
+              ? normalized / 12.92
+              : ((normalized + .055) / 1.055) ** 2.4;
+          });
+          return .2126 * channels[0] + .7152 * channels[1] + .0722 * channels[2];
+        };
+        const inspectBar = selector => {
+          const bar = document.querySelector(selector);
+          if (!bar) return null;
+          const label = bar.querySelector('.bar-label') || bar;
+          const background = getComputedStyle(bar).backgroundColor;
+          const text = getComputedStyle(label).color;
+          const lighter = Math.max(luminance(background), luminance(text));
+          const darker = Math.min(luminance(background), luminance(text));
+          return { background, text, ratio: (lighter + .05) / (darker + .05) };
+        };
+        return {
+          airbnb: inspectBar('.booking-bar.airbnb:not(.completed):not(.not-available)'),
+          booking: inspectBar('.booking-bar.booking:not(.completed):not(.not-available)')
+        };
+      })(),
       summaryPresentation: (() => {
         const cards = Array.from(document.querySelectorAll('#statsBar .stat-card'))
           .filter(card => getComputedStyle(card).display !== 'none');
@@ -433,6 +459,12 @@ async function inspectPage(browser, baseUrl, viewport, isMobile) {
     assert.ok(Math.abs(metrics.handover.gap) <= 0.01, `handover bars have a ${metrics.handover.gap}px gap`);
     assert.ok(Math.abs(metrics.handover.outgoingToMarker) <= 0.01, 'checkout does not end at the handover marker');
     assert.ok(Math.abs(metrics.handover.incomingToMarker) <= 0.01, 'check-in does not start at the handover marker');
+    assert.equal(metrics.timelineContrast.airbnb?.background, 'rgb(199, 47, 82)', 'Airbnb timeline bar is not using its solid fill');
+    assert.equal(metrics.timelineContrast.booking?.background, 'rgb(18, 87, 168)', 'Booking timeline bar is not using its solid fill');
+    for (const [platform, contrast] of Object.entries(metrics.timelineContrast)) {
+      assert.equal(contrast?.text, 'rgb(255, 255, 255)', `${platform} timeline label is not white`);
+      assert.ok(contrast?.ratio >= 4.5, `${platform} timeline contrast is too low: ${contrast?.ratio}`);
+    }
     const shellRects = [
       metrics.shellLayout.topbar,
       metrics.shellLayout.hero,
