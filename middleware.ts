@@ -2,6 +2,10 @@ declare const process: {
   env: Record<string, string | undefined>;
 };
 
+import requestAccess from './lib/request-access.js';
+
+const { shouldAllowProtectedRoute } = requestAccess;
+
 const PUBLIC_ASSET_PATHS = new Set([
   '/favicon.ico',
   '/favicon-16.png',
@@ -13,10 +17,6 @@ const PUBLIC_ASSET_PATHS = new Set([
   '/booking.png',
   '/manifest.json',
 ]);
-
-function isVercelHost(hostname: string) {
-  return hostname === 'vercel.app' || hostname.endsWith('.vercel.app');
-}
 
 function isPublicMaidPath(pathname: string) {
   return pathname.startsWith('/maid/');
@@ -90,10 +90,16 @@ export default function middleware(request: Request) {
   if (isPublicWidgetApiRequest(url.pathname, request)) return;
   if (isAllowedMachinePath(url.pathname, request)) return;
 
-  if (!isVercelHost(url.hostname)) {
-    const requireIdentity = process.env.REQUIRE_CF_ACCESS_IDENTITY === '1' || process.env.REQUIRE_CF_ACCESS_IDENTITY === 'true';
-    if (!requireIdentity || hasCloudflareAccessIdentity(request)) return;
-  }
+  const requireCloudflareIdentity =
+    process.env.REQUIRE_CF_ACCESS_IDENTITY === '1' ||
+    process.env.REQUIRE_CF_ACCESS_IDENTITY === 'true';
+
+  if (shouldAllowProtectedRoute({
+    hostname: url.hostname,
+    vercelEnvironment: process.env.VERCEL_ENV,
+    requireCloudflareIdentity,
+    hasCloudflareIdentity: hasCloudflareAccessIdentity(request),
+  })) return;
 
   return blockedResponse();
 }
