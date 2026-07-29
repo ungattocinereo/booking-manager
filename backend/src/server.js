@@ -13,13 +13,17 @@ const { formatBooking, formatCleaningTask, formatAvailabilityMarker, todayInRome
 const { isUnavailableMarker, normalizeBookingsForDisplay } = require('../../lib/booking-normalization');
 const { checkApplicationHealth } = require('../../lib/health-check');
 const {
-  normalizeCleanerName,
-  cleanerIdFromName,
-  normalizeCleanerSlug,
-  normalizePropertyIds,
   isDateOnly,
   normalizeTaskType
 } = require('../../lib/api-validation');
+const {
+  cleanerServiceStatus,
+  listCleaners,
+  createCleaner,
+  updateCleaner,
+  deleteCleaner,
+  getMaidCalendar
+} = require('../../lib/cleaners-service');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -66,7 +70,7 @@ app.get('/api/dashboard', async (req, res) => {
       db.getProperties(),
       db.getBookings(null, fromDate, { includeInactive }),
       db.getCleaningTasks(null, today),
-      db.getCleaners(),
+      listCleaners(db),
       full && typeof db.getStatsSnapshots === 'function'
         ? db.getStatsSnapshots({ seasonYear, limit: snapshotsLimit })
         : Promise.resolve([]),
@@ -74,10 +78,6 @@ app.get('/api/dashboard', async (req, res) => {
         ? db.getSyncHealth()
         : Promise.resolve(null)
     ]);
-
-    await Promise.all(cleaners.map(async cleaner => {
-      cleaner.properties = await db.getCleanerProperties(cleaner.id);
-    }));
 
     const normalizedBookings = normalizeBookingsForDisplay(bookings);
     const visibleBookings = req.query.include_markers === '1'
@@ -209,16 +209,9 @@ app.all('/api/stats-snapshots', (_req, res) => {
 
 app.get('/api/cleaners', async (req, res) => {
   try {
-    const cleaners = await db.getCleaners();
-    
-    // Add property assignments
-    await Promise.all(cleaners.map(async cleaner => {
-      cleaner.properties = await db.getCleanerProperties(cleaner.id);
-    }));
-    
-    res.json(cleaners);
+    res.json(await listCleaners(db));
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(cleanerServiceStatus(error)).json({ error: error.message });
   }
 });
 
@@ -287,69 +280,36 @@ app.post('/api/cleaning-tasks', async (req, res) => {
 // Update cleaner (name, slug, property assignments)
 app.put('/api/cleaners/:id', async (req, res) => {
   try {
-    const { name, slug, property_ids } = req.body;
-
-    // Update property assignments
-    if (property_ids !== undefined) {
-      const normalizedIds = normalizePropertyIds(property_ids);
-      if (!normalizedIds) return res.status(400).json({ error: 'property_ids must be an array of valid IDs' });
-      await db.replaceCleanerProperties(req.params.id, normalizedIds);
-      return res.json({ success: true });
-    }
-
-    // Update name/slug
-    const fields = {};
-    if (name !== undefined) {
-      fields.name = normalizeCleanerName(name);
-      if (!fields.name) return res.status(400).json({ error: 'Invalid name' });
-    }
-    if (slug !== undefined) {
-      fields.slug = normalizeCleanerSlug(slug);
-      if (fields.slug === undefined) return res.status(400).json({ error: 'Invalid slug' });
-    }
-    await db.updateCleaner(req.params.id, fields);
-    res.json({ success: true });
+    res.json(await updateCleaner(db, req.params.id, req.body));
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(cleanerServiceStatus(error)).json({ error: error.message });
   }
 });
 
 // Create cleaner
 app.post('/api/cleaners', async (req, res) => {
   try {
-    const name = normalizeCleanerName(req.body?.name);
-    if (!name) return res.status(400).json({ error: 'Valid name required' });
-    const id = cleanerIdFromName(name);
-    if (!id) return res.status(400).json({ error: 'Name must contain letters or numbers' });
-    const result = await db.createCleaner(id, name);
-    const inserted = USE_POSTGRES ? result.rowCount : result.changes;
-    if (!inserted) return res.status(409).json({ error: 'Cleaner already exists' });
-    res.json({ success: true, id, name });
+    res.status(201).json(await createCleaner(db, req.body));
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(cleanerServiceStatus(error)).json({ error: error.message });
   }
 });
 
 // Delete cleaner
 app.delete('/api/cleaners/:id', async (req, res) => {
   try {
-    await db.deleteCleanerWithRelations(req.params.id);
-    res.json({ success: true });
+    res.json(await deleteCleaner(db, req.params.id));
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(cleanerServiceStatus(error)).json({ error: error.message });
   }
 });
 
 // Update cleaner property assignments
 app.put('/api/cleaners/:id/properties', async (req, res) => {
   try {
-    const { property_ids } = req.body;
-    const normalizedIds = normalizePropertyIds(property_ids);
-    if (!normalizedIds) return res.status(400).json({ error: 'property_ids must be an array of valid IDs' });
-    await db.replaceCleanerProperties(req.params.id, normalizedIds);
-    res.json({ success: true });
+    res.json(await updateCleaner(db, req.params.id, { property_ids: req.body?.property_ids }));
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(cleanerServiceStatus(error)).json({ error: error.message });
   }
 });
 
@@ -357,28 +317,9 @@ app.put('/api/cleaners/:id/properties', async (req, res) => {
 
 app.get('/api/maid/:slug', async (req, res) => {
   try {
-    const cleaner = await db.getCleanerBySlug(req.params.slug);
-    if (!cleaner) return res.status(404).json({ error: 'Not found' });
-
-    const assignedProperties = await db.getCleanerProperties(cleaner.id);
-    const propertyIds = assignedProperties.map(p => p.id);
-
-    const today = todayInRome();
-    const allBookings = normalizeBookingsForDisplay(await db.getBookings(null, today));
-
-    // Filter to assigned properties only.
-    const maidBookings = allBookings.filter(b => {
-      if (!propertyIds.includes(b.property_id)) return false;
-      return true;
-    });
-
-    res.json({
-      cleaner: { id: cleaner.id, name: cleaner.name, slug: cleaner.slug },
-      properties: assignedProperties,
-      bookings: maidBookings.map(formatBooking)
-    });
+    res.json(await getMaidCalendar(db, req.params.slug));
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(cleanerServiceStatus(error)).json({ error: error.message });
   }
 });
 

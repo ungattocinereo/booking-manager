@@ -3,7 +3,12 @@ const USE_POSTGRES = process.env.POSTGRES_URL || process.env.DATABASE_URL;
 const db = USE_POSTGRES 
   ? require('../backend/src/database-postgres')
   : require('../backend/src/database');
-const { normalizeCleanerName, cleanerIdFromName, normalizeCleanerSlug } = require('../lib/api-validation');
+const {
+  cleanerServiceStatus,
+  listCleaners,
+  createCleaner,
+  updateCleaner
+} = require('../lib/cleaners-service');
 
 module.exports = async (req, res) => {
   try {
@@ -13,43 +18,20 @@ module.exports = async (req, res) => {
     }
 
     if (req.method === 'GET') {
-      const cleaners = await db.getCleaners();
-      await Promise.all(cleaners.map(async cleaner => {
-        cleaner.properties = await db.getCleanerProperties(cleaner.id);
-      }));
-      return res.status(200).json(cleaners);
+      return res.status(200).json(await listCleaners(db));
     }
 
     if (req.method === 'POST') {
-      const name = normalizeCleanerName(req.body?.name);
-      if (!name) return res.status(400).json({ error: 'Valid name required' });
-      const id = cleanerIdFromName(name);
-      if (!id) return res.status(400).json({ error: 'Name must contain letters or numbers' });
-      const result = await db.createCleaner(id, name);
-      const inserted = USE_POSTGRES ? result.rowCount : result.changes;
-      if (!inserted) return res.status(409).json({ error: 'Cleaner already exists' });
-      return res.status(201).json({ success: true, id, name });
+      return res.status(201).json(await createCleaner(db, req.body));
     }
 
     if (req.method === 'PUT') {
-      const { id, name, slug } = req.body;
-      if (!id) return res.status(400).json({ error: 'id required' });
-      const fields = {};
-      if (name !== undefined) {
-        fields.name = normalizeCleanerName(name);
-        if (!fields.name) return res.status(400).json({ error: 'Invalid name' });
-      }
-      if (slug !== undefined) {
-        fields.slug = normalizeCleanerSlug(slug);
-        if (fields.slug === undefined) return res.status(400).json({ error: 'Invalid slug' });
-      }
-      await db.updateCleaner(id, fields);
-      return res.status(200).json({ success: true });
+      return res.status(200).json(await updateCleaner(db, req.body?.id, req.body));
     }
 
     res.status(405).json({ error: 'Method not allowed' });
   } catch (error) {
     console.error('Error with cleaners:', error);
-    res.status(500).json({ error: error.message });
+    res.status(cleanerServiceStatus(error)).json({ error: error.message });
   }
 };

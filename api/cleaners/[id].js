@@ -3,7 +3,11 @@ const USE_POSTGRES = process.env.POSTGRES_URL || process.env.DATABASE_URL;
 const db = USE_POSTGRES
   ? require('../../backend/src/database-postgres')
   : require('../../backend/src/database');
-const { normalizeCleanerName, normalizeCleanerSlug, normalizePropertyIds } = require('../../lib/api-validation');
+const {
+  cleanerServiceStatus,
+  updateCleaner,
+  deleteCleaner
+} = require('../../lib/cleaners-service');
 
 module.exports = async (req, res) => {
   try {
@@ -14,39 +18,16 @@ module.exports = async (req, res) => {
     const { id } = req.query;
 
     if (req.method === 'PUT') {
-      const { name, slug, property_ids } = req.body;
-
-      // Update property assignments
-      if (property_ids !== undefined) {
-        const normalizedIds = normalizePropertyIds(property_ids);
-        if (!normalizedIds) return res.status(400).json({ error: 'property_ids must be an array of valid IDs' });
-        await db.replaceCleanerProperties(id, normalizedIds);
-        return res.status(200).json({ success: true });
-      }
-
-      // Update name/slug
-      const fields = {};
-      if (name !== undefined) {
-        fields.name = normalizeCleanerName(name);
-        if (!fields.name) return res.status(400).json({ error: 'Invalid name' });
-      }
-      if (slug !== undefined) {
-        fields.slug = normalizeCleanerSlug(slug);
-        if (fields.slug === undefined) return res.status(400).json({ error: 'Invalid slug' });
-      }
-      await db.updateCleaner(id, fields);
-      return res.status(200).json({ success: true });
+      return res.status(200).json(await updateCleaner(db, id, req.body));
     }
 
     if (req.method === 'DELETE') {
-      await db.deleteCleanerWithRelations(id);
-
-      return res.status(200).json({ success: true });
+      return res.status(200).json(await deleteCleaner(db, id));
     }
 
     res.status(405).json({ error: 'Method not allowed' });
   } catch (error) {
     console.error('Error with cleaner operation:', error);
-    res.status(500).json({ error: error.message });
+    res.status(cleanerServiceStatus(error)).json({ error: error.message });
   }
 };

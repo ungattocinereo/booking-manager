@@ -13,7 +13,7 @@
   <link rel="manifest" href="/manifest.json">
   <link rel="preload" href="/airbnb-badge.png" as="image">
   <link rel="preload" href="/booking-badge.png" as="image">
-  <meta name="theme-color" content="#4f46e5">
+  <meta name="theme-color" content="#eef0f6">
 
   <!-- Apple Web App -->
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -38,7 +38,7 @@
 
   <script defer src="https://unpkg.com/lucide@1.17.0/dist/umd/lucide.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;750;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&family=Unbounded:wght@600;700&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg: #f2f4f7;
@@ -2937,11 +2937,571 @@
       .reporting-record { grid-template-columns:1fr; border-top:1px solid var(--border); padding-top:7px; }
       .reporting-metrics { grid-template-columns:1fr; }
     }
+
+    /* ===== ORBIT 2.0 DESIGN SYSTEM ===== */
+    :root {
+      --bg: #eef0f6;
+      --card: #ffffff;
+      --border: #d5d8e6;
+      --text: #171827;
+      --text-secondary: #686b7d;
+      --accent: #6d2cfc;
+      --accent-light: #eee9ff;
+      --accent-hover: #541cfb;
+      --violet-deep: #2809e3;
+      --violet-soft: #a076f6;
+      --lavender: #bbbbe0;
+      --airbnb: #d9365c;
+      --airbnb-light: #fff1f5;
+      --booking: #155bb3;
+      --booking-light: #eef5ff;
+      --direct: #157a5b;
+      --direct-light: #edf8f3;
+      --success: #157a5b;
+      --success-light: #edf8f3;
+      --warning: #a96000;
+      --warning-light: #fff6e7;
+      --danger: #c52f4e;
+      --shadow-sm: none;
+      --shadow: none;
+      --shadow-md: none;
+      --radius: 24px;
+      --radius-sm: 14px;
+    }
+    body {
+      font-family: 'Golos Text', -apple-system, BlinkMacSystemFont, sans-serif;
+      background:
+        radial-gradient(circle at 8% -8%, rgba(109,44,252,.10), transparent 25rem),
+        var(--bg);
+      color: var(--text);
+    }
+    button, input, select, textarea { font-family: inherit; }
+    button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible,
+    [tabindex]:focus-visible {
+      outline: 3px solid rgba(109,44,252,.24) !important;
+      outline-offset: 2px;
+    }
+    .orbit-topbar {
+      position: sticky;
+      top: 10px;
+      z-index: 150;
+      width: calc(100% - 32px);
+      max-width: 1440px;
+      min-height: 64px;
+      margin: 10px auto 0;
+      padding: 7px 8px 7px 14px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      border: 1px solid rgba(187,187,224,.72);
+      border-radius: 999px;
+      background: rgba(255,255,255,.91);
+      backdrop-filter: blur(20px) saturate(140%);
+    }
+    .header { display: contents; }
+    .header-left { order: 1; flex: 0 1 auto; }
+    .header-actions { order: 3; margin-left: auto; }
+    .header-logo {
+      width: 42px;
+      height: 42px;
+      flex-basis: 42px;
+      border-radius: 14px;
+      box-shadow: none;
+    }
+    .header h1 {
+      font-family: 'Unbounded', sans-serif;
+      font-size: 14px;
+      letter-spacing: -.04em;
+    }
+    .header h1 span {
+      margin-top: 3px;
+      color: var(--text-secondary);
+      font-family: 'Golos Text', sans-serif;
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: .09em;
+    }
+    .last-sync { max-width: 150px; font-size: 11px; line-height: 1.2; text-align: right; }
+    .nav {
+      order: 2;
+      width: auto;
+      max-width: min(58vw, 680px);
+      padding: 3px;
+      gap: 2px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: #f2f2f8;
+      overflow: hidden;
+    }
+    .nav-item {
+      min-height: 38px;
+      padding: 0 13px;
+      gap: 7px;
+      border: 0;
+      border-radius: 999px;
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .nav-item:hover { color: var(--text); background: #fff; }
+    .nav-item.active {
+      color: #fff;
+      background: var(--text);
+      border: 0;
+    }
+    .btn {
+      min-height: 40px;
+      padding: 0 16px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      justify-content: center;
+    }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-secondary, .btn-ghost {
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: rgba(255,255,255,.8);
+      color: var(--text);
+    }
+    .btn-secondary:hover, .btn-ghost:hover { border-color: var(--lavender); background: var(--accent-light); }
+    .btn-danger-ghost { border-radius: 999px; }
+    .btn-sm { min-height: 34px; padding: 0 12px; border-radius: 999px; }
+    #syncBtn { min-height: 42px; color: var(--accent); border-color: #cec3f5; background: #f5f2ff; }
+
+    .orbit-hero {
+      width: calc(100% - 56px);
+      max-width: 1408px;
+      min-height: 190px;
+      margin: 30px auto 4px;
+      padding: 26px 30px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 118px minmax(270px, .72fr);
+      gap: 28px;
+      align-items: end;
+    }
+    .orbit-eyebrow {
+      margin-bottom: 10px;
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    .orbit-hero-copy { min-width: 0; }
+    .orbit-hero h2 {
+      max-width: 800px;
+      margin: 0;
+      font-family: 'Unbounded', sans-serif;
+      font-size: clamp(30px, 4vw, 58px);
+      line-height: .98;
+      letter-spacing: -.065em;
+    }
+    .orbit-hero-copy p {
+      max-width: 660px;
+      margin-top: 14px;
+      color: var(--text-secondary);
+      font-size: 15px;
+    }
+    .orbit-date {
+      width: 110px;
+      height: 110px;
+      border: 1px solid #c9bdfa;
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      background: var(--accent);
+    }
+    .orbit-date span {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 39px;
+      font-weight: 600;
+      line-height: .95;
+    }
+    .orbit-date small {
+      margin-top: 6px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    .freshness-status {
+      min-height: 78px;
+      margin: 0;
+      padding: 13px 14px;
+      border-color: var(--border);
+      border-radius: 20px;
+      background: rgba(255,255,255,.72);
+      box-shadow: none;
+    }
+    .freshness-status[data-state="ok"] { border-color: #bfdfd2; background: var(--success-light); }
+    .freshness-status[data-state="warning"] { border-color: #ecd29e; background: var(--warning-light); }
+    .freshness-status[data-state="cached"] { border-color: #cbd8ec; background: var(--booking-light); }
+    .freshness-icon { border-radius: 50%; background: #fff; }
+    .freshness-title { font-size: 12px; font-weight: 700; }
+
+    .stats-bar, .legend, .calendar-section {
+      width: calc(100% - 56px);
+      max-width: 1408px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .stats-bar { padding: 16px 0 12px; gap: 10px; }
+    .stat-card {
+      min-width: 175px;
+      padding: 15px 18px;
+      border-color: var(--border);
+      border-radius: 20px;
+      background: rgba(255,255,255,.88);
+    }
+    .stat-card:first-child {
+      color: #fff;
+      border-color: var(--accent);
+      background: var(--accent);
+    }
+    .stat-card:first-child .stat-label { color: rgba(255,255,255,.7); }
+    .stat-card:first-child .stat-breakdown span { color: #fff; }
+    .stat-card .stat-label { font-size: 10px; font-weight: 700; letter-spacing: .08em; }
+    .stat-card .stat-value {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 26px;
+      font-weight: 600;
+    }
+    .legend { padding: 2px 0 14px; gap: 18px; }
+    .legend-item { white-space: nowrap; }
+    .legend-dot { height: 9px; border-radius: 999px; }
+    .legend-dot.airbnb { background: var(--airbnb-light); border: 1px solid var(--airbnb); }
+    .legend-dot.booking { background: var(--booking-light); border: 1px solid var(--booking); }
+    .legend-dot.direct { background: var(--direct-light); border: 1px solid var(--direct); }
+
+    .calendar-section { padding: 0 0 36px; }
+    .calendar-toolbar {
+      padding: 10px;
+      border-radius: 22px;
+      background: rgba(255,255,255,.84);
+      box-shadow: none;
+    }
+    .calendar-today-btn {
+      color: #fff;
+      border-color: var(--accent);
+      background: var(--accent);
+      box-shadow: none;
+    }
+    .calendar-today-btn:hover { border-color: var(--accent-hover); background: var(--accent-hover); }
+    .calendar-today-date, .calendar-control, .segmented-control, .toggle-pill {
+      border-radius: 999px;
+      background: #f7f7fb;
+      box-shadow: none;
+    }
+    .segment-btn { border-radius: 999px; }
+    .segment-btn.active { color: #fff; background: var(--text); box-shadow: none; }
+    .calendar-container { border-radius: 24px; box-shadow: none; }
+    .calendar-scroll-wrapper {
+      --calendar-grid-line: #e1e2ec;
+      --calendar-booking-height: 28px;
+      background: #fff;
+    }
+    .calendar-scroll-wrapper::-webkit-scrollbar-track { background: #f2f2f7; }
+    .calendar-scroll-wrapper::-webkit-scrollbar-thumb { background: #bcbfce; border-color: #f2f2f7; }
+    .calendar-property-rail-grid { border-right-color: var(--border); box-shadow: none; }
+    .cal-property-header, .cal-day-header { background: #fafafd; }
+    .cal-group-header, .cal-row-layer.group { background: #f0f1f6; }
+    .cal-day-header.today,
+    .cal-day-header.today.weekend {
+      border-color: #c5b6fa;
+      background: var(--accent-light);
+      box-shadow: inset 0 -3px 0 var(--accent);
+    }
+    .cal-day-header.today .day-num,
+    .cal-day-header.today .day-name { color: var(--accent); }
+    .cal-month-label { color: var(--violet-deep); border-color: #d5ccfa; background: var(--accent-light); }
+    .cal-day-column.today,
+    .cal-day-column.today.weekend {
+      background: rgba(109,44,252,.065);
+      box-shadow: inset 1px 0 rgba(109,44,252,.2), inset -1px 0 rgba(109,44,252,.2);
+    }
+    .cal-day-column.today::after { width: 2px; background: var(--accent); opacity: .65; }
+    .cal-day-column.weekend { background: #fbf8f4; }
+    .cal-day-column.past { background: #f6f6f8; }
+    .booking-bar {
+      margin: 0;
+      padding: 0 10px;
+      border: 1px solid currentColor;
+      border-radius: 999px;
+      color: var(--text);
+      font-size: 11px;
+      font-weight: 600;
+      box-shadow: none;
+      transition: background .15s ease, border-color .15s ease;
+    }
+    .booking-bar:hover, .booking-bar:focus-visible { transform: none; opacity: 1; box-shadow: none; filter: brightness(.98); }
+    .booking-bar.airbnb { color: var(--airbnb); background: var(--airbnb-light); }
+    .booking-bar.booking { color: var(--booking); background: var(--booking-light); }
+    .booking-bar.direct { color: var(--direct); background: var(--direct-light); }
+    .booking-bar.other { color: #596074; background: #f0f1f5; }
+    .booking-bar .bar-label { color: var(--text); }
+    .booking-bar.handover-start { border-top-left-radius: 1px; border-bottom-left-radius: 1px; }
+    .booking-bar.handover-end { border-top-right-radius: 1px; border-bottom-right-radius: 1px; }
+    .calendar-handover-marker {
+      position: relative;
+      z-index: 26;
+      width: 8px;
+      height: 8px;
+      align-self: center;
+      justify-self: start;
+      margin-left: -4px;
+      border: 2px solid #fff;
+      border-radius: 2px;
+      background: var(--accent);
+      transform: rotate(45deg);
+      pointer-events: none;
+    }
+    .booking-bar.completed { color: #7a7d8e; border-color: #b9bbc7; background: #f8f8fa !important; }
+    .booking-bar.not-available { color: #626578; border-color: #b9bbc7; background-color: #f1f2f5; box-shadow: none; }
+    .booking-tooltip { font-family: 'Golos Text', sans-serif; border-radius: 14px; box-shadow: none; }
+
+    .mobile-agenda-card, .agenda-item { box-shadow: none; }
+    .mobile-agenda-card { border-radius: 24px; }
+    .agenda-item { border-radius: 18px; border-left-width: 1px; }
+    .agenda-chip { font-weight: 600; }
+    .agenda-chip.active { background: var(--text); border-color: var(--text); }
+
+    .cleaners-section, .stats-section, .tax-section, .reporting-section {
+      width: calc(100% - 56px);
+      max-width: 1240px;
+      margin-left: auto;
+      margin-right: auto;
+      padding: 16px 0 48px;
+    }
+    .add-cleaner-form, .cleaner-card, .stats-history-status, .stats-radar-card,
+    .stats-dynamics-card, .stats-summary-card, .stats-chart-card,
+    .tax-row, .reporting-card, .reporting-fold {
+      border-color: var(--border);
+      border-radius: 24px;
+      background: rgba(255,255,255,.9);
+      box-shadow: none;
+    }
+    .add-cleaner-form { padding: 14px; }
+    .add-cleaner-form input, .reporting-field select, .reporting-field input,
+    .reporting-month input {
+      min-height: 42px;
+      border-radius: 14px;
+      color: var(--text);
+      background: #f8f8fb;
+    }
+    .add-cleaner-form input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(109,44,252,.12); }
+    .cleaners-grid { gap: 14px; }
+    .cleaner-card-header { padding: 17px 18px; background: #f7f7fb; }
+    .cleaner-card-header h3 { font-family: 'Unbounded', sans-serif; font-size: 13px; }
+    .cleaner-property-item { min-height: 48px; border-bottom-color: #edeef4; }
+    .unassigned-card { border-color: #e5c78c; background: var(--warning-light); }
+    .unassigned-card .cleaner-card-header { border-color: #e5c78c; background: #fff1cf; }
+
+    .stats-history-status { padding: 14px; }
+    .stats-history-icon { border-radius: 50%; color: var(--accent); background: var(--accent-light); }
+    .stats-radar-card, .stats-dynamics-card { padding: 20px; }
+    .stats-radar-title, .stats-dynamics-title, .tax-title, .reporting-card h3 {
+      font-family: 'Unbounded', sans-serif;
+      letter-spacing: -.04em;
+    }
+    .stats-radar-periods { border-radius: 999px; background: #f0f0f6; }
+    .stats-radar-period { border-radius: 999px; }
+    .stats-radar-period.active { color: #fff; background: var(--text); box-shadow: none; }
+    .stats-radar-metric, .stats-mini-metric, .stats-primary-metric,
+    .stats-month-tile, .stats-timeline-control, .stats-change-note {
+      border-radius: 16px;
+      box-shadow: none;
+    }
+    .stats-radar-value, .stats-primary-metric .value, .stats-mini-metric .value,
+    .stats-month-tile strong, .stats-summary-card .value {
+      font-family: 'IBM Plex Mono', monospace;
+      font-weight: 600;
+      letter-spacing: -.04em;
+    }
+    .stats-radar-gap { border-color: #d8ccfc; border-radius: 999px; background: var(--accent-light); color: var(--violet-deep); }
+    .stats-dynamics-card {
+      background: linear-gradient(135deg, rgba(109,44,252,.08), rgba(255,255,255,.9) 46%);
+    }
+    .stats-snapshot-pill { border-color: #d7cdf8; background: var(--accent-light); color: var(--violet-deep); }
+    .stats-primary-metric { border-color: #d8ccfc; background: #f7f4ff; }
+    .stats-primary-metric .value { color: var(--violet-deep); }
+    .stats-month-tile::before { background: linear-gradient(180deg, rgba(109,44,252,.06), rgba(109,44,252,.18)); }
+    .stats-summary-card::before { display: none; }
+    .stats-step-btn { border-radius: 50%; }
+    .stats-chart-card { min-height: 310px; }
+
+    .tax-section { max-width: 1100px; }
+    .tax-header { padding: 0 4px; }
+    .tax-title-kicker { color: var(--accent); }
+    .tax-summary-pill { border-radius: 999px; }
+    .tax-controls { padding: 12px; border: 1px solid var(--border); border-radius: 20px; background: rgba(255,255,255,.8); }
+    .tax-controls label { border-radius: 999px; background: #f5f5f9; }
+    .tax-row { overflow: hidden; }
+    .tax-row-check { border-radius: 999px; }
+
+    .reporting-section { max-width: 980px; }
+    .reporting-hero { display: none; }
+    .reporting-unit { border-radius: 999px; background: #fff; }
+    .reporting-unit.active { box-shadow: none; }
+    .reporting-current-unit-icon, .reporting-file-icon { border-radius: 14px; color: var(--accent); background: var(--accent-light); }
+    .reporting-flow-step.active, .reporting-flow-step.done { color: var(--accent); }
+    .reporting-flow-step.done:not(:last-child)::after { background: var(--violet-soft); }
+    .reporting-flow-step.active .reporting-flow-dot { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(109,44,252,.1); }
+    .reporting-flow-step.done .reporting-flow-dot { border-color: var(--accent); background: var(--accent); }
+    .reporting-dropzone { border-radius: 20px; background: #f7f7fb; }
+    .reporting-dropzone:hover { border-color: var(--accent); background: var(--accent-light); }
+    .reporting-batch, .reporting-stay, .reporting-metric { border-radius: 14px; }
+    .reporting-file button:focus-visible, .reporting-fold summary:focus-visible,
+    .reporting-unit:focus-visible, .reporting-dropzone:focus-within { outline-color: rgba(109,44,252,.25); }
+
+    .booking-panel-backdrop { background: rgba(23,24,39,.34); backdrop-filter: blur(5px); }
+    .booking-panel {
+      top: 12px;
+      right: 12px;
+      bottom: 12px;
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      box-shadow: none;
+    }
+    .booking-panel-header { padding: 22px; }
+    .booking-panel-title { font-family: 'Unbounded', sans-serif; font-size: 18px; letter-spacing: -.04em; }
+    .booking-panel-close { border-radius: 50%; }
+    .booking-detail-hero { border-radius: 20px; background: #f6f4ff; }
+    .booking-night-badge { border-radius: 18px; }
+    .booking-night-number { font-family: 'IBM Plex Mono', monospace; }
+    .booking-detail-card, .booking-status-note { border-radius: 16px; }
+    .toast { border-radius: 999px; box-shadow: none; }
+
+    @media (max-width: 1180px) {
+      .orbit-topbar { border-radius: 24px; }
+      .nav-item { padding: 0 10px; }
+      .nav-item svg { display: none; }
+      .last-sync { display: none; }
+      .orbit-hero { grid-template-columns: minmax(0, 1fr) 100px minmax(240px, .7fr); }
+      .orbit-date { width: 94px; height: 94px; }
+    }
+
+    @media (max-width: 768px) {
+      body { padding-bottom: calc(86px + env(safe-area-inset-bottom)); }
+      .orbit-topbar {
+        position: sticky;
+        top: 0;
+        width: 100%;
+        min-height: 62px;
+        margin: 0;
+        padding: 9px 12px;
+        border-width: 0 0 1px;
+        border-radius: 0;
+        background: rgba(255,255,255,.94);
+        backdrop-filter: none;
+      }
+      .header {
+        width: 100%;
+        height: auto;
+        padding: 0;
+        display: flex;
+        position: static;
+        border: 0;
+        background: transparent;
+      }
+      .header-left { order: 0; }
+      .header-actions { order: 0; }
+      .header-logo { width: 40px; height: 40px; flex-basis: 40px; }
+      .header h1 { font-size: 13px; }
+      .header h1 span { font-size: 8px; }
+      #syncBtn { width: 42px; min-width: 42px; padding: 0; font-size: 0; }
+      #syncBtn svg { width: 17px !important; height: 17px !important; }
+      .nav {
+        position: fixed;
+        left: 10px;
+        right: 10px;
+        bottom: calc(8px + env(safe-area-inset-bottom));
+        z-index: 300;
+        width: auto;
+        max-width: none;
+        min-height: 66px;
+        padding: 5px;
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        border: 1px solid var(--border);
+        border-radius: 24px;
+        background: rgba(255,255,255,.94);
+        backdrop-filter: blur(20px);
+        overflow: visible;
+      }
+      .nav-item {
+        min-width: 0;
+        min-height: 54px;
+        padding: 5px 2px;
+        flex-direction: column;
+        justify-content: center;
+        gap: 3px;
+        border-radius: 18px;
+        font-size: 9px;
+        line-height: 1;
+      }
+      .nav-item svg { display: block; width: 18px !important; height: 18px !important; }
+      .nav-item.active { background: var(--accent-light); color: var(--accent); }
+      .orbit-hero {
+        width: 100%;
+        min-height: 0;
+        margin: 0;
+        padding: 24px 16px 8px;
+        grid-template-columns: minmax(0, 1fr) 74px;
+        gap: 12px;
+        align-items: center;
+      }
+      .orbit-hero h2 { font-size: clamp(27px, 9vw, 39px); line-height: 1; }
+      .orbit-eyebrow { margin-bottom: 7px; font-size: 9px; }
+      .orbit-hero-copy p { margin-top: 10px; font-size: 13px; line-height: 1.45; }
+      .orbit-date { width: 70px; height: 70px; }
+      .orbit-date span { font-size: 28px; }
+      .orbit-date small { margin-top: 4px; font-size: 8px; }
+      .freshness-status { grid-column: 1 / -1; min-height: 60px; margin: 8px 0 0; border-radius: 18px; }
+      .freshness-detail { white-space: normal; }
+      .stats-bar, .legend { display: none !important; }
+      .calendar-section, .cleaners-section, .stats-section, .tax-section, .reporting-section {
+        width: 100%;
+        padding: 12px 12px 28px;
+      }
+      .calendar-section { padding-top: 8px; }
+      .calendar-toolbar { border-radius: 20px; }
+      .calendar-container { border-radius: 20px; }
+      .mobile-agenda-card { border-radius: 22px; }
+      .add-cleaner-form { border-radius: 22px; }
+      .cleaner-card { border-radius: 22px; }
+      .stats-radar-card, .stats-dynamics-card, .stats-summary-card, .stats-chart-card { border-radius: 20px; }
+      .stats-chart-card { min-height: 0; }
+      .tax-header { display: flex; align-items: flex-end; }
+      .tax-title { font-size: 19px; }
+      .reporting-card, .reporting-fold { border-radius: 20px; }
+      .booking-panel {
+        top: auto;
+        right: 0;
+        bottom: 0;
+        border-width: 1px 0 0;
+        border-radius: 28px 28px 0 0;
+      }
+      .toast { right: 12px; bottom: calc(84px + env(safe-area-inset-bottom)); }
+    }
+
+    @media (max-width: 420px) {
+      .orbit-hero-copy p { max-width: 255px; }
+      .orbit-hero h2 { font-size: 28px; }
+      .freshness-detail { font-size: 10px; }
+      .tax-header { display: block; }
+      .tax-summary { margin-top: 10px; }
+    }
   </style>
 </head>
 <body>
 
-  <!-- HEADER -->
+  <!-- ORBIT TOP BAR -->
+  <div class="orbit-topbar">
   <div class="header">
     <div class="header-left">
       <div class="header-logo">
@@ -2975,7 +3535,18 @@
       <i data-lucide="shield-check" style="width:16px;height:16px;"></i>Гости
     </button>
   </nav>
+  </div>
 
+  <section class="orbit-hero" aria-labelledby="orbitHeroTitle">
+    <div class="orbit-hero-copy">
+      <div class="orbit-eyebrow" id="orbitHeroEyebrow">Atrani · операционный день</div>
+      <h2 id="orbitHeroTitle">Сегодня без лишнего</h2>
+      <p id="orbitHeroSubtitle">Видно главное: кто приезжает, кто выезжает и где пересменка.</p>
+    </div>
+    <div class="orbit-date" aria-label="Сегодня">
+      <span id="orbitDateDay">—</span>
+      <small id="orbitDateMonth">—</small>
+    </div>
   <section class="freshness-status" id="freshnessStatus" data-state="loading" role="status" aria-live="polite" aria-atomic="true">
     <div class="freshness-icon" aria-hidden="true">
       <i data-lucide="loader-2" style="width:17px;height:17px;"></i>
@@ -2987,6 +3558,7 @@
     <button class="btn btn-ghost btn-sm freshness-retry" id="freshnessRetry" type="button" onclick="retryDashboardLoad()" hidden>
       <i data-lucide="rotate-cw" style="width:14px;height:14px;"></i><span>Повторить</span>
     </button>
+  </section>
   </section>
 
   <!-- STATS -->
@@ -3272,7 +3844,7 @@
       <div class="tax-summary" id="taxSummary"></div>
     </div>
     <div class="tax-controls">
-      <button class="btn btn-secondary" onclick="taxScrollToToday()" style="padding:6px 14px;font-size:13px;">📍 Сегодня</button>
+      <button class="btn btn-secondary" onclick="taxScrollToToday()" style="padding:6px 14px;font-size:13px;"><i data-lucide="locate-fixed" style="width:14px;height:14px;"></i>Сегодня</button>
       <label><input type="checkbox" id="taxShowUnpaidOnly" onchange="renderTaxList()"> Только неоплаченные</label>
     </div>
     <div id="taxList" class="tax-list"></div>
@@ -3297,7 +3869,7 @@
         <div class="reporting-flow" id="reportingFlow" aria-label="Этапы отправки"></div>
         <label class="reporting-dropzone" id="reportingDropzone">
           <input id="reportingFiles" type="file" accept=".txt,text/plain" onchange="uploadReportingFiles(this.files)">
-          <i data-lucide="file-up" style="width:22px;height:22px;color:#0f766e;"></i>
+          <i data-lucide="file-up" style="width:22px;height:22px;color:var(--accent);"></i>
           <strong id="reportingUploadTitle">Выбрать TXT из Comune</strong>
           <span>Один файл · до 256 KB</span>
         </label>
@@ -3383,8 +3955,56 @@ let lastAutoSyncAttemptAt = 0;
 
 const TAB_ROUTES = { '/stats': 'stats', '/maid': 'cleaners', '/tax': 'tax', '/reporting': 'reporting' };
 const ROUTE_TABS = { stats: '/stats', cleaners: '/maid', tax: '/tax', reporting: '/reporting' };
+const ORBIT_HERO_CONTENT = {
+  calendar: {
+    eyebrow: 'Atrani · операционный день',
+    title: 'Сегодня без лишнего',
+    subtitle: 'Видно главное: кто приезжает, кто выезжает и где пересменка.'
+  },
+  cleaners: {
+    eyebrow: 'Команда и объекты',
+    title: 'Уборка без накладок',
+    subtitle: 'Назначения и публичные календари собраны в одном месте.'
+  },
+  stats: {
+    eyebrow: 'Сезон в движении',
+    title: 'Цифры, которые помогают решать',
+    subtitle: 'Загрузка, динамика и точки внимания — без визуального шума.'
+  },
+  tax: {
+    eyebrow: 'Tassa di soggiorno',
+    title: 'Налоги без хвостов',
+    subtitle: 'Платежи по датам и гостям, с понятным статусом каждого визита.'
+  },
+  reporting: {
+    eyebrow: 'Alloggiati · ISTAT',
+    title: 'Гости под контролем',
+    subtitle: 'Проверка и отправка документов без потери контекста.'
+  }
+};
+
+function updateOrbitHero(tab) {
+  const content = ORBIT_HERO_CONTENT[tab] || ORBIT_HERO_CONTENT.calendar;
+  const eyebrow = document.getElementById('orbitHeroEyebrow');
+  const title = document.getElementById('orbitHeroTitle');
+  const subtitle = document.getElementById('orbitHeroSubtitle');
+  if (eyebrow) eyebrow.textContent = content.eyebrow;
+  if (title) title.textContent = content.title;
+  if (subtitle) subtitle.textContent = content.subtitle;
+
+  const dateParts = new Intl.DateTimeFormat('ru-RU', {
+    timeZone: 'Europe/Rome',
+    day: '2-digit',
+    month: 'short'
+  }).formatToParts(new Date());
+  const day = document.getElementById('orbitDateDay');
+  const month = document.getElementById('orbitDateMonth');
+  if (day) day.textContent = dateParts.find(part => part.type === 'day')?.value || '—';
+  if (month) month.textContent = (dateParts.find(part => part.type === 'month')?.value || '—').replace('.', '');
+}
 
 function switchTab(tab, pushState = true) {
+  updateOrbitHero(tab);
   document.querySelectorAll('.nav-item').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
   document.getElementById('calendarTab').style.display = tab === 'calendar' ? 'block' : 'none';
   document.getElementById('cleanersTab').style.display = tab === 'cleaners' ? 'block' : 'none';
@@ -4671,7 +5291,10 @@ function renderCalendar({ preserveScroll = false, focusDate = null, behavior = '
       rowLayer.style.gridColumn = `2 / ${totalDays + 2}`;
       grid.appendChild(rowLayer);
 
-      getCalendarBookingsForProperty(prop.id, startDate, endDate, today).forEach(booking => {
+      const propertyBookings = getCalendarBookingsForProperty(prop.id, startDate, endDate, today);
+      const isTurnoverBooking = candidate => !isUnavailableBooking(candidate) || hasGuestDetails(candidate);
+
+      propertyBookings.forEach(booking => {
         const start = parseLocalDate(booking.start_date);
         const end = parseLocalDate(booking.end_date);
         const visualRange = getCalendarHandoverRange(dayMetrics, start, end, startDate, endDate);
@@ -4690,18 +5313,40 @@ function renderCalendar({ preserveScroll = false, focusDate = null, behavior = '
         const shortLabel = visibleWidth > fullLabelThreshold ? barText : (visibleWidth > shortLabelThreshold ? String(barText).split(' ')[0] : '');
         const platformAria = platformBrand(booking.platform)?.label || platformLabel(booking.platform);
         const bookingAria = booking.guest_name ? `${platformAria} ${barText}` : platformAria;
+        const hasHandoverStart = isTurnoverBooking(booking) && propertyBookings.some(other =>
+          other !== booking && isTurnoverBooking(other) && other.end_date === booking.start_date
+        );
+        const hasHandoverEnd = isTurnoverBooking(booking) && propertyBookings.some(other =>
+          other !== booking && isTurnoverBooking(other) && other.start_date === booking.end_date
+        );
 
         const bar = document.createElement('button');
         bar.type = 'button';
-        bar.className = `booking-bar ${platformClass}${hasPlatformLogo ? ' has-platform-logo' : ''}${hasPlatformLogo && !shortLabel ? ' icon-only' : ''}${isBlocked ? ' not-available' : ''}${isCompleted ? ' completed' : ''}`;
+        bar.className = `booking-bar ${platformClass}${hasPlatformLogo ? ' has-platform-logo' : ''}${hasPlatformLogo && !shortLabel ? ' icon-only' : ''}${isBlocked ? ' not-available' : ''}${isCompleted ? ' completed' : ''}${hasHandoverStart ? ' handover-start' : ''}${hasHandoverEnd ? ' handover-end' : ''}`;
         bar.style.gridRow = row;
         bar.style.gridColumn = `2 / ${totalDays + 2}`;
-        bar.style.marginLeft = formatCalendarPx(visualRange.left + 4);
-        bar.style.width = formatCalendarPx(Math.max(hasPlatformLogo ? 22 : 10, visibleWidth - 8));
+        bar.style.marginLeft = formatCalendarPx(visualRange.left);
+        bar.style.width = formatCalendarPx(visibleWidth);
+        bar.dataset.bookingId = String(booking.id);
+        bar.dataset.propertyId = prop.id;
+        bar.dataset.startDate = booking.start_date;
+        bar.dataset.endDate = booking.end_date;
         bar.innerHTML = `${hasPlatformLogo ? platformTimelineLogoHtml(booking.platform, 'bar-platform-logo', { decorative: true }) : ''}${shortLabel ? `<span class="bar-label">${escapeHtml(shortLabel)}</span>` : ''}`;
         bar.setAttribute('aria-label', `${propertyMeta(booking.property_id).name}: ${bookingAria}`);
         bar.addEventListener('click', () => openBookingPanel(booking.id));
         grid.appendChild(bar);
+
+        if (hasHandoverStart) {
+          const marker = document.createElement('span');
+          marker.className = 'calendar-handover-marker';
+          marker.style.gridRow = row;
+          marker.style.gridColumn = `2 / ${totalDays + 2}`;
+          marker.style.marginLeft = formatCalendarPx(visualRange.left - 4);
+          marker.dataset.propertyId = prop.id;
+          marker.dataset.handoverDate = booking.start_date;
+          marker.setAttribute('aria-hidden', 'true');
+          grid.appendChild(marker);
+        }
       });
 
       currentRow++;
@@ -5982,13 +6627,13 @@ function buildStatsTimeline(year, fallbackSnapshot) {
 }
 
 function statsChartDefaults() {
-  const chartFont = { family: "'Manrope', sans-serif" };
+  const chartFont = { family: "'Golos Text', sans-serif" };
   return {
     font: chartFont,
     plugins: {
       legend: {
         labels: {
-          color: '#344054',
+          color: '#4f5265',
           usePointStyle: true,
           pointStyle: 'circle',
           boxWidth: 7,
@@ -5998,12 +6643,12 @@ function statsChartDefaults() {
         }
       },
       tooltip: {
-        backgroundColor: '#111827',
+        backgroundColor: '#171827',
         titleColor: '#fff',
         bodyColor: '#e5e7eb',
         borderColor: 'rgba(255,255,255,.12)',
         borderWidth: 1,
-        cornerRadius: 8,
+        cornerRadius: 14,
         padding: 11,
         displayColors: true,
         titleFont: { ...chartFont, size: 12, weight: 800 },
@@ -6014,13 +6659,13 @@ function statsChartDefaults() {
       x: {
         grid: { display: false },
         border: { display: false },
-        ticks: { color: '#667085', font: { ...chartFont, size: 11, weight: 650 } }
+        ticks: { color: '#686b7d', font: { ...chartFont, size: 11, weight: 650 } }
       },
       y: {
         beginAtZero: true,
         border: { display: false },
-        grid: { color: '#edf1f5' },
-        ticks: { color: '#667085', precision: 0, font: { ...chartFont, size: 11, weight: 650 } }
+        grid: { color: '#e8e9f0' },
+        ticks: { color: '#686b7d', precision: 0, font: { ...chartFont, size: 11, weight: 650 } }
       }
     }
   };
@@ -6233,10 +6878,10 @@ function createStatsDynamicsChart() {
         {
           label: 'Бронирования',
           data: snapshots.map(snapshot => Number(snapshot.booking_count) || 0),
-          borderColor: '#0f766e',
-          backgroundColor: 'rgba(15,118,110,.1)',
+          borderColor: '#6d2cfc',
+          backgroundColor: 'rgba(109,44,252,.1)',
           borderWidth: 2,
-          pointBackgroundColor: '#0f766e',
+          pointBackgroundColor: '#6d2cfc',
           pointBorderColor: '#fff',
           pointRadius: 2,
           pointHoverRadius: 5,
@@ -6572,9 +7217,9 @@ function renderStatsNow({ chartsAvailable = typeof Chart !== 'undefined' } = {})
     data: {
       labels: monthLabels,
       datasets: [
-        { label: 'Airbnb', data: monthlyAirbnb, backgroundColor: '#D8304E', borderRadius: 7, maxBarThickness: 42 },
-        { label: 'Booking.com', data: monthlyBooking, backgroundColor: '#003b95', borderRadius: 7, maxBarThickness: 42 },
-        { label: 'Прямые', data: monthlyDirect, backgroundColor: '#059669', borderRadius: 7, maxBarThickness: 42 }
+        { label: 'Airbnb', data: monthlyAirbnb, backgroundColor: '#d9365c', borderRadius: 9, maxBarThickness: 42 },
+        { label: 'Booking.com', data: monthlyBooking, backgroundColor: '#155bb3', borderRadius: 9, maxBarThickness: 42 },
+        { label: 'Прямые', data: monthlyDirect, backgroundColor: '#157a5b', borderRadius: 9, maxBarThickness: 42 }
       ]
     },
     options: {
@@ -6643,7 +7288,7 @@ function renderStatsNow({ chartsAvailable = typeof Chart !== 'undefined' } = {})
   const countryLabels = top8.map(([c]) => `${countryToFlag(c)} ${COUNTRY_NAMES[c] || c.toUpperCase()}`);
   const countryData = top8.map(([, c]) => c);
   if (othersCount > 0) { countryLabels.push('Другие'); countryData.push(othersCount); }
-  const countryColors = ['#0f766e','#D8304E','#003b95','#d97706','#0891b2','#be185d','#7c3aed','#475467','#98a2b3'];
+  const countryColors = ['#6d2cfc','#d9365c','#155bb3','#157a5b','#a076f6','#596074','#2809e3','#bbbbe0','#d2d6e8'];
 
   createDeferredStatsChart('countries', 'chartCountries', canvas => new Chart(canvas, {
     type: 'doughnut',
@@ -6680,7 +7325,7 @@ function renderStatsNow({ chartsAvailable = typeof Chart !== 'undefined' } = {})
   // Reorder: Mon-Sun
   const reordered = [...checkinByDay.slice(1), checkinByDay[0]];
   const reorderedLabels = [...dayNamesRu.slice(1), dayNamesRu[0]];
-  const dayColors = reordered.map((_, i) => i >= 5 ? '#f59e0b' : '#0f766e'); // weekend accent
+  const dayColors = reordered.map((_, i) => i >= 5 ? '#d9365c' : '#6d2cfc'); // weekend accent
 
   createDeferredStatsChart('checkinDays', 'chartCheckinDays', canvas => new Chart(canvas, {
     type: 'bar',
@@ -6754,11 +7399,11 @@ function renderStatsNow({ chartsAvailable = typeof Chart !== 'undefined' } = {})
       datasets: [{
         label: 'Гости',
         data: monthlyGuests,
-        borderColor: '#0f766e',
-        backgroundColor: 'rgba(15,118,110,.12)',
+        borderColor: '#6d2cfc',
+        backgroundColor: 'rgba(109,44,252,.12)',
         fill: true,
         tension: 0.35,
-        pointBackgroundColor: '#0f766e',
+        pointBackgroundColor: '#6d2cfc',
         pointBorderColor: '#fff',
         pointBorderWidth: 2,
         pointRadius: 4,
@@ -6898,6 +7543,7 @@ const bootstrappedFromCache = hydrateDashboardFromCache();
 // Route-based tab on page load
 const TAB_ROUTE_MAP = { '/stats': 'stats', '/maid': 'cleaners', '/tax': 'tax', '/reporting': 'reporting' };
 const initTab = TAB_ROUTE_MAP[location.pathname] || 'calendar';
+updateOrbitHero(initTab);
 if (initTab !== 'calendar') switchTab(initTab, false);
 
 window.addEventListener('resize', () => {

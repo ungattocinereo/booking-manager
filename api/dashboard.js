@@ -7,6 +7,7 @@ const db = USE_POSTGRES
 const { formatBooking, formatCleaningTask, formatAvailabilityMarker, todayInRome } = require('./_helpers');
 const { isUnavailableMarker, normalizeBookingsForDisplay } = require('../lib/booking-normalization');
 const { isDateOnly } = require('../lib/api-validation');
+const { listCleaners } = require('../lib/cleaners-service');
 const { handleReportingRequest } = require('../backend/src/reporting/http-handlers');
 
 module.exports = async (req, res) => {
@@ -47,7 +48,7 @@ module.exports = async (req, res) => {
       db.getProperties(),
       db.getBookings(null, fromDate, { includeInactive }),
       db.getCleaningTasks(null, today),
-      db.getCleaners(),
+      listCleaners(db),
       full && typeof db.getStatsSnapshots === 'function'
         ? db.getStatsSnapshots({ seasonYear, limit: snapshotsLimit })
         : Promise.resolve([]),
@@ -55,10 +56,6 @@ module.exports = async (req, res) => {
         ? db.getSyncHealth()
         : Promise.resolve(null)
     ]);
-
-    await Promise.all(cleaners.map(async cleaner => {
-      cleaner.properties = await db.getCleanerProperties(cleaner.id);
-    }));
 
     // Format dates to YYYY-MM-DD
     const normalizedBookings = normalizeBookingsForDisplay(bookings);
