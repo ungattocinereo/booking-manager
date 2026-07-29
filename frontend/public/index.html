@@ -288,6 +288,7 @@
     .stats-bar {
       padding: 16px 28px;
       display: flex;
+      align-items: flex-start;
       gap: 12px;
       overflow-x: auto;
       overscroll-behavior-x: contain;
@@ -342,12 +343,68 @@
       margin-top: 6px;
       display: flex;
       flex-direction: column;
+      gap: 8px;
+    }
+    .stat-day-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      align-items: start;
+    }
+    .stat-card.stat-day-card { min-width: 300px; }
+    .stat-movement-group {
+      display: grid;
       gap: 4px;
+      min-width: 0;
+    }
+    .stat-movement-heading {
+      min-height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding-bottom: 3px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-secondary);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+    .stat-movement-heading span {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .stat-movement-group[data-movement="checkin"] .stat-movement-heading { color: var(--accent); }
+    .stat-movement-group[data-movement="checkout"] .stat-movement-heading { color: var(--warning); }
+    .stat-movement-count {
+      min-width: 20px;
+      height: 20px;
+      padding: 0 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      color: currentColor;
+      background: var(--bg);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      font-weight: 600;
+    }
+    .stat-movement-empty {
+      min-height: 18px;
+      padding-left: 24px;
+      display: flex;
+      align-items: center;
+      color: var(--text-secondary);
+      font-size: 11px;
     }
     .stat-checkin-item {
       display: flex;
       align-items: center;
       gap: 6px;
+      min-width: 0;
       font-size: 12px;
       color: var(--text);
     }
@@ -361,18 +418,17 @@
       flex-shrink: 0;
     }
     .stat-checkin-item .prop-name {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
       font-weight: 600;
       white-space: nowrap;
     }
     .stat-checkin-item .guest-info {
+      flex: 0 0 auto;
+      margin-left: auto;
       color: var(--text-secondary);
       white-space: nowrap;
-    }
-    .stat-checkin-more {
-      padding-left: 24px;
-      color: var(--text-secondary);
-      font-size: 11px;
-      font-weight: 700;
     }
 
     /* ===== BOOKING TOOLTIP ===== */
@@ -3675,20 +3731,20 @@
         <span class="airbnb-count" id="statAirbnbCount">—</span>
       </div>
     </div>
-    <div class="stat-card" id="statTodayCard">
+    <div class="stat-card stat-day-card" id="statTodayCard">
       <div class="stat-label">Сегодня</div>
       <div class="stat-value" id="statTodayCount" style="font-size:20px;">—</div>
-      <div class="stat-checkin-list" id="statTodayList"></div>
+      <div class="stat-checkin-list stat-day-list" id="statTodayList"></div>
     </div>
-    <div class="stat-card" style="min-width:260px;">
-      <div class="stat-label" id="statNextLabel">Ближайшие заезды</div>
+    <div class="stat-card stat-day-card" style="min-width:300px;">
+      <div class="stat-label" id="statNextLabel">Ближайший день</div>
       <div class="stat-value" id="statNextDate" style="font-size:16px;">—</div>
-      <div class="stat-checkin-list" id="statNextList"></div>
+      <div class="stat-checkin-list stat-day-list" id="statNextList"></div>
     </div>
-    <div class="stat-card" style="min-width:260px;">
+    <div class="stat-card stat-day-card" style="min-width:300px;">
       <div class="stat-label" id="statNext2Label">Следующий день</div>
       <div class="stat-value" id="statNext2Date" style="font-size:16px;">—</div>
-      <div class="stat-checkin-list" id="statNext2List"></div>
+      <div class="stat-checkin-list stat-day-list" id="statNext2List"></div>
     </div>
     <div class="stat-card" id="statConflictCard" style="display:none; border-color:var(--danger); background:#fef2f2;">
       <div class="stat-label" style="color:var(--danger);">Конфликты</div>
@@ -4593,18 +4649,36 @@ function updateStats() {
   document.getElementById('statAirbnbCount').innerHTML = `<span style="display:inline-flex;align-items:center;gap:3px;"><span style="width:8px;height:8px;border-radius:50%;background:var(--airbnb);display:inline-block;"></span>${airbnbCount} Airbnb</span>`;
 
   const today = toLocalIso(todayLocal());
-  const upcoming = realBookings.filter(b => b.start_date >= today).sort((a,b) => a.start_date.localeCompare(b.start_date));
+  const upcoming = realBookings.filter(b => b.start_date >= today || b.end_date >= today);
   const dayNamesRu = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
 
-  // Group upcoming by check-in date
+  // Group every upcoming movement by date. Operational cards must never hide
+  // either side of a turnover day.
   const checkinDates = {};
+  const checkoutDates = {};
   for (const b of upcoming) {
-    if (!checkinDates[b.start_date]) checkinDates[b.start_date] = [];
-    checkinDates[b.start_date].push(b);
+    if (b.start_date >= today) {
+      if (!checkinDates[b.start_date]) checkinDates[b.start_date] = [];
+      checkinDates[b.start_date].push(b);
+    }
+    if (b.end_date >= today) {
+      if (!checkoutDates[b.end_date]) checkoutDates[b.end_date] = [];
+      checkoutDates[b.end_date].push(b);
+    }
   }
-  const sortedDates = Object.keys(checkinDates).sort();
+  const sortedDates = [...new Set([
+    ...Object.keys(checkinDates),
+    ...Object.keys(checkoutDates)
+  ])].sort();
+  const sortMovements = items => items.sort((a, b) => {
+    const propertyA = properties.find(p => p.id === a.property_id)?.name || a.property_id;
+    const propertyB = properties.find(p => p.id === b.property_id)?.name || b.property_id;
+    return propertyA.localeCompare(propertyB, 'ru');
+  });
+  Object.values(checkinDates).forEach(sortMovements);
+  Object.values(checkoutDates).forEach(sortMovements);
 
-  function renderCheckinItem(b) {
+  function renderMovementItem(b) {
     const p = properties.find(pp => pp.id === b.property_id);
     const cfg = propertyConfig[b.property_id] || { icon: 'home', color: '#6b7280', bg: '#f9fafb' };
     const flag = b.guest_country ? countryToFlag(b.guest_country) : '';
@@ -4616,12 +4690,33 @@ function updateStats() {
     </div>`;
   }
 
-  function renderCheckinList(items, limit = 3) {
-    const visible = items.slice(0, limit).map(renderCheckinItem).join('');
-    const remaining = items.length - limit;
-    return remaining > 0
-      ? `${visible}<div class="stat-checkin-more">+ ещё ${remaining}</div>`
-      : visible;
+  function renderMovementGroup(type, items) {
+    const isCheckout = type === 'checkout';
+    const label = isCheckout ? 'Выезды' : 'Заезды';
+    const icon = isCheckout ? 'log-out' : 'log-in';
+    const rows = items.length
+      ? items.map(renderMovementItem).join('')
+      : '<div class="stat-movement-empty">Нет</div>';
+    return `<div class="stat-movement-group" data-movement="${type}">
+      <div class="stat-movement-heading">
+        <span><i data-lucide="${icon}" style="width:11px;height:11px;"></i>${label}</span>
+        <strong class="stat-movement-count">${items.length}</strong>
+      </div>
+      ${rows}
+    </div>`;
+  }
+
+  function renderDayMovements(date) {
+    return [
+      renderMovementGroup('checkin', checkinDates[date] || []),
+      renderMovementGroup('checkout', checkoutDates[date] || [])
+    ].join('');
+  }
+
+  function movementCountLabel(date) {
+    const arrivals = (checkinDates[date] || []).length;
+    const departures = (checkoutDates[date] || []).length;
+    return `${arrivals} ${pluralRu(arrivals, 'заезд', 'заезда', 'заездов')} · ${departures} ${pluralRu(departures, 'выезд', 'выезда', 'выездов')}`;
   }
 
   function formatDateTitle(dateStr) {
@@ -4630,17 +4725,14 @@ function updateStats() {
   }
 
   // Today card
-  const todayCheckins = checkinDates[today] || [];
-  document.getElementById('statTodayCount').textContent = todayCheckins.length > 0
-    ? `${todayCheckins.length} заезд${todayCheckins.length > 1 ? (todayCheckins.length < 5 ? 'а' : 'ов') : ''}`
-    : 'Нет заездов';
-  document.getElementById('statTodayList').innerHTML = renderCheckinList(todayCheckins);
+  document.getElementById('statTodayCount').textContent = movementCountLabel(today);
+  document.getElementById('statTodayList').innerHTML = renderDayMovements(today);
 
-  // Next check-in day (skip today)
+  // Next dates with any movement (skip today).
   const futureDates = sortedDates.filter(d => d > today);
   if (futureDates.length > 0) {
     document.getElementById('statNextDate').textContent = formatDateTitle(futureDates[0]);
-    document.getElementById('statNextList').innerHTML = renderCheckinList(checkinDates[futureDates[0]]);
+    document.getElementById('statNextList').innerHTML = renderDayMovements(futureDates[0]);
   } else {
     document.getElementById('statNextDate').textContent = '—';
     document.getElementById('statNextList').innerHTML = '';
@@ -4648,7 +4740,7 @@ function updateStats() {
   // Following check-in day
   if (futureDates.length > 1) {
     document.getElementById('statNext2Date').textContent = formatDateTitle(futureDates[1]);
-    document.getElementById('statNext2List').innerHTML = renderCheckinList(checkinDates[futureDates[1]]);
+    document.getElementById('statNext2List').innerHTML = renderDayMovements(futureDates[1]);
   } else {
     document.getElementById('statNext2Date').textContent = '—';
     document.getElementById('statNext2List').innerHTML = '';
