@@ -1490,38 +1490,37 @@
       max-width: 1320px;
       margin: 0 auto;
     }
+    .stats-operations {
+      margin-bottom: 18px;
+    }
     .stats-history-status {
       position: relative;
-      overflow: hidden;
       display: grid;
       grid-template-columns: minmax(0, 1fr) auto;
       gap: 12px 18px;
       align-items: center;
-      margin-bottom: 12px;
-      padding: 13px 14px 11px;
-      border: 1px solid #ccfbf1;
-      border-radius: 8px;
-      background: linear-gradient(180deg, #f0fdfa, #ffffff);
+      margin: 0;
+      padding: 10px 4px 16px;
+      border: 0;
+      border-bottom: 1px solid var(--border);
+      border-radius: 0;
+      background: transparent;
       color: #134e4a;
     }
     .stats-history-status[data-state="loading"] {
-      border-color: var(--border);
-      background: #fff;
+      background: transparent;
       color: var(--text);
     }
     .stats-history-status[data-state="cached"] {
-      border-color: #fde68a;
-      background: linear-gradient(180deg, #fffbeb, #ffffff);
+      background: transparent;
       color: #78350f;
     }
     .stats-history-status[data-state="warning"] {
-      border-color: #fde68a;
-      background: linear-gradient(180deg, #fffbeb, #ffffff);
+      background: transparent;
       color: #78350f;
     }
     .stats-history-status[data-state="error"] {
-      border-color: #fecaca;
-      background: linear-gradient(180deg, #fff1f2, #ffffff);
+      background: transparent;
       color: #881337;
     }
     .stats-history-copy {
@@ -1586,7 +1585,7 @@
     }
     .stats-quality-line {
       grid-column: 1 / -1;
-      min-height: 5px;
+      min-height: 4px;
       display: flex;
       align-items: center;
       gap: 2px;
@@ -1596,7 +1595,7 @@
     }
     .stats-quality-segment {
       flex: 1 1 0;
-      height: 5px;
+      height: 4px;
       min-width: 2px;
       background: #14b8a6;
     }
@@ -1605,48 +1604,50 @@
     .stats-quality-segment.invalid { background: #fb7185; }
     .stats-quality-segment.current { background: #0f766e; }
     .stats-radar-card {
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      background: linear-gradient(180deg, #ffffff, #fbfcfd);
-      box-shadow: var(--shadow-sm);
-      padding: 16px;
-      margin-bottom: 16px;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+      padding: 22px 4px 26px;
+      margin: 0;
     }
     .stats-radar-head {
       display: flex;
       align-items: flex-start;
       justify-content: space-between;
       gap: 14px;
-      margin-bottom: 12px;
+      margin-bottom: 18px;
     }
     .stats-radar-title {
-      font-size: 15px;
+      font-size: 18px;
       line-height: 1.25;
       font-weight: 800;
       color: var(--text);
     }
     .stats-radar-sub {
-      margin-top: 2px;
+      margin-top: 4px;
       color: var(--text-secondary);
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 650;
     }
     .stats-radar-periods {
       display: inline-grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 3px;
+      gap: 16px;
       flex: 0 0 auto;
-      padding: 3px;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      background: #f3f4f6;
+      padding: 0;
+      border: 0;
+      border-bottom: 1px solid var(--border);
+      border-radius: 0;
+      background: transparent;
     }
     .stats-radar-period {
+      position: relative;
       min-width: 66px;
       min-height: 38px;
-      padding: 0 10px;
+      padding: 0 2px 8px;
       border: 0;
-      border-radius: 7px;
+      border-radius: 0;
       background: transparent;
       color: var(--text-secondary);
       font: inherit;
@@ -1655,29 +1656,40 @@
       cursor: pointer;
     }
     .stats-radar-period.active {
-      background: #fff;
-      color: #0f766e;
-      box-shadow: 0 1px 3px rgba(15,23,42,.12);
+      background: transparent;
+      color: var(--accent);
+      box-shadow: none;
+    }
+    .stats-radar-period.active::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -1px;
+      height: 2px;
+      background: currentColor;
     }
     .stats-radar-grid {
       display: grid;
       grid-template-columns: repeat(6, minmax(0, 1fr));
-      gap: 8px;
+      gap: 0;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
     }
     .stats-radar-metric {
       min-width: 0;
-      padding: 11px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      background: #fff;
+      padding: 15px 18px;
+      border: 0;
+      border-left: 1px solid var(--border);
+      border-radius: 0;
+      background: transparent;
     }
+    .stats-radar-metric:first-child { border-left: 0; }
     .stats-radar-metric.attention {
-      border-color: #fde68a;
-      background: #fffbeb;
+      background: transparent;
     }
     .stats-radar-metric.critical {
-      border-color: #fecaca;
-      background: #fff1f2;
+      background: transparent;
     }
     .stats-radar-label {
       min-height: 30px;
@@ -1689,10 +1701,12 @@
     .stats-radar-value {
       margin-top: 2px;
       color: var(--text);
-      font-size: 24px;
+      font-size: 27px;
       line-height: 1;
       font-weight: 800;
     }
+    .stats-radar-metric.attention .stats-radar-value { color: #a16207; }
+    .stats-radar-metric.critical .stats-radar-value { color: #be123c; }
     .stats-radar-note {
       margin-top: 10px;
       color: var(--text-secondary);
@@ -1701,9 +1715,9 @@
       font-weight: 650;
     }
     .stats-radar-gaps {
-      margin-top: 12px;
-      padding-top: 11px;
-      border-top: 1px solid var(--border);
+      margin-top: 16px;
+      padding-top: 0;
+      border-top: 0;
     }
     .stats-radar-gaps-title {
       margin-bottom: 7px;
@@ -1712,21 +1726,19 @@
       font-weight: 800;
     }
     .stats-radar-gaps-list {
-      display: flex;
-      gap: 6px;
-      overflow-x: auto;
-      padding-bottom: 2px;
-      scrollbar-width: none;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px 18px;
     }
-    .stats-radar-gaps-list::-webkit-scrollbar { display: none; }
     .stats-radar-gap {
-      flex: 0 0 auto;
-      max-width: 240px;
-      padding: 7px 9px;
-      border: 1px solid #ccfbf1;
-      border-radius: 8px;
-      background: #f0fdfa;
-      color: #134e4a;
+      min-width: 0;
+      max-width: none;
+      padding: 2px 0 2px 10px;
+      border: 0;
+      border-left: 2px solid var(--accent);
+      border-radius: 0;
+      background: transparent;
+      color: var(--text);
       font-size: 11px;
       line-height: 1.35;
       font-weight: 750;
@@ -3449,8 +3461,7 @@
       margin-right: auto;
       padding: 16px 0 48px;
     }
-    .add-cleaner-form, .cleaner-card, .stats-history-status, .stats-radar-card,
-    .stats-dynamics-card, .stats-summary-card, .stats-chart-card,
+    .add-cleaner-form, .cleaner-card, .stats-dynamics-card, .stats-summary-card, .stats-chart-card,
     .tax-row, .reporting-card, .reporting-fold {
       border-color: var(--border);
       border-radius: 24px;
@@ -3476,17 +3487,31 @@
     .unassigned-card { border-color: #e5c78c; background: var(--warning-light); }
     .unassigned-card .cleaner-card-header { border-color: #e5c78c; background: #fff1cf; }
 
-    .stats-history-status { padding: 14px; }
+    .stats-history-status {
+      padding: 10px 4px 16px;
+      border: 0;
+      border-bottom: 1px solid var(--border);
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+    }
     .stats-history-icon { border-radius: 50%; color: var(--accent); background: var(--accent-light); }
-    .stats-radar-card, .stats-dynamics-card { padding: 20px; }
+    .stats-radar-card {
+      padding: 22px 4px 26px;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+    }
+    .stats-dynamics-card { padding: 20px; }
     .stats-radar-title, .stats-dynamics-title, .tax-title, .reporting-card h3 {
       font-family: 'Unbounded', sans-serif;
       letter-spacing: -.04em;
     }
-    .stats-radar-periods { border-radius: 999px; background: #f0f0f6; }
-    .stats-radar-period { border-radius: 999px; }
-    .stats-radar-period.active { color: #fff; background: var(--text); box-shadow: none; }
-    .stats-radar-metric, .stats-mini-metric, .stats-primary-metric,
+    .stats-radar-periods { border-radius: 0; background: transparent; }
+    .stats-radar-period { border-radius: 0; }
+    .stats-radar-period.active { color: var(--accent); background: transparent; box-shadow: none; }
+    .stats-mini-metric, .stats-primary-metric,
     .stats-month-tile, .stats-timeline-control, .stats-change-note {
       border-radius: 16px;
       box-shadow: none;
@@ -3497,7 +3522,13 @@
       font-weight: 600;
       letter-spacing: -.04em;
     }
-    .stats-radar-gap { border-color: #d8ccfc; border-radius: 999px; background: var(--accent-light); color: var(--violet-deep); }
+    .stats-radar-gap {
+      border: 0;
+      border-left: 2px solid var(--accent);
+      border-radius: 0;
+      background: transparent;
+      color: var(--text);
+    }
     .stats-dynamics-card {
       background: linear-gradient(135deg, rgba(109,44,252,.08), rgba(255,255,255,.9) 46%);
     }
@@ -3816,7 +3847,21 @@
       .mobile-agenda-card { border-radius: 22px; }
       .add-cleaner-form { border-radius: 22px; }
       .cleaner-card { border-radius: 22px; }
-      .stats-radar-card, .stats-dynamics-card, .stats-summary-card, .stats-chart-card { border-radius: 20px; }
+      .stats-radar-card {
+        padding: 20px 0 24px;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+      }
+      .stats-history-status { padding-left: 0; padding-right: 0; }
+      .stats-radar-metric {
+        padding: 13px 10px;
+        border-top: 1px solid var(--border);
+      }
+      .stats-radar-metric:nth-child(-n+3) { border-top: 0; }
+      .stats-radar-metric:nth-child(3n+1) { border-left: 0; }
+      .stats-radar-gaps-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .stats-dynamics-card, .stats-summary-card, .stats-chart-card { border-radius: 20px; }
       .stats-chart-card { min-height: 0; }
       .tax-header { display: flex; align-items: flex-end; }
       .tax-title { font-size: 19px; }
@@ -3835,6 +3880,11 @@
       .orbit-hero-copy p { max-width: 255px; }
       .orbit-hero h2 { font-size: 28px; }
       .freshness-detail { font-size: 10px; }
+      .stats-radar-metric:nth-child(3) { border-top: 1px solid var(--border); }
+      .stats-radar-metric:nth-child(3n+1) { border-left: 1px solid var(--border); }
+      .stats-radar-metric:nth-child(-n+2) { border-top: 0; }
+      .stats-radar-metric:nth-child(2n+1) { border-left: 0; }
+      .stats-radar-gaps-list { grid-template-columns: 1fr; }
       .tax-header { display: block; }
       .tax-summary { margin-top: 10px; }
     }
@@ -3999,6 +4049,7 @@
 
   <!-- STATS TAB -->
   <div class="stats-section" id="statsTab" style="display:none">
+    <div class="stats-operations">
     <div class="stats-history-status" id="statsHistoryStatus" data-state="loading" role="status" aria-live="polite">
       <div class="stats-history-copy">
         <span class="stats-history-icon" id="statsHistoryIcon" aria-hidden="true">
@@ -4031,6 +4082,7 @@
       <div class="stats-radar-gaps" id="statsRadarGaps"></div>
       <div class="stats-radar-note" id="statsRadarNote"></div>
     </section>
+    </div>
 
     <div class="stats-dynamics-card" id="statsDynamicsCard">
       <div class="stats-dynamics-top">
@@ -7458,12 +7510,12 @@ function renderStatsOperationalRadar() {
 
   rangeEl.textContent = `${statsRadarDateLabel(start)} — ${statsRadarDateLabel(lastDay)} · ${days} ${pluralRu(days, 'день', 'дня', 'дней')}`;
   const taskNote = cleaningTasksAvailable
-    ? `${freeGrossNights} апартамент-ночей без брони в выбранном периоде.`
+    ? `Свободно ${freeGrossNights} из ${grossNights} апартамент-ночей в выбранном периоде.`
     : 'Данные уборок отсутствуют в сохранённой копии; обновите dashboard.';
   const markerNote = availabilityMarkersAvailable
-    ? 'Технические закрытия учтены только в списке окон.'
+    ? 'Технические закрытия учтены при поиске окон.'
     : 'Технические закрытия в сохранённой копии недоступны.';
-  noteEl.textContent = `${taskNote} ${markerNote} Процент «Забронировано» рассчитан от всех апартамент-ночей.`;
+  noteEl.textContent = `${taskNote} ${markerNote} Загрузка рассчитана по занятым ночам.`;
 
   for (const period of [7, 30]) {
     const button = document.getElementById(`statsRadar${period}`);

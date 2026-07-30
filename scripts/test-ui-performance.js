@@ -915,6 +915,43 @@ async function inspectStatsPage(browser, baseUrl, viewport, isMobile) {
   assert.notEqual(radar30['Заезды'], radar7['Заезды']);
   assert.match(await page.locator('#statsRadarRange').innerText(), /30 дней/);
 
+  const surfaceHierarchy = await page.evaluate(() => {
+    const readSurface = selector => {
+      const node = document.querySelector(selector);
+      const style = getComputedStyle(node);
+      return {
+        backgroundColor: style.backgroundColor,
+        backgroundImage: style.backgroundImage,
+        borderTopWidth: style.borderTopWidth,
+        borderRadius: style.borderRadius
+      };
+    };
+    const history = document.querySelector('#statsHistoryStatus');
+    const radar = document.querySelector('.stats-radar-card');
+    const dynamics = document.querySelector('#statsDynamicsCard');
+    return {
+      history: readSurface('#statsHistoryStatus'),
+      radar: readSurface('.stats-radar-card'),
+      metric: readSurface('#statsRadarGrid .stats-radar-metric'),
+      dynamics: readSurface('#statsDynamicsCard'),
+      dynamicsStartsCards: Boolean(history && radar && dynamics &&
+        history.compareDocumentPosition(radar) & Node.DOCUMENT_POSITION_FOLLOWING &&
+        radar.compareDocumentPosition(dynamics) & Node.DOCUMENT_POSITION_FOLLOWING)
+    };
+  });
+  for (const [name, surface] of Object.entries({
+    history: surfaceHierarchy.history,
+    radar: surfaceHierarchy.radar,
+    metric: surfaceHierarchy.metric
+  })) {
+    assert.equal(surface.backgroundColor, 'rgba(0, 0, 0, 0)', `${name} still has a card background`);
+    assert.equal(surface.borderTopWidth, '0px', `${name} still has a card border`);
+    assert.equal(surface.borderRadius, '0px', `${name} still has rounded card corners`);
+  }
+  assert.notEqual(surfaceHierarchy.dynamics.backgroundImage, 'none', 'season dynamics lost its card surface');
+  assert.notEqual(surfaceHierarchy.dynamics.borderRadius, '0px', 'season dynamics no longer starts the card hierarchy');
+  assert.equal(surfaceHierarchy.dynamicsStartsCards, true, 'operational strip no longer precedes season dynamics');
+
   for (let iteration = 0; iteration < 3; iteration++) {
     await page.getByRole('button', { name: /Календарь/ }).click();
     await page.getByRole('button', { name: /Статистика/ }).click();
@@ -933,8 +970,12 @@ async function inspectStatsPage(browser, baseUrl, viewport, isMobile) {
   assert.ok(charts.destroyed > 0, 'repeated tab switches did not dispose old charts');
   assert.ok(charts.active <= 7, `chart instances accumulated after repeated switches: ${charts.active}`);
 
+  await page.locator('#statsRadar7').click();
+  await page.waitForFunction(() => document.getElementById('statsRadar7')?.getAttribute('aria-pressed') === 'true');
+  await captureUiScreenshot(page, isMobile ? 'orbit-stats-mobile' : 'orbit-stats-desktop');
+
   await context.close();
-  return { historyTitle, radar7, radar30, overflow, charts };
+  return { historyTitle, radar7, radar30, surfaceHierarchy, overflow, charts };
 }
 
 async function inspectCachedStatsAuthFallback(browser, baseUrl, serverState) {
