@@ -3150,6 +3150,18 @@
       gap: 28px;
       align-items: end;
     }
+    @media (min-width: 769px) {
+      .orbit-hero[data-tab="calendar"] {
+        min-height: 0;
+        margin-top: 18px;
+        padding-top: 18px;
+        padding-bottom: 18px;
+        align-items: center;
+      }
+      .orbit-hero[data-tab="calendar"] h2 {
+        font-size: clamp(28px, 3.35vw, 48px);
+      }
+    }
     .orbit-eyebrow {
       margin-bottom: 10px;
       color: var(--accent);
@@ -3867,11 +3879,11 @@
   </nav>
   </div>
 
-  <section class="orbit-hero" aria-labelledby="orbitHeroTitle">
+  <section class="orbit-hero" data-tab="calendar" aria-labelledby="orbitHeroTitle">
     <div class="orbit-hero-copy">
       <div class="orbit-eyebrow" id="orbitHeroEyebrow">Atrani · операционный день</div>
-      <h2 id="orbitHeroTitle">Сегодня без лишнего</h2>
-      <p id="orbitHeroSubtitle">Видно главное: кто приезжает, кто выезжает и где пересменка.</p>
+      <h2 id="orbitHeroTitle">Нет заездов и нет выездов</h2>
+      <p id="orbitHeroSubtitle" hidden></p>
     </div>
     <div class="orbit-date" aria-label="Сегодня">
       <span id="orbitDateDay">—</span>
@@ -4294,8 +4306,7 @@ const ROUTE_TABS = { stats: '/stats', cleaners: '/maid', tax: '/tax', reporting:
 const ORBIT_HERO_CONTENT = {
   calendar: {
     eyebrow: 'Atrani · операционный день',
-    title: 'Сегодня без лишнего',
-    subtitle: 'Видно главное: кто приезжает, кто выезжает и где пересменка.'
+    subtitle: ''
   },
   cleaners: {
     eyebrow: 'Команда и объекты',
@@ -4319,14 +4330,28 @@ const ORBIT_HERO_CONTENT = {
   }
 };
 
+function calendarMovementTitle() {
+  const today = toLocalIso(todayLocal());
+  const realBookings = bookings.filter(booking => isRealGuestBooking(booking, bookings));
+  const checkins = realBookings.filter(booking => booking.start_date === today).length;
+  const checkouts = realBookings.filter(booking => booking.end_date === today).length;
+  if (!checkins && !checkouts) return 'Нет заездов и нет выездов';
+  return `${checkins} ${pluralRu(checkins, 'заезд', 'заезда', 'заездов')} и ещё ${checkouts} ${pluralRu(checkouts, 'выезд', 'выезда', 'выездов')}`;
+}
+
 function updateOrbitHero(tab) {
   const content = ORBIT_HERO_CONTENT[tab] || ORBIT_HERO_CONTENT.calendar;
+  const hero = document.querySelector('.orbit-hero');
   const eyebrow = document.getElementById('orbitHeroEyebrow');
   const title = document.getElementById('orbitHeroTitle');
   const subtitle = document.getElementById('orbitHeroSubtitle');
+  if (hero) hero.dataset.tab = tab;
   if (eyebrow) eyebrow.textContent = content.eyebrow;
-  if (title) title.textContent = content.title;
-  if (subtitle) subtitle.textContent = content.subtitle;
+  if (title) title.textContent = tab === 'calendar' ? calendarMovementTitle() : content.title;
+  if (subtitle) {
+    subtitle.textContent = content.subtitle;
+    subtitle.hidden = !content.subtitle;
+  }
 
   const dateParts = new Intl.DateTimeFormat('ru-RU', {
     timeZone: 'Europe/Rome',
@@ -4822,8 +4847,7 @@ function updateStats() {
   const upcoming = realBookings.filter(b => b.start_date >= today);
   const dayNamesRu = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
 
-  // The top summary is deliberately check-in only. Departures remain visible
-  // in the mobile agenda and on the horizontal timeline.
+  // Arrival cards remain check-in only; the hero summarizes both movement types.
   const checkinDates = {};
   for (const b of upcoming) {
     if (!checkinDates[b.start_date]) checkinDates[b.start_date] = [];
@@ -4875,6 +4899,7 @@ function updateStats() {
     orbitArrivals.textContent = String(todayCheckins.length);
     orbitArrivals.setAttribute('aria-label', checkinCountLabel(todayCheckins.length, 'Сегодня заездов нет'));
   }
+  if (document.querySelector('.nav-item.active')?.dataset.tab === 'calendar') updateOrbitHero('calendar');
 
   // Tomorrow is always shown, even when there are no arrivals.
   const tomorrowCheckins = checkinDates[tomorrow] || [];

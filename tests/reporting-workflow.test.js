@@ -83,6 +83,27 @@ test('a parsed TXT is immediately testable and ISTAT edits do not reset Alloggia
   });
 });
 
+test('same-day TXT imports are deduplicated separately for San Sebastiano and Dragone', async () => {
+  await withReportingDb(async ({ db, ReportingService }) => {
+    const service = new ReportingService(db);
+    const input = {
+      filename: 'same-day.txt',
+      contentBase64: Buffer.from(SAMPLE, 'latin1').toString('base64'),
+      operator: 'test@example.com'
+    };
+
+    const sanSebastiano = await service.importTxt({ ...input, unitId: 'sansebastiano' });
+    const dragone = await service.importTxt({ ...input, unitId: 'dragone' });
+
+    assert.equal(sanSebastiano.batch.reporting_unit_id, 'sansebastiano');
+    assert.equal(dragone.batch.reporting_unit_id, 'dragone');
+    await assert.rejects(
+      service.importTxt({ ...input, unitId: 'dragone' }),
+      error => error.status === 409 && /ранее импортированных/.test(error.message)
+    );
+  });
+});
+
 test('deleting a draft purges guest data, preserves detached Test audit, and permits re-upload', async () => {
   await withReportingDb(async ({ db, store, ReportingService, createBatch }) => {
     const batch = await createBatch('DELETE');

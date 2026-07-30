@@ -89,8 +89,8 @@ function validateMember(head, member) {
   if (!head || head.recordType !== expectedHead) {
     throw new Error(`Строка ${member.lineNumber}: тип ${member.recordType} указан без соответствующей главной записи ${expectedHead}`);
   }
-  if (head.arrivalDate !== member.arrivalDate || head.departureDate !== member.departureDate) {
-    throw new Error(`Строка ${member.lineNumber}: даты участника не совпадают с главной записью группы`);
+  if (head.arrivalDate !== member.arrivalDate) {
+    throw new Error(`Строка ${member.lineNumber}: дата заезда участника не совпадает с главной записью группы`);
   }
 }
 

@@ -384,6 +384,22 @@ async function inspectPage(browser, baseUrl, viewport, isMobile) {
       chartLoaded: Boolean(document.querySelector('script[data-chart-js]')),
       freshnessState: document.getElementById('freshnessStatus')?.dataset.state,
       freshnessTitle: document.getElementById('freshnessTitle')?.textContent,
+      heroSummary: (() => {
+        const hero = document.querySelector('.orbit-hero');
+        const copy = document.querySelector('.orbit-hero-copy');
+        const date = document.querySelector('.orbit-date');
+        const freshness = document.getElementById('freshnessStatus');
+        const center = element => {
+          const rect = element?.getBoundingClientRect();
+          return rect ? rect.top + rect.height / 2 : null;
+        };
+        return {
+          title: document.getElementById('orbitHeroTitle')?.textContent,
+          subtitleDisplay: getComputedStyle(document.getElementById('orbitHeroSubtitle')).display,
+          height: hero?.getBoundingClientRect().height || 0,
+          centers: [center(copy), center(date), center(freshness)]
+        };
+      })(),
       timelineContrast: (() => {
         const parseRgb = value => (value.match(/[\d.]+/g) || []).slice(0, 3).map(Number);
         const luminance = value => {
@@ -489,6 +505,8 @@ async function inspectPage(browser, baseUrl, viewport, isMobile) {
   assert.equal(metrics.chartLoaded, false);
   assert.equal(metrics.freshnessState, 'ok');
   assert.match(metrics.freshnessTitle, /актуальны/i);
+  assert.equal(metrics.heroSummary.title, '6 заездов и ещё 5 выездов');
+  assert.equal(metrics.heroSummary.subtitleDisplay, 'none');
 
   if (isMobile) {
     assert.equal(metrics.dayColumns, 0);
@@ -499,6 +517,8 @@ async function inspectPage(browser, baseUrl, viewport, isMobile) {
     await page.getByRole('button', { name: /Список/ }).click();
     await page.waitForFunction(() => document.querySelectorAll('.cal-day-column').length === 0);
   } else {
+    assert.ok(metrics.heroSummary.height <= 150, `desktop calendar hero is too tall: ${metrics.heroSummary.height}px`);
+    assert.ok(Math.max(...metrics.heroSummary.centers) - Math.min(...metrics.heroSummary.centers) <= 1, 'desktop calendar hero items are not horizontally aligned');
     assert.ok(metrics.dayColumns > 0 && metrics.dayColumns <= 250);
     assert.ok(metrics.nodes < 1800, `desktop DOM budget exceeded: ${metrics.nodes}`);
     assert.ok(metrics.handoverMarkers > 0, 'desktop timeline did not render handover markers');
@@ -1024,9 +1044,11 @@ async function inspectConfirmedEmptyDashboard(browser, baseUrl, serverState) {
   const result = {
     initialBookings,
     confirmedBookings: await page.locator('#statBookings').innerText(),
+    heroTitle: await page.locator('#orbitHeroTitle').innerText(),
     confirmationRequests: serverState.dashboardRequests - requestsBefore
   };
   assert.equal(result.confirmedBookings, '0');
+  assert.equal(result.heroTitle, 'Нет заездов и нет выездов');
   assert.ok(result.confirmationRequests >= 2, 'empty dashboard was accepted without a confirming request');
   assert.deepEqual(errors.pageErrors, []);
   assert.deepEqual(errors.consoleErrors, []);

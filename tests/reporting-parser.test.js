@@ -31,6 +31,15 @@ test('rejects malformed line length and orphaned family members', () => {
   assert.throws(() => parseAlloggiatiTxt(Buffer.from(SAMPLE[2], 'latin1')), /без соответствующей главной записи/);
 });
 
+test('allows a group member to leave before the group leader', () => {
+  const shorterMember = `${SAMPLE[2].slice(0, 12)}02${SAMPLE[2].slice(14)}`;
+  const parsed = parseAlloggiatiTxt(Buffer.from([SAMPLE[1], shorterMember].join('\r\n'), 'latin1'));
+
+  assert.equal(parsed.stayCount, 1);
+  assert.equal(parsed.groups[0].head.departureDate, '2026-07-29');
+  assert.equal(parsed.groups[0].members[0].departureDate, '2026-07-27');
+});
+
 test('derives foreign ISTAT country codes from Alloggiati citizenship', () => {
   assert.deepEqual(istatOriginFromCitizenship('100000602'), {
     originKind: 'country',
