@@ -4105,6 +4105,10 @@ const DASHBOARD_CACHE_KEY = 'atrani-dashboard-cache-v1';
 const DASHBOARD_VISIBLE_REFRESH_MIN_MS = 30 * 1000;
 const CALENDAR_AUTO_SYNC_INTERVAL_MS = 5 * 60 * 1000;
 const CALENDAR_AUTO_SYNC_STORAGE_KEY = 'atrani-calendar-auto-sync-v1';
+const CALENDAR_AUTO_SYNC_PRODUCTION_HOSTS = new Set([
+  'booking-manager-mu.vercel.app',
+  'booking-manager-cinereos-projects.vercel.app'
+]);
 const STATS_HISTORY_CACHE_PREFIX = 'atrani-stats-history-v2';
 const STATS_PRIMARY_ORIGIN = 'https://b.amalfi.day';
 
@@ -7688,6 +7692,10 @@ function rememberAutoSyncAttempt(timestamp) {
 }
 
 async function autoSyncCalendars() {
+  const hostname = String(location.hostname || '').toLowerCase();
+  const isPreviewHost = hostname.endsWith('.vercel.app')
+    && !CALENDAR_AUTO_SYNC_PRODUCTION_HOSTS.has(hostname);
+  if (isPreviewHost) return false;
   if (document.hidden || document.visibilityState === 'hidden' || calendarSyncInFlight) return false;
 
   const now = Date.now();

@@ -2,6 +2,17 @@
 const { runSync, SyncInProgressError } = require('../backend/src/sync-service');
 
 module.exports = async (req, res) => {
+  // Preview deployments share the production database, but intentionally do
+  // not receive ICAL_URLS. Never let an open preview tab overwrite the shared
+  // sync health with a configuration error.
+  if (process.env.VERCEL_ENV === 'preview') {
+    return res.status(403).json({
+      success: false,
+      code: 'SYNC_DISABLED_IN_PREVIEW',
+      error: 'Calendar sync is disabled in preview deployments'
+    });
+  }
+
   // Allow POST (manual) and GET (scheduled automation/Vercel Cron)
   if (req.method === 'GET') {
     // Verify cron secret if set
