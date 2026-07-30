@@ -650,9 +650,28 @@ async function inspectWideSectionLayouts(browser, baseUrl) {
   await page.getByRole('button', { name: /Налоги/ }).click();
   await page.waitForFunction(() => document.querySelectorAll('#taxList .tax-date-group').length > 1);
   const tax = await readSection('#taxTab');
-  const taxColumns = await page.locator('#taxList').evaluate(element =>
-    getComputedStyle(element).gridTemplateColumns.split(' ').filter(Boolean).length
-  );
+  const taxLayout = await page.locator('#taxList').evaluate(element => {
+    const group = element.querySelector('.tax-date-group');
+    const header = group?.querySelector('.tax-date-header');
+    const rows = group?.querySelector('.tax-date-rows');
+    const groupStyle = group ? getComputedStyle(group) : null;
+    const headerStyle = header ? getComputedStyle(header) : null;
+    const rowsStyle = rows ? getComputedStyle(rows) : null;
+    const previousScrollTop = element.scrollTop;
+    element.scrollTop = Math.min(80, Math.max(0, (group?.scrollHeight || 0) - (header?.offsetHeight || 0) - 1));
+    const stickyOffset = header
+      ? Math.round(header.getBoundingClientRect().top - element.getBoundingClientRect().top)
+      : null;
+    element.scrollTop = previousScrollTop;
+    return {
+      groupColumns: groupStyle?.gridTemplateColumns.split(' ').filter(Boolean).length || 0,
+      cardColumns: rowsStyle?.gridTemplateColumns.split(' ').filter(Boolean).length || 0,
+      headerPosition: headerStyle?.position || '',
+      headerTop: headerStyle?.top || '',
+      stickyOffset,
+      paidText: header?.querySelector('.tax-date-progress-total')?.textContent || ''
+    };
+  });
   await captureUiScreenshot(page, 'orbit-tax-wide');
 
   await page.getByRole('button', { name: /Гости/ }).click();
@@ -667,7 +686,12 @@ async function inspectWideSectionLayouts(browser, baseUrl) {
     assert.ok(Math.abs(section.left - topbar.left) <= 0.5, 'wide section does not share the shell left edge');
     assert.ok(Math.abs(section.right - topbar.right) <= 0.5, 'wide section does not share the shell right edge');
   }
-  assert.equal(taxColumns, 2, 'wide tax list should use two columns');
+  assert.equal(taxLayout.groupColumns, 2, 'wide tax group should split the date rail from payment cards');
+  assert.equal(taxLayout.cardColumns, 2, 'wide tax payments should use two card columns');
+  assert.equal(taxLayout.headerPosition, 'sticky', 'wide tax date rail should remain sticky');
+  assert.equal(taxLayout.headerTop, '0px', 'wide tax date rail should stick to the top of the tax scroller');
+  assert.ok(Math.abs(taxLayout.stickyOffset) <= 1, 'wide tax date rail should stay pinned while the tax list scrolls');
+  assert.match(taxLayout.paidText, /оплачено из/);
   assert.equal(reportingColumns, 2, 'wide guest-reporting workspace should use two columns');
   const overflow = await readHorizontalOverflow(page);
   assert.ok(overflow.document <= 1, `wide layout document overflows horizontally by ${overflow.document}px`);
@@ -676,7 +700,7 @@ async function inspectWideSectionLayouts(browser, baseUrl) {
   assert.deepEqual(errors.consoleErrors, []);
 
   await context.close();
-  return { topbar, tax, reporting, taxColumns, reportingColumns, overflow };
+  return { topbar, tax, reporting, taxLayout, reportingColumns, overflow };
 }
 
 async function inspectReportingPage(browser, baseUrl) {

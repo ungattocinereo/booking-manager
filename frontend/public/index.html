@@ -3511,6 +3511,45 @@
     .tax-row { overflow: hidden; }
     .tax-row-check { border-radius: 999px; }
 
+    .tax-date-heading {
+      min-width: 0;
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+    .tax-date-title {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 5px;
+      color: currentColor;
+      white-space: nowrap;
+    }
+    .tax-date-title strong,
+    .tax-date-title span {
+      font: inherit;
+    }
+    .tax-date-weekday {
+      color: var(--text-secondary);
+      text-transform: capitalize;
+    }
+    .tax-date-progress {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+    .tax-date-progress-total {
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-weight: 650;
+      white-space: nowrap;
+    }
+    .tax-date-progress-total strong {
+      color: var(--success);
+      font: 600 13px/1 'IBM Plex Mono', monospace;
+    }
+    .tax-date-rows { min-width: 0; }
+
     .reporting-section { max-width: var(--orbit-shell-max); }
     .reporting-hero { display: none; }
     .reporting-unit { border-radius: 999px; background: #fff; }
@@ -3526,18 +3565,91 @@
     .reporting-file button:focus-visible, .reporting-fold summary:focus-visible,
     .reporting-unit:focus-visible, .reporting-dropzone:focus-within { outline-color: rgba(109,44,252,.25); }
 
-    @media (min-width: 1360px) {
-      .tax-list {
+    @media (min-width: 1200px) {
+      .tax-list { display: block; }
+      .tax-date-group {
+        min-width: 0;
+        display: grid;
+        grid-template-columns: minmax(190px, 220px) minmax(0, 1fr);
+        align-items: start;
+        gap: 18px;
+        margin-bottom: 24px;
+        padding-bottom: 24px;
+        border-bottom: 1px solid rgba(128, 132, 153, .2);
+      }
+      .tax-date-group:last-child {
+        margin-bottom: 0;
+        padding-bottom: 0;
+        border-bottom: 0;
+      }
+      .tax-date-header {
+        position: sticky;
+        top: 0;
+        z-index: 4;
+        align-self: start;
+        display: block;
+        margin: 0;
+        padding: 16px 18px 18px 4px;
+        border-right: 1px solid rgba(128, 132, 153, .32);
+        background: var(--bg);
+        backdrop-filter: none;
+      }
+      .tax-date-heading {
+        display: block;
+      }
+      .tax-date-weekday {
+        display: block;
+        margin-bottom: 7px;
+        color: var(--accent);
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+      }
+      .tax-date-title {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        color: var(--text);
+      }
+      .tax-date-title strong {
+        font: 600 38px/.95 'IBM Plex Mono', monospace;
+        letter-spacing: -.08em;
+      }
+      .tax-date-title span {
+        font: 700 14px/1 'Golos Text', sans-serif;
+      }
+      .tax-date-header .date-badge {
+        display: inline-flex;
+        margin-top: 10px;
+      }
+      .tax-date-progress {
+        align-items: flex-start;
+        justify-content: flex-start;
+        flex-direction: column;
+        gap: 5px;
+        margin-top: 14px;
+      }
+      .tax-date-progress-total {
+        font-size: 12px;
+      }
+      .tax-date-progress-total strong {
+        font-size: 15px;
+      }
+      .tax-date-header .unpaid-count,
+      .tax-date-header .paid-count {
+        font-size: 11px;
+      }
+      .tax-date-rows {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        column-gap: 16px;
-        align-items: start;
+        gap: 12px;
       }
-      .tax-date-group { min-width: 0; }
       .tax-row {
         grid-template-columns: minmax(0, 1fr) auto minmax(138px, auto);
         grid-template-rows: auto auto;
         gap: 8px 10px;
+        margin-bottom: 0;
       }
       .tax-row-property {
         grid-column: 1;
@@ -8568,14 +8680,20 @@ function renderTaxList({ preserveScroll = false, focusToday = false } = {}) {
     const unpaidCount = rows.filter(r => !r.tax_paid).length;
     const paidCount = rows.length - unpaidCount;
     const isToday = date === today;
-    const weekday = new Date(date + 'T12:00:00').toLocaleDateString('ru-RU', { weekday: 'short', day: 'numeric', month: 'short' });
+    const dateValue = new Date(date + 'T12:00:00');
+    const weekday = dateValue.toLocaleDateString('ru-RU', { weekday: 'long' });
+    const dayNumber = dateValue.toLocaleDateString('ru-RU', { day: 'numeric' });
+    const monthName = dateValue.toLocaleDateString('ru-RU', { month: 'long' });
 
     html += `<div class="tax-date-group" id="tax-date-${date}">`;
     html += `<div class="tax-date-header ${isToday ? 'today' : ''}">`;
-    html += `<span>${weekday} ${isToday ? '<span class="date-badge">сегодня</span>' : ''}</span>`;
-    if (unpaidCount > 0) html += `<span class="unpaid-count">⚠️ ${unpaidCount} не оплачено</span>`;
-    else html += `<span class="paid-count">✓ ${paidCount || rows.length} оплачено</span>`;
+    html += `<div class="tax-date-heading"><span class="tax-date-weekday">${escapeHtml(weekday)}</span><time class="tax-date-title" datetime="${date}"><strong>${escapeHtml(dayNumber)}</strong><span>${escapeHtml(monthName)}</span></time>${isToday ? '<span class="date-badge">сегодня</span>' : ''}</div>`;
+    html += `<div class="tax-date-progress"><span class="tax-date-progress-total"><strong>${paidCount}</strong> оплачено из ${rows.length}</span>`;
+    if (unpaidCount > 0) html += `<span class="unpaid-count">${unpaidCount} к оплате</span>`;
+    else html += `<span class="paid-count">✓ всё отмечено</span>`;
     html += `</div>`;
+    html += `</div>`;
+    html += `<div class="tax-date-rows">`;
 
     for (const r of rows) {
       const meta = propertyMeta(r.property_id);
@@ -8601,7 +8719,7 @@ function renderTaxList({ preserveScroll = false, focusToday = false } = {}) {
       html += `<span class="tax-status-copy"><span class="tax-status-label">${statusLabel}</span>${statusMeta}</span>`;
       html += `</button></div>`;
     }
-    html += `</div>`;
+    html += `</div></div>`;
   }
 
   listEl.innerHTML = html;
