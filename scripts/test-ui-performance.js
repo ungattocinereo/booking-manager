@@ -697,9 +697,20 @@ async function inspectWideSectionLayouts(browser, baseUrl) {
   await page.getByRole('button', { name: /Гости/ }).click();
   await page.waitForFunction(() => document.querySelectorAll('#reportingUnits .reporting-unit').length === 2);
   const reporting = await readSection('#reportingTab');
-  const reportingColumns = await page.locator('.reporting-stack').evaluate(element =>
-    getComputedStyle(element).gridTemplateColumns.split(' ').filter(Boolean).length
-  );
+  const reportingLayout = await page.locator('.reporting-stack').evaluate(element => {
+    const primaryGrid = element.querySelector('.reporting-primary-grid');
+    const upload = primaryGrid?.querySelector('.reporting-card');
+    const history = primaryGrid?.querySelector('#reportingHistoryFold');
+    const istat = element.querySelector('.reporting-istat-area');
+    const uploadRect = upload?.getBoundingClientRect();
+    const historyRect = history?.getBoundingClientRect();
+    const istatRect = istat?.getBoundingClientRect();
+    return {
+      columns: primaryGrid ? getComputedStyle(primaryGrid).gridTemplateColumns.split(' ').filter(Boolean).length : 0,
+      heightDifference: uploadRect && historyRect ? Math.abs(uploadRect.height - historyRect.height) : Infinity,
+      istatBelowPrimary: Boolean(istatRect && uploadRect && historyRect && istatRect.top >= Math.max(uploadRect.bottom, historyRect.bottom))
+    };
+  });
   await captureUiScreenshot(page, 'orbit-reporting-wide');
 
   for (const section of [tax, reporting]) {
@@ -712,7 +723,9 @@ async function inspectWideSectionLayouts(browser, baseUrl) {
   assert.equal(taxLayout.headerTop, '0px', 'wide tax date rail should stick to the top of the tax scroller');
   assert.ok(Math.abs(taxLayout.stickyOffset) <= 1, 'wide tax date rail should stay pinned while the tax list scrolls');
   assert.match(taxLayout.paidText, /оплачено из/);
-  assert.equal(reportingColumns, 2, 'wide guest-reporting workspace should use two columns');
+  assert.equal(reportingLayout.columns, 2, 'wide guest-reporting workspace should use two primary columns');
+  assert.ok(reportingLayout.heightDifference <= 1, 'TXT upload and history columns should have equal heights');
+  assert.equal(reportingLayout.istatBelowPrimary, true, 'ISTAT should be a separate section below the primary columns');
   const overflow = await readHorizontalOverflow(page);
   assert.ok(overflow.document <= 1, `wide layout document overflows horizontally by ${overflow.document}px`);
   assert.ok(overflow.body <= 1, `wide layout body overflows horizontally by ${overflow.body}px`);
@@ -720,7 +733,7 @@ async function inspectWideSectionLayouts(browser, baseUrl) {
   assert.deepEqual(errors.consoleErrors, []);
 
   await context.close();
-  return { topbar, tax, reporting, taxLayout, reportingColumns, overflow };
+  return { topbar, tax, reporting, taxLayout, reportingLayout, overflow };
 }
 
 async function inspectReportingPage(browser, baseUrl) {
@@ -736,16 +749,53 @@ async function inspectReportingPage(browser, baseUrl) {
   assert.equal(await page.locator('#reportingUnits .reporting-unit-icon').count(), 2);
   assert.equal(await page.locator('#reportingCurrentUnitName').innerText(), 'Dragone');
   assert.match(await page.locator('#reportingAlert').innerText(), /отправки пока отключены/i);
-  assert.match(await page.locator('#reportingDropzone').innerText(), /Выбрать TXT для Dragone/i);
+  assert.match(await page.locator('#reportingDropzone').innerText(), /Выбрать или перетащить TXT для Dragone/i);
   assert.match(await page.locator('#reportingHistoryTitle').innerText(), /Dragone/);
   assert.equal(await page.locator('.reporting-flow-step').count(), 3);
   assert.equal(await page.locator('#reportingBatchList').innerText(), '');
   assert.equal(await page.locator('#reportingHistoryFold').getAttribute('open'), null);
   assert.equal(await page.locator('#reportingIstatFold').getAttribute('open'), null);
+  assert.match(await page.locator('#reportingIstatDeadline').innerText(), /4-го числа|ISTAT за/i);
+  const reportingPositions = await page.evaluate(() => {
+    const primary = document.querySelector('.reporting-primary-grid')?.getBoundingClientRect();
+    const istat = document.querySelector('.reporting-istat-area')?.getBoundingClientRect();
+    const upload = document.querySelector('.reporting-primary-grid > .reporting-card')?.getBoundingClientRect();
+    const history = document.getElementById('reportingHistoryFold')?.getBoundingClientRect();
+    return {
+      istatBelowPrimary: Boolean(primary && istat && istat.top >= primary.bottom),
+      equalPrimaryHeights: Boolean(upload && history && Math.abs(upload.height - history.height) <= 1)
+    };
+  });
+  assert.equal(reportingPositions.istatBelowPrimary, true);
+  assert.equal(reportingPositions.equalPrimaryHeights, true);
+
+  await page.setViewportSize({ width:390, height:844 });
+  const mobileReportingLayout = await page.evaluate(() => ({
+    columns: getComputedStyle(document.querySelector('.reporting-primary-grid')).gridTemplateColumns.split(' ').filter(Boolean).length,
+    istatBelowPrimary: document.querySelector('.reporting-istat-area').getBoundingClientRect().top >= document.querySelector('.reporting-primary-grid').getBoundingClientRect().bottom,
+    horizontalOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth
+  }));
+  assert.equal(mobileReportingLayout.columns, 1);
+  assert.equal(mobileReportingLayout.istatBelowPrimary, true);
+  assert.ok(mobileReportingLayout.horizontalOverflow <= 1);
+  await captureUiScreenshot(page, 'orbit-reporting-mobile');
+  await page.setViewportSize({ width:1280, height:900 });
+
+  const dragState = await page.evaluate(() => {
+    const dropzone = document.getElementById('reportingDropzone');
+    const transfer = new DataTransfer();
+    transfer.items.add(new File(['test'], 'guests.txt', { type:'text/plain' }));
+    dropzone.dispatchEvent(new DragEvent('dragenter', { bubbles:true, cancelable:true, dataTransfer:transfer }));
+    const activeAfterEnter = dropzone.classList.contains('drag-active');
+    dropzone.dispatchEvent(new DragEvent('drop', { bubbles:true, cancelable:true, dataTransfer:transfer }));
+    return { activeAfterEnter, activeAfterDrop:dropzone.classList.contains('drag-active') };
+  });
+  assert.equal(dragState.activeAfterEnter, true);
+  assert.equal(dragState.activeAfterDrop, false);
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth), false);
   await page.getByRole('button', { name: /Carina/ }).click();
   await page.waitForFunction(() => document.getElementById('reportingCurrentUnitName')?.textContent === 'Carina');
-  assert.match(await page.locator('#reportingDropzone').innerText(), /Выбрать TXT для Carina/i);
+  assert.match(await page.locator('#reportingDropzone').innerText(), /Выбрать или перетащить TXT для Carina/i);
   assert.match(await page.locator('#reportingHistoryTitle').innerText(), /Carina/);
   await page.locator('#reportingIstatFold > summary').click();
   await page.waitForFunction(() => document.querySelectorAll('.reporting-istat-table tbody tr').length > 0);

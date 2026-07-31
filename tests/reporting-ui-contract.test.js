@@ -11,7 +11,7 @@ test('reporting UI keeps apartment context visible with a distinct icon', () => 
   assert.match(html, /id="reportingCurrentUnitName"/);
   assert.match(html, /class="reporting-unit-icon"/);
   assert.match(html, /function reportingUnitMeta/);
-  assert.match(html, /reportingUploadTitle'\)\.textContent = `Выбрать TXT для \$\{name\}`/);
+  assert.match(html, /reportingUploadTitle'\)\.textContent = `Выбрать или перетащить TXT для \$\{name\}`/);
   assert.match(html, /reportingHistoryTitle'\)\.textContent = `Последние отправки · \$\{name\}`/);
   assert.match(html, /reportingIstatTitle'\)\.textContent = `ISTAT · \$\{name\}`/);
 });
@@ -21,6 +21,16 @@ test('reporting upload snapshots its apartment even if the visible selection cha
   assert.match(html, /unit_id: requestedUnitId/);
   assert.match(html, /requestedUnitId !== reportingState\.unitId/);
   assert.match(html, /reportingState\.actionInFlight \|\| unitId === reportingState\.unitId/);
+});
+
+test('reporting workspace keeps ISTAT separate and accepts dropped TXT files', () => {
+  assert.match(html, /class="reporting-primary-grid"/);
+  assert.match(html, /class="reporting-istat-area"/);
+  assert.match(html, /id="reportingIstatDeadline"/);
+  assert.match(html, /До 4-го числа осталось/);
+  assert.match(html, /addEventListener\('dragenter'/);
+  assert.match(html, /addEventListener\('drop'/);
+  assert.match(html, /uploadReportingFiles\(event\.dataTransfer\.files\)/);
 });
 
 test('reporting UI keeps the two-click Alloggiati flow and a folded ISTAT ledger', () => {

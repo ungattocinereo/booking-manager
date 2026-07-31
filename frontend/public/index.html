@@ -2868,7 +2868,10 @@
     .reporting-unit.active .reporting-unit-icon { color:#fff; background:var(--unit-color); }
     .reporting-unit strong { font-size:12px; }
     .reporting-unit-count { display:inline-grid; place-items:center; min-width:17px; height:17px; padding:0 4px; border-radius:999px; background:#fee2e2; color:#b91c1c; font-size:9px; font-weight:800; }
-    .reporting-stack { display:grid; gap:12px; }
+    .reporting-stack { display:grid; gap:16px; }
+    .reporting-primary-grid { display:grid; gap:12px; align-items:stretch; }
+    .reporting-primary-grid > .reporting-card,.reporting-primary-grid > .reporting-fold { min-width:0; height:100%; }
+    .reporting-istat-area { display:grid; gap:10px; min-width:0; }
     .reporting-card { background:#fff; border:1px solid var(--border); border-radius:16px; padding:17px; box-shadow:0 5px 18px rgba(15,23,42,.035); }
     .reporting-card-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:13px; }
     .reporting-card h3 { margin:0; font-size:16px; }
@@ -2885,8 +2888,10 @@
     .reporting-flow-step.done { color:#0f766e; }
     .reporting-flow-step.done .reporting-flow-dot { border-color:#0f766e; background:#0f766e; color:#fff; }
     .reporting-flow-step > span:last-child { position:relative; z-index:1; padding-right:6px; background:#fff; }
-    .reporting-dropzone { border:1.5px dashed #94a3b8; border-radius:13px; padding:18px; text-align:center; background:#f8fafc; cursor:pointer; display:block; transition:border-color .16s ease,background .16s ease; }
+    .reporting-dropzone { position:relative; border:1.5px dashed #94a3b8; border-radius:13px; padding:18px; text-align:center; background:#f8fafc; cursor:pointer; display:block; transition:border-color .16s ease,background .16s ease,box-shadow .16s ease,transform .16s ease; }
     .reporting-dropzone:hover { border-color:#0f766e; background:#f0fdfa; }
+    .reporting-dropzone.drag-active { border-color:#6d2cfc; border-style:solid; background:#f3edff; box-shadow:0 0 0 5px rgba(109,44,252,.1); transform:translateY(-1px); }
+    .reporting-dropzone.drag-active strong { color:#5b21d2; }
     .reporting-dropzone.busy { pointer-events:none; opacity:.65; }
     .reporting-dropzone input { display:none; }
     .reporting-dropzone strong { display:block; margin:7px 0 3px; }
@@ -2967,9 +2972,25 @@
     .reporting-istat-remote strong { display:block; margin-top:3px; font-size:14px; }
     .reporting-istat-remote small { display:block; margin-top:3px; color:#64748b; font-size:10px; }
     .reporting-istat-toolbar { display:flex; justify-content:space-between; align-items:center; gap:10px; margin:14px 0 5px; }
-    .reporting-istat-deadline { display:flex; align-items:center; gap:8px; min-height:36px; padding:7px 10px; border-radius:10px; background:#eff6ff; color:#1e40af; font-size:11px; font-weight:750; }
-    .reporting-istat-deadline.complete { background:#ecfdf5; color:#047857; }
-    .reporting-istat-deadline.overdue { background:#fff1f2; color:#be123c; }
+    .reporting-istat-reminder { display:grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:center; gap:13px; min-height:78px; padding:13px 16px; border:1px solid #c4b5fd; border-radius:18px; background:linear-gradient(115deg,#f8f5ff 0%,#f1edff 58%,#ebe4ff 100%); color:#3b1a8f; }
+    .reporting-istat-reminder-icon { display:grid; place-items:center; width:42px; height:42px; border-radius:14px; background:#fff; color:#6d2cfc; box-shadow:0 6px 18px rgba(109,44,252,.12); }
+    .reporting-istat-reminder-copy { min-width:0; }
+    .reporting-istat-reminder-copy small { display:block; margin-bottom:3px; color:#7655b5; font-size:9px; font-weight:850; letter-spacing:.09em; text-transform:uppercase; }
+    .reporting-istat-reminder-copy strong { display:block; color:#24104f; font-size:14px; line-height:1.3; }
+    .reporting-istat-reminder-copy span { display:block; margin-top:3px; color:#6f6289; font-size:10px; line-height:1.4; }
+    .reporting-istat-countdown { display:grid; place-items:center; align-content:center; min-width:66px; min-height:52px; padding:7px 10px; border-radius:15px; background:#6d2cfc; color:#fff; text-align:center; }
+    .reporting-istat-countdown strong { font:700 24px/1 'IBM Plex Mono',monospace; }
+    .reporting-istat-countdown span { margin-top:3px; font-size:9px; font-weight:750; }
+    .reporting-istat-reminder.complete { border-color:#a7f3d0; background:linear-gradient(115deg,#f1fcf7,#e7f9f1); color:#047857; }
+    .reporting-istat-reminder.complete .reporting-istat-reminder-icon { color:#059669; box-shadow:0 6px 18px rgba(5,150,105,.12); }
+    .reporting-istat-reminder.complete .reporting-istat-reminder-copy small,.reporting-istat-reminder.complete .reporting-istat-reminder-copy span { color:#3d7d67; }
+    .reporting-istat-reminder.complete .reporting-istat-reminder-copy strong { color:#065f46; }
+    .reporting-istat-reminder.complete .reporting-istat-countdown { background:#059669; }
+    .reporting-istat-reminder.overdue { border-color:#fecdd3; background:linear-gradient(115deg,#fff7f8,#fff0f2); color:#be123c; }
+    .reporting-istat-reminder.overdue .reporting-istat-reminder-icon { color:#e11d48; box-shadow:0 6px 18px rgba(225,29,72,.1); }
+    .reporting-istat-reminder.overdue .reporting-istat-reminder-copy small,.reporting-istat-reminder.overdue .reporting-istat-reminder-copy span { color:#a94a63; }
+    .reporting-istat-reminder.overdue .reporting-istat-reminder-copy strong { color:#881337; }
+    .reporting-istat-reminder.overdue .reporting-istat-countdown { background:#e11d48; }
     .reporting-istat-note { margin-top:11px; padding:10px 12px; border-radius:10px; background:#f8fafc; color:#526579; font-size:11px; line-height:1.45; }
     .reporting-istat-table-wrap { max-height:410px; margin-top:11px; overflow:auto; border:1px solid #dbe5ef; border-radius:12px; }
     .reporting-istat-table { width:100%; min-width:650px; border-collapse:collapse; font-size:11px; }
@@ -3004,6 +3025,10 @@
       .reporting-istat-header { grid-template-columns:1fr; }
       .reporting-istat-remote { min-width:0; }
       .reporting-istat-toolbar { align-items:stretch; flex-direction:column; }
+      .reporting-istat-reminder { grid-template-columns:auto minmax(0,1fr); padding:13px; }
+      .reporting-istat-countdown { grid-column:1 / -1; grid-template-columns:auto auto; gap:5px; justify-content:center; min-height:38px; width:100%; }
+      .reporting-istat-countdown strong { font-size:20px; }
+      .reporting-istat-countdown span { margin-top:0; }
       .reporting-month { width:100%; }
       .reporting-month input { flex:1; min-width:0; }
       .reporting-card-target { max-width:145px; }
@@ -3604,6 +3629,7 @@
     .reporting-flow-step.done .reporting-flow-dot { border-color: var(--accent); background: var(--accent); }
     .reporting-dropzone { border-radius: 20px; background: #f7f7fb; }
     .reporting-dropzone:hover { border-color: var(--accent); background: var(--accent-light); }
+    .reporting-dropzone.drag-active { border-color: var(--accent); background: #f3edff; box-shadow: 0 0 0 5px rgba(109,44,252,.1); }
     .reporting-batch, .reporting-stay, .reporting-metric { border-radius: 14px; }
     .reporting-file button:focus-visible, .reporting-fold summary:focus-visible,
     .reporting-unit:focus-visible, .reporting-dropzone:focus-within { outline-color: rgba(109,44,252,.25); }
@@ -3714,13 +3740,8 @@
     }
 
     @media (min-width: 1100px) {
-      .reporting-stack {
-        grid-template-columns: minmax(0, 1.45fr) minmax(360px, .75fr);
-        align-items: start;
-      }
-      .reporting-stack > .reporting-card {
-        grid-row: 1 / span 2;
-      }
+      .reporting-primary-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+      .reporting-primary-grid > .reporting-card,.reporting-primary-grid > .reporting-fold { align-self:stretch; }
     }
 
     .booking-panel-backdrop { background: rgba(23,24,39,.34); backdrop-filter: blur(5px); }
@@ -4254,7 +4275,8 @@
     <div class="reporting-alert" id="reportingAlert" hidden></div>
     <div class="reporting-units" id="reportingUnits" role="list" aria-label="Апартаменты"></div>
     <div class="reporting-stack">
-      <section class="reporting-card">
+      <div class="reporting-primary-grid">
+        <section class="reporting-card">
         <div class="reporting-card-head">
           <div class="reporting-current-unit">
             <span class="reporting-current-unit-icon" id="reportingCurrentUnitIcon"><i data-lucide="home" style="width:18px;height:18px"></i></span>
@@ -4262,35 +4284,42 @@
           </div>
         </div>
         <div class="reporting-flow" id="reportingFlow" aria-label="Этапы отправки"></div>
-        <label class="reporting-dropzone" id="reportingDropzone">
+        <label class="reporting-dropzone" id="reportingDropzone" for="reportingFiles" tabindex="0" role="button" aria-describedby="reportingUploadHint">
           <input id="reportingFiles" type="file" accept=".txt,text/plain" onchange="uploadReportingFiles(this.files)">
           <i data-lucide="file-up" style="width:22px;height:22px;color:var(--accent);"></i>
-          <strong id="reportingUploadTitle">Выбрать TXT из Comune</strong>
-          <span>Один файл · до 256 KB</span>
+          <strong id="reportingUploadTitle">Выбрать или перетащить TXT из Comune</strong>
+          <span id="reportingUploadHint">Нажмите на поле или перетащите файл сюда · до 256 KB</span>
         </label>
         <div id="reportingUploadError"></div>
         <div id="reportingBatchDetail"></div>
         <div id="reportingBatchList"></div>
-      </section>
-      <details class="reporting-fold" id="reportingHistoryFold">
-        <summary><span id="reportingHistoryTitle">Последние отправки</span><span class="reporting-status" id="reportingHistoryCount">0</span></summary>
-        <div class="reporting-fold-body reporting-history" id="reportingHistory"></div>
-      </details>
-      <details class="reporting-fold" id="reportingIstatFold" ontoggle="handleReportingIstatToggle(this.open)">
-        <summary><span id="reportingIstatTitle">ISTAT за месяц</span><span class="reporting-status" id="reportingIstatStatus" hidden></span></summary>
-        <div class="reporting-fold-body">
-          <div class="reporting-istat-editor" id="reportingIstatBatchEditor"></div>
-          <div class="reporting-istat-header">
-            <div><span class="reporting-ledger-kicker">Ежемесячная статистика · до 4-го числа</span><h3>Данные в Sinfonia Turismo</h3><p>TXT пополняет черновик автоматически. Отчёт отправляется отдельно раз в месяц.</p></div>
-            <div class="reporting-istat-remote" id="reportingIstatRemote" aria-live="polite"><span>В ISTAT внесено по</span><strong>Проверяем…</strong></div>
-          </div>
-          <div class="reporting-istat-toolbar">
-            <div class="reporting-istat-deadline" id="reportingIstatDeadline"><i data-lucide="calendar-clock" style="width:16px;height:16px"></i><span>Считаем срок отправки…</span></div>
-            <div class="reporting-month"><input type="month" id="reportingMonth" aria-label="Месяц отчёта ISTAT" onchange="renderIstatStatus()"><button class="btn btn-secondary" id="reportingIstatCheck" type="button" onclick="loadIstatPreview()">Проверить</button></div>
-          </div>
-          <div id="reportingIstatPreview" class="reporting-detail-empty">Выберите месяц для предварительной проверки.</div>
+        </section>
+        <details class="reporting-fold" id="reportingHistoryFold">
+          <summary><span id="reportingHistoryTitle">Последние отправки</span><span class="reporting-status" id="reportingHistoryCount">0</span></summary>
+          <div class="reporting-fold-body reporting-history" id="reportingHistory"></div>
+        </details>
+      </div>
+      <section class="reporting-istat-area" aria-label="Ежемесячный отчёт ISTAT">
+        <div class="reporting-istat-reminder" id="reportingIstatDeadline" role="status" aria-live="polite">
+          <span class="reporting-istat-reminder-icon"><i data-lucide="calendar-clock" style="width:20px;height:20px"></i></span>
+          <span class="reporting-istat-reminder-copy"><small>ISTAT · ежемесячный срок</small><strong>Считаем, сколько осталось до 4-го числа…</strong><span>Отчёт отправляется отдельно от Alloggiati.</span></span>
+          <span class="reporting-istat-countdown"><strong>—</strong><span>дней</span></span>
         </div>
-      </details>
+        <details class="reporting-fold" id="reportingIstatFold" ontoggle="handleReportingIstatToggle(this.open)">
+          <summary><span id="reportingIstatTitle">ISTAT за месяц</span><span class="reporting-status" id="reportingIstatStatus" hidden></span></summary>
+          <div class="reporting-fold-body">
+            <div class="reporting-istat-editor" id="reportingIstatBatchEditor"></div>
+            <div class="reporting-istat-header">
+              <div><span class="reporting-ledger-kicker">Ежемесячная статистика · до 4-го числа</span><h3>Данные в Sinfonia Turismo</h3><p>TXT пополняет черновик автоматически. Отчёт отправляется отдельно раз в месяц.</p></div>
+              <div class="reporting-istat-remote" id="reportingIstatRemote" aria-live="polite"><span>В ISTAT внесено по</span><strong>Проверяем…</strong></div>
+            </div>
+            <div class="reporting-istat-toolbar">
+              <div class="reporting-month"><input type="month" id="reportingMonth" aria-label="Месяц отчёта ISTAT" onchange="renderIstatStatus()"><button class="btn btn-secondary" id="reportingIstatCheck" type="button" onclick="loadIstatPreview()">Проверить</button></div>
+            </div>
+            <div id="reportingIstatPreview" class="reporting-detail-empty">Выберите месяц для предварительной проверки.</div>
+          </div>
+        </details>
+      </section>
     </div>
     <datalist id="reportingOriginCodes"></datalist>
   </div>
@@ -8059,11 +8088,10 @@ async function reportingFetch(url, options = {}) {
   return body;
 }
 
-function previousMonthValue() {
-  const date = new Date();
-  date.setDate(1);
-  date.setMonth(date.getMonth() - 1);
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+function currentIstatReportingMonthValue() {
+  const [year, month, day] = new Date().toLocaleDateString('sv-SE', { timeZone:'Europe/Rome' }).split('-').map(Number);
+  const reportingMonth = new Date(Date.UTC(year, month - 1 - (day <= 4 ? 1 : 0), 1));
+  return `${reportingMonth.getUTCFullYear()}-${String(reportingMonth.getUTCMonth() + 1).padStart(2, '0')}`;
 }
 
 function italianReportingDateToIso(value) {
@@ -8086,7 +8114,9 @@ function istatMonthDates(month) {
   return {
     monthEndIso: monthEnd.toISOString().slice(0, 10),
     deadlineIso: deadline.toISOString().slice(0, 10),
-    deadlineLabel: new Intl.DateTimeFormat('ru-RU', { day:'numeric', month:'long', year:'numeric', timeZone:'UTC' }).format(deadline)
+    deadlineLabel: new Intl.DateTimeFormat('ru-RU', { day:'numeric', month:'long', year:'numeric', timeZone:'UTC' }).format(deadline),
+    deadlineShortLabel: new Intl.DateTimeFormat('ru-RU', { day:'numeric', month:'long', timeZone:'UTC' }).format(deadline),
+    monthLabel: new Intl.DateTimeFormat('ru-RU', { month:'long', year:'numeric', timeZone:'UTC' }).format(monthEnd).replace(/\s*г\.$/, '')
   };
 }
 
@@ -8106,20 +8136,34 @@ function renderIstatStatus() {
   if (!dates) return;
 
   const todayIso = new Date().toLocaleDateString('sv-SE', { timeZone:'Europe/Rome' });
+  const daysRemaining = Math.round((Date.parse(`${dates.deadlineIso}T00:00:00Z`) - Date.parse(`${todayIso}T00:00:00Z`)) / 86400000);
   let className = '';
-  let copy = `Отправить этот месяц до ${dates.deadlineLabel}`;
+  let title = daysRemaining > 0
+    ? `До 4-го числа осталось ${daysRemaining} ${pluralRu(daysRemaining, 'день', 'дня', 'дней')}`
+    : '4-е число — сегодня';
+  let detail = `Отчёт за ${dates.monthLabel} нужно отправить до ${dates.deadlineShortLabel}.`;
+  let count = String(Math.max(0, daysRemaining));
+  let countLabel = daysRemaining === 0 ? 'сегодня' : pluralRu(daysRemaining, 'день', 'дня', 'дней');
   let icon = 'calendar-clock';
   if (latest && latest >= dates.monthEndIso) {
     className = 'complete';
-    copy = 'Этот месяц уже полностью внесён в ISTAT';
+    title = `ISTAT за ${dates.monthLabel} уже отправлен`;
+    detail = `В Sinfonia подтверждены данные по ${formatReportingDate(latest)}.`;
+    count = '✓';
+    countLabel = 'готово';
     icon = 'badge-check';
-  } else if (todayIso > dates.deadlineIso) {
+  } else if (daysRemaining < 0) {
+    const overdueDays = Math.abs(daysRemaining);
     className = 'overdue';
-    copy = `Срок был ${dates.deadlineLabel} — подготовьте отчёт сейчас`;
+    title = `Срок ISTAT прошёл ${overdueDays} ${pluralRu(overdueDays, 'день', 'дня', 'дней')} назад`;
+    detail = `Отчёт за ${dates.monthLabel} нужно было отправить до ${dates.deadlineShortLabel}.`;
+    count = String(overdueDays);
+    countLabel = 'после срока';
     icon = 'circle-alert';
   }
-  deadline.className = `reporting-istat-deadline ${className}`.trim();
-  deadline.innerHTML = `<i data-lucide="${icon}" style="width:16px;height:16px"></i><span>${escapeHtml(copy)}</span>`;
+  deadline.className = `reporting-istat-reminder ${className}`.trim();
+  deadline.setAttribute('aria-label', `${title}. ${detail}`);
+  deadline.innerHTML = `<span class="reporting-istat-reminder-icon"><i data-lucide="${icon}" style="width:20px;height:20px"></i></span><span class="reporting-istat-reminder-copy"><small>ISTAT · ежемесячный срок</small><strong>${escapeHtml(title)}</strong><span>${escapeHtml(detail)}</span></span><span class="reporting-istat-countdown"><strong>${escapeHtml(count)}</strong><span>${escapeHtml(countLabel)}</span></span>`;
   refreshLucideIcons();
 }
 
@@ -8139,7 +8183,8 @@ async function loadReportingDashboard({ force = false } = {}) {
         : (reportingState.units[0]?.id || null);
     }
     const month = document.getElementById('reportingMonth');
-    if (!month.value) month.value = previousMonthValue();
+    if (!month.value) month.value = currentIstatReportingMonthValue();
+    renderIstatStatus();
     renderReportingUnits();
     renderReportingBatchDetail();
     await loadReportingBatches();
@@ -8177,7 +8222,7 @@ function renderReportingContext(unit, meta) {
   section.style.setProperty('--reporting-unit-bg', meta.bg);
   document.getElementById('reportingCurrentUnitIcon').innerHTML = `<i data-lucide="${escapeHtml(meta.icon)}" style="width:18px;height:18px"></i>`;
   document.getElementById('reportingCurrentUnitName').textContent = name;
-  document.getElementById('reportingUploadTitle').textContent = `Выбрать TXT для ${name}`;
+  document.getElementById('reportingUploadTitle').textContent = `Выбрать или перетащить TXT для ${name}`;
   document.getElementById('reportingHistoryTitle').textContent = `Последние отправки · ${name}`;
   document.getElementById('reportingIstatTitle').textContent = `ISTAT · ${name}`;
 }
@@ -8226,6 +8271,7 @@ async function selectReportingUnit(unitId) {
   document.getElementById('reportingOriginCodes').innerHTML = '';
   document.getElementById('reportingIstatBatchEditor').innerHTML = '';
   renderReportingBatchDetail();
+  renderIstatStatus();
   document.getElementById('reportingIstatPreview').innerHTML = '<div class="reporting-detail-empty">Откройте ISTAT, чтобы проверить месяц.</div>';
   await loadReportingBatches();
 }
@@ -8342,8 +8388,62 @@ function arrayBufferToBase64(buffer) {
   return btoa(binary);
 }
 
+let reportingDragDepth = 0;
+
+function reportingDragContainsFiles(event) {
+  const types = Array.from(event?.dataTransfer?.types || []);
+  return types.includes('Files') || Boolean(event?.dataTransfer?.files?.length);
+}
+
+function setReportingDropzoneActive(active) {
+  const dropzone = document.getElementById('reportingDropzone');
+  if (!dropzone) return;
+  dropzone.classList.toggle('drag-active', active);
+  dropzone.setAttribute('aria-label', active ? 'Отпустите TXT-файл для загрузки' : 'Выбрать или перетащить TXT-файл');
+}
+
+function initReportingDropzone() {
+  const dropzone = document.getElementById('reportingDropzone');
+  const input = document.getElementById('reportingFiles');
+  if (!dropzone || !input || dropzone.dataset.dropReady === 'true') return;
+  dropzone.dataset.dropReady = 'true';
+
+  dropzone.addEventListener('keydown', event => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    input.click();
+  });
+  dropzone.addEventListener('dragenter', event => {
+    if (!reportingDragContainsFiles(event)) return;
+    event.preventDefault();
+    reportingDragDepth += 1;
+    setReportingDropzoneActive(true);
+  });
+  dropzone.addEventListener('dragover', event => {
+    if (!reportingDragContainsFiles(event)) return;
+    event.preventDefault();
+    if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy';
+    setReportingDropzoneActive(true);
+  });
+  dropzone.addEventListener('dragleave', event => {
+    if (!reportingDragContainsFiles(event)) return;
+    reportingDragDepth = Math.max(0, reportingDragDepth - 1);
+    if (reportingDragDepth === 0) setReportingDropzoneActive(false);
+  });
+  dropzone.addEventListener('drop', event => {
+    if (!reportingDragContainsFiles(event)) return;
+    event.preventDefault();
+    reportingDragDepth = 0;
+    setReportingDropzoneActive(false);
+    uploadReportingFiles(event.dataTransfer.files);
+  });
+}
+
+initReportingDropzone();
+
 async function uploadReportingFiles(fileList) {
-  const file = Array.from(fileList || [])[0];
+  const files = Array.from(fileList || []);
+  const file = files[0];
   if (!file || !reportingState.unitId) return;
   const requestedUnitId = reportingState.unitId;
   const dropzone = document.getElementById('reportingDropzone');
@@ -8351,6 +8451,8 @@ async function uploadReportingFiles(fileList) {
   renderReportingUploadError();
   dropzone.classList.add('busy');
   try {
+    if (files.length > 1) throw new Error('Можно загрузить только один TXT-файл');
+    if (!/\.txt$/i.test(file.name)) throw new Error('Поддерживается только файл с расширением .txt');
     if (file.size > 256 * 1024) throw new Error('Файл больше 256 KB');
     const content = arrayBufferToBase64(await file.arrayBuffer());
     const result = await reportingFetch(`${API}/reporting/imports`, {
@@ -8598,7 +8700,7 @@ async function loadIstatPreview() {
   const requestedUnitId = reportingState.unitId;
   const istatLoadSeq = ++reportingState.istatLoadSeq;
   const monthInput = document.getElementById('reportingMonth');
-  if (!monthInput.value) monthInput.value = previousMonthValue();
+  if (!monthInput.value) monthInput.value = currentIstatReportingMonthValue();
   const month = monthInput.value;
   const target = document.getElementById('reportingIstatPreview');
   target.innerHTML = `<div class="reporting-detail-empty">Считаем движения по дням для «${escapeHtml(currentReportingUnit()?.name || 'структуры')}»…</div>`;
