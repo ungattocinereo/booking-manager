@@ -8,7 +8,8 @@
     "node": ">=20"
   },
   "scripts": {
-    "sync": "node scripts/sync.js"
+    "sync": "node scripts/sync.js",
+    "test": "node --test tests/*.test.js"
   },
   "dependencies": {
     "xlsx": "^0.18.5"

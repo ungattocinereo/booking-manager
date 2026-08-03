@@ -89,16 +89,18 @@ async function fetchUpstream(propertyId) {
 async function fetchAllUpstream() {
   const all = [];
   const failedProperties = [];
+  const successfulProperties = [];
   for (const id of PROPERTY_IDS) {
     try {
       const rows = await fetchUpstream(id);
       all.push(...rows);
+      successfulProperties.push(id);
     } catch (err) {
       failedProperties.push(id);
       console.error(`upstream fetch failed for ${id}:`, err.message);
     }
   }
-  return { rows: all, failedProperties };
+  return { rows: all, failedProperties, successfulProperties };
 }
 
 function readExports() {
@@ -123,13 +125,76 @@ function pushEvent(events, ev) {
   events.push({ ...ev, detectedAt: ev.detectedAt || nowIso() });
 }
 
+function planCancellationTransitions({
+  trackedActiveLive,
+  currentByKey,
+  successfulPropertySet,
+  pendingCancellations,
+  detectedAt
+}) {
+  for (const key of currentByKey.keys()) delete pendingCancellations[key];
+
+  const missingActive = trackedActiveLive.filter(last =>
+    successfulPropertySet.has(last.propertyId) && !currentByKey.has(last.bookingKey)
+  );
+  const confirmationCandidates = [];
+
+  for (const last of missingActive) {
+    const previous = pendingCancellations[last.bookingKey];
+    const consecutiveSuccessfulMisses = (previous?.consecutiveSuccessfulMisses || 0) + 1;
+    pendingCancellations[last.bookingKey] = {
+      bookingKey: last.bookingKey,
+      propertyId: last.propertyId,
+      firstMissingAt: previous?.firstMissingAt || detectedAt,
+      lastMissingAt: detectedAt,
+      consecutiveSuccessfulMisses
+    };
+    if (consecutiveSuccessfulMisses >= 2) confirmationCandidates.push(last);
+  }
+
+  for (const key of Object.keys(pendingCancellations)) {
+    const isStillTracked = trackedActiveLive.some(last => last.bookingKey === key);
+    if (!isStillTracked && !currentByKey.has(key)) delete pendingCancellations[key];
+  }
+
+  const suspiciousKeys = new Set();
+  const warnings = [];
+  if (
+    trackedActiveLive.length >= 10 &&
+    confirmationCandidates.length >= 10 &&
+    confirmationCandidates.length / trackedActiveLive.length > 0.5
+  ) {
+    confirmationCandidates.forEach(last => suspiciousKeys.add(last.bookingKey));
+    warnings.push(`bulk cancellation guard: refusing ${confirmationCandidates.length}/${trackedActiveLive.length} confirmed candidates`);
+  }
+
+  for (const propertyId of PROPERTY_IDS) {
+    const trackedForProperty = trackedActiveLive.filter(last => last.propertyId === propertyId);
+    const candidatesForProperty = confirmationCandidates.filter(last => last.propertyId === propertyId);
+    if (
+      trackedForProperty.length >= 5 &&
+      candidatesForProperty.length >= 5 &&
+      candidatesForProperty.length / trackedForProperty.length >= 0.8
+    ) {
+      candidatesForProperty.forEach(last => suspiciousKeys.add(last.bookingKey));
+      warnings.push(`property cancellation guard (${propertyId}): refusing ${candidatesForProperty.length}/${trackedForProperty.length} confirmed candidates`);
+    }
+  }
+
+  return { confirmationCandidates, suspiciousKeys, warnings };
+}
+
 async function main() {
   fs.mkdirSync(DATA_DIR, { recursive: true });
   const state = loadJson(STATE_PATH, { events: [], imports: [], bootstrappedAt: null });
+  const pendingCancellations = state.pendingCancellations && typeof state.pendingCancellations === 'object'
+    ? state.pendingCancellations
+    : {};
   const isBootstrap = state.events.length === 0;
 
   // --- (A) Snapshot-diff from upstream bookings API ---
-  const { rows: upstream, failedProperties } = await fetchAllUpstream();
+  const { rows: upstream, failedProperties, successfulProperties } = await fetchAllUpstream();
+  const successfulPropertySet = new Set(successfulProperties);
   const currentByKey = new Map(upstream.map(r => [r.bookingKey, r]));
 
   const activeLive = new Map();
@@ -154,6 +219,7 @@ async function main() {
 
   if (!upstreamUnavailable) {
     for (const [key, cur] of currentByKey) {
+      delete pendingCancellations[key];
       if (!activeLive.has(key)) {
         pushEvent(state.events, {
           eventType: 'created',
@@ -177,33 +243,43 @@ async function main() {
       }
     }
 
-    const missingActive = trackedActiveLive.filter(last => !currentByKey.has(last.bookingKey));
-    if (!isBootstrap && trackedActiveLive.length >= 10 && missingActive.length >= 10 && missingActive.length / trackedActiveLive.length > 0.5) {
-      console.error(`bulk cancellation guard: refusing ${missingActive.length}/${trackedActiveLive.length} upstream cancellations in one sync`);
-    } else {
-      for (const last of missingActive) {
-        pushEvent(state.events, {
-          eventType: 'cancelled',
-          bookingKey: last.bookingKey,
-          propertyId: last.propertyId,
-          platform: last.platform,
-          startDate: last.startDate,
-          endDate: last.endDate,
-          guestName: last.guestName,
-          guestCount: last.guestCount,
-          reservationUrl: last.reservationUrl,
-          confirmationCode: last.confirmationCode,
-          source: 'upstream_api',
-          sourceRef: 'hourly_sync',
-          bookingCreatedAt: last.bookingCreatedAt,
-          rawSummary: last.rawSummary,
-          bookingType: last.bookingType,
-          detectedAt: nowIso()
-        });
-        cancelledByApi++;
-      }
+    // A failed property fetch never advances cancellation confirmation. A real
+    // cancellation needs two successful snapshots in which the booking is absent.
+    const { confirmationCandidates, suspiciousKeys, warnings } = planCancellationTransitions({
+      trackedActiveLive,
+      currentByKey,
+      successfulPropertySet,
+      pendingCancellations,
+      detectedAt: nowIso()
+    });
+    warnings.forEach(warning => console.error(warning));
+
+    for (const last of confirmationCandidates) {
+      if (suspiciousKeys.has(last.bookingKey)) continue;
+      pushEvent(state.events, {
+        eventType: 'cancelled',
+        bookingKey: last.bookingKey,
+        propertyId: last.propertyId,
+        platform: last.platform,
+        startDate: last.startDate,
+        endDate: last.endDate,
+        guestName: last.guestName,
+        guestCount: last.guestCount,
+        reservationUrl: last.reservationUrl,
+        confirmationCode: last.confirmationCode,
+        source: 'upstream_api',
+        sourceRef: 'hourly_sync_confirmed',
+        bookingCreatedAt: last.bookingCreatedAt,
+        rawSummary: last.rawSummary,
+        bookingType: last.bookingType,
+        detectedAt: nowIso()
+      });
+      cancelledByApi++;
+      delete pendingCancellations[last.bookingKey];
     }
   }
+
+  state.pendingCancellations = pendingCancellations;
 
   // --- (B) Ingest CSV exports ---
   const exports = readExports();
@@ -421,15 +497,21 @@ async function main() {
   console.log(JSON.stringify({
     bootstrapped: isBootstrap,
     upstream_rows: upstream.length,
+    failed_properties: failedProperties,
     created_by_api: createdByApi,
     cancelled_by_api: cancelledByApi,
+    pending_cancellations: Object.keys(pendingCancellations).length,
     new_imports: newImports.length,
     total_events: state.events.length,
     bookings_in_card: bookings.length
   }, null, 2));
 }
 
-main().catch(err => {
-  console.error('sync failed:', err);
-  process.exit(1);
-});
+if (require.main === module) {
+  main().catch(err => {
+    console.error('sync failed:', err);
+    process.exit(1);
+  });
+}
+
+module.exports = { planCancellationTransitions };
