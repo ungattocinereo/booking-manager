@@ -3467,6 +3467,24 @@
       "rawSummary": "Reserved",
       "bookingType": "reservation",
       "detectedAt": "2026-08-04T01:03:06.940Z"
+    },
+    {
+      "eventType": "created",
+      "bookingKey": "harmony|airbnb|2026-09-14|2026-09-17",
+      "propertyId": "harmony",
+      "platform": "airbnb",
+      "startDate": "2026-09-14",
+      "endDate": "2026-09-17",
+      "guestName": "Leo Gonzales",
+      "guestCount": 2,
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HM8Y3H2D5N",
+      "confirmationCode": null,
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync",
+      "bookingCreatedAt": "2026-08-04T05:44:20.537Z",
+      "rawSummary": "Reserved",
+      "bookingType": "reservation",
+      "detectedAt": "2026-08-04T07:16:59.163Z"
     }
   ],
   "imports": [
