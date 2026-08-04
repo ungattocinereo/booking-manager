@@ -3485,6 +3485,24 @@
       "rawSummary": "Reserved",
       "bookingType": "reservation",
       "detectedAt": "2026-08-04T07:16:59.163Z"
+    },
+    {
+      "eventType": "created",
+      "bookingKey": "harmony|airbnb|2026-10-19|2026-10-22",
+      "propertyId": "harmony",
+      "platform": "airbnb",
+      "startDate": "2026-10-19",
+      "endDate": "2026-10-22",
+      "guestName": null,
+      "guestCount": null,
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HMPKKPCHYZ",
+      "confirmationCode": null,
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync",
+      "bookingCreatedAt": "2026-08-04T15:04:55.655Z",
+      "rawSummary": "Reserved",
+      "bookingType": "reservation",
+      "detectedAt": "2026-08-04T15:04:59.894Z"
     }
   ],
   "imports": [
