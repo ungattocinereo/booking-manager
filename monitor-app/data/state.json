@@ -3554,6 +3554,24 @@
       "sourceRef": "hourly_sync_confirmed",
       "bookingCreatedAt": "2026-03-28T19:32:10.986Z",
       "detectedAt": "2026-08-05T16:47:33.141Z"
+    },
+    {
+      "eventType": "cancelled",
+      "bookingKey": "royal|airbnb|2026-08-07|2026-08-12",
+      "propertyId": "royal",
+      "platform": "airbnb",
+      "startDate": "2026-08-07",
+      "endDate": "2026-08-12",
+      "guestName": null,
+      "guestCount": null,
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HMF92D25NJ",
+      "confirmationCode": null,
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync_confirmed",
+      "bookingCreatedAt": "2026-06-25T06:10:25.681Z",
+      "rawSummary": "Reserved",
+      "bookingType": "reservation",
+      "detectedAt": "2026-08-05T18:41:34.890Z"
     }
   ],
   "imports": [
@@ -3619,13 +3637,5 @@
     }
   ],
   "bootstrappedAt": "2026-04-20T17:25:53.350Z",
-  "pendingCancellations": {
-    "royal|airbnb|2026-08-07|2026-08-12": {
-      "bookingKey": "royal|airbnb|2026-08-07|2026-08-12",
-      "propertyId": "royal",
-      "firstMissingAt": "2026-08-05T16:47:33.141Z",
-      "lastMissingAt": "2026-08-05T16:47:33.141Z",
-      "consecutiveSuccessfulMisses": 1
-    }
-  }
+  "pendingCancellations": {}
 }
