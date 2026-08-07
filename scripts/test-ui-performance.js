@@ -1322,6 +1322,14 @@ async function inspectDarkThemeRoutes(browser, baseUrl) {
     });
     const visual = await readDarkVisualAudit(page, route.surfaces);
     assertDarkVisualAudit(visual, `${route.path} dark route`);
+    if (route.tab === 'stats') {
+      const historyBackground = await page.locator('#statsHistoryStatus').evaluate(node => {
+        const style = getComputedStyle(node);
+        return { color: style.backgroundColor, image: style.backgroundImage };
+      });
+      assert.deepEqual(historyBackground, { color: 'rgba(0, 0, 0, 0)', image: 'none' },
+        '/stats dark route: current history status regained a filled background');
+    }
     await captureUiScreenshot(page, `theme-dark-${route.tab}`);
     routes[route.path] = {
       tab: route.tab,
