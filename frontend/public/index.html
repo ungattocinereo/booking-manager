@@ -14,6 +14,116 @@
   <link rel="preload" href="/airbnb-badge.png" as="image">
   <link rel="preload" href="/booking-badge.png" as="image">
   <meta name="theme-color" content="#eef0f6">
+  <script>
+    (() => {
+      const STORAGE_KEY = 'atrani-theme-preference';
+      const THEMES = new Set(['system', 'light', 'dark']);
+      const media = window.matchMedia('(prefers-color-scheme: dark)');
+      const root = document.documentElement;
+
+      function readPreference() {
+        try {
+          const saved = localStorage.getItem(STORAGE_KEY);
+          return THEMES.has(saved) ? saved : 'system';
+        } catch {
+          return 'system';
+        }
+      }
+
+      function resolveTheme(preference) {
+        return preference === 'system' ? (media.matches ? 'dark' : 'light') : preference;
+      }
+
+      function updateSystemChrome(resolved) {
+        const themeColor = document.querySelector('meta[name="theme-color"]');
+        if (themeColor) themeColor.content = resolved === 'dark' ? '#10111b' : '#eef0f6';
+        const statusBar = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
+        if (statusBar) statusBar.content = resolved === 'dark' ? 'black-translucent' : 'default';
+      }
+
+      function syncControls() {
+        const preference = root.dataset.themePreference || readPreference();
+        document.querySelectorAll('[data-theme-option]').forEach(button => {
+          const active = button.dataset.themeOption === preference;
+          button.classList.toggle('active', active);
+          button.setAttribute('aria-pressed', active ? 'true' : 'false');
+        });
+      }
+
+      function applyPreference(preference) {
+        const safePreference = THEMES.has(preference) ? preference : 'system';
+        const resolved = resolveTheme(safePreference);
+        root.dataset.themePreference = safePreference;
+        root.dataset.colorScheme = resolved;
+        root.style.colorScheme = resolved;
+        updateSystemChrome(resolved);
+        return resolved;
+      }
+
+      function notify(previousPreference, previousResolved) {
+        window.dispatchEvent(new CustomEvent('atrani-theme-change', {
+          detail: {
+            preference: root.dataset.themePreference,
+            resolved: root.dataset.colorScheme,
+            previousPreference,
+            previousResolved
+          }
+        }));
+      }
+
+      function setPreference(preference) {
+        const safePreference = THEMES.has(preference) ? preference : 'system';
+        const previousPreference = root.dataset.themePreference;
+        const previousResolved = root.dataset.colorScheme;
+        try {
+          localStorage.setItem(STORAGE_KEY, safePreference);
+        } catch {
+          // The selected theme still applies for this page when storage is unavailable.
+        }
+        applyPreference(safePreference);
+        syncControls();
+        notify(previousPreference, previousResolved);
+      }
+
+      window.AtraniTheme = {
+        storageKey: STORAGE_KEY,
+        getPreference: () => root.dataset.themePreference || readPreference(),
+        getResolved: () => root.dataset.colorScheme || resolveTheme(readPreference()),
+        setPreference,
+        syncControls
+      };
+
+      applyPreference(readPreference());
+
+      document.addEventListener('click', event => {
+        const button = event.target.closest?.('[data-theme-option]');
+        if (button) setPreference(button.dataset.themeOption);
+      });
+      document.addEventListener('DOMContentLoaded', () => {
+        updateSystemChrome(root.dataset.colorScheme);
+        syncControls();
+      }, { once: true });
+
+      const handleSystemChange = () => {
+        if (root.dataset.themePreference !== 'system') return;
+        const previousResolved = root.dataset.colorScheme;
+        applyPreference('system');
+        syncControls();
+        if (previousResolved !== root.dataset.colorScheme) notify('system', previousResolved);
+      };
+      if (media.addEventListener) media.addEventListener('change', handleSystemChange);
+      else media.addListener(handleSystemChange);
+
+      window.addEventListener('storage', event => {
+        if (event.key !== STORAGE_KEY) return;
+        const previousPreference = root.dataset.themePreference;
+        const previousResolved = root.dataset.colorScheme;
+        applyPreference(readPreference());
+        syncControls();
+        notify(previousPreference, previousResolved);
+      });
+    })();
+  </script>
 
   <!-- Apple Web App -->
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -271,7 +381,7 @@
       font-family: inherit;
       text-decoration: none;
     }
-    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary { background: var(--accent); color: var(--accent-contrast); }
     .btn-primary:hover { background: var(--accent-hover); }
     .btn-ghost {
       background: transparent;
@@ -580,7 +690,7 @@
     }
     .segment-btn.active {
       background: var(--text);
-      color: #fff;
+      color: var(--strong-contrast);
       box-shadow: var(--shadow-sm);
     }
     .toggle-pill {
@@ -1058,7 +1168,7 @@
     .agenda-chip.active {
       background: var(--accent);
       border-color: var(--accent);
-      color: #fff;
+      color: var(--accent-contrast);
     }
     .agenda-list {
       padding: 10px 12px 14px;
@@ -1468,7 +1578,7 @@
       bottom: 24px;
       right: 24px;
       background: var(--text);
-      color: #fff;
+      color: var(--strong-contrast);
       padding: 12px 20px;
       border-radius: var(--radius-sm);
       font-size: 13px;
@@ -2193,7 +2303,7 @@
     }
     .tax-date-header.today { color: var(--accent); }
     .tax-date-header .date-badge {
-      background: var(--accent); color: #fff; padding: 2px 8px; border-radius: 10px; font-size: 11px;
+      background: var(--accent); color: var(--accent-contrast); padding: 2px 8px; border-radius: 10px; font-size: 11px;
     }
     .tax-date-header.today .date-badge { background: var(--accent); }
     .tax-date-header .unpaid-count { font-size: 12px; color: var(--warning); font-weight: 600; white-space: nowrap; }
@@ -2367,7 +2477,7 @@
     }
     .tax-row-check.is-paid .tax-status-icon {
       background: var(--success);
-      color: #fff;
+      color: var(--success-contrast);
     }
     .tax-row-check.is-unpaid .tax-status-icon {
       box-shadow: inset 0 0 0 1px #fed7aa;
@@ -2860,6 +2970,7 @@
     .reporting-hero h2 { margin:0 0 4px; font-size:25px; letter-spacing:-.035em; }
     .reporting-hero p { margin:0; color:var(--text-secondary); font-size:13px; }
     .reporting-alert { display:flex; gap:10px; align-items:flex-start; padding:12px 14px; border:1px solid #fde68a; border-radius:12px; background:#fffbeb; color:#92400e; font-size:12px; margin-bottom:16px; }
+    .reporting-alert.success { border-color:var(--success-border); background:var(--success-light); color:var(--success); }
     .reporting-units { display:flex; gap:6px; overflow-x:auto; padding:2px 1px 8px; margin-bottom:10px; scrollbar-width:none; }
     .reporting-unit { --unit-color:#0f766e; --unit-bg:#f0fdfa; flex:0 0 auto; display:flex; align-items:center; gap:7px; border:1px solid var(--border); border-radius:999px; background:#fff; padding:5px 10px 5px 6px; cursor:pointer; color:var(--text-secondary); }
     .reporting-unit:hover { border-color:#94a3b8; }
@@ -2886,7 +2997,7 @@
     .reporting-flow-step.active { color:#0f766e; }
     .reporting-flow-step.active .reporting-flow-dot { border-color:#0f766e; box-shadow:0 0 0 4px rgba(20,184,166,.1); }
     .reporting-flow-step.done { color:#0f766e; }
-    .reporting-flow-step.done .reporting-flow-dot { border-color:#0f766e; background:#0f766e; color:#fff; }
+    .reporting-flow-step.done .reporting-flow-dot { border-color:#0f766e; background:#0f766e; color:var(--accent-contrast); }
     .reporting-flow-step > span:last-child { position:relative; z-index:1; padding-right:6px; background:#fff; }
     .reporting-dropzone { position:relative; border:1.5px dashed #94a3b8; border-radius:13px; padding:18px; text-align:center; background:#f8fafc; cursor:pointer; display:block; transition:border-color .16s ease,background .16s ease,box-shadow .16s ease,transform .16s ease; }
     .reporting-dropzone:hover { border-color:#0f766e; background:#f0fdfa; }
@@ -2934,7 +3045,7 @@
     .reporting-stay-meta { color:var(--text-secondary); font-size:11px; margin-top:2px; }
     .reporting-form-grid { display:grid; grid-template-columns:1.3fr .7fr; gap:8px; }
     .reporting-field label { display:block; color:var(--text-secondary); font-size:10px; font-weight:700; margin:0 0 4px 2px; }
-    .reporting-field select,.reporting-field input { width:100%; min-height:35px; border:1px solid var(--border); border-radius:9px; padding:7px 9px; background:#fff; color:var(--text-primary); }
+    .reporting-field select,.reporting-field input { width:100%; min-height:35px; border:1px solid var(--border); border-radius:9px; padding:7px 9px; background:#fff; color:var(--text); }
     .reporting-records { margin-top:9px; display:grid; gap:6px; }
     .reporting-record { display:grid; grid-template-columns:minmax(130px,1fr) 100px minmax(120px,.8fr); gap:7px; align-items:center; font-size:11px; }
     .reporting-record .name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
@@ -2978,7 +3089,7 @@
     .reporting-istat-reminder-copy small { display:block; margin-bottom:3px; color:#7655b5; font-size:9px; font-weight:850; letter-spacing:.09em; text-transform:uppercase; }
     .reporting-istat-reminder-copy strong { display:block; color:#24104f; font-size:14px; line-height:1.3; }
     .reporting-istat-reminder-copy span { display:block; margin-top:3px; color:#6f6289; font-size:10px; line-height:1.4; }
-    .reporting-istat-countdown { display:grid; place-items:center; align-content:center; min-width:66px; min-height:52px; padding:7px 10px; border-radius:15px; background:#6d2cfc; color:#fff; text-align:center; }
+    .reporting-istat-countdown { display:grid; place-items:center; align-content:center; min-width:66px; min-height:52px; padding:7px 10px; border-radius:15px; background:var(--accent); color:var(--accent-contrast); text-align:center; }
     .reporting-istat-countdown strong { font:700 24px/1 'IBM Plex Mono',monospace; }
     .reporting-istat-countdown span { margin-top:3px; font-size:9px; font-weight:750; }
     .reporting-istat-reminder.complete { border-color:#a7f3d0; background:linear-gradient(115deg,#f1fcf7,#e7f9f1); color:#047857; }
@@ -3009,7 +3120,7 @@
     .reporting-istat-state.sent { border-color:#a7f3d0; background:#ecfdf5; color:#047857; }
     .reporting-istat-state.pending { border-color:#fed7aa; background:#fff7ed; color:#b45309; }
     .reporting-istat-state.update { border-color:#fcd34d; background:#fffbeb; color:#a16207; }
-    .reporting-file button:focus-visible,.reporting-fold summary:focus-visible,.reporting-unit:focus-visible,.reporting-dropzone:focus-within { outline:3px solid rgba(20,184,166,.25); outline-offset:2px; }
+    .reporting-file button:focus-visible,.reporting-fold summary:focus-visible,.reporting-unit:focus-visible,.reporting-dropzone:focus-within { outline:3px solid var(--focus-ring); outline-offset:2px; }
     @media (prefers-reduced-motion:reduce) { .reporting-dropzone,.reporting-fold > summary::after { transition:none; } }
     @media (max-width:600px) {
       .reporting-section { padding:16px 12px 40px; }
@@ -3053,6 +3164,8 @@
       --violet-deep: #2809e3;
       --violet-soft: #a076f6;
       --lavender: #bbbbe0;
+      --strong-contrast: #ffffff;
+      --success-contrast: #ffffff;
       --airbnb: #d9365c;
       --airbnb-light: #fff1f5;
       --booking: #155bb3;
@@ -3068,12 +3181,103 @@
       --warning: #a96000;
       --warning-light: #fff6e7;
       --danger: #c52f4e;
+      --accent-contrast: #ffffff;
+      --surface-muted: #f7f7fb;
+      --surface-subtle: #f1f2f7;
+      --surface-overlay: rgba(255,255,255,.91);
+      --input-bg: #f8f8fb;
+      --control-border: #aeb2c4;
+      --focus-ring: #6d2cfc;
+      --success-border: #a8ddc9;
+      --warning-border: #e5c78c;
+      --danger-light: #fff0f3;
+      --danger-border: #f3b7c3;
+      --info-light: #eef5ff;
+      --info-border: #b8d2f4;
+      --theme-track: #f0eff7;
+      --theme-active: #ffffff;
+      --theme-active-text: #541cfb;
+      --theme-active-border: #7a5ec7;
+      --chart-text: #686b7d;
+      --chart-grid: #e8e9f0;
+      --chart-tooltip: #171827;
+      --chart-tooltip-text: #f5f3ff;
+      --chart-tooltip-border: rgba(255,255,255,.12);
+      --chart-point-border: #ffffff;
+      --chart-accent: #6d2cfc;
+      --chart-accent-fill: rgba(109,44,252,.12);
+      --chart-warning: #d97706;
+      --chart-warning-ink: #9a3412;
+      --chart-muted: #596074;
+      --chart-soft: #d2d6e8;
       --shadow-sm: none;
       --shadow: none;
       --shadow-md: none;
       --radius: 24px;
       --radius-sm: 14px;
     }
+    html[data-color-scheme="dark"] {
+      --bg: #10111b;
+      --card: #191a27;
+      --border: #303247;
+      --text: #f5f3ff;
+      --text-secondary: #aaa9bd;
+      --accent: #a985ff;
+      --accent-light: #2d244b;
+      --accent-hover: #bd9fff;
+      --accent-contrast: #171125;
+      --strong-contrast: #10111b;
+      --success-contrast: #0b1d17;
+      --violet-deep: #c6b5ff;
+      --violet-soft: #a985ff;
+      --lavender: #52536f;
+      --airbnb: #ff879f;
+      --airbnb-light: #3a202a;
+      --booking: #7db5ff;
+      --booking-light: #192f4a;
+      --timeline-airbnb: #c72f52;
+      --timeline-airbnb-border: #ff879f;
+      --timeline-booking: #1767c2;
+      --timeline-booking-border: #7db5ff;
+      --direct: #63d6aa;
+      --direct-light: #17382f;
+      --success: #63d6aa;
+      --success-light: #17382f;
+      --warning: #f5bb68;
+      --warning-light: #392c18;
+      --danger: #ff8294;
+      --surface-muted: #202130;
+      --surface-subtle: #242536;
+      --surface-overlay: rgba(25,26,39,.92);
+      --input-bg: #141520;
+      --control-border: #64667f;
+      --focus-ring: #b69dff;
+      --success-border: #2f705b;
+      --warning-border: #745725;
+      --danger-light: #3a202a;
+      --danger-border: #74404a;
+      --info-light: #192f4a;
+      --info-border: #385f8a;
+      --theme-track: #11121d;
+      --theme-active: #30264d;
+      --theme-active-text: #d2c1ff;
+      --theme-active-border: #9d86dc;
+      --chart-text: #b8b7ca;
+      --chart-grid: #303247;
+      --chart-tooltip: #080913;
+      --chart-tooltip-text: #f5f3ff;
+      --chart-tooltip-border: rgba(197,190,235,.24);
+      --chart-point-border: #191a27;
+      --chart-accent: #a985ff;
+      --chart-accent-fill: rgba(169,133,255,.16);
+      --chart-warning: #f5bb68;
+      --chart-warning-ink: #f0b45f;
+      --chart-muted: #9c9db3;
+      --chart-soft: #45475f;
+      --chart-property-solo: #8f8aff;
+      --chart-property-vingtage: #ed6dab;
+    }
+    html { background: var(--bg); }
     body {
       font-family: 'Golos Text', -apple-system, BlinkMacSystemFont, sans-serif;
       background:
@@ -3081,10 +3285,59 @@
         var(--bg);
       color: var(--text);
     }
+    .theme-switcher {
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      padding: 3px;
+      border: 1px solid var(--control-border);
+      border-radius: 999px;
+      background: var(--theme-track);
+    }
+    .theme-option {
+      position: relative;
+      min-height: 34px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 0 10px;
+      border: 0;
+      border-radius: 999px;
+      background: transparent;
+      color: var(--text-secondary);
+      font: inherit;
+      font-size: 11px;
+      font-weight: 650;
+      cursor: pointer;
+      transition: background .15s ease, color .15s ease;
+    }
+    .theme-option:hover { color: var(--text); }
+    .theme-option.active {
+      background: var(--theme-active);
+      color: var(--theme-active-text);
+      box-shadow: inset 0 0 0 1px var(--theme-active-border);
+    }
+    .theme-option-check {
+      position: absolute;
+      top: 2px;
+      right: 4px;
+      display: none;
+      font-size: 8px;
+      font-weight: 900;
+      line-height: 1;
+    }
+    .theme-option.active .theme-option-check { display: block; }
+    .theme-option:focus-visible { outline-color: var(--focus-ring) !important; }
+    .theme-option svg { width: 14px; height: 14px; flex: 0 0 14px; }
+    .theme-option-fallback { width: 14px; font-size: 16px; line-height: 1; text-align: center; }
+    .theme-option svg + .theme-option-fallback { display: none; }
     button, input, select, textarea { font-family: inherit; }
-    button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible,
+    button:focus-visible, a:focus-visible, summary:focus-visible,
+    input:focus-visible, select:focus-visible, textarea:focus-visible,
     [tabindex]:focus-visible {
-      outline: 3px solid rgba(109,44,252,.24) !important;
+      outline: 3px solid var(--focus-ring) !important;
       outline-offset: 2px;
     }
     .orbit-topbar {
@@ -3151,7 +3404,7 @@
     }
     .nav-item:hover { color: var(--text); background: #fff; }
     .nav-item.active {
-      color: #fff;
+      color: var(--strong-contrast);
       background: var(--text);
       border: 0;
     }
@@ -3163,7 +3416,7 @@
       font-weight: 600;
       justify-content: center;
     }
-    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary { background: var(--accent); color: var(--accent-contrast); }
     .btn-primary:hover { background: var(--accent-hover); }
     .btn-secondary, .btn-ghost {
       border: 1px solid var(--border);
@@ -3232,7 +3485,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      color: #fff;
+      color: var(--accent-contrast);
       background: var(--accent);
     }
     .orbit-date-arrivals {
@@ -3359,7 +3612,7 @@
       box-shadow: none;
     }
     .calendar-today-btn {
-      color: #fff;
+      color: var(--accent-contrast);
       border-color: var(--accent);
       background: var(--accent);
       box-shadow: none;
@@ -3371,7 +3624,7 @@
       box-shadow: none;
     }
     .segment-btn { border-radius: 999px; }
-    .segment-btn.active { color: #fff; background: var(--text); box-shadow: none; }
+    .segment-btn.active { color: var(--strong-contrast); background: var(--text); box-shadow: none; }
     .calendar-container { border-radius: 24px; box-shadow: none; }
     .calendar-scroll-wrapper {
       --calendar-grid-line: #e1e2ec;
@@ -3909,6 +4162,280 @@
       .tax-header { display: block; }
       .tax-summary { margin-top: 10px; }
     }
+
+    /* ===== ORBIT NIGHT THEME ===== */
+    html[data-color-scheme="dark"] body {
+      background:
+        radial-gradient(circle at 8% -8%, rgba(169,133,255,.14), transparent 28rem),
+        linear-gradient(180deg, #10111b 0%, #12131f 100%);
+      background-attachment: fixed;
+    }
+    html[data-color-scheme="dark"] ::selection { background: rgba(169,133,255,.34); color: var(--text); }
+    html[data-color-scheme="dark"] :where(input, select, textarea) { color-scheme: dark; }
+    html[data-color-scheme="dark"] :where(input[type="text"], input[type="url"], input[type="search"], input[type="month"], input[type="number"], select, textarea) {
+      border-color: var(--control-border);
+      background: var(--input-bg);
+      color: var(--text);
+    }
+    html[data-color-scheme="dark"] :where(input, textarea)::placeholder { color: #9290a4; opacity: 1; }
+    html[data-color-scheme="dark"] :where(input, select, textarea):disabled { color: #9290a4; opacity: 1; }
+    html[data-color-scheme="dark"] option { background: var(--card); color: var(--text); }
+    html[data-color-scheme="dark"] :where(input, textarea):-webkit-autofill {
+      -webkit-text-fill-color: var(--text);
+      box-shadow: 0 0 0 1000px var(--input-bg) inset;
+    }
+
+    html[data-color-scheme="dark"] .orbit-topbar {
+      border-color: rgba(115,111,151,.72);
+      background: var(--surface-overlay);
+    }
+    html[data-color-scheme="dark"] .nav { background: #151622; }
+    html[data-color-scheme="dark"] .nav-item:hover { background: var(--surface-muted); }
+    html[data-color-scheme="dark"] .nav-item.active { background: var(--text); color: var(--strong-contrast); }
+    html[data-color-scheme="dark"] .btn-secondary,
+    html[data-color-scheme="dark"] .btn-ghost { border-color: var(--border); background: rgba(25,26,39,.84); }
+    html[data-color-scheme="dark"] .btn-secondary:hover,
+    html[data-color-scheme="dark"] .btn-ghost:hover { border-color: var(--lavender); background: var(--accent-light); }
+    html[data-color-scheme="dark"] .btn-danger-ghost:hover { background: var(--danger-light); }
+    html[data-color-scheme="dark"] #syncBtn { border-color: #51436f; background: var(--accent-light); color: var(--accent); }
+    html[data-color-scheme="dark"] .orbit-date { border-color: #8069bb; }
+    html[data-color-scheme="dark"] .orbit-date-arrivals { border-color: var(--bg); background: #28233b; color: #d5c6ff; }
+    html[data-color-scheme="dark"] .stat-card + .stat-card::before {
+      background: linear-gradient(180deg, transparent 0%, #3b3c52 13%, #3b3c52 87%, transparent 100%);
+    }
+    html[data-color-scheme="dark"] .stat-card.stat-day-card[data-empty="true"] .stat-value { color: #89899e; }
+    html[data-color-scheme="dark"] .freshness-status { background: rgba(25,26,39,.78); }
+    html[data-color-scheme="dark"] .freshness-icon { background: rgba(255,255,255,.06); }
+    html[data-color-scheme="dark"] .freshness-status[data-state="ok"] { border-color: var(--success-border); background: var(--success-light); }
+    html[data-color-scheme="dark"] .freshness-status[data-state="warning"] { border-color: var(--warning-border); background: var(--warning-light); }
+    html[data-color-scheme="dark"] .freshness-status[data-state="error"] { border-color: var(--danger-border); background: var(--danger-light); }
+    html[data-color-scheme="dark"] .freshness-status[data-state="cached"] { border-color: var(--info-border); background: var(--info-light); }
+    html[data-color-scheme="dark"] #statConflictCard { background: var(--danger-light) !important; }
+    html[data-color-scheme="dark"] #statRecentCard { border-color: var(--info-border) !important; background: var(--info-light) !important; }
+
+    html[data-color-scheme="dark"] .legend-dot.completed { background: var(--card); border-color: #77788c; }
+    html[data-color-scheme="dark"] .calendar-toolbar { background: rgba(25,26,39,.88); }
+    html[data-color-scheme="dark"] .calendar-today-date,
+    html[data-color-scheme="dark"] :where(.calendar-control, .toggle-pill) { border-color: var(--control-border); background: var(--card); }
+    html[data-color-scheme="dark"] .segmented-control { border-color: var(--control-border); background: var(--theme-track); }
+    html[data-color-scheme="dark"] .segment-btn.active { background: var(--text); color: var(--strong-contrast); }
+    html[data-color-scheme="dark"] .calendar-scroll-wrapper {
+      --calendar-grid-line: #303247;
+      background: var(--card);
+      scrollbar-color: #55576d #141520;
+    }
+    html[data-color-scheme="dark"] .calendar-scroll-wrapper::-webkit-scrollbar-track { background: #141520; }
+    html[data-color-scheme="dark"] .calendar-scroll-wrapper::-webkit-scrollbar-thumb { background: #55576d; border-color: #141520; }
+    html[data-color-scheme="dark"] .calendar-scroll-wrapper::-webkit-scrollbar-thumb:hover { background: #6e7088; }
+    html[data-color-scheme="dark"] .calendar-property-rail-grid { background: var(--card); border-right-color: #404258; }
+    html[data-color-scheme="dark"] :where(.cal-property-header, .cal-day-header) { background: #1d1e2c; }
+    html[data-color-scheme="dark"] :where(.cal-property-month-spacer, .cal-month-band) { background: #161722; }
+    html[data-color-scheme="dark"] .cal-month-label { border-color: #725bb0; background: #30264d; }
+    html[data-color-scheme="dark"] .cal-group-header,
+    html[data-color-scheme="dark"] .cal-row-layer.group { background: #202130; }
+    html[data-color-scheme="dark"] .cal-group-label { color: #a5a4b8; }
+    html[data-color-scheme="dark"] .cal-day-header.today,
+    html[data-color-scheme="dark"] .cal-day-header.today.weekend { border-color: var(--border); background: #30264d; }
+    html[data-color-scheme="dark"] .cal-day-header.past { background: #161722; }
+    html[data-color-scheme="dark"] .cal-day-header.weekend { background: #242019; }
+    html[data-color-scheme="dark"] .cal-day-header.past.weekend { background: #1b1a1d; }
+    html[data-color-scheme="dark"] .cal-day-header.past :where(.day-num, .day-name) { color: #9290a4; }
+    html[data-color-scheme="dark"] .cal-day-column { background: var(--card); }
+    html[data-color-scheme="dark"] .cal-day-column.today,
+    html[data-color-scheme="dark"] .cal-day-column.today.weekend { background: rgba(169,133,255,.13); }
+    html[data-color-scheme="dark"] .cal-day-column.past { background: #161722; }
+    html[data-color-scheme="dark"] .cal-day-column.weekend { background: #211f1c; }
+    html[data-color-scheme="dark"] .cal-day-column.past.weekend { background: #19191d; }
+    html[data-color-scheme="dark"] .booking-bar.completed {
+      border-color: #5a5b70;
+      background: #222331 !important;
+      color: #aaaabd;
+    }
+    html[data-color-scheme="dark"] .booking-bar.completed .bar-label { color: #aaaabd; }
+    html[data-color-scheme="dark"] .booking-bar.not-available {
+      border-color: #56586d;
+      background: #20212e !important;
+      color: #aaaabd;
+    }
+    html[data-color-scheme="dark"] .booking-bar.not-available .bar-label { color: #aaaabd; }
+    html[data-color-scheme="dark"] .booking-tooltip { border-color: var(--border); background: #090a12; color: var(--text); }
+    html[data-color-scheme="dark"] .booking-tooltip::after { border-top-color: #090a12; }
+
+    html[data-color-scheme="dark"] :where(.mobile-agenda-card, .mobile-agenda-head, .agenda-chip, .agenda-item) { background: var(--card); }
+    html[data-color-scheme="dark"] .agenda-chip.active { border-color: var(--text); background: var(--text); color: var(--strong-contrast); }
+    html[data-color-scheme="dark"] button.agenda-item:focus-visible { outline-color: var(--focus-ring); }
+    html[data-color-scheme="dark"] .agenda-platform-action { background: var(--card); }
+    html[data-color-scheme="dark"] .agenda-type.checkout { background: var(--warning-light); }
+    html[data-color-scheme="dark"] .agenda-type.conflict { background: var(--danger-light); }
+    html[data-color-scheme="dark"] :where(.prop-icon, .cal-property-icon, .agenda-item-icon, .booking-night-badge, .tax-property-icon, .reporting-unit-icon, .reporting-current-unit-icon) {
+      background: color-mix(in srgb, currentColor 15%, var(--card)) !important;
+    }
+
+    html[data-color-scheme="dark"] .booking-panel-backdrop { background: rgba(4,4,10,.72); }
+    html[data-color-scheme="dark"] :where(.booking-panel, .booking-panel-close, .booking-detail-card) { background: var(--card); }
+    html[data-color-scheme="dark"] :where(.booking-detail-hero, .booking-status-note) { background: var(--surface-muted); }
+    html[data-color-scheme="dark"] .booking-night-badge { border-color: rgba(197,190,235,.18); }
+    html[data-color-scheme="dark"] .booking-platform-pill.airbnb { background: var(--timeline-airbnb); }
+    html[data-color-scheme="dark"] .booking-platform-pill.booking { background: var(--timeline-booking); }
+    html[data-color-scheme="dark"] .booking-platform-pill.direct { background: #157a5b; }
+
+    html[data-color-scheme="dark"] :where(.add-cleaner-form, .cleaner-card) { background: var(--card); }
+    html[data-color-scheme="dark"] .cleaner-card-header { background: var(--surface-muted); }
+    html[data-color-scheme="dark"] .cleaner-property-item { border-color: var(--border); }
+    html[data-color-scheme="dark"] .unassigned-card { border-color: var(--warning-border); background: var(--warning-light); }
+    html[data-color-scheme="dark"] .unassigned-card .cleaner-card-header { border-color: var(--warning-border); background: #332817; }
+    html[data-color-scheme="dark"] .add-cleaner-form input:focus { box-shadow: 0 0 0 3px var(--focus-ring); }
+
+    html[data-color-scheme="dark"] .stats-history-status { border-color: var(--success-border); background: linear-gradient(180deg, #1c352f, var(--card)); color: #ace8d3; }
+    html[data-color-scheme="dark"] .stats-history-status[data-state="loading"] { border-color: var(--border); background: var(--card); color: var(--text); }
+    html[data-color-scheme="dark"] .stats-history-status[data-state="cached"],
+    html[data-color-scheme="dark"] .stats-history-status[data-state="warning"] { border-color: var(--warning-border); background: linear-gradient(180deg, #352b1b, var(--card)); color: #f2cb8d; }
+    html[data-color-scheme="dark"] .stats-history-status[data-state="error"] { border-color: var(--danger-border); background: linear-gradient(180deg, #382129, var(--card)); color: #ffb0bd; }
+    html[data-color-scheme="dark"] .stats-history-action { background: rgba(8,8,16,.42); }
+    html[data-color-scheme="dark"] .stats-quality-line { background: #303247; }
+    html[data-color-scheme="dark"] :where(.stats-dynamics-card, .stats-summary-card, .stats-chart-card) { background: var(--card); }
+    html[data-color-scheme="dark"] .stats-radar-periods { background: transparent; }
+    html[data-color-scheme="dark"] .stats-radar-period.active { background: transparent; color: var(--accent); }
+    html[data-color-scheme="dark"] .stats-radar-metric { background: var(--card); }
+    html[data-color-scheme="dark"] .stats-radar-metric.attention { border-color: var(--warning-border); background: var(--warning-light); }
+    html[data-color-scheme="dark"] .stats-radar-metric.critical { border-color: var(--danger-border); background: var(--danger-light); }
+    html[data-color-scheme="dark"] .stats-radar-metric.attention .stats-radar-value { color: var(--warning); }
+    html[data-color-scheme="dark"] .stats-radar-metric.critical .stats-radar-value { color: var(--danger); }
+    html[data-color-scheme="dark"] .stats-radar-gap { border-color: var(--accent); background: transparent; color: var(--text); }
+    html[data-color-scheme="dark"] .stats-charts-status { border-color: var(--warning-border); background: var(--warning-light); color: #efc987; }
+    html[data-color-scheme="dark"] .stats-dynamics-card {
+      background: linear-gradient(135deg, rgba(169,133,255,.12), var(--card) 48%);
+    }
+    html[data-color-scheme="dark"] .stats-snapshot-pill { border-color: #65528f; background: var(--accent-light); color: #d2c1ff; }
+    html[data-color-scheme="dark"] .stats-primary-metric { border-color: #604d8d; background: #262039; }
+    html[data-color-scheme="dark"] .stats-primary-metric .value { color: #d2c1ff; }
+    html[data-color-scheme="dark"] .stats-delta.positive { background: var(--success-light); color: var(--success); }
+    html[data-color-scheme="dark"] .stats-delta.negative { background: var(--danger-light); color: var(--danger); }
+    html[data-color-scheme="dark"] .stats-delta.neutral { background: var(--surface-subtle); color: var(--text-secondary); }
+    html[data-color-scheme="dark"] .stats-metric-delta.positive { color: var(--success); }
+    html[data-color-scheme="dark"] .stats-metric-delta.negative { color: var(--danger); }
+    html[data-color-scheme="dark"] .stats-mini-metric { background: rgba(25,26,39,.88); }
+    html[data-color-scheme="dark"] .stats-change-note { border-color: #44465d; background: rgba(16,17,27,.72); }
+    html[data-color-scheme="dark"] .stats-timeline-control { background: rgba(16,17,27,.62); }
+    html[data-color-scheme="dark"] .stats-step-btn { background: var(--card); }
+    html[data-color-scheme="dark"] .stats-month-tile { background: var(--card); }
+    html[data-color-scheme="dark"] .stats-month-tile::before { background: linear-gradient(180deg, rgba(169,133,255,.08), rgba(169,133,255,.24)); }
+
+    html[data-color-scheme="dark"] .tax-controls { background: rgba(25,26,39,.84); }
+    html[data-color-scheme="dark"] .tax-controls label { background: var(--surface-muted); }
+    html[data-color-scheme="dark"] .tax-date-header { background: var(--bg); }
+    html[data-color-scheme="dark"] .tax-summary-pill.warning { border-color: var(--warning-border); background: var(--warning-light); color: var(--warning); }
+    html[data-color-scheme="dark"] .tax-summary-pill.warning strong { color: #f4c77e; }
+    html[data-color-scheme="dark"] .tax-summary-pill.success { border-color: var(--success-border); background: var(--success-light); color: var(--success); }
+    html[data-color-scheme="dark"] .tax-summary-pill.success strong { color: #8ce2c2; }
+    html[data-color-scheme="dark"] .tax-row { background: var(--card); }
+    html[data-color-scheme="dark"] .tax-row:hover { border-color: #484a61; }
+    html[data-color-scheme="dark"] .tax-platform-property-badge { background: var(--card); }
+    html[data-color-scheme="dark"] .tax-row-check { background: var(--card); }
+    html[data-color-scheme="dark"] .tax-row-check.is-paid { border-color: var(--success-border); background: var(--success-light); color: var(--success); }
+    html[data-color-scheme="dark"] .tax-row-check.is-unpaid { border-color: var(--warning-border); background: var(--warning-light); color: var(--warning); }
+    html[data-color-scheme="dark"] .tax-status-icon { background: rgba(255,255,255,.07); }
+
+    html[data-color-scheme="dark"] .reporting-alert { border-color: var(--warning-border); background: var(--warning-light); color: #f0c885; }
+    html[data-color-scheme="dark"] .reporting-alert.success { border-color: var(--success-border); background: var(--success-light); color: var(--success); }
+    html[data-color-scheme="dark"] .reporting-section { --report-teal: var(--accent); }
+    html[data-color-scheme="dark"] .reporting-unit { background: var(--card); }
+    html[data-color-scheme="dark"] .reporting-unit:hover { border-color: #55576d; }
+    html[data-color-scheme="dark"] .reporting-unit.active { background: color-mix(in srgb, var(--unit-color) 18%, var(--card)); }
+    html[data-color-scheme="dark"] .reporting-unit.active .reporting-unit-icon { color: #10111b; }
+    html[data-color-scheme="dark"] .reporting-unit-count { background: var(--danger-light); color: #ff9cab; }
+    html[data-color-scheme="dark"] :where(.reporting-card, .reporting-batch, .reporting-fold) { background: var(--card); }
+    html[data-color-scheme="dark"] .reporting-flow-step { color: #9290a4; }
+    html[data-color-scheme="dark"] .reporting-flow-step:not(:last-child)::after { background: #393b50; }
+    html[data-color-scheme="dark"] .reporting-flow-dot { border-color: #5b5d75; background: var(--card); }
+    html[data-color-scheme="dark"] .reporting-flow-step > span:last-child { background: var(--card); }
+    html[data-color-scheme="dark"] .reporting-flow-step.done .reporting-flow-dot { color: var(--accent-contrast); }
+    html[data-color-scheme="dark"] .reporting-dropzone { border-color: #62647c; background: var(--surface-muted); }
+    html[data-color-scheme="dark"] .reporting-dropzone:hover { border-color: var(--accent); background: var(--accent-light); }
+    html[data-color-scheme="dark"] .reporting-dropzone.drag-active { border-color: var(--accent); background: #30264d; box-shadow: 0 0 0 5px rgba(169,133,255,.14); }
+    html[data-color-scheme="dark"] .reporting-dropzone.drag-active strong { color: var(--accent); }
+    html[data-color-scheme="dark"] .reporting-upload-error,
+    html[data-color-scheme="dark"] .reporting-result.error { background: var(--danger-light); color: var(--danger); }
+    html[data-color-scheme="dark"] .reporting-batch:hover { border-color: #55576d; }
+    html[data-color-scheme="dark"] .reporting-status { background: var(--surface-subtle); color: #bcbccf; }
+    html[data-color-scheme="dark"] .reporting-status.ready,
+    html[data-color-scheme="dark"] .reporting-status.tested { background: var(--success-light); color: var(--success); }
+    html[data-color-scheme="dark"] .reporting-status.sent,
+    html[data-color-scheme="dark"] .reporting-status.pii_purged { background: var(--info-light); color: #91c2ff; }
+    html[data-color-scheme="dark"] .reporting-status.partial,
+    html[data-color-scheme="dark"] .reporting-status.unknown { background: var(--danger-light); color: var(--danger); }
+    html[data-color-scheme="dark"] .reporting-status.sending { background: var(--warning-light); color: var(--warning); }
+    html[data-color-scheme="dark"] .reporting-file-icon,
+    html[data-color-scheme="dark"] .reporting-result { background: var(--success-light); color: var(--success); }
+    html[data-color-scheme="dark"] .reporting-delete:hover { background: var(--danger-light); color: var(--danger); }
+    html[data-color-scheme="dark"] .reporting-guest-row { background: var(--surface-muted); }
+    html[data-color-scheme="dark"] .reporting-origin-hint.manual { color: var(--warning); }
+    html[data-color-scheme="dark"] .reporting-errors { color: var(--danger); }
+    html[data-color-scheme="dark"] .reporting-history-row { border-color: var(--border); }
+    html[data-color-scheme="dark"] .reporting-receipt { color: var(--accent); }
+    html[data-color-scheme="dark"] .reporting-receipt:hover { background: var(--accent-light); }
+    html[data-color-scheme="dark"] .reporting-istat-header { border-color: var(--info-border); }
+    html[data-color-scheme="dark"] .reporting-istat-header h3,
+    html[data-color-scheme="dark"] .reporting-istat-day,
+    html[data-color-scheme="dark"] .reporting-istat-progress strong { color: var(--text); }
+    html[data-color-scheme="dark"] .reporting-istat-header p,
+    html[data-color-scheme="dark"] .reporting-istat-remote small,
+    html[data-color-scheme="dark"] .reporting-istat-note,
+    html[data-color-scheme="dark"] .reporting-istat-progress span { color: var(--text-secondary); }
+    html[data-color-scheme="dark"] .reporting-istat-remote { border-color: var(--info-border); background: var(--info-light); color: #a9ccff; }
+    html[data-color-scheme="dark"] .reporting-ledger-kicker { color: #8dbbff; }
+    html[data-color-scheme="dark"] .reporting-istat-reminder { border-color: #65528f; background: linear-gradient(115deg, #2b2343, #231e35); color: #d8ccff; }
+    html[data-color-scheme="dark"] .reporting-istat-reminder-icon { background: var(--card); color: var(--accent); box-shadow: none; }
+    html[data-color-scheme="dark"] .reporting-istat-reminder-copy small,
+    html[data-color-scheme="dark"] .reporting-istat-reminder-copy span { color: #aaa0c7; }
+    html[data-color-scheme="dark"] .reporting-istat-reminder-copy strong { color: #eee9ff; }
+    html[data-color-scheme="dark"] .reporting-istat-reminder.complete { border-color: var(--success-border); background: linear-gradient(115deg, #17382f, #192a28); color: var(--success); }
+    html[data-color-scheme="dark"] .reporting-istat-reminder.complete .reporting-istat-reminder-copy small,
+    html[data-color-scheme="dark"] .reporting-istat-reminder.complete .reporting-istat-reminder-copy span { color: #8abdab; }
+    html[data-color-scheme="dark"] .reporting-istat-reminder.complete .reporting-istat-reminder-copy strong { color: #bcebd9; }
+    html[data-color-scheme="dark"] .reporting-istat-reminder.complete .reporting-istat-countdown { background: #157a5b; color: #ffffff; }
+    html[data-color-scheme="dark"] .reporting-istat-reminder.overdue { border-color: var(--danger-border); background: linear-gradient(115deg, #3a202a, #2e1d26); color: var(--danger); }
+    html[data-color-scheme="dark"] .reporting-istat-reminder.overdue .reporting-istat-reminder-copy small,
+    html[data-color-scheme="dark"] .reporting-istat-reminder.overdue .reporting-istat-reminder-copy span { color: #c88c9a; }
+    html[data-color-scheme="dark"] .reporting-istat-reminder.overdue .reporting-istat-reminder-copy strong { color: #ffc2cc; }
+    html[data-color-scheme="dark"] .reporting-istat-reminder.overdue .reporting-istat-countdown { background: #c72f52; color: #ffffff; }
+    html[data-color-scheme="dark"] .reporting-istat-note { background: var(--surface-muted); }
+    html[data-color-scheme="dark"] .reporting-istat-table-wrap { border-color: var(--border); }
+    html[data-color-scheme="dark"] .reporting-istat-table th { background: #202130; color: #b8b7ca; }
+    html[data-color-scheme="dark"] .reporting-istat-table td { border-color: var(--border); color: #d4d2e0; }
+    html[data-color-scheme="dark"] .reporting-istat-table tbody tr.has-data { background: #1b2030; }
+    html[data-color-scheme="dark"] .reporting-istat-table tbody tr.istat-sent { background: #182a27; }
+    html[data-color-scheme="dark"] .reporting-istat-table tbody tr.istat-update { background: #2d281c; }
+    html[data-color-scheme="dark"] .reporting-istat-zero { color: #9290a4; }
+    html[data-color-scheme="dark"] .reporting-istat-movement { color: #8dbbff; }
+    html[data-color-scheme="dark"] .reporting-istat-progress span { border-color: var(--border); }
+    html[data-color-scheme="dark"] .reporting-istat-state.sent { border-color: var(--success-border); background: var(--success-light); color: var(--success); }
+    html[data-color-scheme="dark"] .reporting-istat-state.pending { border-color: var(--warning-border); background: var(--warning-light); color: var(--warning); }
+    html[data-color-scheme="dark"] .reporting-istat-state.update { border-color: #78672e; background: #342d18; color: #f1c75d; }
+
+    html[data-color-scheme="dark"] .toast { background: #eee9ff; color: #1a1726; }
+
+    @media (max-width: 1180px) {
+      .theme-option-label { display: none; }
+      .theme-option { width: 44px; min-height: 44px; padding: 0; }
+    }
+    @media (max-width: 768px) {
+      .theme-switcher { gap: 1px; padding: 2px; }
+      .theme-option { width: 44px; min-height: 44px; }
+      html[data-color-scheme="dark"] .orbit-topbar { background: rgba(25,26,39,.96); }
+      html[data-color-scheme="dark"] .nav { background: rgba(25,26,39,.96); box-shadow: 0 -14px 30px rgba(0,0,0,.28); }
+      html[data-color-scheme="dark"] .nav-item.active { background: var(--accent-light); color: var(--accent); }
+    }
+    @media (max-width: 360px) {
+      .header-left { gap: 8px; }
+      .header-logo { width: 34px; height: 34px; flex-basis: 34px; }
+      .header h1 { max-width: 25vw; }
+      .header h1 span { display: none; }
+      .header-actions { gap: 6px; }
+      .header h1 { display: none; }
+      .theme-option { width: 44px; }
+      #syncBtn { width: 44px; min-width: 44px; min-height: 44px; }
+    }
   </style>
 </head>
 <body>
@@ -3923,6 +4450,17 @@
       <h1>Atrani <span>Бронирования</span></h1>
     </div>
     <div class="header-actions">
+      <div class="theme-switcher" role="group" aria-label="Цветовая тема">
+        <button class="theme-option" type="button" data-theme-option="system" aria-label="Системная тема" title="Системная тема" aria-pressed="false">
+          <i data-lucide="monitor"></i><span class="theme-option-fallback" aria-hidden="true">◫</span><span class="theme-option-label">Системное</span><span class="theme-option-check" aria-hidden="true">✓</span>
+        </button>
+        <button class="theme-option" type="button" data-theme-option="light" aria-label="Светлая тема" title="Светлая тема" aria-pressed="false">
+          <i data-lucide="sun"></i><span class="theme-option-fallback" aria-hidden="true">☼</span><span class="theme-option-label">День</span><span class="theme-option-check" aria-hidden="true">✓</span>
+        </button>
+        <button class="theme-option" type="button" data-theme-option="dark" aria-label="Тёмная тема" title="Тёмная тема" aria-pressed="false">
+          <i data-lucide="moon"></i><span class="theme-option-fallback" aria-hidden="true">☾</span><span class="theme-option-label">Ночь</span><span class="theme-option-check" aria-hidden="true">✓</span>
+        </button>
+      </div>
       <span class="last-sync" id="lastSync"></span>
       <button class="btn btn-ghost" id="syncBtn" onclick="syncCalendars()">
         <i data-lucide="refresh-cw" style="width:14px;height:14px;"></i>Синхронизация
@@ -6191,7 +6729,7 @@ function renderCleaners() {
     `;
   } else {
     unassignedEl.innerHTML = `
-      <div style="background:var(--success-light); border:1px solid #a7f3d0; border-radius:var(--radius); padding:14px 20px; margin-bottom:16px; font-size:13px; color:var(--success); display:flex; align-items:center; gap:8px;">
+      <div style="background:var(--success-light); border:1px solid var(--success-border); border-radius:var(--radius); padding:14px 20px; margin-bottom:16px; font-size:13px; color:var(--success); display:flex; align-items:center; gap:8px;">
         <i data-lucide="check-circle" style="width:16px;height:16px;"></i>Всем апартаментам назначена уборщица
       </div>
     `;
@@ -6313,6 +6851,12 @@ let statsCharts = {};
 let chartJsPromise = null;
 let statsRenderSequence = 0;
 let statsChartObservers = [];
+
+window.addEventListener('atrani-theme-change', event => {
+  if (event.detail?.previousResolved === event.detail?.resolved) return;
+  const statsVisible = document.getElementById('statsTab')?.style.display !== 'none';
+  if (statsVisible) renderStats();
+});
 
 function ensureChartJs() {
   if (typeof Chart !== 'undefined') return Promise.resolve();
@@ -7112,6 +7656,10 @@ function buildStatsTimeline(year, fallbackSnapshot) {
   return canonicalizeStatsHistory([...(statsSnapshots || []), currentSnapshot], year).rows;
 }
 
+function themeCssColor(variable, fallback) {
+  return getComputedStyle(document.documentElement).getPropertyValue(variable).trim() || fallback;
+}
+
 function statsChartDefaults() {
   const chartFont = { family: "'Golos Text', sans-serif" };
   return {
@@ -7119,7 +7667,7 @@ function statsChartDefaults() {
     plugins: {
       legend: {
         labels: {
-          color: '#4f5265',
+          color: themeCssColor('--chart-text', '#686b7d'),
           usePointStyle: true,
           pointStyle: 'circle',
           boxWidth: 7,
@@ -7129,10 +7677,10 @@ function statsChartDefaults() {
         }
       },
       tooltip: {
-        backgroundColor: '#171827',
-        titleColor: '#fff',
-        bodyColor: '#e5e7eb',
-        borderColor: 'rgba(255,255,255,.12)',
+        backgroundColor: themeCssColor('--chart-tooltip', '#171827'),
+        titleColor: themeCssColor('--chart-tooltip-text', '#f5f3ff'),
+        bodyColor: themeCssColor('--chart-tooltip-text', '#f5f3ff'),
+        borderColor: themeCssColor('--chart-tooltip-border', 'rgba(255,255,255,.12)'),
         borderWidth: 1,
         cornerRadius: 14,
         padding: 11,
@@ -7145,13 +7693,13 @@ function statsChartDefaults() {
       x: {
         grid: { display: false },
         border: { display: false },
-        ticks: { color: '#686b7d', font: { ...chartFont, size: 11, weight: 650 } }
+        ticks: { color: themeCssColor('--chart-text', '#686b7d'), font: { ...chartFont, size: 11, weight: 650 } }
       },
       y: {
         beginAtZero: true,
         border: { display: false },
-        grid: { color: '#e8e9f0' },
-        ticks: { color: '#686b7d', precision: 0, font: { ...chartFont, size: 11, weight: 650 } }
+        grid: { color: themeCssColor('--chart-grid', '#e8e9f0') },
+        ticks: { color: themeCssColor('--chart-text', '#686b7d'), precision: 0, font: { ...chartFont, size: 11, weight: 650 } }
       }
     }
   };
@@ -7364,11 +7912,11 @@ function createStatsDynamicsChart() {
         {
           label: 'Бронирования',
           data: snapshots.map(snapshot => Number(snapshot.booking_count) || 0),
-          borderColor: '#6d2cfc',
-          backgroundColor: 'rgba(109,44,252,.1)',
+          borderColor: themeCssColor('--chart-accent', '#6d2cfc'),
+          backgroundColor: themeCssColor('--chart-accent-fill', 'rgba(109,44,252,.12)'),
           borderWidth: 2,
-          pointBackgroundColor: '#6d2cfc',
-          pointBorderColor: '#fff',
+          pointBackgroundColor: themeCssColor('--chart-accent', '#6d2cfc'),
+          pointBorderColor: themeCssColor('--chart-point-border', '#fff'),
           pointRadius: 2,
           pointHoverRadius: 5,
           fill: true,
@@ -7378,10 +7926,10 @@ function createStatsDynamicsChart() {
         {
           label: 'Занятые ночи',
           data: snapshots.map(snapshot => Number(snapshot.occupied_nights) || 0),
-          borderColor: '#d97706',
+          borderColor: themeCssColor('--chart-warning', '#d97706'),
           backgroundColor: 'transparent',
-          pointBackgroundColor: '#d97706',
-          pointBorderColor: '#fff',
+          pointBackgroundColor: themeCssColor('--chart-warning', '#d97706'),
+          pointBorderColor: themeCssColor('--chart-point-border', '#fff'),
           pointBorderWidth: 1,
           pointRadius: 2,
           pointHoverRadius: 5,
@@ -7414,7 +7962,7 @@ function createStatsDynamicsChart() {
           position: 'right',
           border: { display: false },
           grid: { drawOnChartArea: false },
-          ticks: { color: '#9a3412', precision: 0, font: { ...defaults.font, size: 11, weight: 650 } }
+          ticks: { color: themeCssColor('--chart-warning-ink', '#9a3412'), precision: 0, font: { ...defaults.font, size: 11, weight: 650 } }
         }
       }
     }
@@ -7703,9 +8251,9 @@ function renderStatsNow({ chartsAvailable = typeof Chart !== 'undefined' } = {})
     data: {
       labels: monthLabels,
       datasets: [
-        { label: 'Airbnb', data: monthlyAirbnb, backgroundColor: '#d9365c', borderRadius: 9, maxBarThickness: 42 },
-        { label: 'Booking.com', data: monthlyBooking, backgroundColor: '#155bb3', borderRadius: 9, maxBarThickness: 42 },
-        { label: 'Прямые', data: monthlyDirect, backgroundColor: '#157a5b', borderRadius: 9, maxBarThickness: 42 }
+        { label: 'Airbnb', data: monthlyAirbnb, backgroundColor: themeCssColor('--airbnb', '#d9365c'), borderRadius: 9, maxBarThickness: 42 },
+        { label: 'Booking.com', data: monthlyBooking, backgroundColor: themeCssColor('--booking', '#155bb3'), borderRadius: 9, maxBarThickness: 42 },
+        { label: 'Прямые', data: monthlyDirect, backgroundColor: themeCssColor('--direct', '#157a5b'), borderRadius: 9, maxBarThickness: 42 }
       ]
     },
     options: {
@@ -7732,7 +8280,7 @@ function renderStatsNow({ chartsAvailable = typeof Chart !== 'undefined' } = {})
       id: p.id,
       label: p.name,
       occupancy: propertyDenominator > 0 ? Math.round((nights / propertyDenominator) * 100) : 0,
-      color: (propertyConfig[p.id] || {}).color || '#6b7280'
+      color: themeCssColor(`--chart-property-${p.id}`, (propertyConfig[p.id] || {}).color || themeCssColor('--chart-muted', '#596074'))
     };
   }).sort((a, b) => b.occupancy - a.occupancy);
   const occupancySub = document.getElementById('statsOccupancySub');
@@ -7774,7 +8322,17 @@ function renderStatsNow({ chartsAvailable = typeof Chart !== 'undefined' } = {})
   const countryLabels = top8.map(([c]) => `${countryToFlag(c)} ${COUNTRY_NAMES[c] || c.toUpperCase()}`);
   const countryData = top8.map(([, c]) => c);
   if (othersCount > 0) { countryLabels.push('Другие'); countryData.push(othersCount); }
-  const countryColors = ['#6d2cfc','#d9365c','#155bb3','#157a5b','#a076f6','#596074','#2809e3','#bbbbe0','#d2d6e8'];
+  const countryColors = [
+    themeCssColor('--chart-accent', '#6d2cfc'),
+    themeCssColor('--airbnb', '#d9365c'),
+    themeCssColor('--booking', '#155bb3'),
+    themeCssColor('--direct', '#157a5b'),
+    themeCssColor('--violet-soft', '#a076f6'),
+    themeCssColor('--chart-muted', '#596074'),
+    themeCssColor('--violet-deep', '#2809e3'),
+    themeCssColor('--lavender', '#bbbbe0'),
+    themeCssColor('--chart-soft', '#d2d6e8')
+  ];
 
   createDeferredStatsChart('countries', 'chartCountries', canvas => new Chart(canvas, {
     type: 'doughnut',
@@ -7784,7 +8342,7 @@ function renderStatsNow({ chartsAvailable = typeof Chart !== 'undefined' } = {})
         data: countryData,
         backgroundColor: countryColors.slice(0, countryData.length),
         borderWidth: 4,
-        borderColor: '#fff',
+        borderColor: themeCssColor('--chart-point-border', '#fff'),
         hoverOffset: 5
       }]
     },
@@ -7811,7 +8369,9 @@ function renderStatsNow({ chartsAvailable = typeof Chart !== 'undefined' } = {})
   // Reorder: Mon-Sun
   const reordered = [...checkinByDay.slice(1), checkinByDay[0]];
   const reorderedLabels = [...dayNamesRu.slice(1), dayNamesRu[0]];
-  const dayColors = reordered.map((_, i) => i >= 5 ? '#d9365c' : '#6d2cfc'); // weekend accent
+  const dayColors = reordered.map((_, i) => i >= 5
+    ? themeCssColor('--airbnb', '#d9365c')
+    : themeCssColor('--chart-accent', '#6d2cfc'));
 
   createDeferredStatsChart('checkinDays', 'chartCheckinDays', canvas => new Chart(canvas, {
     type: 'bar',
@@ -7843,7 +8403,7 @@ function renderStatsNow({ chartsAvailable = typeof Chart !== 'undefined' } = {})
     return {
       label: p.name,
       value: count > 0 ? +(total / count).toFixed(1) : 0,
-      color: (propertyConfig[p.id] || {}).color || '#6b7280'
+      color: themeCssColor(`--chart-property-${p.id}`, (propertyConfig[p.id] || {}).color || themeCssColor('--chart-muted', '#596074'))
     };
   }).sort((a, b) => b.value - a.value);
 
@@ -7885,12 +8445,12 @@ function renderStatsNow({ chartsAvailable = typeof Chart !== 'undefined' } = {})
       datasets: [{
         label: 'Гости',
         data: monthlyGuests,
-        borderColor: '#6d2cfc',
-        backgroundColor: 'rgba(109,44,252,.12)',
+        borderColor: themeCssColor('--chart-accent', '#6d2cfc'),
+        backgroundColor: themeCssColor('--chart-accent-fill', 'rgba(109,44,252,.12)'),
         fill: true,
         tension: 0.35,
-        pointBackgroundColor: '#6d2cfc',
-        pointBorderColor: '#fff',
+        pointBackgroundColor: themeCssColor('--chart-accent', '#6d2cfc'),
+        pointBorderColor: themeCssColor('--chart-point-border', '#fff'),
         pointBorderWidth: 2,
         pointRadius: 4,
         pointHoverRadius: 7
@@ -8755,7 +9315,7 @@ async function loadIstatPreview() {
     target.innerHTML = `
       <div class="reporting-metrics"><div class="reporting-metric"><strong>${totals.arrivals}</strong><span>прибытий</span></div><div class="reporting-metric"><strong>${totals.departures}</strong><span>отъездов</span></div><div class="reporting-metric"><strong>${totals.rooms}</strong><span>комнато-дней</span></div></div>
       <div class="reporting-istat-progress"><span><strong>${sentDays}</strong> дней отправлено</span>${updateDays ? `<span><strong>${updateDays}</strong> ${updateDays === 1 ? 'день нужно обновить' : 'дней нужно обновить'}</span>` : ''}<span><strong>${pendingDays}</strong> дней ожидают отправки</span></div>
-      ${preview.errors.length ? `<ul class="reporting-errors">${preview.errors.map(error => `<li>${escapeHtml(error)}</li>`).join('')}</ul>` : '<div class="reporting-alert" style="margin-top:10px;border-color:#a7f3d0;background:#ecfdf5;color:#047857">Месячная таблица готова к отправке.</div>'}
+      ${preview.errors.length ? `<ul class="reporting-errors">${preview.errors.map(error => `<li>${escapeHtml(error)}</li>`).join('')}</ul>` : '<div class="reporting-alert success" style="margin-top:10px">Месячная таблица готова к отправке.</div>'}
       <div class="reporting-istat-note">Это черновик из ежедневных импортов. Нулевые дни тоже входят в отчёт.</div>
       <div class="reporting-istat-table-wrap"><table class="reporting-istat-table"><thead><tr><th>Дата</th><th>Прибыло</th><th>Осталось</th><th>Уехало</th><th>Комнат</th><th>Состояние</th></tr></thead><tbody>${dayRows}</tbody></table></div>
       <div class="reporting-actions"><button class="btn btn-primary" type="button" onclick="sendIstatMonth()" ${preview.ready && reportingState.externalSendEnabled ? '' : 'disabled'}>${latest && latest >= `${preview.month}-01` ? 'Обновить ISTAT' : 'Отправить месяц'}</button></div>`;
