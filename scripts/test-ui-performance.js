@@ -1320,6 +1320,9 @@ async function inspectDarkThemeRoutes(browser, baseUrl) {
       themeColor: '#10111b',
       label: `${route.path} dark route`
     });
+    const darkAccent = await page.evaluate(() =>
+      getComputedStyle(document.documentElement).getPropertyValue('--accent').trim().toLowerCase());
+    assert.equal(darkAccent, '#834df9', `${route.path}: unexpected dark theme accent`);
     const visual = await readDarkVisualAudit(page, route.surfaces);
     assertDarkVisualAudit(visual, `${route.path} dark route`);
     if (route.tab === 'stats') {
