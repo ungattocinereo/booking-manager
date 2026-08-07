@@ -3194,10 +3194,9 @@
       --danger-border: #f3b7c3;
       --info-light: #eef5ff;
       --info-border: #b8d2f4;
-      --theme-track: #f0eff7;
-      --theme-active: #ffffff;
-      --theme-active-text: #541cfb;
-      --theme-active-border: #7a5ec7;
+      --theme-track: #e9e8f0;
+      --theme-active: #6d2cfc;
+      --theme-active-text: #ffffff;
       --chart-text: #686b7d;
       --chart-grid: #e8e9f0;
       --chart-tooltip: #171827;
@@ -3259,9 +3258,8 @@
       --info-light: #192f4a;
       --info-border: #385f8a;
       --theme-track: #11121d;
-      --theme-active: #30264d;
-      --theme-active-text: #d2c1ff;
-      --theme-active-border: #9d86dc;
+      --theme-active: #a985ff;
+      --theme-active-text: #171125;
       --chart-text: #b8b7ca;
       --chart-grid: #303247;
       --chart-tooltip: #080913;
@@ -3287,22 +3285,45 @@
     }
     .theme-switcher {
       flex: 0 0 auto;
-      display: inline-flex;
+      position: relative;
+      isolation: isolate;
+      display: inline-grid;
+      grid-template-columns: repeat(3, 44px);
       align-items: center;
-      gap: 2px;
-      padding: 3px;
-      border: 1px solid var(--control-border);
+      gap: 0;
+      padding: 2px;
+      border: 0;
       border-radius: 999px;
       background: var(--theme-track);
     }
+    .theme-switcher::before {
+      content: '';
+      position: absolute;
+      z-index: 0;
+      top: 2px;
+      bottom: 2px;
+      left: 2px;
+      width: 44px;
+      border-radius: 999px;
+      background: var(--theme-active);
+      box-shadow: none;
+      transform: translateX(0);
+      transition: transform .16s cubic-bezier(.2,.8,.2,1);
+      will-change: transform;
+    }
+    html[data-theme-preference="light"] .theme-switcher::before { transform: translateX(100%); }
+    html[data-theme-preference="dark"] .theme-switcher::before { transform: translateX(200%); }
     .theme-option {
       position: relative;
-      min-height: 34px;
+      z-index: 1;
+      width: 44px;
+      min-width: 44px;
+      min-height: 44px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 6px;
-      padding: 0 10px;
+      gap: 0;
+      padding: 0;
       border: 0;
       border-radius: 999px;
       background: transparent;
@@ -3311,28 +3332,30 @@
       font-size: 11px;
       font-weight: 650;
       cursor: pointer;
-      transition: background .15s ease, color .15s ease;
+      transition: color .18s ease, opacity .18s ease;
     }
-    .theme-option:hover { color: var(--text); }
+    .theme-option:hover { color: var(--text); opacity: .86; }
     .theme-option.active {
-      background: var(--theme-active);
+      background: transparent;
       color: var(--theme-active-text);
-      box-shadow: inset 0 0 0 1px var(--theme-active-border);
+      font-weight: 750;
+      box-shadow: none;
+      opacity: 1;
     }
-    .theme-option-check {
-      position: absolute;
-      top: 2px;
-      right: 4px;
-      display: none;
-      font-size: 8px;
-      font-weight: 900;
-      line-height: 1;
-    }
-    .theme-option.active .theme-option-check { display: block; }
     .theme-option:focus-visible { outline-color: var(--focus-ring) !important; }
     .theme-option svg { width: 14px; height: 14px; flex: 0 0 14px; }
     .theme-option-fallback { width: 14px; font-size: 16px; line-height: 1; text-align: center; }
     .theme-option svg + .theme-option-fallback { display: none; }
+    .theme-option-label { display: none; }
+    @media (prefers-reduced-motion: reduce) {
+      .theme-switcher::before, .theme-option { transition: none !important; }
+    }
+    @media (forced-colors: active) {
+      .theme-switcher { background: Canvas; }
+      .theme-switcher::before { background: Highlight; }
+      .theme-option { color: CanvasText; }
+      .theme-option.active { color: HighlightText; }
+    }
     button, input, select, textarea { font-family: inherit; }
     button:focus-visible, a:focus-visible, summary:focus-visible,
     input:focus-visible, select:focus-visible, textarea:focus-visible,
@@ -4415,13 +4438,7 @@
 
     html[data-color-scheme="dark"] .toast { background: #eee9ff; color: #1a1726; }
 
-    @media (max-width: 1180px) {
-      .theme-option-label { display: none; }
-      .theme-option { width: 44px; min-height: 44px; padding: 0; }
-    }
     @media (max-width: 768px) {
-      .theme-switcher { gap: 1px; padding: 2px; }
-      .theme-option { width: 44px; min-height: 44px; }
       html[data-color-scheme="dark"] .orbit-topbar { background: rgba(25,26,39,.96); }
       html[data-color-scheme="dark"] .nav { background: rgba(25,26,39,.96); box-shadow: 0 -14px 30px rgba(0,0,0,.28); }
       html[data-color-scheme="dark"] .nav-item.active { background: var(--accent-light); color: var(--accent); }
@@ -4433,7 +4450,6 @@
       .header h1 span { display: none; }
       .header-actions { gap: 6px; }
       .header h1 { display: none; }
-      .theme-option { width: 44px; }
       #syncBtn { width: 44px; min-width: 44px; min-height: 44px; }
     }
   </style>
@@ -4452,13 +4468,13 @@
     <div class="header-actions">
       <div class="theme-switcher" role="group" aria-label="Цветовая тема">
         <button class="theme-option" type="button" data-theme-option="system" aria-label="Системная тема" title="Системная тема" aria-pressed="false">
-          <i data-lucide="monitor"></i><span class="theme-option-fallback" aria-hidden="true">◫</span><span class="theme-option-label">Системное</span><span class="theme-option-check" aria-hidden="true">✓</span>
+          <i data-lucide="monitor"></i><span class="theme-option-fallback" aria-hidden="true">◫</span><span class="theme-option-label">Системное</span>
         </button>
         <button class="theme-option" type="button" data-theme-option="light" aria-label="Светлая тема" title="Светлая тема" aria-pressed="false">
-          <i data-lucide="sun"></i><span class="theme-option-fallback" aria-hidden="true">☼</span><span class="theme-option-label">День</span><span class="theme-option-check" aria-hidden="true">✓</span>
+          <i data-lucide="sun"></i><span class="theme-option-fallback" aria-hidden="true">☼</span><span class="theme-option-label">День</span>
         </button>
         <button class="theme-option" type="button" data-theme-option="dark" aria-label="Тёмная тема" title="Тёмная тема" aria-pressed="false">
-          <i data-lucide="moon"></i><span class="theme-option-fallback" aria-hidden="true">☾</span><span class="theme-option-label">Ночь</span><span class="theme-option-check" aria-hidden="true">✓</span>
+          <i data-lucide="moon"></i><span class="theme-option-fallback" aria-hidden="true">☾</span><span class="theme-option-label">Ночь</span>
         </button>
       </div>
       <span class="last-sync" id="lastSync"></span>

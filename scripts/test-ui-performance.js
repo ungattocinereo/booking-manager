@@ -1071,6 +1071,7 @@ function assertDarkVisualAudit(audit, label) {
 
 async function readNarrowThemeControlAudit(page, shellSelector) {
   return page.evaluate(selector => {
+    const switcher = document.querySelector('.theme-switcher');
     const controls = Array.from(document.querySelectorAll('[data-theme-option]')).map(control => {
       const rect = control.getBoundingClientRect();
       return {
@@ -1081,11 +1082,33 @@ async function readNarrowThemeControlAudit(page, shellSelector) {
         right: rect.right
       };
     });
+    const activeControl = document.querySelector('[data-theme-option][aria-pressed="true"]');
+    const switcherRect = switcher?.getBoundingClientRect() || null;
+    const activeRect = activeControl?.getBoundingClientRect() || null;
+    const switcherStyle = switcher ? getComputedStyle(switcher) : null;
+    const thumbStyle = switcher ? getComputedStyle(switcher, '::before') : null;
+    const thumbMatrix = thumbStyle?.transform && thumbStyle.transform !== 'none'
+      ? new DOMMatrixReadOnly(thumbStyle.transform)
+      : { m41: 0 };
+    const thumbLeft = thumbStyle ? Number.parseFloat(thumbStyle.left) + thumbMatrix.m41 : null;
+    const activeLeft = switcherRect && activeRect ? activeRect.left - switcherRect.left : null;
+    const thumbWidth = thumbStyle ? Number.parseFloat(thumbStyle.width) : null;
     const shellRect = document.querySelector(selector)?.getBoundingClientRect() || null;
-    const selectedCheck = document.querySelector('[data-theme-option][aria-pressed="true"] .theme-option-check');
     return {
       controls,
-      selectedCheckVisible: Boolean(selectedCheck && getComputedStyle(selectedCheck).display !== 'none'),
+      activeOption: activeControl?.dataset.themeOption || null,
+      switcher: switcherRect && switcherStyle ? {
+        width: switcherRect.width,
+        height: switcherRect.height,
+        borderWidth: Number.parseFloat(switcherStyle.borderTopWidth)
+      } : null,
+      thumb: thumbStyle && activeRect ? {
+        width: thumbWidth,
+        height: Number.parseFloat(thumbStyle.height),
+        backgroundColor: thumbStyle.backgroundColor,
+        transitionDuration: thumbStyle.transitionDuration,
+        aligned: Math.abs(thumbLeft - activeLeft) <= 1 && Math.abs(thumbWidth - activeRect.width) <= 1
+      } : null,
       shell: shellRect ? { left: shellRect.left, right: shellRect.right, width: shellRect.width } : null,
       viewportWidth: innerWidth,
       overflow: {
@@ -1103,7 +1126,13 @@ function assertNarrowThemeControlAudit(audit, label) {
     assert.ok(control.height >= 44, `${label}: ${control.option} target is only ${control.height}px high`);
     assert.ok(control.left >= -1 && control.right <= audit.viewportWidth + 1, `${label}: ${control.option} target is clipped`);
   }
-  assert.equal(audit.selectedCheckVisible, true, `${label}: selected theme lacks a non-color check indicator`);
+  assert.ok(audit.switcher, `${label}: theme rail is missing`);
+  assert.equal(audit.switcher.borderWidth, 0, `${label}: theme rail still has a decorative outline`);
+  assert.ok(audit.thumb, `${label}: moving theme thumb is missing`);
+  assert.equal(audit.thumb.aligned, true, `${label}: theme thumb is not aligned with ${audit.activeOption}`);
+  assert.ok(audit.thumb.width >= 44 && audit.thumb.height >= 44, `${label}: theme thumb is smaller than its target`);
+  assert.notEqual(audit.thumb.backgroundColor, 'rgba(0, 0, 0, 0)', `${label}: theme thumb is invisible`);
+  assert.notEqual(audit.thumb.transitionDuration, '0s', `${label}: theme thumb has no motion`);
   assert.ok(audit.shell, `${label}: header shell is missing`);
   assert.ok(audit.shell.left >= -1 && audit.shell.right <= audit.viewportWidth + 1, `${label}: header shell is clipped`);
   assert.ok(audit.overflow.document <= 1, `${label}: document overflows horizontally by ${audit.overflow.document}px`);
@@ -1127,20 +1156,32 @@ async function inspectNarrowThemeControls(browser, baseUrl) {
     getComputedStyle(document.getElementById('calendarTab')).display !== 'none'
   );
   await page.waitForSelector('.mobile-agenda-card');
-  const admin = await readNarrowThemeControlAudit(page, '.orbit-topbar');
-  assertNarrowThemeControlAudit(admin, '320px admin theme switcher');
+  const adminSystem = await readNarrowThemeControlAudit(page, '.orbit-topbar');
+  assertNarrowThemeControlAudit(adminSystem, '320px admin system theme switcher');
+  assert.equal(adminSystem.activeOption, 'system');
+  await page.locator('[data-theme-option="dark"]').click();
+  await page.waitForFunction(() => document.documentElement.dataset.themePreference === 'dark');
+  await page.waitForTimeout(220);
+  const adminDark = await readNarrowThemeControlAudit(page, '.orbit-topbar');
+  assertNarrowThemeControlAudit(adminDark, '320px admin dark theme switcher');
+  assert.equal(adminDark.activeOption, 'dark');
   await captureUiScreenshot(page, 'theme-dark-narrow-admin');
 
   await page.goto(new URL('/maid/test-cleaner', baseUrl).href, { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('.header .theme-switcher');
   const maid = await readNarrowThemeControlAudit(page, '.header');
   assertNarrowThemeControlAudit(maid, '320px maid theme switcher');
+  assert.equal(maid.activeOption, 'dark');
   await captureUiScreenshot(page, 'theme-dark-narrow-maid');
+
+  await page.emulateMedia({ colorScheme: 'dark', reducedMotion: 'reduce' });
+  const reducedMotion = await readNarrowThemeControlAudit(page, '.header');
+  assert.equal(reducedMotion.thumb.transitionDuration, '0s', 'reduced motion did not disable the theme thumb animation');
 
   assert.deepEqual(errors.pageErrors, []);
   assert.deepEqual(errors.consoleErrors, []);
   await context.close();
-  return { admin, maid };
+  return { adminSystem, adminDark, maid, reducedMotionDuration: reducedMotion.thumb.transitionDuration };
 }
 
 async function inspectThemePreferences(browser, baseUrl) {
