@@ -1,6 +1,17 @@
 # 📝 Changelog
 
-## [Unreleased] - 2026-05-30
+## [Unreleased]
+
+Changes after the Design 2.0 baseline are recorded here.
+
+## [Design 2.0 Baseline] - 2026-08-07
+
+### 🧭 Статус версии
+
+- Текущая версия интерфейса и продукта закреплена как **Design 2.0 / Orbit**; каноническая ветка для production и всей дальнейшей разработки — `main`.
+- Точная рабочая версия до документационного закрепления сохранена аннотированным тегом `rollback/design-2.0-live-2026-08-07` на commit `25665231b112bf8c280c25f3a9a60f1267a701c3`.
+- Название Design 2.0 описывает поколение интерфейса и не переиспользует исторический semver-релиз `[2.0.0] Docker Edition`.
+- Новые изменения создаются только от актуального `main`, проходят pull request и CI, после merge временная ветка удаляется.
 
 ### ✨ Новое
 
@@ -15,7 +26,7 @@
 - Dashboard получил метаданные полноты/диапазона, Rome-date используется в основном и maid-интерфейсах, а переход уборочного календаря через Новый год покрыт browser-тестом.
 - Синхронизация Express/Vercel объединена в общий сервис с блокировкой параллельного запуска и явным отчётом о частично упавших фидах.
 - Назначения уборщиц и удаление связанных данных стали транзакционными; Postgres DDL вынесен в `npm run migrate:postgres`.
-- `npm test` больше не запускает реальные внешние календари; добавлены unit, lifecycle и `npm run test:ui`, зависимости обновлены до состояния `npm audit` без уязвимостей.
+- `npm test` больше не запускает реальные внешние календари; добавлены unit, lifecycle и `npm run test:ui`. На момент закрепления baseline в production-зависимостях нет high/critical advisory; остаётся одна moderate транзитивная advisory `undici` через `sqlite3`/`node-gyp`.
 - Закреплена рабочая версия на GitHub tag `working-2026-07-02-booking-manager`.
 - Добавлены `npm run backup:data` и `npm run audit:data` для read-only backup/audit Vercel Postgres.
 - Синхронизация календарей больше не удаляет stale future bookings физически: строки мягко архивируются через `active = false` и `missing_since`, чтобы прошлые и будущие брони оставались в production DB.

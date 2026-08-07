@@ -4,11 +4,13 @@ Booking and cleaning calendar for vacation rental properties in Atrani, Italy. S
 
 **Live:** [b.amalfi.day](https://b.amalfi.day)
 
+**Current baseline:** **Design 2.0 / Orbit** on `main`. This is the only starting point for new product work; see [BASELINE.md](BASELINE.md) and [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ---
 
 ## Features
 
-- **Calendar sync** — iCal sync from Airbnb + Booking.com every 30 minutes via GitHub Actions, with a daily Vercel fallback (14 feeds, 10 properties)
+- **Calendar sync** — iCal sync from Airbnb + Booking.com every 30 minutes via GitHub Actions, with a daily Vercel fallback (15 feeds, 11 properties)
 - **Gantt timeline** — visual booking calendar with color-coded platforms, guest names, country flags
 - **Cleaning management** — auto-generated cleaning tasks on checkout dates, cleaner assignment
 - **Maid calendar** — mobile-first Italian-language page for each cleaner at `/maid/:slug`
@@ -27,10 +29,11 @@ Booking and cleaning calendar for vacation rental properties in Atrani, Italy. S
 | Youth Room | Airbnb + Booking.com | Dragone |
 | Central Room | Booking.com | Dragone |
 | Awesome Apartments | Airbnb | Dragone |
-| Carina | Airbnb | Salvatore / Margarita |
-| Harmony | Airbnb | Salvatore / Margarita |
-| Royal | Airbnb | Salvatore / Margarita |
+| Carina | Airbnb | Dipino |
+| Harmony | Airbnb | Dipino |
+| Royal | Airbnb | Dipino |
 | Villa Susy | Booking.com | Susy |
+| Carmela | Airbnb | Oliva |
 
 ## Architecture
 
@@ -75,7 +78,16 @@ Booking and cleaning calendar for vacation rental properties in Atrani, Italy. S
 | `/stats` | Statistics — season charts and analytics | Russian |
 | `/maid` | Cleaning management — cleaner assignments, slug links | Russian |
 | `/maid/:slug` | Maid calendar — check-ins/check-outs for specific cleaner | Italian |
+| `/tax` | Tourist-tax workspace | Russian |
 | `/reporting` | Guest registration and Alloggiati/ISTAT reporting | Russian |
+
+## Canonical baseline and development
+
+The current product generation is **Design 2.0 / Orbit**. `main` is the canonical and production branch. Do not develop from historical `design2.0` branches: they predate the version currently running in production.
+
+Every change starts from an up-to-date `main`, uses a short-lived topic branch, and returns through a pull request whose CI checks pass. The only branch permitted to remain long-lived besides `main` is `monitor/nuove-prenotazioni`, an operational data/GitHub Pages branch that is not a product-development base and is excluded from Vercel deployments.
+
+The immutable rollback point for the exact application version promoted as this baseline is `rollback/design-2.0-live-2026-08-07` (`25665231b112bf8c280c25f3a9a60f1267a701c3`). It restores code only; database backups and migrations are handled separately. Full release and rollback rules are in [BASELINE.md](BASELINE.md).
 
 ## Access Control
 
@@ -240,7 +252,7 @@ booking-manager/
 
 ## Database
 
-5 tables: `properties`, `bookings`, `cleaners`, `cleaner_properties`, `cleaning_tasks`.
+15 tables cover properties, bookings, cleaning, statistics/sync history, guest reporting, Alloggiati receipts, and ISTAT submissions. SQLite and Postgres schemas are kept in `backend/database/schema.sql` and `backend/database/schema-postgres.sql`.
 
 Auto-detects database engine at runtime: Postgres if `POSTGRES_URL`/`DATABASE_URL` is set, SQLite otherwise.
 
@@ -249,7 +261,7 @@ Auto-detects database engine at runtime: Postgres if `POSTGRES_URL`/`DATABASE_UR
 | Layer | Technology |
 |-------|-----------|
 | Backend | Express.js, Node.js |
-| Frontend | Vanilla JS, Chart.js, Lucide icons, Inter font |
+| Frontend | Vanilla JS, Chart.js, Lucide icons, Golos Text, Unbounded, IBM Plex Mono |
 | Database | SQLite (local) / PostgreSQL (Vercel) |
 | Deployment | Vercel (serverless, cron, rewrites) |
 | Bot | node-telegram-bot-api, axios |
