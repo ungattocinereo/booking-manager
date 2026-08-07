@@ -8,6 +8,17 @@ Atrani Booking Manager — a booking and cleaning calendar management system for
 
 UI language is Russian.
 
+## Canonical baseline and branch policy
+
+- The current product/UI generation is **Design 2.0 / Orbit**.
+- `main` is the only canonical product and production branch. Start every task from an up-to-date `origin/main`; never use a historical branch whose name contains `design2.0` as a base.
+- Use a short-lived `codex/<topic>` branch, open a pull request to `main`, require the `ci / test` check, and delete the branch after merge.
+- `monitor/nuove-prenotazioni` is the only branch permitted to remain long-lived besides `main`. It is an operational data/GitHub Pages branch, is excluded from Vercel, and must not be merged into or used as a base for product work.
+- The immutable code rollback point for the baseline is `rollback/design-2.0-live-2026-08-07` at `25665231b112bf8c280c25f3a9a60f1267a701c3`. A code rollback does not roll back Postgres; review migrations, backups, and reporting encryption-key compatibility separately.
+- Design 2.0 is a design-generation name, not the historical package semver `[2.0.0] Docker Edition`.
+
+See `BASELINE.md` for the release boundary and `CONTRIBUTING.md` for the required workflow.
+
 ## Commands
 
 ```bash
@@ -44,7 +55,7 @@ Both paths share the database layer — `server.js` and each `api/*.js` file che
 - `backend/config/calendars.json` — property definitions with iCal URLs (local dev config)
 - `backend/database/` — SQL schemas (`schema.sql` for SQLite, `schema-postgres.sql` for Postgres)
 - `api/` — Vercel serverless functions. `api/cleaners/[id].js` for CRUD, `api/maid/[slug].js` for maid calendar. `_helpers.js` has shared date formatters.
-- `frontend/public/index.html` — dashboard (vanilla JS, Chart.js, Lucide icons, Inter font). Tabs: Calendar, Cleaners (/maid), Statistics (/stats)
+- `frontend/public/index.html` — Design 2.0 / Orbit dashboard (vanilla JS, Chart.js, Lucide icons, Golos Text/Unbounded/IBM Plex Mono). Routes: Calendar (`/`), Cleaners (`/maid`), Statistics (`/stats`), Tourist tax (`/tax`), Reporting (`/reporting`)
 - `frontend/public/maid.html` — mobile-first maid calendar in Italian, served at `/maid/:slug`
 - `telegram-bot/` — standalone Telegram bot (separate `package.json`, `node-telegram-bot-api`, communicates with the API over HTTP)
 - `scraper/` — one-off import scripts for Booking.com/Airbnb data (not part of the running app)
@@ -57,13 +68,13 @@ Both paths share the database layer — `server.js` and each `api/*.js` file che
 4. Frontend fetches `/api/bookings` and renders a Gantt-style timeline
 5. Telegram bot queries the same API and formats results in Russian for the family group chat
 
-### Database schema (5 tables)
+### Database schema (15 tables)
 
-- `properties` — rental units (id like "orange", "solo", "vingtage")
-- `bookings` — synced from iCal, keyed by (property_id, platform, start_date, end_date)
-- `cleaners` — cleaning staff
-- `cleaner_properties` — many-to-many assignments
-- `cleaning_tasks` — auto-generated from checkout dates, with status tracking
+- Core inventory: `properties`, `bookings`
+- Cleaning: `cleaners`, `cleaner_properties`, `cleaning_tasks`
+- Operations and analytics: `booking_stats_snapshots`, `sync_runs`
+- Guest reporting: `reporting_units`, `guest_import_batches`, `guest_stays`, `guest_records`
+- Alloggiati and ISTAT: `alloggiati_submissions`, `alloggiati_receipts`, `istat_baseline_stays`, `istat_month_submissions`
 
 ### Properties
 
@@ -75,17 +86,17 @@ Each cleaner can have a unique `slug` for a public maid calendar at `/maid/:slug
 
 ### Cron
 
-Vercel cron runs `GET /api/sync` every hour. Secured by `CRON_SECRET` env var (Bearer token in Authorization header).
+GitHub Actions runs the production calendar sync every 30 minutes. Vercel runs the protected `GET /api/sync` fallback daily at 06:00 UTC and reporting maintenance at 06:30 UTC. The sync endpoint is secured by `CRON_SECRET` (Bearer token in the Authorization header).
 
 ### Frontend routing
 
-`/stats` and `/maid` are rewrites to `index.html`. Frontend JS reads `location.pathname` and switches tabs via `switchTab()`. `history.pushState` keeps URL in sync.
+`/stats`, `/maid`, `/tax`, and `/reporting` are rewrites to `index.html`. Frontend JS reads `location.pathname` and switches tabs via `switchTab()`. `history.pushState` keeps URL in sync. `/maid/:slug` is the separate public Italian maid page.
 
 ## Environment Variables
 
 Key vars (see `.env.example`):
 - `POSTGRES_URL` / `DATABASE_URL` — Postgres connection (presence triggers Postgres mode)
 - `ICAL_URLS` — JSON array of property calendar URLs (Vercel deployment)
-- `CRON_SECRET` — secret for hourly sync cron authentication
+- `CRON_SECRET` — secret for scheduled sync authentication
 - `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` — for the Telegram bot
 - `PORT` — Express port (default 3001)
