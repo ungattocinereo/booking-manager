@@ -3626,6 +3626,21 @@
       "rawSummary": "Reserved",
       "bookingType": "reservation",
       "detectedAt": "2026-08-08T13:52:13.468Z"
+    },
+    {
+      "eventType": "cancelled",
+      "bookingKey": "royal|airbnb|2026-09-18|2026-09-21",
+      "propertyId": "royal",
+      "platform": "airbnb",
+      "startDate": "2026-09-18",
+      "endDate": "2026-09-21",
+      "guestName": "Sandra Jarque",
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HMB2CME9RX",
+      "confirmationCode": "HMB2CME9RX",
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync_confirmed",
+      "bookingCreatedAt": "2026-04-16T11:19:00.646Z",
+      "detectedAt": "2026-08-08T23:37:21.762Z"
     }
   ],
   "imports": [
@@ -3691,13 +3706,5 @@
     }
   ],
   "bootstrappedAt": "2026-04-20T17:25:53.350Z",
-  "pendingCancellations": {
-    "royal|airbnb|2026-09-18|2026-09-21": {
-      "bookingKey": "royal|airbnb|2026-09-18|2026-09-21",
-      "propertyId": "royal",
-      "firstMissingAt": "2026-08-08T22:38:00.611Z",
-      "lastMissingAt": "2026-08-08T22:38:00.611Z",
-      "consecutiveSuccessfulMisses": 1
-    }
-  }
+  "pendingCancellations": {}
 }
