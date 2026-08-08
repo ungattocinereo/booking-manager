@@ -3058,14 +3058,42 @@
     .reporting-fold > summary::after { content:"⌄"; color:#94a3b8; font-size:16px; transition:transform .16s ease; }
     .reporting-fold[open] > summary::after { transform:rotate(180deg); }
     .reporting-fold-body { padding:0 16px 16px; border-top:1px solid var(--border); }
-    .reporting-history { display:grid; }
-    .reporting-history-row { display:grid; grid-template-columns:105px minmax(0,1fr) auto; gap:11px; align-items:center; width:100%; padding:11px 0; border:0; border-bottom:1px solid #f1f5f9; background:transparent; text-align:left; cursor:pointer; }
-    .reporting-history-row:last-child { border-bottom:0; }
-    .reporting-history-row time { color:var(--text-secondary); font-size:10px; font-variant-numeric:tabular-nums; }
-    .reporting-history-row strong { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:12px; }
-    .reporting-history-row small { display:block; margin-top:2px; color:var(--text-secondary); font-size:10px; }
-    .reporting-receipt { display:grid; place-items:center; color:#0f766e; padding:7px; border-radius:8px; }
+    .reporting-history-panel { display:flex; min-height:0; flex-direction:column; }
+    .reporting-history-head { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:16px; border-bottom:1px solid var(--border); }
+    .reporting-history-heading { min-width:0; }
+    .reporting-history-kicker { display:block; margin-bottom:3px; color:var(--report-teal); font-size:9px; font-weight:850; letter-spacing:.1em; text-transform:uppercase; }
+    .reporting-history-heading strong { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:14px; }
+    .reporting-history { display:flex; min-height:0; flex:1; flex-direction:column; gap:10px; padding:12px; border-top:0; }
+    .reporting-history-list { display:grid; gap:8px; }
+    .reporting-history-card { position:relative; display:grid; grid-template-columns:minmax(0,1fr) 42px; overflow:hidden; border:1px solid #e6e7ef; border-radius:15px; background:#fafafe; transition:border-color .18s ease,background .18s ease; }
+    .reporting-history-card:hover { border-color:#c5bfd9; background:#f8f6ff; }
+    .reporting-history-main { display:grid; grid-template-columns:62px minmax(0,1fr) auto; gap:12px; align-items:center; min-width:0; min-height:76px; padding:9px 11px; border:0; background:transparent; color:inherit; text-align:left; cursor:pointer; }
+    .reporting-history-date { display:grid; align-content:center; min-height:56px; padding-right:10px; border-right:1px solid var(--border); font-variant-numeric:tabular-nums; }
+    .reporting-history-date strong { font:700 24px/1 'Unbounded',sans-serif; letter-spacing:-.06em; }
+    .reporting-history-date span { margin-top:4px; color:var(--text-secondary); font-size:9px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; }
+    .reporting-history-date small { margin-top:2px; color:var(--text-secondary); font:600 9px/1.2 'IBM Plex Mono',monospace; }
+    .reporting-history-copy { min-width:0; }
+    .reporting-history-property { display:flex; align-items:center; gap:5px; overflow:hidden; color:var(--report-teal); font-size:9px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; white-space:nowrap; }
+    .reporting-history-property span { overflow:hidden; text-overflow:ellipsis; }
+    .reporting-history-origin { display:block; margin-top:4px; overflow:hidden; color:var(--text); font-size:12px; font-weight:800; line-height:1.3; text-overflow:ellipsis; white-space:nowrap; }
+    .reporting-history-meta { display:flex; align-items:center; gap:5px; margin-top:4px; overflow:hidden; color:var(--text-secondary); font-size:9px; white-space:nowrap; }
+    .reporting-history-meta span { overflow:hidden; text-overflow:ellipsis; }
+    .reporting-history-guests { display:grid; min-width:52px; place-items:end; align-content:center; }
+    .reporting-history-guests strong { color:var(--accent); font:700 22px/1 'IBM Plex Mono',monospace; }
+    .reporting-history-guests span { margin-top:3px; color:var(--text-secondary); font-size:9px; font-weight:750; }
+    .reporting-receipt { display:grid; place-items:center; border:0; border-left:1px solid var(--border); border-radius:0; background:transparent; color:#0f766e; text-decoration:none; }
     .reporting-receipt:hover { background:#f0fdfa; }
+    .reporting-receipt.unavailable { color:var(--text-secondary); opacity:.65; }
+    .reporting-history-more { display:flex; align-items:center; justify-content:center; gap:7px; width:100%; min-height:42px; margin-top:auto; border:1px solid var(--border); border-radius:13px; background:transparent; color:var(--text-secondary); font-size:11px; font-weight:800; cursor:pointer; transition:border-color .18s ease,color .18s ease,background .18s ease; }
+    .reporting-history-more:hover { border-color:var(--accent); background:var(--accent-light); color:var(--text); }
+    .reporting-history-dialog { width:min(880px,calc(100% - 32px)); max-height:min(760px,calc(100dvh - 32px)); margin:auto; padding:0; overflow:hidden; border:1px solid var(--border); border-radius:26px; background:var(--card); color:var(--text); box-shadow:0 28px 90px rgba(17,18,35,.28); }
+    .reporting-history-dialog::backdrop { background:rgba(23,24,39,.5); backdrop-filter:blur(7px); }
+    .reporting-history-dialog-shell { display:grid; grid-template-rows:auto minmax(0,1fr); max-height:min(760px,calc(100dvh - 32px)); }
+    .reporting-history-dialog-head { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:20px 22px 17px; border-bottom:1px solid var(--border); }
+    .reporting-history-dialog-head h3 { margin:3px 0 0; font:700 18px/1.25 'Unbounded',sans-serif; letter-spacing:-.04em; }
+    .reporting-history-dialog-close { display:grid; width:44px; height:44px; flex:none; place-items:center; border:1px solid var(--border); border-radius:50%; background:transparent; color:var(--text-secondary); font:400 24px/1 sans-serif; cursor:pointer; }
+    .reporting-history-dialog-close:hover { border-color:var(--accent); color:var(--text); }
+    .reporting-history-dialog-list { display:grid; gap:10px; min-height:0; padding:16px 18px 20px; overflow:auto; }
     .reporting-istat-editor { margin-top:14px; }
     .reporting-month { display:flex; gap:8px; align-items:center; }
     .reporting-month input { min-height:36px; border:1px solid var(--border); border-radius:9px; padding:6px 9px; }
@@ -3120,15 +3148,24 @@
     .reporting-istat-state.sent { border-color:#a7f3d0; background:#ecfdf5; color:#047857; }
     .reporting-istat-state.pending { border-color:#fed7aa; background:#fff7ed; color:#b45309; }
     .reporting-istat-state.update { border-color:#fcd34d; background:#fffbeb; color:#a16207; }
-    .reporting-file button:focus-visible,.reporting-fold summary:focus-visible,.reporting-unit:focus-visible,.reporting-dropzone:focus-within { outline:3px solid var(--focus-ring); outline-offset:2px; }
-    @media (prefers-reduced-motion:reduce) { .reporting-dropzone,.reporting-fold > summary::after { transition:none; } }
+    .reporting-file button:focus-visible,.reporting-fold summary:focus-visible,.reporting-unit:focus-visible,.reporting-dropzone:focus-within,.reporting-history-main:focus-visible,.reporting-history-more:focus-visible,.reporting-history-dialog-close:focus-visible,.reporting-receipt:focus-visible { outline:3px solid var(--focus-ring); outline-offset:2px; }
+    .reporting-history-main:focus-visible { outline-offset:-4px; }
+    @media (prefers-reduced-motion:reduce) { .reporting-dropzone,.reporting-fold > summary::after,.reporting-history-card,.reporting-history-more { transition:none; } }
     @media (max-width:600px) {
       .reporting-section { padding:16px 12px 40px; }
       .reporting-form-grid { grid-template-columns:1fr; }
       .reporting-card { padding:14px; }
       .reporting-flow-step { gap:5px; font-size:10px; }
       .reporting-flow-step:not(:last-child)::after { left:23px; }
-      .reporting-history-row { grid-template-columns:82px minmax(0,1fr) auto; gap:8px; }
+      .reporting-history { padding:10px; }
+      .reporting-history-card { grid-template-columns:1fr; }
+      .reporting-history-main { grid-template-columns:54px minmax(0,1fr); gap:10px; min-height:92px; padding:10px 48px 10px 10px; }
+      .reporting-history-date { min-height:64px; }
+      .reporting-history-guests { grid-column:2; grid-row:2; display:flex; align-items:baseline; justify-content:flex-start; gap:5px; min-width:0; }
+      .reporting-history-guests strong { font-size:19px; }
+      .reporting-history-guests span { margin-top:0; }
+      .reporting-receipt { position:absolute; top:8px; right:8px; width:36px; height:36px; border:0; border-radius:10px; }
+      .reporting-history-origin { white-space:normal; }
       .reporting-record { grid-template-columns:1fr; border-top:1px solid var(--border); padding-top:7px; }
       .reporting-metrics { grid-template-columns:1fr; }
       .reporting-card-head { align-items:flex-start; }
@@ -4394,9 +4431,14 @@
     html[data-color-scheme="dark"] .reporting-guest-row { background: var(--surface-muted); }
     html[data-color-scheme="dark"] .reporting-origin-hint.manual { color: var(--warning); }
     html[data-color-scheme="dark"] .reporting-errors { color: var(--danger); }
-    html[data-color-scheme="dark"] .reporting-history-row { border-color: var(--border); }
+    html[data-color-scheme="dark"] .reporting-history-card { border-color: var(--border); background: var(--surface-muted); }
+    html[data-color-scheme="dark"] .reporting-history-card:hover { border-color: #55576d; background: var(--surface-subtle); }
+    html[data-color-scheme="dark"] .reporting-history-date { border-color: var(--border); }
+    html[data-color-scheme="dark"] .reporting-history-dialog { background: var(--card); }
+    html[data-color-scheme="dark"] .reporting-history-dialog::backdrop { background: rgba(4,4,10,.72); }
     html[data-color-scheme="dark"] .reporting-receipt { color: var(--accent); }
-    html[data-color-scheme="dark"] .reporting-receipt:hover { background: var(--accent-light); }
+    html[data-color-scheme="dark"] .reporting-receipt:hover,
+    html[data-color-scheme="dark"] .reporting-history-more:hover { background: var(--accent-light); }
     html[data-color-scheme="dark"] .reporting-istat-header { border-color: var(--info-border); }
     html[data-color-scheme="dark"] .reporting-istat-header h3,
     html[data-color-scheme="dark"] .reporting-istat-day,
@@ -4848,10 +4890,16 @@
         <div id="reportingBatchDetail"></div>
         <div id="reportingBatchList"></div>
         </section>
-        <details class="reporting-fold" id="reportingHistoryFold">
-          <summary><span id="reportingHistoryTitle">Последние отправки</span><span class="reporting-status" id="reportingHistoryCount">0</span></summary>
-          <div class="reporting-fold-body reporting-history" id="reportingHistory"></div>
-        </details>
+        <section class="reporting-fold reporting-history-panel" id="reportingHistoryFold" aria-labelledby="reportingHistoryTitle">
+          <header class="reporting-history-head">
+            <span class="reporting-history-heading"><span class="reporting-history-kicker">Alloggiati Web · архив</span><strong id="reportingHistoryTitle">Последние отправки</strong></span>
+            <span class="reporting-status" id="reportingHistoryCount">0</span>
+          </header>
+          <div class="reporting-fold-body reporting-history">
+            <div class="reporting-history-list" id="reportingHistory"></div>
+            <button class="reporting-history-more" id="reportingHistoryMore" type="button" onclick="openReportingHistoryArchive()" aria-controls="reportingHistory reportingHistoryDialog" aria-expanded="false" hidden></button>
+          </div>
+        </section>
       </div>
       <section class="reporting-istat-area" aria-label="Ежемесячный отчёт ISTAT">
         <div class="reporting-istat-reminder" id="reportingIstatDeadline" role="status" aria-live="polite">
@@ -4876,6 +4924,15 @@
       </section>
     </div>
     <datalist id="reportingOriginCodes"></datalist>
+    <dialog class="reporting-history-dialog" id="reportingHistoryDialog" aria-labelledby="reportingHistoryDialogTitle" onclick="handleReportingHistoryDialogClick(event)" onclose="syncReportingHistoryDialogState()">
+      <div class="reporting-history-dialog-shell">
+        <header class="reporting-history-dialog-head">
+          <div><span class="reporting-history-kicker">Alloggiati Web · полный архив</span><h3 id="reportingHistoryDialogTitle">История отправок</h3></div>
+          <button class="reporting-history-dialog-close" type="button" onclick="closeReportingHistoryDialog()" aria-label="Закрыть архив"><span aria-hidden="true">×</span></button>
+        </header>
+        <div class="reporting-history-dialog-list" id="reportingHistoryArchive"></div>
+      </div>
+    </dialog>
   </div>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -4914,7 +4971,7 @@ let statsCurrentBookingKeysPromise = null;
 let allAssignments = {};
 let allTaxBookings = [];
 let taxFocusTodayOnNextRender = false;
-let reportingState = { loaded: false, externalSendEnabled: false, units: [], unitId: null, batches: [], history: [], batch: null, istatPreview: null, istatStatus: null, uploadError: null, actionInFlight: false, loadSeq: 0, batchLoadSeq: 0, actionSeq: 0, istatLoadSeq: 0 };
+let reportingState = { loaded: false, externalSendEnabled: false, units: [], unitId: null, batches: [], history: [], historyExpanded: false, batch: null, istatPreview: null, istatStatus: null, uploadError: null, actionInFlight: false, loadSeq: 0, batchLoadSeq: 0, actionSeq: 0, istatLoadSeq: 0 };
 
 const DASHBOARD_CACHE_KEY = 'atrani-dashboard-cache-v1';
 const DASHBOARD_VISIBLE_REFRESH_MIN_MS = 30 * 1000;
@@ -8840,8 +8897,9 @@ async function selectReportingUnit(unitId) {
   reportingState.istatStatus = null;
   reportingState.uploadError = null;
   reportingState.history = [];
+  reportingState.historyExpanded = false;
   reportingState.actionInFlight = false;
-  document.getElementById('reportingHistoryFold').open = false;
+  closeReportingHistoryDialog();
   document.getElementById('reportingIstatFold').open = false;
   renderReportingUnits();
   document.getElementById('reportingOriginCodes').innerHTML = '';
@@ -8862,7 +8920,7 @@ async function loadReportingBatches() {
     const unitId = encodeURIComponent(reportingState.unitId);
     const [batches, history] = await Promise.all([
       reportingFetch(`${API}/reporting/imports?unit_id=${unitId}&view=open&limit=100`),
-      reportingFetch(`${API}/reporting/imports?unit_id=${unitId}&view=sent&limit=5`)
+      reportingFetch(`${API}/reporting/imports?unit_id=${unitId}&view=sent&limit=200`)
     ]);
     if (loadSeq !== reportingState.loadSeq || requestedUnitId !== reportingState.unitId) return;
     reportingState.batches = batches;
@@ -8917,24 +8975,121 @@ function formatReportingDateTime(value) {
   }).format(date);
 }
 
+const REPORTING_HISTORY_PREVIEW_LIMIT = 5;
+
+function reportingHistoryDateParts(value) {
+  const date = new Date(value);
+  if (!value || Number.isNaN(date.getTime())) return { day:'—', month:'дата', year:'', time:'—' };
+  const parts = new Intl.DateTimeFormat('ru-RU', {
+    day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit', timeZone:'Europe/Rome'
+  }).formatToParts(date).reduce((result, part) => ({ ...result, [part.type]:part.value }), {});
+  return {
+    day: parts.day || '—',
+    month: String(parts.month || '').replace('.', ''),
+    year: parts.year || '',
+    time: `${parts.hour || '—'}:${parts.minute || '—'}`
+  };
+}
+
+function reportingStayWord(count) {
+  const value = Math.abs(Number(count)) % 100;
+  const last = value % 10;
+  if (value > 10 && value < 20) return 'проживаний';
+  if (last === 1) return 'проживание';
+  if (last >= 2 && last <= 4) return 'проживания';
+  return 'проживаний';
+}
+
+function reportingHistoryPropertyLabel(batch) {
+  const propertiesSummary = Array.isArray(batch.property_summary) ? batch.property_summary : [];
+  if (!propertiesSummary.length) return currentReportingUnit()?.name || 'Апартамент';
+  const names = propertiesSummary.map(item => propertyMeta(item.property_id).name);
+  return names.length > 2 ? `${names.slice(0, 2).join(' · ')} · +${names.length - 2}` : names.join(' · ');
+}
+
+function reportingHistoryOriginLabel(batch) {
+  const origins = Array.isArray(batch.origin_summary) ? batch.origin_summary : [];
+  if (!origins.length) return 'Происхождение не указано';
+  const visible = origins.slice(0, 2).map(item => `${item.label || item.code || 'Не указано'} · ${Number(item.guest_count) || 0}`);
+  return origins.length > 2 ? `${visible.join(', ')} · +${origins.length - 2}` : visible.join(', ');
+}
+
+function reportingHistoryCardHtml(batch) {
+  const sentAt = batch.alloggiati_sent_at || '';
+  const date = reportingHistoryDateParts(sentAt);
+  const guests = Number(batch.record_count) || 0;
+  const stays = Number(batch.stay_count) || 0;
+  const label = `${formatReportingDateTime(sentAt)}, ${guests} ${reportingGuestWord(guests)}`;
+  const receipt = batch.receipt_received_at && sentAt
+    ? `<a class="reporting-receipt" aria-label="Скачать квитанцию за ${escapeHtml(formatReportingDateTime(sentAt))}" title="Скачать квитанцию" href="${API}/reporting/alloggiati?unit_id=${encodeURIComponent(batch.reporting_unit_id)}&date=${encodeURIComponent(String(sentAt).slice(0,10))}" target="_blank" rel="noopener" onclick="event.stopPropagation()"><i data-lucide="file-check-2" style="width:16px;height:16px"></i></a>`
+    : '<span class="reporting-receipt unavailable" title="Отправлено без квитанции" aria-hidden="true"><i data-lucide="circle-check" style="width:16px;height:16px"></i></span>';
+  return `<article class="reporting-history-card">
+    <button class="reporting-history-main" type="button" onclick="openReportingHistoryBatch(${Number(batch.id)})" aria-label="Открыть отправку: ${escapeHtml(label)}">
+      <time class="reporting-history-date" datetime="${escapeHtml(sentAt)}"><strong>${escapeHtml(date.day)}</strong><span>${escapeHtml(`${date.month} ${date.year}`.trim())}</span><small>${escapeHtml(date.time)}</small></time>
+      <span class="reporting-history-copy"><span class="reporting-history-property"><i data-lucide="building-2" style="width:11px;height:11px;flex:none"></i><span>${escapeHtml(reportingHistoryPropertyLabel(batch))}</span></span><span class="reporting-history-origin">${escapeHtml(reportingHistoryOriginLabel(batch))}</span><span class="reporting-history-meta"><i data-lucide="calendar-range" style="width:11px;height:11px;flex:none"></i><span>${escapeHtml(reportingDateRange(batch))} · ${stays} ${reportingStayWord(stays)} · ${escapeHtml(batch.filename || 'TXT')}</span></span></span>
+      <span class="reporting-history-guests"><strong>${guests}</strong><span>${reportingGuestWord(guests)}</span></span>
+    </button>
+    ${receipt}
+  </article>`;
+}
+
 function renderReportingHistory() {
   const target = document.getElementById('reportingHistory');
-  document.getElementById('reportingHistoryCount').textContent = reportingState.history.length;
-  if (!reportingState.history.length) {
+  const more = document.getElementById('reportingHistoryMore');
+  const total = reportingState.history.length;
+  document.getElementById('reportingHistoryCount').textContent = total;
+  if (!total) {
     target.innerHTML = `<div class="reporting-detail-empty" style="padding:22px 8px 8px">Для ${escapeHtml(currentReportingUnit()?.name || 'этого апартамента')} отправок пока нет.</div>`;
+    more.hidden = true;
+    more.setAttribute('aria-expanded', 'false');
     return;
   }
-  target.innerHTML = reportingState.history.map(batch => {
-    const receipt = batch.receipt_received_at && batch.alloggiati_sent_at
-      ? `<a class="reporting-receipt" aria-label="Скачать квитанцию" title="Квитанция" href="${API}/reporting/alloggiati?unit_id=${encodeURIComponent(batch.reporting_unit_id)}&date=${encodeURIComponent(String(batch.alloggiati_sent_at).slice(0,10))}" target="_blank" onclick="event.stopPropagation()"><i data-lucide="file-check-2" style="width:15px;height:15px"></i></a>`
-      : '<span></span>';
-    return `<div class="reporting-history-row" role="button" tabindex="0" onclick="openReportingBatch(${Number(batch.id)})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openReportingBatch(${Number(batch.id)})}">
-      <time>${escapeHtml(formatReportingDateTime(batch.alloggiati_sent_at))}</time>
-      <span><strong>${escapeHtml(batch.filename)}</strong><small>${reportingDateRange(batch)} · ${batch.record_count} ${reportingGuestWord(batch.record_count)}</small></span>
-      ${receipt}
-    </div>`;
-  }).join('');
+  const isMobile = window.matchMedia('(max-width:600px)').matches;
+  const expandedInline = isMobile && reportingState.historyExpanded;
+  const visibleHistory = expandedInline ? reportingState.history : reportingState.history.slice(0, REPORTING_HISTORY_PREVIEW_LIMIT);
+  target.innerHTML = visibleHistory.map(reportingHistoryCardHtml).join('');
+  more.hidden = total <= REPORTING_HISTORY_PREVIEW_LIMIT;
+  more.setAttribute('aria-expanded', String(expandedInline || document.getElementById('reportingHistoryDialog')?.open === true));
+  more.innerHTML = expandedInline
+    ? '<i data-lucide="chevron-up" style="width:14px;height:14px"></i>Свернуть архив'
+    : isMobile
+      ? `<i data-lucide="chevron-down" style="width:14px;height:14px"></i>Показать ещё ${total - REPORTING_HISTORY_PREVIEW_LIMIT}`
+      : `<i data-lucide="archive" style="width:14px;height:14px"></i>Все отправки · ${total}`;
   refreshLucideIcons();
+}
+
+function openReportingHistoryArchive() {
+  if (window.matchMedia('(max-width:600px)').matches) {
+    reportingState.historyExpanded = !reportingState.historyExpanded;
+    renderReportingHistory();
+    return;
+  }
+  const dialog = document.getElementById('reportingHistoryDialog');
+  document.getElementById('reportingHistoryDialogTitle').textContent = `История отправок · ${currentReportingUnit()?.name || 'Апартамент'}`;
+  document.getElementById('reportingHistoryArchive').innerHTML = reportingState.history.map(reportingHistoryCardHtml).join('');
+  if (!dialog.open) dialog.showModal();
+  document.getElementById('reportingHistoryMore').setAttribute('aria-expanded', 'true');
+  refreshLucideIcons();
+}
+
+function closeReportingHistoryDialog() {
+  const dialog = document.getElementById('reportingHistoryDialog');
+  if (dialog?.open) dialog.close();
+  syncReportingHistoryDialogState();
+}
+
+function syncReportingHistoryDialogState() {
+  document.getElementById('reportingHistoryMore')?.setAttribute('aria-expanded', 'false');
+}
+
+function handleReportingHistoryDialogClick(event) {
+  if (event.target === event.currentTarget) closeReportingHistoryDialog();
+}
+
+async function openReportingHistoryBatch(batchId) {
+  closeReportingHistoryDialog();
+  await openReportingBatch(batchId);
+  document.getElementById('reportingBatchDetail')?.scrollIntoView({ block:'nearest', behavior:window.matchMedia('(prefers-reduced-motion:reduce)').matches ? 'auto' : 'smooth' });
 }
 
 function reportingFlowStep() {

@@ -124,7 +124,69 @@ class ReportingStore {
        ${orderClause} LIMIT ?`,
       isPostgres(this.db) ? [unitId || null, safeLimit] : [unitId || null, unitId || null, safeLimit]
     );
-    return rows.map(normalizeBatch);
+    const batches = rows.map(normalizeBatch);
+    if (view !== 'sent' || !batches.length) return batches;
+
+    const metadata = await this.batchHistoryMetadata(batches.map(batch => batch.id));
+    return batches.map(batch => ({
+      ...batch,
+      ...(metadata.get(batch.id) || { origin_summary: [], property_summary: [] })
+    }));
+  }
+
+  async batchHistoryMetadata(batchIds) {
+    const ids = [...new Set(batchIds.map(Number).filter(Number.isInteger))];
+    const metadata = new Map(ids.map(id => [id, { origin_summary: [], property_summary: [] }]));
+    if (!ids.length) return metadata;
+
+    const pgPlaceholders = ids.map((_, index) => `$${index + 1}`).join(', ');
+    const sqlitePlaceholders = ids.map(() => '?').join(', ');
+    const originRows = await this.rows(
+      `SELECT batch_id, origin_kind, origin_code, origin_label, COUNT(*)::int AS guest_count
+       FROM guest_records
+       WHERE batch_id IN (${pgPlaceholders}) AND (origin_label IS NOT NULL OR origin_code IS NOT NULL)
+       GROUP BY batch_id, origin_kind, origin_code, origin_label
+       ORDER BY batch_id, guest_count DESC, origin_label`,
+      `SELECT batch_id, origin_kind, origin_code, origin_label, COUNT(*) AS guest_count
+       FROM guest_records
+       WHERE batch_id IN (${sqlitePlaceholders}) AND (origin_label IS NOT NULL OR origin_code IS NOT NULL)
+       GROUP BY batch_id, origin_kind, origin_code, origin_label
+       ORDER BY batch_id, guest_count DESC, origin_label`,
+      ids
+    );
+    const propertyRows = await this.rows(
+      `SELECT batch_id, property_id, SUM(guest_count)::int AS guest_count
+       FROM guest_stays
+       WHERE batch_id IN (${pgPlaceholders}) AND property_id IS NOT NULL
+       GROUP BY batch_id, property_id
+       ORDER BY batch_id, guest_count DESC, property_id`,
+      `SELECT batch_id, property_id, SUM(guest_count) AS guest_count
+       FROM guest_stays
+       WHERE batch_id IN (${sqlitePlaceholders}) AND property_id IS NOT NULL
+       GROUP BY batch_id, property_id
+       ORDER BY batch_id, guest_count DESC, property_id`,
+      ids
+    );
+
+    for (const row of originRows) {
+      const item = metadata.get(Number(row.batch_id));
+      if (!item) continue;
+      item.origin_summary.push({
+        kind: row.origin_kind || null,
+        code: row.origin_code || null,
+        label: row.origin_label || row.origin_code || 'Не указано',
+        guest_count: Number(row.guest_count) || 0
+      });
+    }
+    for (const row of propertyRows) {
+      const item = metadata.get(Number(row.batch_id));
+      if (!item) continue;
+      item.property_summary.push({
+        property_id: row.property_id,
+        guest_count: Number(row.guest_count) || 0
+      });
+    }
+    return metadata;
   }
 
   async createBatch({ unit, filename, parsed, operatorEmail, bookingMatches = [] }) {

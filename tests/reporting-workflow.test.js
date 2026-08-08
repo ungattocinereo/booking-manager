@@ -127,7 +127,7 @@ test('deleting a draft purges guest data, preserves detached Test audit, and per
   });
 });
 
-test('sent history is scoped, sorted, and limited to five successful batches', async () => {
+test('sent history is scoped, sorted, and supports preview and full archive limits', async () => {
   await withReportingDb(async ({ db, store, createBatch }) => {
     for (let index = 0; index < 7; index++) {
       const batch = await createBatch(`HISTORY${index}`);
@@ -136,6 +136,10 @@ test('sent history is scoped, sorted, and limited to five successful batches', a
           "UPDATE guest_import_batches SET status='sent', alloggiati_sent_at=datetime('now', ?) WHERE id=?",
           [`-${6 - index} minutes`, batch.id]
         );
+        if (index === 5) {
+          await db.run("UPDATE guest_records SET origin_kind='country', origin_code='701', origin_label='Австралия' WHERE batch_id=?", [batch.id]);
+          await db.run("UPDATE guest_stays SET property_id='carina' WHERE batch_id=?", [batch.id]);
+        }
       } else {
         await db.run("UPDATE guest_import_batches SET status='unknown' WHERE id=?", [batch.id]);
       }
@@ -145,6 +149,11 @@ test('sent history is scoped, sorted, and limited to five successful batches', a
     assert.equal(history.length, 5);
     assert.ok(history.every(batch => batch.status === 'sent'));
     assert.deepEqual(history.map(batch => batch.filename), ['HISTORY5.txt', 'HISTORY4.txt', 'HISTORY3.txt', 'HISTORY2.txt', 'HISTORY1.txt']);
+    assert.deepEqual(history[0].origin_summary, [{ kind: 'country', code: '701', label: 'Австралия', guest_count: 1 }]);
+    assert.deepEqual(history[0].property_summary, [{ property_id: 'carina', guest_count: 1 }]);
+    const archive = await store.listBatches('carina', 200, 'sent');
+    assert.equal(archive.length, 6);
+    assert.deepEqual(archive.map(batch => batch.filename), ['HISTORY5.txt', 'HISTORY4.txt', 'HISTORY3.txt', 'HISTORY2.txt', 'HISTORY1.txt', 'HISTORY0.txt']);
     const open = await store.listBatches('carina', 100, 'open');
     assert.deepEqual(open.map(batch => batch.filename), ['HISTORY6.txt']);
   });
