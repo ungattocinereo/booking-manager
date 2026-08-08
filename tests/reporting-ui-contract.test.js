@@ -33,6 +33,19 @@ test('reporting workspace keeps ISTAT separate and accepts dropped TXT files', (
   assert.match(html, /uploadReportingFiles\(event\.dataTransfer\.files\)/);
 });
 
+test('reporting history keeps five rich receipts visible and progressively discloses the archive', () => {
+  assert.match(html, /const REPORTING_HISTORY_PREVIEW_LIMIT = 5/);
+  assert.match(html, /view=sent&limit=200/);
+  assert.match(html, /<section class="reporting-fold reporting-history-panel" id="reportingHistoryFold"/);
+  assert.match(html, /<dialog class="reporting-history-dialog" id="reportingHistoryDialog"/);
+  assert.match(html, /class="reporting-history-date"/);
+  assert.match(html, /class="reporting-history-origin"/);
+  assert.match(html, /class="reporting-history-guests"/);
+  assert.match(html, /window\.matchMedia\('\(max-width:600px\)'\)\.matches/);
+  assert.match(html, /reportingState\.historyExpanded = !reportingState\.historyExpanded/);
+  assert.match(html, /dialog\.showModal\(\)/);
+});
+
 test('reporting UI keeps the two-click Alloggiati flow and a folded ISTAT ledger', () => {
   assert.match(html, /const labels = \['TXT', 'Проверка', 'Отправка'\]/);
   assert.match(html, /runAlloggiatiAction\('test'\)/);

@@ -277,7 +277,40 @@ function createServer(state = {
     }
     if (url.pathname === '/api/reporting/imports') {
       response.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store' });
-      response.end('[]');
+      if (request.method !== 'GET' || url.searchParams.get('view') !== 'sent') {
+        response.end('[]');
+        return;
+      }
+      const unitId = url.searchParams.get('unit_id') || 'dragone';
+      const propertyIds = unitId === 'carina' ? ['carina'] : ['awesome', 'central', 'orange'];
+      const origins = [
+        [{ kind:'country', code:'701', label:'Австралия', guest_count:2 }, { kind:'country', code:'100', label:'Италия', guest_count:1 }],
+        [{ kind:'country', code:'536', label:'Великобритания', guest_count:4 }],
+        [{ kind:'country', code:'219', label:'Германия', guest_count:2 }],
+        [{ kind:'country', code:'220', label:'Франция', guest_count:3 }],
+        [{ kind:'country', code:'404', label:'США', guest_count:2 }],
+        [{ kind:'country', code:'724', label:'Испания', guest_count:4 }],
+        [{ kind:'country', code:'528', label:'Нидерланды', guest_count:2 }],
+        [{ kind:'country', code:'756', label:'Швейцария', guest_count:3 }]
+      ];
+      response.end(JSON.stringify(Array.from({ length:8 }, (_, index) => {
+        const day = 31 - index;
+        const guestCount = origins[index].reduce((sum, origin) => sum + origin.guest_count, 0);
+        return {
+          id: 101 + index,
+          reporting_unit_id: unitId,
+          filename: `ALLOGGIATI_${String(day).padStart(2, '0')}072026.txt`,
+          status: index === 6 ? 'pii_purged' : 'sent',
+          record_count: guestCount,
+          stay_count: index % 3 + 1,
+          arrival_from: `2026-07-${String(Math.max(1, day - 2)).padStart(2, '0')}`,
+          arrival_to: `2026-07-${String(day).padStart(2, '0')}`,
+          alloggiati_sent_at: `2026-07-${String(day).padStart(2, '0')}T09:${String(10 + index).padStart(2, '0')}:00.000Z`,
+          receipt_received_at: index % 2 === 0 ? `2026-07-${String(day).padStart(2, '0')}T09:30:00.000Z` : null,
+          origin_summary: origins[index],
+          property_summary: propertyIds.slice(0, index % 2 ? 1 : 2).map((propertyId, propertyIndex) => ({ property_id:propertyId, guest_count:Math.max(1, guestCount - propertyIndex) }))
+        };
+      })));
       return;
     }
     if (url.pathname === '/api/reporting/istat' && url.searchParams.get('action') === 'codes') {
@@ -752,6 +785,7 @@ async function inspectReportingPage(browser, baseUrl) {
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(`${baseUrl}reporting`, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => document.querySelectorAll('#reportingUnits .reporting-unit').length === 2);
+  await page.waitForFunction(() => document.querySelectorAll('#reportingHistory .reporting-history-card').length === 5);
   assert.equal(await page.locator('#reportingTab').isVisible(), true);
   assert.match(await page.locator('#reportingUnits').innerText(), /Dragone/);
   assert.equal(await page.locator('#reportingUnits .reporting-unit-icon').count(), 2);
@@ -759,9 +793,14 @@ async function inspectReportingPage(browser, baseUrl) {
   assert.match(await page.locator('#reportingAlert').innerText(), /отправки пока отключены/i);
   assert.match(await page.locator('#reportingDropzone').innerText(), /Выбрать или перетащить TXT для Dragone/i);
   assert.match(await page.locator('#reportingHistoryTitle').innerText(), /Dragone/);
+  assert.equal(await page.locator('#reportingHistoryFold').evaluate(element => element.tagName), 'SECTION');
+  assert.equal(await page.locator('#reportingHistoryCount').innerText(), '8');
+  assert.equal(await page.locator('#reportingHistory .reporting-history-card').count(), 5);
+  assert.match(await page.locator('#reportingHistory .reporting-history-card').first().innerText(), /Австралия/);
+  assert.match(await page.locator('#reportingHistory .reporting-history-card').first().innerText(), /AWESOME/);
+  assert.match(await page.locator('#reportingHistory .reporting-history-card').first().innerText(), /3\s+гостя/);
   assert.equal(await page.locator('.reporting-flow-step').count(), 3);
   assert.equal(await page.locator('#reportingBatchList').innerText(), '');
-  assert.equal(await page.locator('#reportingHistoryFold').getAttribute('open'), null);
   assert.equal(await page.locator('#reportingIstatFold').getAttribute('open'), null);
   assert.match(await page.locator('#reportingIstatDeadline').innerText(), /4-го числа|ISTAT за/i);
   const reportingPositions = await page.evaluate(() => {
@@ -777,7 +816,36 @@ async function inspectReportingPage(browser, baseUrl) {
   assert.equal(reportingPositions.istatBelowPrimary, true);
   assert.equal(reportingPositions.equalPrimaryHeights, true);
 
+  const primaryBeforeArchive = await page.locator('.reporting-primary-grid').boundingBox();
+  await page.locator('#reportingHistoryMore').click();
+  assert.equal(await page.locator('#reportingHistoryDialog').evaluate(dialog => dialog.open), true);
+  assert.equal(await page.locator('#reportingHistoryArchive .reporting-history-card').count(), 8);
+  assert.match(await page.locator('#reportingHistoryDialogTitle').innerText(), /Dragone/);
+  await captureUiScreenshot(page, 'orbit-reporting-archive-desktop');
+  const primaryDuringArchive = await page.locator('.reporting-primary-grid').boundingBox();
+  assert.deepEqual(
+    { x:primaryDuringArchive.x, width:primaryDuringArchive.width, height:primaryDuringArchive.height },
+    { x:primaryBeforeArchive.x, width:primaryBeforeArchive.width, height:primaryBeforeArchive.height },
+    'desktop archive should open in the top layer without resizing the reporting workspace'
+  );
+  await page.getByRole('button', { name:'Закрыть архив' }).click();
+  assert.equal(await page.locator('#reportingHistoryDialog').evaluate(dialog => dialog.open), false);
+  await page.evaluate(() => window.AtraniTheme.setPreference('dark'));
+  await page.waitForFunction(() => document.documentElement.dataset.colorScheme === 'dark');
+  await page.locator('#reportingHistoryMore').click();
+  const darkDialogSurface = await page.locator('#reportingHistoryDialog').evaluate(dialog => getComputedStyle(dialog).backgroundColor);
+  assert.doesNotMatch(darkDialogSurface, /rgb\(2(?:4[5-9]|5\d), 2(?:4[5-9]|5\d), 2(?:4[5-9]|5\d)\)/, 'dark archive should not retain a near-white dialog surface');
+  await captureUiScreenshot(page, 'orbit-reporting-archive-dark');
+  await page.getByRole('button', { name:'Закрыть архив' }).click();
+  await page.evaluate(() => window.AtraniTheme.setPreference('light'));
+  await page.waitForFunction(() => document.documentElement.dataset.colorScheme === 'light');
+
   await page.setViewportSize({ width:390, height:844 });
+  assert.equal(await page.locator('#reportingHistory .reporting-history-card').count(), 5);
+  await page.locator('#reportingHistoryMore').click();
+  assert.equal(await page.locator('#reportingHistoryDialog').evaluate(dialog => dialog.open), false);
+  assert.equal(await page.locator('#reportingHistory .reporting-history-card').count(), 8);
+  assert.match(await page.locator('#reportingHistoryMore').innerText(), /Свернуть архив/);
   const mobileReportingLayout = await page.evaluate(() => ({
     columns: getComputedStyle(document.querySelector('.reporting-primary-grid')).gridTemplateColumns.split(' ').filter(Boolean).length,
     istatBelowPrimary: document.querySelector('.reporting-istat-area').getBoundingClientRect().top >= document.querySelector('.reporting-primary-grid').getBoundingClientRect().bottom,
@@ -787,6 +855,8 @@ async function inspectReportingPage(browser, baseUrl) {
   assert.equal(mobileReportingLayout.istatBelowPrimary, true);
   assert.ok(mobileReportingLayout.horizontalOverflow <= 1);
   await captureUiScreenshot(page, 'orbit-reporting-mobile');
+  await page.locator('#reportingHistoryMore').click();
+  assert.equal(await page.locator('#reportingHistory .reporting-history-card').count(), 5);
   await page.setViewportSize({ width:1280, height:900 });
 
   const dragState = await page.evaluate(() => {
