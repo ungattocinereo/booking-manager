@@ -816,6 +816,12 @@ async function inspectReportingPage(browser, baseUrl) {
   assert.equal(reportingPositions.istatBelowPrimary, true);
   assert.equal(reportingPositions.equalPrimaryHeights, true);
 
+  const historyMoreTopBeforeStretch = (await page.locator('#reportingHistoryMore').boundingBox()).y;
+  await page.locator('.reporting-primary-grid > .reporting-card').evaluate(card => { card.style.minHeight = '1000px'; });
+  const historyMoreTopAfterStretch = (await page.locator('#reportingHistoryMore').boundingBox()).y;
+  assert.ok(Math.abs(historyMoreTopAfterStretch - historyMoreTopBeforeStretch) <= 1, 'history archive button should stay below five receipts when the neighboring TXT card grows');
+  await page.locator('.reporting-primary-grid > .reporting-card').evaluate(card => { card.style.minHeight = ''; });
+
   const primaryBeforeArchive = await page.locator('.reporting-primary-grid').boundingBox();
   await page.locator('#reportingHistoryMore').click();
   assert.equal(await page.locator('#reportingHistoryDialog').evaluate(dialog => dialog.open), true);
