@@ -2981,7 +2981,7 @@
     .reporting-unit-count { display:inline-grid; place-items:center; min-width:17px; height:17px; padding:0 4px; border-radius:999px; background:#fee2e2; color:#b91c1c; font-size:9px; font-weight:800; }
     .reporting-stack { display:grid; gap:16px; }
     .reporting-primary-grid { display:grid; gap:12px; align-items:stretch; }
-    .reporting-primary-grid > .reporting-card,.reporting-primary-grid > .reporting-fold { min-width:0; height:100%; }
+    .reporting-primary-grid > .reporting-card,.reporting-primary-grid > .reporting-fold { min-width:0; }
     .reporting-istat-area { display:grid; gap:10px; min-width:0; }
     .reporting-card { background:#fff; border:1px solid var(--border); border-radius:16px; padding:17px; box-shadow:0 5px 18px rgba(15,23,42,.035); }
     .reporting-card-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:13px; }
@@ -3085,6 +3085,7 @@
     .reporting-receipt:hover { background:#f0fdfa; }
     .reporting-receipt.unavailable { color:var(--text-secondary); opacity:.65; }
     .reporting-history-more { display:flex; align-items:center; justify-content:center; gap:7px; width:100%; min-height:42px; margin-top:0; border:1px solid var(--border); border-radius:13px; background:transparent; color:var(--text-secondary); font-size:11px; font-weight:800; cursor:pointer; transition:border-color .18s ease,color .18s ease,background .18s ease; }
+    .reporting-history-more[hidden] { display:none; }
     .reporting-history-more:hover { border-color:var(--accent); background:var(--accent-light); color:var(--text); }
     .reporting-history-dialog { width:min(880px,calc(100% - 32px)); max-height:min(760px,calc(100dvh - 32px)); margin:auto; padding:0; overflow:hidden; border:1px solid var(--border); border-radius:26px; background:var(--card); color:var(--text); box-shadow:0 28px 90px rgba(17,18,35,.28); }
     .reporting-history-dialog::backdrop { background:rgba(23,24,39,.5); backdrop-filter:blur(7px); }
@@ -8674,6 +8675,7 @@ window.addEventListener('resize', () => {
     calendarNeedsVisibleRender = true;
     return;
   }
+  if (reportingState.loaded && document.getElementById('reportingTab')?.style.display !== 'none') renderReportingHistory();
   clearTimeout(calendarResizeTimer);
   calendarResizeTimer = setTimeout(() => renderCalendarWhenVisible({ preserveScroll: true }), 120);
 });
@@ -9048,7 +9050,7 @@ function renderReportingHistory() {
   const expandedInline = isMobile && reportingState.historyExpanded;
   const visibleHistory = expandedInline ? reportingState.history : reportingState.history.slice(0, REPORTING_HISTORY_PREVIEW_LIMIT);
   target.innerHTML = visibleHistory.map(reportingHistoryCardHtml).join('');
-  more.hidden = total <= REPORTING_HISTORY_PREVIEW_LIMIT;
+  more.hidden = isMobile && total <= REPORTING_HISTORY_PREVIEW_LIMIT;
   more.setAttribute('aria-expanded', String(expandedInline || document.getElementById('reportingHistoryDialog')?.open === true));
   more.innerHTML = expandedInline
     ? '<i data-lucide="chevron-up" style="width:14px;height:14px"></i>Свернуть архив'

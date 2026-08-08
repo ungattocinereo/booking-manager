@@ -293,7 +293,8 @@ function createServer(state = {
         [{ kind:'country', code:'528', label:'Нидерланды', guest_count:2 }],
         [{ kind:'country', code:'756', label:'Швейцария', guest_count:3 }]
       ];
-      response.end(JSON.stringify(Array.from({ length:8 }, (_, index) => {
+      const historyLength = unitId === 'carina' ? 3 : 8;
+      response.end(JSON.stringify(Array.from({ length:historyLength }, (_, index) => {
         const day = 31 - index;
         const guestCount = origins[index].reduce((sum, origin) => sum + origin.guest_count, 0);
         return {
@@ -877,10 +878,41 @@ async function inspectReportingPage(browser, baseUrl) {
   assert.equal(dragState.activeAfterEnter, true);
   assert.equal(dragState.activeAfterDrop, false);
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth), false);
+  await page.evaluate(() => window.AtraniTheme.setPreference('dark'));
+  await page.waitForFunction(() => document.documentElement.dataset.colorScheme === 'dark');
   await page.getByRole('button', { name: /Carina/ }).click();
   await page.waitForFunction(() => document.getElementById('reportingCurrentUnitName')?.textContent === 'Carina');
+  await page.waitForFunction(() => document.querySelectorAll('#reportingHistory .reporting-history-card').length === 3);
   assert.match(await page.locator('#reportingDropzone').innerText(), /Выбрать или перетащить TXT для Carina/i);
   assert.match(await page.locator('#reportingHistoryTitle').innerText(), /Carina/);
+  assert.equal(await page.locator('#reportingHistoryCount').innerText(), '3');
+  assert.equal(await page.locator('#reportingHistoryMore').isVisible(), true);
+  assert.match(await page.locator('#reportingHistoryMore').innerText(), /Все отправки · 3/);
+  const desktopShortHistory = await page.locator('#reportingHistoryFold').evaluate(fold => {
+    const cards = [...fold.querySelectorAll('.reporting-history-card')];
+    const foldRect = fold.getBoundingClientRect();
+    const lastRect = cards.at(-1)?.getBoundingClientRect();
+    return { count:cards.length, clipped:Boolean(lastRect && lastRect.bottom > foldRect.bottom + 1), overflow:fold.scrollHeight - fold.clientHeight };
+  });
+  assert.deepEqual(desktopShortHistory, { count:3, clipped:false, overflow:0 });
+  await captureUiScreenshot(page, 'orbit-reporting-three-desktop');
+  await page.locator('#reportingHistoryMore').click();
+  assert.equal(await page.locator('#reportingHistoryArchive .reporting-history-card').count(), 3);
+  await page.getByRole('button', { name:'Закрыть архив' }).click();
+
+  await page.setViewportSize({ width:390, height:844 });
+  await page.waitForFunction(() => document.querySelectorAll('#reportingHistory .reporting-history-card').length === 3 && document.getElementById('reportingHistoryMore')?.hidden);
+  assert.equal(await page.locator('#reportingHistoryMore').isHidden(), true);
+  const mobileShortHistory = await page.locator('#reportingHistoryFold').evaluate(fold => {
+    const cards = [...fold.querySelectorAll('.reporting-history-card')];
+    const foldRect = fold.getBoundingClientRect();
+    const lastRect = cards.at(-1)?.getBoundingClientRect();
+    return { count:cards.length, clipped:Boolean(lastRect && lastRect.bottom > foldRect.bottom + 1), overflow:fold.scrollHeight - fold.clientHeight };
+  });
+  assert.deepEqual(mobileShortHistory, { count:3, clipped:false, overflow:0 });
+  assert.ok((await readHorizontalOverflow(page)).document <= 1);
+  await captureUiScreenshot(page, 'orbit-reporting-three-mobile');
+  await page.setViewportSize({ width:1280, height:900 });
   await page.locator('#reportingIstatFold > summary').click();
   await page.waitForFunction(() => document.querySelectorAll('.reporting-istat-table tbody tr').length > 0);
   const istatMonth = await page.locator('#reportingMonth').inputValue();
