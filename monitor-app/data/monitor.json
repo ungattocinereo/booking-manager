@@ -1,7 +1,8 @@
 {
   "since": "2026-04-17",
-  "generated_at": "2026-08-08T13:06:11.146Z",
+  "generated_at": "2026-08-08T13:52:13.473Z",
   "available_dates": [
+    "2026-08-08",
     "2026-08-07",
     "2026-08-05",
     "2026-08-04",
@@ -1332,11 +1333,14 @@
           "startDate": "2026-08-26",
           "endDate": "2026-08-29",
           "guestName": "Рузанна Адамян",
+          "guestCount": 3,
           "confirmationCode": "HM5ZHW9WKP",
           "firstSeenAt": "2026-03-28T19:32:10.986Z",
-          "status": "cancelled",
-          "cancelledAt": "2026-08-05T16:47:33.141Z",
-          "link": "https://www.airbnb.com/hosting/reservations/details/HM5ZHW9WKP",
+          "status": "active",
+          "cancelledAt": null,
+          "link": "https://www.airbnb.com/hosting/reservations/details/HMK5MWH42T",
+          "rawSummary": "Reserved",
+          "bookingType": "reservation",
           "sources": [
             "upstream_api",
             "export_airbnb_csv"
@@ -5602,6 +5606,24 @@
       "rawSummary": "Reserved",
       "bookingType": "reservation",
       "detectedAt": "2026-08-07T08:20:16.740Z"
+    },
+    {
+      "eventType": "created",
+      "bookingKey": "royal|airbnb|2026-08-26|2026-08-29",
+      "propertyId": "royal",
+      "platform": "airbnb",
+      "startDate": "2026-08-26",
+      "endDate": "2026-08-29",
+      "guestName": "Рузанна Адамян",
+      "guestCount": 3,
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HMK5MWH42T",
+      "confirmationCode": null,
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync",
+      "bookingCreatedAt": "2026-03-28T19:32:10.986Z",
+      "rawSummary": "Reserved",
+      "bookingType": "reservation",
+      "detectedAt": "2026-08-08T13:52:13.468Z"
     }
   ],
   "imports_log": [
