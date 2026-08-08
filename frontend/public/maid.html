@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Calendario Pulizie — Atrani</title>
 
   <!-- Favicon & App Icons -->
@@ -10,7 +10,117 @@
   <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#4f46e5">
+  <meta name="theme-color" content="#f8f9fb">
+  <script>
+    (() => {
+      const STORAGE_KEY = 'atrani-theme-preference';
+      const THEMES = new Set(['system', 'light', 'dark']);
+      const media = window.matchMedia('(prefers-color-scheme: dark)');
+      const root = document.documentElement;
+
+      function readPreference() {
+        try {
+          const saved = localStorage.getItem(STORAGE_KEY);
+          return THEMES.has(saved) ? saved : 'system';
+        } catch {
+          return 'system';
+        }
+      }
+
+      function resolveTheme(preference) {
+        return preference === 'system' ? (media.matches ? 'dark' : 'light') : preference;
+      }
+
+      function updateSystemChrome(resolved) {
+        const themeColor = document.querySelector('meta[name="theme-color"]');
+        if (themeColor) themeColor.content = resolved === 'dark' ? '#0d1518' : '#f8f9fb';
+        const statusBar = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
+        if (statusBar) statusBar.content = resolved === 'dark' ? 'black-translucent' : 'default';
+      }
+
+      function syncControls() {
+        const preference = root.dataset.themePreference || readPreference();
+        document.querySelectorAll('[data-theme-option]').forEach(button => {
+          const active = button.dataset.themeOption === preference;
+          button.classList.toggle('active', active);
+          button.setAttribute('aria-pressed', active ? 'true' : 'false');
+        });
+      }
+
+      function applyPreference(preference) {
+        const safePreference = THEMES.has(preference) ? preference : 'system';
+        const resolved = resolveTheme(safePreference);
+        root.dataset.themePreference = safePreference;
+        root.dataset.colorScheme = resolved;
+        root.style.colorScheme = resolved;
+        updateSystemChrome(resolved);
+        return resolved;
+      }
+
+      function notify(previousPreference, previousResolved) {
+        window.dispatchEvent(new CustomEvent('atrani-theme-change', {
+          detail: {
+            preference: root.dataset.themePreference,
+            resolved: root.dataset.colorScheme,
+            previousPreference,
+            previousResolved
+          }
+        }));
+      }
+
+      function setPreference(preference) {
+        const safePreference = THEMES.has(preference) ? preference : 'system';
+        const previousPreference = root.dataset.themePreference;
+        const previousResolved = root.dataset.colorScheme;
+        try {
+          localStorage.setItem(STORAGE_KEY, safePreference);
+        } catch {
+          // The selected theme still applies for this page when storage is unavailable.
+        }
+        applyPreference(safePreference);
+        syncControls();
+        notify(previousPreference, previousResolved);
+      }
+
+      window.AtraniTheme = {
+        storageKey: STORAGE_KEY,
+        getPreference: () => root.dataset.themePreference || readPreference(),
+        getResolved: () => root.dataset.colorScheme || resolveTheme(readPreference()),
+        setPreference,
+        syncControls
+      };
+
+      applyPreference(readPreference());
+
+      document.addEventListener('click', event => {
+        const button = event.target.closest?.('[data-theme-option]');
+        if (button) setPreference(button.dataset.themeOption);
+      });
+      document.addEventListener('DOMContentLoaded', () => {
+        updateSystemChrome(root.dataset.colorScheme);
+        syncControls();
+      }, { once: true });
+
+      const handleSystemChange = () => {
+        if (root.dataset.themePreference !== 'system') return;
+        const previousResolved = root.dataset.colorScheme;
+        applyPreference('system');
+        syncControls();
+        if (previousResolved !== root.dataset.colorScheme) notify('system', previousResolved);
+      };
+      if (media.addEventListener) media.addEventListener('change', handleSystemChange);
+      else media.addListener(handleSystemChange);
+
+      window.addEventListener('storage', event => {
+        if (event.key !== STORAGE_KEY) return;
+        const previousPreference = root.dataset.themePreference;
+        const previousResolved = root.dataset.colorScheme;
+        applyPreference(readPreference());
+        syncControls();
+        notify(previousPreference, previousResolved);
+      });
+    })();
+  </script>
 
   <!-- Apple Web App -->
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -40,6 +150,7 @@
       --text-tertiary: #9ca3af;
       --accent: #0f766e;
       --accent-light: #e6f5f3;
+      --accent-contrast: #ffffff;
       --checkin: #059669;
       --checkin-light: #ecfdf5;
       --checkin-border: #a7f3d0;
@@ -48,13 +159,53 @@
       --checkout-border: #fed7aa;
       --today-bg: #0f766e;
       --today-text: #ffffff;
+      --surface-overlay: rgba(255,255,255,.92);
+      --surface-raised: #ffffff;
+      --control-border: #b8bdc9;
+      --theme-track: #e8ecef;
+      --theme-active: #0f766e;
+      --theme-active-text: #ffffff;
+      --theme-inactive-text: #525b6b;
+      --focus-ring: #0f766e;
       --radius: 16px;
       --radius-sm: 12px;
       --shadow: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
       --shadow-md: 0 4px 12px rgba(0,0,0,.08);
     }
 
+    html[data-color-scheme="dark"] {
+      --bg: #0d1518;
+      --card: #152126;
+      --border: #3c5057;
+      --text: #f1f7f6;
+      --text-secondary: #b0c1c0;
+      --text-tertiary: #839797;
+      --accent: #72d8cc;
+      --accent-light: #193a37;
+      --accent-contrast: #08211e;
+      --checkin: #65d3a5;
+      --checkin-light: #16362d;
+      --checkin-border: #2f705b;
+      --checkout: #f3bf70;
+      --checkout-light: #3a2b17;
+      --checkout-border: #745725;
+      --today-bg: #72d8cc;
+      --today-text: #08211e;
+      --surface-overlay: rgba(21,33,38,.94);
+      --surface-raised: #1c2b31;
+      --control-border: #596f77;
+      --theme-track: #0b1417;
+      --theme-active: #72d8cc;
+      --theme-active-text: #08211e;
+      --theme-inactive-text: #b0c1c0;
+      --focus-ring: #72d8cc;
+      --shadow: 0 8px 24px rgba(0,0,0,.24), 0 1px 2px rgba(0,0,0,.32);
+      --shadow-md: 0 18px 46px rgba(0,0,0,.38);
+    }
+
     * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html { min-height: 100%; background: var(--bg); }
 
     body {
       font-family: 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -75,13 +226,14 @@
       top: 0;
       z-index: 50;
       backdrop-filter: blur(12px);
-      background: rgba(255,255,255,.92);
+      background: var(--surface-overlay);
     }
     .header-top {
       display: flex;
       align-items: center;
       gap: 12px;
     }
+    .header-copy { flex: 1; min-width: 0; }
     .header-icon {
       width: 40px; height: 40px;
       background: var(--accent);
@@ -89,18 +241,101 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #fff;
+      color: var(--accent-contrast);
       flex-shrink: 0;
     }
     .header h1 {
       font-size: 18px;
       font-weight: 700;
       letter-spacing: -0.3px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
     .header .subtitle {
       font-size: 13px;
       color: var(--text-secondary);
       margin-top: 1px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .theme-switcher {
+      flex: 0 0 auto;
+      position: relative;
+      isolation: isolate;
+      display: inline-grid;
+      grid-template-columns: repeat(3, 44px);
+      align-items: center;
+      gap: 0;
+      padding: 2px;
+      border: 0;
+      border-radius: 999px;
+      background: var(--theme-track);
+    }
+    .theme-switcher::before {
+      content: '';
+      position: absolute;
+      z-index: 0;
+      top: 2px;
+      bottom: 2px;
+      left: 2px;
+      width: 44px;
+      border-radius: 999px;
+      background: var(--theme-active);
+      box-shadow: none;
+      transform: translateX(0);
+      transition: transform .16s cubic-bezier(.2,.8,.2,1);
+      will-change: transform;
+    }
+    html[data-theme-preference="light"] .theme-switcher::before { transform: translateX(100%); }
+    html[data-theme-preference="dark"] .theme-switcher::before { transform: translateX(200%); }
+    .theme-option {
+      position: relative;
+      z-index: 1;
+      width: 44px;
+      min-width: 44px;
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      padding: 0;
+      border: 0;
+      border-radius: 999px;
+      background: transparent;
+      color: var(--theme-inactive-text);
+      font: inherit;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: color .18s ease, opacity .18s ease;
+    }
+    .theme-option:hover { color: var(--text); opacity: .86; }
+    .theme-option.active {
+      background: transparent;
+      color: var(--theme-active-text);
+      font-weight: 800;
+      box-shadow: none;
+      opacity: 1;
+    }
+    .theme-option svg { width: 14px; height: 14px; flex: 0 0 14px; }
+    .theme-option-fallback { width: 14px; font-size: 16px; line-height: 1; text-align: center; }
+    .theme-option svg + .theme-option-fallback { display: none; }
+    .theme-option-label { display: none; }
+    @media (prefers-reduced-motion: reduce) {
+      .theme-switcher::before, .theme-option { transition: none !important; }
+    }
+    @media (forced-colors: active) {
+      .theme-switcher { background: Canvas; }
+      .theme-switcher::before { background: Highlight; }
+      .theme-option { color: CanvasText; }
+      .theme-option.active { color: HighlightText; }
+    }
+    button:focus-visible, .month-pill:focus-visible, [tabindex]:focus-visible {
+      outline: 3px solid var(--focus-ring);
+      outline-offset: 2px;
     }
 
     /* Month navigation */
@@ -116,20 +351,22 @@
     }
     .month-nav::-webkit-scrollbar { display: none; }
     .month-pill {
+      min-height: 40px;
       padding: 8px 16px;
       border-radius: 20px;
       font-size: 13px;
       font-weight: 500;
       white-space: nowrap;
       cursor: pointer;
-      border: 1px solid var(--border);
+      border: 1px solid var(--control-border);
       background: var(--card);
       color: var(--text-secondary);
       transition: all .15s ease;
+      font-family: inherit;
     }
     .month-pill.active {
       background: var(--accent);
-      color: #fff;
+      color: var(--accent-contrast);
       border-color: var(--accent);
     }
     .month-pill.has-today {
@@ -146,10 +383,10 @@
       border-bottom: 1px solid var(--border);
     }
     .quick-pill {
-      min-height: 40px;
-      border: 1px solid var(--border);
+      min-height: 44px;
+      border: 1px solid var(--control-border);
       border-radius: 12px;
-      background: #fff;
+      background: var(--card);
       color: var(--text-secondary);
       font: inherit;
       font-size: 13px;
@@ -163,7 +400,7 @@
     .quick-pill.active {
       background: var(--accent);
       border-color: var(--accent);
-      color: #fff;
+      color: var(--accent-contrast);
     }
 
     /* Content */
@@ -401,6 +638,36 @@
       width: 8px; height: 8px;
       border-radius: 50%;
     }
+
+    html[data-color-scheme="dark"] body {
+      background:
+        radial-gradient(circle at 12% -12%, rgba(114,216,204,.12), transparent 30rem),
+        linear-gradient(180deg, #0d1518 0%, #101a1e 100%);
+      background-attachment: fixed;
+    }
+    html[data-color-scheme="dark"] ::selection { background: rgba(114,216,204,.3); color: var(--text); }
+    html[data-color-scheme="dark"] .event-card { background: var(--card); }
+    html[data-color-scheme="dark"] .event-property-icon {
+      background: color-mix(in srgb, currentColor 15%, var(--card)) !important;
+    }
+    html[data-color-scheme="dark"] .empty-month-icon { background: var(--surface-raised); }
+
+    @media (max-width: 360px) {
+      .header { padding: 12px; }
+      .header-top { gap: 8px; }
+      .header-icon { width: 36px; height: 36px; border-radius: 10px; }
+      .header h1 { font-size: 16px; }
+      .header .subtitle { font-size: 11px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        scroll-behavior: auto !important;
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+      }
+    }
   </style>
 </head>
 <body>
@@ -446,6 +713,20 @@ let data = null;
 let currentMonth = null; // { year, month }
 let viewMode = 'today'; // today | tomorrow | month
 
+function themeSwitcherMarkup() {
+  return `<div class="theme-switcher" role="group" aria-label="Tema colore">
+    <button class="theme-option" type="button" data-theme-option="system" aria-label="Tema di sistema" title="Tema di sistema" aria-pressed="false">
+      <i data-lucide="monitor"></i><span class="theme-option-fallback" aria-hidden="true">◫</span><span class="theme-option-label">Sistema</span>
+    </button>
+    <button class="theme-option" type="button" data-theme-option="light" aria-label="Tema chiaro" title="Tema chiaro" aria-pressed="false">
+      <i data-lucide="sun"></i><span class="theme-option-fallback" aria-hidden="true">☼</span><span class="theme-option-label">Giorno</span>
+    </button>
+    <button class="theme-option" type="button" data-theme-option="dark" aria-label="Tema scuro" title="Tema scuro" aria-pressed="false">
+      <i data-lucide="moon"></i><span class="theme-option-fallback" aria-hidden="true">☾</span><span class="theme-option-label">Notte</span>
+    </button>
+  </div>`;
+}
+
 function todayInRome() {
   const parts = new Intl.DateTimeFormat('en-CA', {
     timeZone: 'Europe/Rome',
@@ -479,12 +760,21 @@ async function loadData() {
 
 function showError() {
   document.getElementById('app').innerHTML = `
+    <div class="header">
+      <div class="header-top">
+        <div class="header-icon"><i data-lucide="calendar-x" style="width:22px;height:22px;"></i></div>
+        <div class="header-copy"><h1>Atrani</h1><div class="subtitle">Calendario pulizie</div></div>
+        ${themeSwitcherMarkup()}
+      </div>
+    </div>
     <div class="error-state">
       <div style="font-size:48px;">🔒</div>
       <h2>Calendario non trovato</h2>
       <p>Questo link non e valido o e stato disattivato.</p>
     </div>
   `;
+  window.AtraniTheme?.syncControls();
+  if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
 function getEvents() {
@@ -617,10 +907,11 @@ function render() {
         <div class="header-icon">
           <i data-lucide="calendar-check" style="width:22px;height:22px;"></i>
         </div>
-        <div>
+        <div class="header-copy">
           <h1>${data.cleaner.name}</h1>
           <div class="subtitle">Calendario arrivi e partenze</div>
         </div>
+        ${themeSwitcherMarkup()}
       </div>
     </div>
   `;
@@ -655,10 +946,10 @@ function render() {
     for (const m of months) {
       const isActive = m.year === currentMonth.year && m.month === currentMonth.month;
       const isCurrentMonth = m.year === today.getFullYear() && m.month === today.getMonth();
-      html += `<div class="month-pill${isActive ? ' active' : ''}${isCurrentMonth ? ' has-today' : ''}"
+      html += `<button type="button" class="month-pill${isActive ? ' active' : ''}${isCurrentMonth ? ' has-today' : ''}"
         onclick="switchMonth(${m.year}, ${m.month})">
         ${MONTHS_SHORT_IT[m.month]}${m.year !== today.getFullYear() ? ' ' + m.year : ''}
-      </div>`;
+      </button>`;
     }
     html += '</div>';
   }
@@ -741,6 +1032,7 @@ function render() {
   html += '</div>';
 
   document.getElementById('app').innerHTML = html;
+  window.AtraniTheme?.syncControls();
   if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
@@ -749,13 +1041,13 @@ function switchMonth(year, month) {
   currentMonth = { year, month };
   render();
   // Scroll to top of content
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  window.scrollTo({ top: 0, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
 }
 
 function switchViewMode(mode) {
   viewMode = mode;
   render();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  window.scrollTo({ top: 0, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
 }
 
 loadData();

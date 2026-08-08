@@ -12,6 +12,7 @@ Booking and cleaning calendar for vacation rental properties in Atrani, Italy. S
 
 - **Calendar sync** — iCal sync from Airbnb + Booking.com every 30 minutes via GitHub Actions, with a daily Vercel fallback (15 feeds, 11 properties)
 - **Gantt timeline** — visual booking calendar with color-coded platforms, guest names, country flags
+- **Adaptive appearance** — Design 2.0 supports system, day, and night modes across every workspace and the public maid calendar
 - **Cleaning management** — auto-generated cleaning tasks on checkout dates, cleaner assignment
 - **Maid calendar** — mobile-first Italian-language page for each cleaner at `/maid/:slug`
 - **Statistics** — season analytics (Apr-Nov) with Chart.js: monthly bookings, occupancy, countries, check-in patterns, stay duration, guest counts
