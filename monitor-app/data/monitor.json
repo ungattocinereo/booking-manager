@@ -1,7 +1,8 @@
 {
   "since": "2026-04-17",
-  "generated_at": "2026-08-14T21:33:23.119Z",
+  "generated_at": "2026-08-14T21:53:13.474Z",
   "available_dates": [
+    "2026-08-14",
     "2026-08-09",
     "2026-08-08",
     "2026-08-07",
@@ -1222,8 +1223,8 @@
           "guestName": null,
           "confirmationCode": null,
           "firstSeenAt": "2026-05-08T06:50:22.842Z",
-          "status": "active",
-          "cancelledAt": null,
+          "status": "cancelled",
+          "cancelledAt": "2026-08-14T21:53:13.470Z",
           "link": "https://www.airbnb.com/hosting/reservations/details/HM5842E9KM",
           "sources": [
             "upstream_api"
@@ -5660,6 +5661,21 @@
       "rawSummary": "Reserved",
       "bookingType": "reservation",
       "detectedAt": "2026-08-09T10:48:46.488Z"
+    },
+    {
+      "eventType": "cancelled",
+      "bookingKey": "royal|airbnb|2026-08-12|2026-08-17",
+      "propertyId": "royal",
+      "platform": "airbnb",
+      "startDate": "2026-08-12",
+      "endDate": "2026-08-17",
+      "guestName": null,
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HM5842E9KM",
+      "confirmationCode": null,
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync_confirmed",
+      "bookingCreatedAt": "2026-05-08T06:50:22.842Z",
+      "detectedAt": "2026-08-14T21:53:13.470Z"
     }
   ],
   "imports_log": [
