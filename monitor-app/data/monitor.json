@@ -1,6 +1,6 @@
 {
   "since": "2026-04-17",
-  "generated_at": "2026-08-15T13:56:22.329Z",
+  "generated_at": "2026-08-15T14:31:44.497Z",
   "available_dates": [
     "2026-08-15",
     "2026-08-14",
@@ -85,6 +85,25 @@
       "accent": "#c9512e",
       "icon": "home",
       "events": [
+        {
+          "bookingKey": "harmony|airbnb|2026-10-02|2026-10-05",
+          "propertyId": "harmony",
+          "platform": "airbnb",
+          "startDate": "2026-10-02",
+          "endDate": "2026-10-05",
+          "guestName": null,
+          "guestCount": null,
+          "confirmationCode": null,
+          "firstSeenAt": "2026-08-15T14:31:18.917Z",
+          "status": "active",
+          "cancelledAt": null,
+          "link": "https://www.airbnb.com/hosting/reservations/details/HM3Y44X9PW",
+          "rawSummary": "Reserved",
+          "bookingType": "reservation",
+          "sources": [
+            "upstream_api"
+          ]
+        },
         {
           "bookingKey": "harmony|airbnb|2026-09-29|2026-10-02",
           "propertyId": "harmony",
@@ -5714,6 +5733,24 @@
       "rawSummary": "Reserved",
       "bookingType": "reservation",
       "detectedAt": "2026-08-15T10:31:24.465Z"
+    },
+    {
+      "eventType": "created",
+      "bookingKey": "harmony|airbnb|2026-10-02|2026-10-05",
+      "propertyId": "harmony",
+      "platform": "airbnb",
+      "startDate": "2026-10-02",
+      "endDate": "2026-10-05",
+      "guestName": null,
+      "guestCount": null,
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HM3Y44X9PW",
+      "confirmationCode": null,
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync",
+      "bookingCreatedAt": "2026-08-15T14:31:18.917Z",
+      "rawSummary": "Reserved",
+      "bookingType": "reservation",
+      "detectedAt": "2026-08-15T14:31:44.492Z"
     }
   ],
   "imports_log": [
