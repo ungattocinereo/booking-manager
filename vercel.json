@@ -24,6 +24,8 @@
     { "source": "/booking.png", "destination": "/frontend/public/booking.png" },
     { "source": "/airbnb-badge.png", "destination": "/frontend/public/airbnb-badge.png" },
     { "source": "/booking-badge.png", "destination": "/frontend/public/booking-badge.png" },
+    { "source": "/i18n.js", "destination": "/frontend/public/i18n.js" },
+    { "source": "/dashboard-i18n.js", "destination": "/frontend/public/dashboard-i18n.js" },
     { "source": "/manifest.json", "destination": "/frontend/public/manifest.json" },
     { "source": "/health", "destination": "/api/health" },
     { "source": "/maid/:slug", "destination": "/frontend/public/maid.html" },

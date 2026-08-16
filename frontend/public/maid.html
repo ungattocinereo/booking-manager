@@ -262,27 +262,41 @@
       white-space: nowrap;
     }
 
-    .theme-switcher {
+    .preference-switchers {
       flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      padding: 2px;
+      border-radius: 999px;
+      background: var(--theme-track);
+    }
+    .preference-divider {
+      width: 1px;
+      height: 18px;
+      flex: 0 0 1px;
+      background: color-mix(in srgb, var(--theme-inactive-text) 30%, transparent);
+    }
+    .theme-switcher {
       position: relative;
       isolation: isolate;
       display: inline-grid;
-      grid-template-columns: repeat(3, 44px);
+      grid-template-columns: repeat(3, 36px);
       align-items: center;
       gap: 0;
-      padding: 2px;
+      padding: 0;
       border: 0;
       border-radius: 999px;
-      background: var(--theme-track);
+      background: transparent;
     }
     .theme-switcher::before {
       content: '';
       position: absolute;
       z-index: 0;
-      top: 2px;
-      bottom: 2px;
-      left: 2px;
-      width: 44px;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      width: 36px;
       border-radius: 999px;
       background: var(--theme-active);
       box-shadow: none;
@@ -295,9 +309,9 @@
     .theme-option {
       position: relative;
       z-index: 1;
-      width: 44px;
-      min-width: 44px;
-      min-height: 44px;
+      width: 36px;
+      min-width: 36px;
+      min-height: 36px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -336,30 +350,34 @@
       position: relative;
       isolation: isolate;
       display: inline-grid;
-      grid-template-columns: repeat(2, 34px);
+      grid-template-columns: repeat(2, 32px);
       align-items: center;
-      padding: 2px;
+      padding: 0;
       border-radius: 999px;
-      background: var(--theme-track);
+      background: transparent;
     }
     .language-switcher::before {
       content: '';
       position: absolute;
       z-index: 0;
-      inset: 2px auto 2px 2px;
-      width: 34px;
+      inset: 0 auto 0 0;
+      width: 32px;
       border-radius: 999px;
       background: var(--theme-active);
       transform: translateX(0);
       transition: transform .16s cubic-bezier(.2,.8,.2,1);
     }
     html[data-language="it"] .language-switcher::before { transform: translateX(100%); }
+    html:not([data-language]) .language-switcher::before { opacity: 0; }
     .language-option {
       position: relative;
       z-index: 1;
-      width: 34px;
-      min-width: 34px;
-      min-height: 34px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      min-width: 32px;
+      min-height: 36px;
       padding: 0;
       border: 0;
       border-radius: 999px;
@@ -371,13 +389,20 @@
       transition: color .18s ease, opacity .18s ease;
     }
     .language-option:hover { color: var(--text); opacity: .86; }
-    .language-option.active { color: var(--theme-active-text); opacity: 1; }
+    html[data-language="ru"] .language-option[data-language-option="ru"],
+    html[data-language="it"] .language-option[data-language-option="it"],
+    .language-option.active,
+    .language-option[aria-pressed="true"] {
+      color: var(--theme-active-text);
+      opacity: 1;
+    }
     @media (prefers-reduced-motion: reduce) {
       .theme-switcher::before, .theme-option,
       .language-switcher::before, .language-option { transition: none !important; }
     }
     @media (forced-colors: active) {
-      .theme-switcher, .language-switcher { background: Canvas; }
+      .preference-switchers { background: Canvas; border: 1px solid CanvasText; }
+      .theme-switcher, .language-switcher { background: transparent; }
       .theme-switcher::before, .language-switcher::before { background: Highlight; }
       .theme-option, .language-option { color: CanvasText; }
       .theme-option.active, .language-option.active { color: HighlightText; }
@@ -825,6 +850,14 @@ function languageSwitcherMarkup() {
   return window.AtraniI18n?.switcherMarkup?.() || '';
 }
 
+function preferenceSwitchersMarkup() {
+  return `<div class="preference-switchers">
+    ${languageSwitcherMarkup()}
+    <span class="preference-divider" aria-hidden="true"></span>
+    ${themeSwitcherMarkup()}
+  </div>`;
+}
+
 function todayInRome() {
   const parts = new Intl.DateTimeFormat('en-CA', {
     timeZone: 'Europe/Rome',
@@ -862,7 +895,7 @@ function showError() {
       <div class="header-top">
         <div class="header-icon"><i data-lucide="calendar-x" style="width:22px;height:22px;"></i></div>
         <div class="header-copy"><h1>Atrani</h1><div class="subtitle">${maidText('calendarSubtitle')}</div></div>
-        <div class="header-controls">${languageSwitcherMarkup()}${themeSwitcherMarkup()}</div>
+        <div class="header-controls">${preferenceSwitchersMarkup()}</div>
       </div>
     </div>
     <div class="error-state">
@@ -872,6 +905,7 @@ function showError() {
     </div>
   `;
   window.AtraniTheme?.syncControls();
+  window.AtraniI18n?.syncControls();
   if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
@@ -1009,7 +1043,7 @@ function render() {
           <h1>${data.cleaner.name}</h1>
           <div class="subtitle">${maidText('scheduleSubtitle')}</div>
         </div>
-        <div class="header-controls">${languageSwitcherMarkup()}${themeSwitcherMarkup()}</div>
+        <div class="header-controls">${preferenceSwitchersMarkup()}</div>
       </div>
     </div>
   `;
@@ -1131,6 +1165,7 @@ function render() {
 
   document.getElementById('app').innerHTML = html;
   window.AtraniTheme?.syncControls();
+  window.AtraniI18n?.syncControls();
   if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 

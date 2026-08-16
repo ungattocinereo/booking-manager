@@ -3238,6 +3238,7 @@
       --theme-track: #e9e8f0;
       --theme-active: #6d2cfc;
       --theme-active-text: #ffffff;
+      --theme-inactive-text: #686b7d;
       --chart-text: #686b7d;
       --chart-grid: #e8e9f0;
       --chart-tooltip: #171827;
@@ -3301,6 +3302,7 @@
       --theme-track: #11121d;
       --theme-active: #834df9;
       --theme-active-text: #ffffff;
+      --theme-inactive-text: #aaa9bd;
       --chart-text: #b8b7ca;
       --chart-grid: #303247;
       --chart-tooltip: #080913;
@@ -3324,27 +3326,41 @@
         var(--bg);
       color: var(--text);
     }
-    .theme-switcher {
+    .preference-switchers {
       flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      padding: 2px;
+      border-radius: 999px;
+      background: var(--theme-track);
+    }
+    .preference-divider {
+      width: 1px;
+      height: 18px;
+      flex: 0 0 1px;
+      background: color-mix(in srgb, var(--theme-inactive-text) 30%, transparent);
+    }
+    .theme-switcher {
       position: relative;
       isolation: isolate;
       display: inline-grid;
-      grid-template-columns: repeat(3, 44px);
+      grid-template-columns: repeat(3, 36px);
       align-items: center;
       gap: 0;
-      padding: 2px;
+      padding: 0;
       border: 0;
       border-radius: 999px;
-      background: var(--theme-track);
+      background: transparent;
     }
     .theme-switcher::before {
       content: '';
       position: absolute;
       z-index: 0;
-      top: 2px;
-      bottom: 2px;
-      left: 2px;
-      width: 44px;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      width: 36px;
       border-radius: 999px;
       background: var(--theme-active);
       box-shadow: none;
@@ -3357,9 +3373,9 @@
     .theme-option {
       position: relative;
       z-index: 1;
-      width: 44px;
-      min-width: 44px;
-      min-height: 44px;
+      width: 36px;
+      min-width: 36px;
+      min-height: 36px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -3368,7 +3384,7 @@
       border: 0;
       border-radius: 999px;
       background: transparent;
-      color: var(--text-secondary);
+      color: var(--theme-inactive-text);
       font: inherit;
       font-size: 11px;
       font-weight: 650;
@@ -3393,49 +3409,61 @@
       position: relative;
       isolation: isolate;
       display: inline-grid;
-      grid-template-columns: repeat(2, 36px);
+      grid-template-columns: repeat(2, 32px);
       align-items: center;
-      padding: 2px;
+      padding: 0;
       border-radius: 999px;
-      background: var(--theme-track);
+      background: transparent;
     }
     .language-switcher::before {
       content: '';
       position: absolute;
       z-index: 0;
-      inset: 2px auto 2px 2px;
-      width: 36px;
+      inset: 0 auto 0 0;
+      width: 32px;
       border-radius: 999px;
       background: var(--theme-active);
       transform: translateX(0);
       transition: transform .16s cubic-bezier(.2,.8,.2,1);
     }
     html[data-language="it"] .language-switcher::before { transform: translateX(100%); }
+    html:not([data-language]) .language-switcher::before { opacity: 0; }
     .language-option {
       position: relative;
       z-index: 1;
-      width: 36px;
-      min-width: 36px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      min-width: 32px;
       min-height: 36px;
       padding: 0;
       border: 0;
       border-radius: 999px;
       background: transparent;
-      color: var(--text-secondary);
+      color: var(--theme-inactive-text);
       font: 700 10px/1 'IBM Plex Mono', monospace;
       letter-spacing: .04em;
       cursor: pointer;
       transition: color .18s ease, opacity .18s ease;
     }
     .language-option:hover { color: var(--text); opacity: .86; }
-    .language-option.active { color: var(--theme-active-text); opacity: 1; }
+    html[data-language="ru"] .language-option[data-language-option="ru"],
+    html[data-language="it"] .language-option[data-language-option="it"],
+    .language-option.active,
+    .language-option[aria-pressed="true"] {
+      color: var(--theme-active-text);
+      font-weight: 800;
+      opacity: 1;
+    }
     .language-option:focus-visible { outline-color: var(--focus-ring) !important; }
     @media (prefers-reduced-motion: reduce) {
       .theme-switcher::before, .theme-option,
       .language-switcher::before, .language-option { transition: none !important; }
     }
     @media (forced-colors: active) {
-      .theme-switcher, .language-switcher { background: Canvas; }
+      .preference-switchers { background: Canvas; border: 1px solid CanvasText; }
+      .theme-switcher, .language-switcher { background: transparent; }
       .theme-switcher::before, .language-switcher::before { background: Highlight; }
       .theme-option, .language-option { color: CanvasText; }
       .theme-option.active, .language-option.active { color: HighlightText; }
@@ -4556,20 +4584,23 @@
       <h1>Atrani <span>Бронирования</span></h1>
     </div>
     <div class="header-actions">
-      <div class="language-switcher" role="group" aria-label="Язык интерфейса">
-        <button class="language-option" type="button" data-language-option="ru" aria-label="Русский" title="Русский" aria-pressed="false">RU</button>
-        <button class="language-option" type="button" data-language-option="it" aria-label="Итальянский" title="Итальянский" aria-pressed="false">IT</button>
-      </div>
-      <div class="theme-switcher" role="group" aria-label="Цветовая тема">
-        <button class="theme-option" type="button" data-theme-option="system" aria-label="Системная тема" title="Системная тема" aria-pressed="false">
-          <i data-lucide="monitor"></i><span class="theme-option-fallback" aria-hidden="true">◫</span><span class="theme-option-label">Системное</span>
-        </button>
-        <button class="theme-option" type="button" data-theme-option="light" aria-label="Светлая тема" title="Светлая тема" aria-pressed="false">
-          <i data-lucide="sun"></i><span class="theme-option-fallback" aria-hidden="true">☼</span><span class="theme-option-label">День</span>
-        </button>
-        <button class="theme-option" type="button" data-theme-option="dark" aria-label="Тёмная тема" title="Тёмная тема" aria-pressed="false">
-          <i data-lucide="moon"></i><span class="theme-option-fallback" aria-hidden="true">☾</span><span class="theme-option-label">Ночь</span>
-        </button>
+      <div class="preference-switchers">
+        <div class="language-switcher" role="group" aria-label="Язык интерфейса">
+          <button class="language-option" type="button" data-language-option="ru" aria-label="Русский" title="Русский" aria-pressed="false">RU</button>
+          <button class="language-option" type="button" data-language-option="it" aria-label="Итальянский" title="Итальянский" aria-pressed="false">IT</button>
+        </div>
+        <span class="preference-divider" aria-hidden="true"></span>
+        <div class="theme-switcher" role="group" aria-label="Цветовая тема">
+          <button class="theme-option" type="button" data-theme-option="system" aria-label="Системная тема" title="Системная тема" aria-pressed="false">
+            <i data-lucide="monitor"></i><span class="theme-option-fallback" aria-hidden="true">◫</span><span class="theme-option-label">Системное</span>
+          </button>
+          <button class="theme-option" type="button" data-theme-option="light" aria-label="Светлая тема" title="Светлая тема" aria-pressed="false">
+            <i data-lucide="sun"></i><span class="theme-option-fallback" aria-hidden="true">☼</span><span class="theme-option-label">День</span>
+          </button>
+          <button class="theme-option" type="button" data-theme-option="dark" aria-label="Тёмная тема" title="Тёмная тема" aria-pressed="false">
+            <i data-lucide="moon"></i><span class="theme-option-fallback" aria-hidden="true">☾</span><span class="theme-option-label">Ночь</span>
+          </button>
+        </div>
       </div>
       <span class="last-sync" id="lastSync"></span>
       <button class="btn btn-ghost" id="syncBtn" onclick="syncCalendars()">
