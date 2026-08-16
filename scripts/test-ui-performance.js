@@ -1195,16 +1195,19 @@ async function readNarrowThemeControlAudit(page, shellSelector) {
       const darker = Math.min(luminance(first), luminance(second));
       return (lighter + .05) / (darker + .05);
     };
-    const switcher = document.querySelector('.theme-switcher');
-    const preferences = document.querySelector('.preference-switchers');
-    const controls = Array.from(document.querySelectorAll('[data-theme-option]')).map(control => {
+    const menu = document.querySelector('[data-theme-menu]');
+    const trigger = menu?.querySelector('[data-theme-trigger]');
+    const popover = menu?.querySelector('.theme-menu-popover');
+    const controls = Array.from(menu?.querySelectorAll('[data-theme-option]') || []).map(control => {
       const rect = control.getBoundingClientRect();
+      const style = getComputedStyle(control);
       return {
         option: control.dataset.themeOption,
-        width: rect.width,
-        height: rect.height,
+        width: Number.parseFloat(style.width),
+        height: Number.parseFloat(style.height),
         left: rect.left,
-        right: rect.right
+        right: rect.right,
+        borderRadius: Number.parseFloat(style.borderTopLeftRadius)
       };
     });
     const activeControl = document.querySelector('[data-theme-option][aria-pressed="true"]');
@@ -1216,50 +1219,64 @@ async function readNarrowThemeControlAudit(page, shellSelector) {
         width: rect.width,
         height: rect.height,
         left: rect.left,
-        right: rect.right
+        right: rect.right,
+        borderRadius: Number.parseFloat(getComputedStyle(control).borderTopLeftRadius)
       };
     });
     const activeLanguage = document.querySelector('[data-language-option][aria-pressed="true"]');
     const languageSwitcher = document.querySelector('.language-switcher');
     const languageThumbStyle = languageSwitcher ? getComputedStyle(languageSwitcher, '::before') : null;
     const activeLanguageStyle = activeLanguage ? getComputedStyle(activeLanguage) : null;
-    const switcherRect = switcher?.getBoundingClientRect() || null;
-    const preferencesRect = preferences?.getBoundingClientRect() || null;
-    const activeRect = activeControl?.getBoundingClientRect() || null;
-    const switcherStyle = switcher ? getComputedStyle(switcher) : null;
-    const thumbStyle = switcher ? getComputedStyle(switcher, '::before') : null;
-    const thumbMatrix = thumbStyle?.transform && thumbStyle.transform !== 'none'
-      ? new DOMMatrixReadOnly(thumbStyle.transform)
-      : { m41: 0 };
-    const thumbLeft = thumbStyle ? Number.parseFloat(thumbStyle.left) + thumbMatrix.m41 : null;
-    const activeLeft = switcherRect && activeRect ? activeRect.left - switcherRect.left : null;
-    const thumbWidth = thumbStyle ? Number.parseFloat(thumbStyle.width) : null;
+    const languageRect = languageSwitcher?.getBoundingClientRect() || null;
+    const triggerRect = trigger?.getBoundingClientRect() || null;
+    const triggerStyle = trigger ? getComputedStyle(trigger) : null;
+    const popoverRect = popover?.getBoundingClientRect() || null;
+    const popoverStyle = popover ? getComputedStyle(popover) : null;
+    const visibleTriggerIcon = Array.from(trigger?.querySelectorAll('[data-theme-trigger-icon]') || [])
+      .find(icon => !icon.hidden);
     const shellRect = document.querySelector(selector)?.getBoundingClientRect() || null;
     return {
       controls,
       activeOption: activeControl?.dataset.themeOption || null,
-      preferences: preferencesRect ? { width: preferencesRect.width, height: preferencesRect.height } : null,
+      hasSharedWrapper: Boolean(document.querySelector('.preference-switchers')),
       language: {
         controls: languageControls,
         activeOption: activeLanguage?.dataset.languageOption || null,
         activeTextColor: activeLanguageStyle?.color || null,
         thumbColor: languageThumbStyle?.backgroundColor || null,
+        rail: languageRect ? { width: languageRect.width, height: languageRect.height } : null,
+        thumb: languageThumbStyle ? {
+          width: Number.parseFloat(languageThumbStyle.width),
+          height: Number.parseFloat(languageThumbStyle.height),
+          borderRadius: Number.parseFloat(languageThumbStyle.borderTopLeftRadius),
+          transitionDuration: languageThumbStyle.transitionDuration
+        } : null,
         contrast: activeLanguageStyle && languageThumbStyle
           ? contrast(activeLanguageStyle.color, languageThumbStyle.backgroundColor)
           : null
       },
-      switcher: switcherRect && switcherStyle ? {
-        width: switcherRect.width,
-        height: switcherRect.height,
-        borderWidth: Number.parseFloat(switcherStyle.borderTopWidth)
+      theme: triggerRect && triggerStyle ? {
+        trigger: {
+          width: Number.parseFloat(triggerStyle.width),
+          height: Number.parseFloat(triggerStyle.height),
+          left: triggerRect.left,
+          right: triggerRect.right,
+          borderRadius: Number.parseFloat(triggerStyle.borderTopLeftRadius),
+          expanded: trigger.getAttribute('aria-expanded')
+        },
+        mainIcon: visibleTriggerIcon?.dataset.themeTriggerIcon || null,
+        popover: popoverRect && popoverStyle ? {
+          width: popoverRect.width,
+          height: popoverRect.height,
+          left: popoverRect.left,
+          right: popoverRect.right,
+          opacity: Number.parseFloat(popoverStyle.opacity),
+          visibility: popoverStyle.visibility,
+          pointerEvents: popoverStyle.pointerEvents
+        } : null
       } : null,
-      thumb: thumbStyle && activeRect ? {
-        width: thumbWidth,
-        height: Number.parseFloat(thumbStyle.height),
-        backgroundColor: thumbStyle.backgroundColor,
-        transitionDuration: thumbStyle.transitionDuration,
-        aligned: Math.abs(thumbLeft - activeLeft) <= 1 && Math.abs(thumbWidth - activeRect.width) <= 1
-      } : null,
+      controlsWidth: languageRect && triggerRect ? triggerRect.right - languageRect.left : null,
+      controlsGap: languageRect && triggerRect ? triggerRect.left - languageRect.right : null,
       shell: shellRect ? { left: shellRect.left, right: shellRect.right, width: shellRect.width } : null,
       viewportWidth: innerWidth,
       overflow: {
@@ -1270,43 +1287,72 @@ async function readNarrowThemeControlAudit(page, shellSelector) {
   }, shellSelector);
 }
 
-function assertNarrowThemeControlAudit(audit, label) {
+function assertNarrowThemeControlAudit(audit, label, { menuOpen = false } = {}) {
+  assert.equal(audit.hasSharedWrapper, false, `${label}: language and theme controls still share a wrapper`);
   assert.equal(audit.controls.length, 3, `${label}: expected three theme controls`);
-  for (const control of audit.controls) {
-    assert.ok(control.width >= 36, `${label}: ${control.option} target is only ${control.width}px wide`);
-    assert.ok(control.height >= 36, `${label}: ${control.option} target is only ${control.height}px high`);
-    assert.ok(control.left >= -1 && control.right <= audit.viewportWidth + 1, `${label}: ${control.option} target is clipped`);
-  }
-  assert.ok(audit.preferences, `${label}: shared preference rail is missing`);
-  assert.ok(audit.preferences.width <= 190, `${label}: preference rail is not compact (${audit.preferences.width}px)`);
-  assert.ok(audit.preferences.height <= 40, `${label}: preference rail is too tall (${audit.preferences.height}px)`);
   assert.equal(audit.language.controls.length, 2, `${label}: expected two language controls`);
   assert.ok(['ru', 'it'].includes(audit.language.activeOption), `${label}: active language is missing`);
   for (const control of audit.language.controls) {
-    assert.ok(control.width >= 32, `${label}: ${control.option} language target is only ${control.width}px wide`);
-    assert.ok(control.height >= 36, `${label}: ${control.option} language target is only ${control.height}px high`);
+    assert.ok(Math.abs(control.width - 32) <= 1, `${label}: ${control.option} language target is ${control.width}px wide instead of 32px`);
+    assert.ok(Math.abs(control.height - 32) <= 1, `${label}: ${control.option} language target is ${control.height}px high instead of 32px`);
+    assert.ok(control.borderRadius >= 15.5, `${label}: ${control.option} language target is not circular`);
     assert.ok(control.left >= -1 && control.right <= audit.viewportWidth + 1, `${label}: ${control.option} language target is clipped`);
   }
+  assert.ok(audit.language.rail, `${label}: language rail is missing`);
+  assert.ok(audit.language.rail.width <= 69, `${label}: language rail is not compact (${audit.language.rail.width}px)`);
+  assert.ok(audit.language.rail.height <= 37, `${label}: language rail is too tall (${audit.language.rail.height}px)`);
+  assert.ok(audit.language.thumb, `${label}: active language circle is missing`);
+  assert.ok(Math.abs(audit.language.thumb.width - 32) <= 1 && Math.abs(audit.language.thumb.height - 32) <= 1,
+    `${label}: active language shape is not a 32px circle`);
+  assert.ok(audit.language.thumb.borderRadius >= 15.5, `${label}: active language shape is still oval`);
   assert.ok(audit.language.contrast >= 4.5,
     `${label}: active language contrast is too low (${audit.language.contrast}; ` +
     `text ${audit.language.activeTextColor}, thumb ${audit.language.thumbColor})`);
-  assert.ok(audit.switcher, `${label}: theme rail is missing`);
-  assert.equal(audit.switcher.borderWidth, 0, `${label}: theme rail still has a decorative outline`);
-  assert.ok(audit.thumb, `${label}: moving theme thumb is missing`);
-  assert.equal(audit.thumb.aligned, true, `${label}: theme thumb is not aligned with ${audit.activeOption}`);
-  assert.ok(audit.thumb.width >= 36 && audit.thumb.height >= 36, `${label}: theme thumb is smaller than its target`);
-  assert.notEqual(audit.thumb.backgroundColor, 'rgba(0, 0, 0, 0)', `${label}: theme thumb is invisible`);
-  assert.notEqual(audit.thumb.transitionDuration, '0s', `${label}: theme thumb has no motion`);
+  assert.ok(audit.theme, `${label}: theme dropdown is missing`);
+  assert.ok(Math.abs(audit.theme.trigger.width - 40) <= 1 && Math.abs(audit.theme.trigger.height - 40) <= 1,
+    `${label}: theme trigger is not 40px square`);
+  assert.ok(audit.theme.trigger.borderRadius >= 19.5, `${label}: theme trigger is not circular`);
+  assert.equal(audit.theme.mainIcon, audit.activeOption, `${label}: main icon does not match selected theme`);
+  assert.equal(audit.theme.trigger.expanded, menuOpen ? 'true' : 'false', `${label}: trigger has wrong expanded state`);
+  assert.ok(audit.theme.popover, `${label}: theme popover is missing`);
+  if (menuOpen) {
+    assert.equal(audit.theme.popover.visibility, 'visible', `${label}: theme popover is hidden`);
+    assert.ok(audit.theme.popover.opacity >= .95, `${label}: theme popover is transparent`);
+    assert.notEqual(audit.theme.popover.pointerEvents, 'none', `${label}: theme popover cannot be used`);
+    for (const control of audit.controls) {
+      assert.ok(Math.abs(control.width - 36) <= 1 && Math.abs(control.height - 36) <= 1,
+        `${label}: ${control.option} theme option is not 36px square`);
+      assert.ok(control.borderRadius >= 17.5, `${label}: ${control.option} theme option is not circular`);
+      assert.ok(control.left >= -1 && control.right <= audit.viewportWidth + 1, `${label}: ${control.option} target is clipped`);
+    }
+  } else {
+    assert.equal(audit.theme.popover.visibility, 'hidden', `${label}: closed theme popover remains visible`);
+    assert.ok(audit.theme.popover.opacity <= .05, `${label}: closed theme popover remains opaque`);
+  }
+  assert.ok(audit.controlsWidth <= 120, `${label}: preference controls are not compact (${audit.controlsWidth}px)`);
+  assert.ok(audit.controlsGap >= 4, `${label}: language and theme controls are not visually separated`);
   assert.ok(audit.shell, `${label}: header shell is missing`);
   assert.ok(audit.shell.left >= -1 && audit.shell.right <= audit.viewportWidth + 1, `${label}: header shell is clipped`);
   assert.ok(audit.overflow.document <= 1, `${label}: document overflows horizontally by ${audit.overflow.document}px`);
   assert.ok(audit.overflow.body <= 1, `${label}: body overflows horizontally by ${audit.overflow.body}px`);
 }
 
+async function chooseTheme(page, preference) {
+  const trigger = page.locator('[data-theme-trigger]').first();
+  const option = page.locator(`[data-theme-option="${preference}"]`).first();
+  if (!await option.isVisible()) {
+    await trigger.click();
+    await page.waitForFunction(() =>
+      document.querySelector('[data-theme-trigger]')?.getAttribute('aria-expanded') === 'true');
+  }
+  await option.click();
+}
+
 async function inspectNarrowThemeControls(browser, baseUrl) {
   const context = await browser.newContext({
     viewport: { width: 320, height: 800 },
     isMobile: true,
+    hasTouch: true,
     colorScheme: 'dark'
   });
   await installStatsBrowserMocks(context);
@@ -1321,31 +1367,54 @@ async function inspectNarrowThemeControls(browser, baseUrl) {
   );
   await page.waitForSelector('.mobile-agenda-card');
   const adminSystem = await readNarrowThemeControlAudit(page, '.orbit-topbar');
-  assertNarrowThemeControlAudit(adminSystem, '320px admin system theme switcher');
+  assertNarrowThemeControlAudit(adminSystem, '320px admin system theme controls');
   assert.equal(adminSystem.activeOption, 'system');
-  await page.locator('[data-theme-option="dark"]').click();
+  await page.locator('[data-theme-trigger]').tap();
+  await page.waitForFunction(() =>
+    document.querySelector('[data-theme-trigger]')?.getAttribute('aria-expanded') === 'true');
+  await page.waitForTimeout(180);
+  const adminOpen = await readNarrowThemeControlAudit(page, '.orbit-topbar');
+  assertNarrowThemeControlAudit(adminOpen, '320px admin open theme menu', { menuOpen: true });
+  await captureUiScreenshot(page, 'theme-menu-open-narrow-admin');
+  await page.locator('[data-theme-option="dark"]').tap();
+  await page.touchscreen.tap(10, 200);
   await page.waitForFunction(() => document.documentElement.dataset.themePreference === 'dark');
   await page.waitForTimeout(220);
   const adminDark = await readNarrowThemeControlAudit(page, '.orbit-topbar');
-  assertNarrowThemeControlAudit(adminDark, '320px admin dark theme switcher');
+  assertNarrowThemeControlAudit(adminDark, '320px admin dark theme controls');
   assert.equal(adminDark.activeOption, 'dark');
   await captureUiScreenshot(page, 'theme-dark-narrow-admin');
 
   await page.goto(new URL('/maid/test-cleaner', baseUrl).href, { waitUntil: 'domcontentloaded' });
-  await page.waitForSelector('.header .theme-switcher');
+  await page.waitForSelector('.header .theme-menu');
   const maid = await readNarrowThemeControlAudit(page, '.header');
-  assertNarrowThemeControlAudit(maid, '320px maid theme switcher');
+  assertNarrowThemeControlAudit(maid, '320px maid theme controls');
   assert.equal(maid.activeOption, 'dark');
   await captureUiScreenshot(page, 'theme-dark-narrow-maid');
 
+  await page.locator('[data-theme-trigger]').tap();
+  await page.waitForTimeout(180);
+  const maidOpen = await readNarrowThemeControlAudit(page, '.header');
+  assertNarrowThemeControlAudit(maidOpen, '320px maid open theme menu', { menuOpen: true });
+  await captureUiScreenshot(page, 'theme-menu-open-narrow-maid');
+  await page.locator('[data-theme-trigger]').tap();
+  await page.touchscreen.tap(10, 200);
+
   await page.emulateMedia({ colorScheme: 'dark', reducedMotion: 'reduce' });
   const reducedMotion = await readNarrowThemeControlAudit(page, '.header');
-  assert.equal(reducedMotion.thumb.transitionDuration, '0s', 'reduced motion did not disable the theme thumb animation');
+  assert.equal(reducedMotion.language.thumb.transitionDuration, '0s', 'reduced motion did not disable the language circle animation');
 
   assert.deepEqual(errors.pageErrors, []);
   assert.deepEqual(errors.consoleErrors, []);
   await context.close();
-  return { adminSystem, adminDark, maid, reducedMotionDuration: reducedMotion.thumb.transitionDuration };
+  return {
+    adminSystem,
+    adminOpen,
+    adminDark,
+    maid,
+    maidOpen,
+    reducedMotionDuration: reducedMotion.language.thumb.transitionDuration
+  };
 }
 
 async function inspectThemePreferences(browser, baseUrl) {
@@ -1383,6 +1452,17 @@ async function inspectThemePreferences(browser, baseUrl) {
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
   await waitForAdminThemeRoute(page, adminThemeRoutes[0]);
 
+  await page.locator('[data-theme-trigger]').hover();
+  await page.waitForFunction(() => {
+    const popover = document.querySelector('.theme-menu-popover');
+    if (!popover) return false;
+    const style = getComputedStyle(popover);
+    return style.visibility === 'visible' && Number(style.opacity) >= .95;
+  });
+  await page.mouse.move(0, 0);
+  await page.waitForFunction(() =>
+    getComputedStyle(document.querySelector('.theme-menu-popover')).visibility === 'hidden');
+
   await page.emulateMedia({ colorScheme: 'dark' });
   await page.waitForFunction(() => document.documentElement.dataset.colorScheme === 'dark');
   const liveSystemDark = await readThemeState(page);
@@ -1393,7 +1473,7 @@ async function inspectThemePreferences(browser, baseUrl) {
     label: 'live system dark'
   });
 
-  await page.locator('[data-theme-option="light"]').click();
+  await chooseTheme(page, 'light');
   await page.waitForFunction(storageKey =>
     document.documentElement.dataset.themePreference === 'light' &&
     document.documentElement.dataset.colorScheme === 'light' &&
@@ -1417,7 +1497,7 @@ async function inspectThemePreferences(browser, baseUrl) {
   });
 
   await page.goto(new URL('/maid/test-cleaner', baseUrl).href, { waitUntil: 'domcontentloaded' });
-  await page.waitForSelector('.header .theme-switcher');
+  await page.waitForSelector('.header .theme-menu');
   const maidLight = await readThemeState(page);
   assertThemeState(maidLight, {
     preference: 'light',
@@ -1426,7 +1506,7 @@ async function inspectThemePreferences(browser, baseUrl) {
     label: 'maid persisted explicit light'
   });
 
-  await page.locator('[data-theme-option="dark"]').click();
+  await chooseTheme(page, 'dark');
   await page.waitForFunction(storageKey =>
     document.documentElement.dataset.themePreference === 'dark' &&
     document.documentElement.dataset.colorScheme === 'dark' &&
@@ -1507,7 +1587,7 @@ async function inspectDarkThemeRoutes(browser, baseUrl) {
   }
 
   await page.goto(new URL('/maid/test-cleaner', baseUrl).href, { waitUntil: 'domcontentloaded' });
-  await page.waitForSelector('.header .theme-switcher');
+  await page.waitForSelector('.header .theme-menu');
   assert.equal(new URL(page.url()).pathname, '/maid/test-cleaner');
   assert.equal(await page.locator('html').getAttribute('lang'), 'ru');
   const maidState = await readThemeState(page);
@@ -1689,7 +1769,7 @@ async function inspectStatsPage(browser, baseUrl, viewport, isMobile) {
   const themeLifecycle = [];
   for (const target of themeTargets) {
     const before = await page.evaluate(() => ({ ...globalThis.__statsChartMock }));
-    await page.locator(`[data-theme-option="${target}"]`).click();
+    await chooseTheme(page, target);
     await page.waitForFunction(({ expected, createdBefore }) =>
       document.documentElement.dataset.themePreference === expected &&
       document.documentElement.dataset.colorScheme === expected &&
