@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Atrani — Бронирования</title>
+  <script src="/i18n.js"></script>
+  <script src="/dashboard-i18n.js"></script>
 
   <!-- Favicon & App Icons -->
   <link rel="icon" href="/favicon.ico" sizes="48x48">
@@ -2921,6 +2923,7 @@
     }
 
     @media (max-width: 420px) {
+      .header h1 { display: none; }
       .header h1 { max-width: 34vw; }
       .stats-radar-head {
         align-items: stretch;
@@ -3385,14 +3388,57 @@
     .theme-option-fallback { width: 14px; font-size: 16px; line-height: 1; text-align: center; }
     .theme-option svg + .theme-option-fallback { display: none; }
     .theme-option-label { display: none; }
+    .language-switcher {
+      flex: 0 0 auto;
+      position: relative;
+      isolation: isolate;
+      display: inline-grid;
+      grid-template-columns: repeat(2, 36px);
+      align-items: center;
+      padding: 2px;
+      border-radius: 999px;
+      background: var(--theme-track);
+    }
+    .language-switcher::before {
+      content: '';
+      position: absolute;
+      z-index: 0;
+      inset: 2px auto 2px 2px;
+      width: 36px;
+      border-radius: 999px;
+      background: var(--theme-active);
+      transform: translateX(0);
+      transition: transform .16s cubic-bezier(.2,.8,.2,1);
+    }
+    html[data-language="it"] .language-switcher::before { transform: translateX(100%); }
+    .language-option {
+      position: relative;
+      z-index: 1;
+      width: 36px;
+      min-width: 36px;
+      min-height: 36px;
+      padding: 0;
+      border: 0;
+      border-radius: 999px;
+      background: transparent;
+      color: var(--text-secondary);
+      font: 700 10px/1 'IBM Plex Mono', monospace;
+      letter-spacing: .04em;
+      cursor: pointer;
+      transition: color .18s ease, opacity .18s ease;
+    }
+    .language-option:hover { color: var(--text); opacity: .86; }
+    .language-option.active { color: var(--theme-active-text); opacity: 1; }
+    .language-option:focus-visible { outline-color: var(--focus-ring) !important; }
     @media (prefers-reduced-motion: reduce) {
-      .theme-switcher::before, .theme-option { transition: none !important; }
+      .theme-switcher::before, .theme-option,
+      .language-switcher::before, .language-option { transition: none !important; }
     }
     @media (forced-colors: active) {
-      .theme-switcher { background: Canvas; }
-      .theme-switcher::before { background: Highlight; }
-      .theme-option { color: CanvasText; }
-      .theme-option.active { color: HighlightText; }
+      .theme-switcher, .language-switcher { background: Canvas; }
+      .theme-switcher::before, .language-switcher::before { background: Highlight; }
+      .theme-option, .language-option { color: CanvasText; }
+      .theme-option.active, .language-option.active { color: HighlightText; }
     }
     button, input, select, textarea { font-family: inherit; }
     button:focus-visible, a:focus-visible, summary:focus-visible,
@@ -4212,6 +4258,7 @@
     }
 
     @media (max-width: 420px) {
+      .header h1 { display: none; }
       .orbit-hero-copy p { max-width: 255px; }
       .orbit-hero h2 { font-size: 28px; }
       .freshness-detail { font-size: 10px; }
@@ -4487,7 +4534,7 @@
       html[data-color-scheme="dark"] .nav-item.active { background: var(--accent-light); color: var(--accent); }
     }
     @media (max-width: 360px) {
-      .header-left { gap: 8px; }
+      .header-left { display: none; }
       .header-logo { width: 34px; height: 34px; flex-basis: 34px; }
       .header h1 { max-width: 25vw; }
       .header h1 span { display: none; }
@@ -4509,6 +4556,10 @@
       <h1>Atrani <span>Бронирования</span></h1>
     </div>
     <div class="header-actions">
+      <div class="language-switcher" role="group" aria-label="Язык интерфейса">
+        <button class="language-option" type="button" data-language-option="ru" aria-label="Русский" title="Русский" aria-pressed="false">RU</button>
+        <button class="language-option" type="button" data-language-option="it" aria-label="Итальянский" title="Итальянский" aria-pressed="false">IT</button>
+      </div>
       <div class="theme-switcher" role="group" aria-label="Цветовая тема">
         <button class="theme-option" type="button" data-theme-option="system" aria-label="Системная тема" title="Системная тема" aria-pressed="false">
           <i data-lucide="monitor"></i><span class="theme-option-fallback" aria-hidden="true">◫</span><span class="theme-option-label">Системное</span>
@@ -4953,6 +5004,10 @@
 
 <script>
 const API = '/api';
+const UI_LANGUAGE = window.AtraniI18n?.getLanguage() || 'ru';
+const UI_LOCALE = window.AtraniI18n?.getLocale() || 'ru-RU';
+const IS_ITALIAN = UI_LANGUAGE === 'it';
+const uiText = value => window.AtraniDashboardI18n?.translateText(value) ?? value;
 
 let properties = [];
 let bookings = [];
@@ -5033,6 +5088,9 @@ function calendarMovementTitle() {
   const checkins = realBookings.filter(booking => booking.start_date === today).length;
   const checkouts = realBookings.filter(booking => booking.end_date === today).length;
   if (!checkins && !checkouts) return 'Нет заездов и нет выездов';
+  if (IS_ITALIAN) {
+    return `${checkins} ${checkins === 1 ? 'arrivo' : 'arrivi'} e ${checkouts} ${checkouts === 1 ? 'partenza' : 'partenze'}`;
+  }
   return `${checkins} ${pluralRu(checkins, 'заезд', 'заезда', 'заездов')} и ещё ${checkouts} ${pluralRu(checkouts, 'выезд', 'выезда', 'выездов')}`;
 }
 
@@ -5050,7 +5108,7 @@ function updateOrbitHero(tab) {
     subtitle.hidden = !content.subtitle;
   }
 
-  const dateParts = new Intl.DateTimeFormat('ru-RU', {
+  const dateParts = new Intl.DateTimeFormat(UI_LOCALE, {
     timeZone: 'Europe/Rome',
     day: '2-digit',
     month: 'short'
@@ -5117,12 +5175,12 @@ function relativeFreshnessTime(value) {
   const timestamp = new Date(value).getTime();
   if (!Number.isFinite(timestamp)) return 'время синхронизации неизвестно';
   const minutes = Math.max(0, Math.floor((Date.now() - timestamp) / 60000));
-  if (minutes < 2) return 'только что';
-  if (minutes < 60) return `${minutes} мин назад`;
+  if (minutes < 2) return IS_ITALIAN ? 'pochi istanti fa' : 'только что';
+  if (minutes < 60) return IS_ITALIAN ? `${minutes} min fa` : `${minutes} мин назад`;
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours} ч назад`;
+  if (hours < 24) return IS_ITALIAN ? `${hours} h fa` : `${hours} ч назад`;
   const days = Math.floor(hours / 24);
-  return `${days} дн назад`;
+  return IS_ITALIAN ? `${days} gg fa` : `${days} дн назад`;
 }
 
 function setFreshnessStatus({ state, icon, title, detail, retry = false }) {
@@ -5135,8 +5193,8 @@ function setFreshnessStatus({ state, icon, title, detail, retry = false }) {
 
   container.dataset.state = state;
   iconEl.innerHTML = `<i data-lucide="${icon}" style="width:17px;height:17px;"></i>`;
-  titleEl.textContent = title;
-  detailEl.textContent = detail;
+  titleEl.textContent = uiText(title);
+  detailEl.textContent = uiText(detail);
   retryEl.hidden = !retry;
   if (typeof lucide !== 'undefined') lucide.createIcons();
 }
@@ -5290,7 +5348,7 @@ function writeCachedDashboard(payload) {
 
 function cachedDashboardLabel(savedAt) {
   if (!savedAt) return 'Показаны сохранённые данные';
-  const time = new Date(savedAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+  const time = new Date(savedAt).toLocaleTimeString(UI_LOCALE, { hour: '2-digit', minute: '2-digit' });
   return `Показаны сохранённые данные ${time}`;
 }
 
@@ -5329,7 +5387,7 @@ function markNetworkDashboardFresh(payload) {
     emptyConfirmed: payload?.meta?.empty_confirmed_client === true
   };
   const lastSyncEl = document.getElementById('lastSync');
-  lastSyncEl.textContent = 'Обновлено ' + new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+  lastSyncEl.textContent = (IS_ITALIAN ? 'Aggiornato ' : 'Обновлено ') + new Date().toLocaleTimeString(UI_LOCALE, { hour: '2-digit', minute: '2-digit' });
   lastDashboardLoadAt = Date.now();
   writeCachedDashboard(payload);
   renderFreshnessFromPayload(payload, { source: 'network' });
@@ -5542,7 +5600,7 @@ function updateStats() {
   const today = toLocalIso(todayLocal());
   const tomorrow = toLocalIso(addCalendarDays(todayLocal(), 1));
   const upcoming = realBookings.filter(b => b.start_date >= today);
-  const dayNamesRu = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+  const dayNames = IS_ITALIAN ? ['Dom','Lun','Mar','Mer','Gio','Ven','Sab'] : ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
 
   // Arrival cards remain check-in only; the hero summarizes both movement types.
   const checkinDates = {};
@@ -5554,7 +5612,7 @@ function updateStats() {
   const sortCheckins = items => items.sort((a, b) => {
     const propertyA = properties.find(p => p.id === a.property_id)?.name || a.property_id;
     const propertyB = properties.find(p => p.id === b.property_id)?.name || b.property_id;
-    return propertyA.localeCompare(propertyB, 'ru');
+    return propertyA.localeCompare(propertyB, UI_LANGUAGE);
   });
   Object.values(checkinDates).forEach(sortCheckins);
 
@@ -5562,7 +5620,7 @@ function updateStats() {
     const p = properties.find(pp => pp.id === b.property_id);
     const cfg = propertyConfig[b.property_id] || { icon: 'home', color: '#6b7280', bg: '#f9fafb' };
     const flag = b.guest_country ? countryToFlag(b.guest_country) : '';
-    const guests = b.guest_count ? `${b.guest_count} чел.` : '';
+    const guests = b.guest_count ? (IS_ITALIAN ? `${b.guest_count} ospiti` : `${b.guest_count} чел.`) : '';
     return `<div class="stat-checkin-item">
       <div class="prop-icon" style="background:${cfg.bg};color:${cfg.color};"><i data-lucide="${cfg.icon}" style="width:12px;height:12px;"></i></div>
       <span class="prop-name">${p?.name || b.property_id}</span>
@@ -5576,13 +5634,13 @@ function updateStats() {
 
   function checkinCountLabel(count, emptyLabel) {
     return count
-      ? `${count} ${pluralRu(count, 'заезд', 'заезда', 'заездов')}`
+      ? `${count} ${IS_ITALIAN ? (count === 1 ? 'arrivo' : 'arrivi') : pluralRu(count, 'заезд', 'заезда', 'заездов')}`
       : emptyLabel;
   }
 
   function formatDateTitle(dateStr) {
     const d = new Date(dateStr + 'T00:00:00');
-    return `${dayNamesRu[d.getDay()]}, ${d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}`;
+    return `${dayNames[d.getDay()]}, ${d.toLocaleDateString(UI_LOCALE, { day: 'numeric', month: 'short' })}`;
   }
 
   // Today card
@@ -5649,9 +5707,9 @@ function updateStats() {
   if (conflicts.length > 0) {
     document.getElementById('statConflictCard').style.display = '';
     conflictEl.textContent = conflicts.length;
-    const fmtShort = (d) => new Date(d + 'T00:00:00').toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+    const fmtShort = (d) => new Date(d + 'T00:00:00').toLocaleDateString(UI_LOCALE, { day: 'numeric', month: 'short' });
     conflictDetail.innerHTML = conflicts.slice(0, 3).map(c => {
-      return `<b>${c.property}</b> ${fmtShort(c.a.start_date)}–${fmtShort(c.b.end_date)}`;
+      return `<b class="user-provided-name">${c.property}</b> ${fmtShort(c.a.start_date)}–${fmtShort(c.b.end_date)}`;
     }).join('<br>') + (conflicts.length > 3 ? `<br>...и ещё ${conflicts.length - 3}` : '');
   } else {
     document.getElementById('statConflictCard').style.display = 'none';
@@ -5664,14 +5722,14 @@ function updateStats() {
   if (recent.length > 0) {
     recentCard.style.display = '';
     document.getElementById('statRecentCount').textContent = recent.length;
-    const fmtShort = (d) => new Date(d + 'T00:00:00').toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+    const fmtShort = (d) => new Date(d + 'T00:00:00').toLocaleDateString(UI_LOCALE, { day: 'numeric', month: 'short' });
     document.getElementById('statRecentList').innerHTML = recent.slice(0, 5).map(b => {
       const prop = properties.find(p => p.id === b.property_id);
       const cfg = propertyConfig[b.property_id] || { icon: 'home', color: '#6b7280', bg: '#f9fafb' };
       const platformBadge = b.platform === 'airbnb'
         ? '<span style="color:var(--airbnb);font-weight:600;font-size:11px;">Airbnb</span>'
         : '<span style="color:var(--booking);font-weight:600;font-size:11px;">Booking</span>';
-      const guest = b.guest_name ? `<span style="font-size:11px;color:var(--text-secondary);">${b.guest_name}</span>` : '';
+      const guest = b.guest_name ? `<span class="user-provided-name" style="font-size:11px;color:var(--text-secondary);">${b.guest_name}</span>` : '';
       return `<div class="stat-checkin-item">
         <div class="prop-icon" style="background:${cfg.bg};color:${cfg.color};"><i data-lucide="${cfg.icon}" style="width:12px;height:12px;"></i></div>
         <span class="prop-name">${prop?.name || b.property_id}</span>
@@ -5885,7 +5943,7 @@ function nightsBetween(startDate, endDate) {
 }
 
 function formatEuro(amount) {
-  return new Intl.NumberFormat('ru-RU', {
+  return new Intl.NumberFormat(UI_LOCALE, {
     style: 'currency',
     currency: 'EUR',
     minimumFractionDigits: amount % 1 === 0 ? 0 : 2,
@@ -5908,9 +5966,9 @@ function taxAmountLabel(booking) {
   const guests = Number(booking.guest_count) || null;
   const rate = 2.5;
 
-  if (nights) return `${formatEuro(nights * rate)} / чел.`;
-  if (guests) return `${formatEuro(guests * rate)} / ночь`;
-  return `${formatEuro(rate)} / чел.·ночь`;
+  if (nights) return `${formatEuro(nights * rate)} / ${IS_ITALIAN ? 'ospite' : 'чел.'}`;
+  if (guests) return `${formatEuro(guests * rate)} / ${IS_ITALIAN ? 'notte' : 'ночь'}`;
+  return `${formatEuro(rate)} / ${IS_ITALIAN ? 'ospite·notte' : 'чел.·ночь'}`;
 }
 
 function formatTaxDate(iso) {
@@ -5924,7 +5982,8 @@ function formatTaxDate(iso) {
   if (!day) return 'Дата не определена';
   const date = new Date(`${day}T12:00:00Z`);
   if (Number.isNaN(date.getTime())) return 'Дата не определена';
-  return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', timeZone: 'UTC' });
+  const locale = typeof UI_LOCALE === 'string' ? UI_LOCALE : 'ru-RU';
+  return date.toLocaleDateString(locale, { day: 'numeric', month: 'short', timeZone: 'UTC' });
 }
 
 function taxStayLabel(booking) {
@@ -5932,8 +5991,8 @@ function taxStayLabel(booking) {
   const guests = Number(booking.guest_count) || null;
   return [
     `${formatTaxDate(booking.start_date)} → ${formatTaxDate(booking.end_date)}`,
-    nights ? `${nights} ${nights === 1 ? 'ночь' : nights < 5 ? 'ночи' : 'ночей'}` : null,
-    guests ? `${guests} чел.` : null
+    nights ? `${nights} ${IS_ITALIAN ? (nights === 1 ? 'notte' : 'notti') : (nights === 1 ? 'ночь' : nights < 5 ? 'ночи' : 'ночей')}` : null,
+    guests ? `${guests} ${IS_ITALIAN ? (guests === 1 ? 'ospite' : 'ospiti') : 'чел.'}` : null
   ].filter(Boolean).join(' · ');
 }
 
@@ -5947,13 +6006,14 @@ const COUNTRY_NAMES = {
   ie:'Ирландия',is:'Исландия',lu:'Люксембург',vn:'Вьетнам',id:'Индонезия',my:'Малайзия',
   ph:'Филиппины',za:'ЮАР'
 };
+if (IS_ITALIAN) Object.assign(COUNTRY_NAMES, window.AtraniDashboardI18n?.countriesIt || {});
 
 const DAY_MS = 86400000;
 const CALENDAR_VIEW_MODES = {
-  twoWeeks: { label: '14 дней', days: 14, dayWidth: 93, fitToWidth: true },
-  month: { label: '30 дней', days: 30, dayWidth: 69 },
-  quarter: { label: '90 дней', days: 90, dayWidth: 45 },
-  season: { label: 'Сезон', season: true, dayWidth: 36 }
+  twoWeeks: { label: IS_ITALIAN ? '14 giorni' : '14 дней', days: 14, dayWidth: 93, fitToWidth: true },
+  month: { label: IS_ITALIAN ? '30 giorni' : '30 дней', days: 30, dayWidth: 69 },
+  quarter: { label: IS_ITALIAN ? '90 giorni' : '90 дней', days: 90, dayWidth: 45 },
+  season: { label: IS_ITALIAN ? 'Stagione' : 'Сезон', season: true, dayWidth: 36 }
 };
 const CALENDAR_ARCHIVE_DAYS = 45;
 const CALENDAR_ARCHIVE_VIEWS = new Set(['quarter', 'season']);
@@ -6097,7 +6157,7 @@ function bindCalendarScrollState() {
 
 function formatBookingDate(iso, options = { day: 'numeric', month: 'short' }) {
   if (!iso) return '—';
-  return parseLocalDate(iso).toLocaleDateString('ru-RU', options);
+  return parseLocalDate(iso).toLocaleDateString(UI_LOCALE, options);
 }
 
 function scrollCalendarToToday({ behavior = 'smooth' } = {}) {
@@ -6141,8 +6201,8 @@ function getCalendarCenteredScrollLeft(scroll, dayIndex) {
 function updateCalendarTodayDate(today) {
   const el = document.getElementById('calendarTodayDate');
   if (!el) return;
-  const weekday = today.toLocaleDateString('ru-RU', { weekday: 'short' }).replace('.', '');
-  const date = today.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+  const weekday = today.toLocaleDateString(UI_LOCALE, { weekday: 'short' }).replace('.', '');
+  const date = today.toLocaleDateString(UI_LOCALE, { day: 'numeric', month: 'long' });
   el.textContent = `${weekday}, ${date}`;
 }
 
@@ -6216,7 +6276,9 @@ function renderCalendarControls() {
     const today = todayLocal();
     const selected = calendarState.anchorDate ? parseLocalDate(calendarState.anchorDate) : today;
     const year = today.getFullYear();
-    const monthNames = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+    const monthNames = IS_ITALIAN
+      ? ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre']
+      : ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
     monthEl.innerHTML = monthNames.map((name, index) => {
       const value = `${year}-${String(index + 1).padStart(2, '0')}`;
       const isSelected = selected.getFullYear() === year && selected.getMonth() === index;
@@ -6297,8 +6359,10 @@ function renderCalendar({ preserveScroll = false, focusDate = null, behavior = '
   grid.innerHTML = '';
   propertyRail.innerHTML = '';
 
-  const dayNames = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
-  const monthNames = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+  const dayNames = IS_ITALIAN ? ['Dom','Lun','Mar','Mer','Gio','Ven','Sab'] : ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+  const monthNames = IS_ITALIAN
+    ? ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre']
+    : ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
 
   const propertyMonthSpacer = document.createElement('div');
   propertyMonthSpacer.className = 'cal-property-month-spacer';
@@ -6406,7 +6470,7 @@ function renderCalendar({ preserveScroll = false, focusDate = null, behavior = '
         const isCompleted = end <= today;
         const platformClass = CALENDAR_PLATFORM_CLASS[booking.platform] || 'other';
         const hasPlatformLogo = Boolean(platformBrand(booking.platform)) && !isBlocked;
-        const barText = booking.guest_name || (isFallback ? 'Booking · без имени' : isBlocked ? unavailableBookingLabel(booking) : platformLabel(booking.platform));
+        const barText = booking.guest_name || uiText(isFallback ? 'Booking · без имени' : isBlocked ? unavailableBookingLabel(booking) : platformLabel(booking.platform));
         const fullLabelThreshold = hasPlatformLogo ? 124 : 104;
         const shortLabelThreshold = hasPlatformLogo ? 58 : 52;
         const shortLabel = visibleWidth > fullLabelThreshold ? barText : (visibleWidth > shortLabelThreshold ? String(barText).split(' ')[0] : '');
@@ -6627,7 +6691,7 @@ function renderMobileAgenda() {
   } else {
     dates.forEach(date => {
       const dateObj = parseLocalDate(date);
-      const header = dateObj.toLocaleDateString('ru-RU', { weekday: 'short', day: 'numeric', month: 'short' });
+      const header = dateObj.toLocaleDateString(UI_LOCALE, { weekday: 'short', day: 'numeric', month: 'short' });
       html += `<div class="agenda-date-group"><div class="agenda-date-header"><span>${header}</span><span>${byDate[date].length}</span></div>`;
       byDate[date].forEach(event => {
         const booking = event.booking;
@@ -6683,7 +6747,7 @@ function openBookingPanel(bookingId) {
   const nightWord = nights === 1 ? 'ночь' : (nights > 1 && nights < 5 ? 'ночи' : 'ночей');
 
   kickerEl.textContent = completed ? 'Завершено' : fallback ? 'Booking без данных гостя' : unavailable ? 'Недоступность' : 'Бронирование';
-  titleEl.textContent = booking.guest_name || (fallback ? 'Booking · нужны детали' : platformLabel(booking.platform));
+  titleEl.textContent = booking.guest_name || uiText(fallback ? 'Booking · нужны детали' : platformLabel(booking.platform));
   bodyEl.innerHTML = `
     <div class="booking-detail-hero" style="--property-color:${meta.color};--property-bg:${meta.bg}">
       <div class="booking-night-badge" aria-label="${nights || 0} ${nightWord}">
@@ -6899,7 +6963,7 @@ async function updateSlug(id, slug) {
 }
 
 async function deleteCleaner(id, name) {
-  if (!confirm(`Удалить ${name}?`)) return;
+  if (!confirm(uiText(`Удалить ${name}?`))) return;
   try {
     const res = await fetch(`${API}/cleaners/${id}`, { method: 'DELETE' });
     if (!res.ok) throw new Error('Failed');
@@ -7172,7 +7236,7 @@ function renderStatsHistoryStatus() {
     const errorCopy = statsHistoryErrorCopy(meta.error);
     titleText = 'Показана сохранённая история';
     const savedLabel = meta.savedAt
-      ? new Date(meta.savedAt).toLocaleString('ru-RU', { timeZone: 'Europe/Rome', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).replace('.', '')
+      ? new Date(meta.savedAt).toLocaleString(UI_LOCALE, { timeZone: 'Europe/Rome', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).replace('.', '')
       : 'неизвестное время';
     detailText = `Копия от ${savedLabel}. ${errorCopy.title}: ${errorCopy.detail}`;
   } else if (meta.state === 'error') {
@@ -7359,7 +7423,9 @@ let statsSnapshotIndex = null;
 let statsSnapshotUserSelected = false;
 
 const STATS_MONTH_INDICES = [3, 4, 5, 6, 7, 8, 9, 10];
-const STATS_MONTH_LABELS = ['Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя'];
+const STATS_MONTH_LABELS = IS_ITALIAN
+  ? ['Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov']
+  : ['Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя'];
 
 function statsMonthKey(year, monthIndex) {
   return `${year}-${String(monthIndex + 1).padStart(2, '0')}`;
@@ -7387,7 +7453,7 @@ function formatStatsSnapshotDate(value, mode = 'long') {
   const options = mode === 'short'
     ? { timeZone: 'Europe/Rome', day: 'numeric', month: 'short' }
     : { timeZone: 'Europe/Rome', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' };
-  return date.toLocaleDateString('ru-RU', options).replace('.', '');
+  return date.toLocaleDateString(UI_LOCALE, options).replace('.', '');
 }
 
 function statsSourceLabel(source) {
@@ -7400,7 +7466,7 @@ function statsSourceLabel(source) {
 }
 
 function formatStatsNumber(value) {
-  return new Intl.NumberFormat('ru-RU').format(Math.round(Number(value) || 0));
+  return new Intl.NumberFormat(UI_LOCALE).format(Math.round(Number(value) || 0));
 }
 
 function formatStatsPercent(value) {
@@ -7493,6 +7559,7 @@ function statsSnapshotDayKey(snapshot) {
 
 function pluralRu(count, one, few, many) {
   const n = Math.abs(Number(count) || 0);
+  if (IS_ITALIAN) return uiText(n === 1 ? one : many);
   const mod10 = n % 10;
   const mod100 = n % 100;
   if (mod10 === 1 && mod100 !== 11) return one;
@@ -7828,7 +7895,7 @@ function renderStatsMetricDelta(elementId, currentValue, previousValue, { percen
     return;
   }
   const sign = rounded > 0 ? '+' : '−';
-  const value = percentPoints ? Math.abs(rounded).toLocaleString('ru-RU') : formatStatsNumber(Math.abs(rounded));
+  const value = percentPoints ? Math.abs(rounded).toLocaleString(UI_LOCALE) : formatStatsNumber(Math.abs(rounded));
   el.textContent = `${sign}${value}${percentPoints ? ' п.п.' : ''}`;
 }
 
@@ -7984,7 +8051,7 @@ function createStatsDynamicsChart() {
       labels: snapshots.map(snapshot => formatStatsSnapshotDate(snapshot.captured_at, 'short')),
       datasets: [
         {
-          label: 'Бронирования',
+          label: uiText('Бронирования'),
           data: snapshots.map(snapshot => Number(snapshot.booking_count) || 0),
           borderColor: themeCssColor('--chart-accent', '#6d2cfc'),
           backgroundColor: themeCssColor('--chart-accent-fill', 'rgba(109,44,252,.12)'),
@@ -7998,7 +8065,7 @@ function createStatsDynamicsChart() {
           yAxisID: 'y'
         },
         {
-          label: 'Занятые ночи',
+          label: uiText('Занятые ночи'),
           data: snapshots.map(snapshot => Number(snapshot.occupied_nights) || 0),
           borderColor: themeCssColor('--chart-warning', '#d97706'),
           backgroundColor: 'transparent',
@@ -8049,7 +8116,7 @@ function setStatsRadarDays(days) {
 }
 
 function statsRadarDateLabel(date) {
-  return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }).replace('.', '');
+  return date.toLocaleDateString(UI_LOCALE, { day: 'numeric', month: 'short' }).replace('.', '');
 }
 
 function statsFreeIntervals(property, occupiedDates, rangeStart, rangeEnd) {
@@ -8076,8 +8143,8 @@ function statsFreeIntervals(property, occupiedDates, rangeStart, rangeEnd) {
 
 function statsFreeIntervalLabel(interval) {
   const lastNight = addCalendarDays(interval.end, -1);
-  const start = interval.start.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }).replace('.', '');
-  const end = lastNight.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }).replace('.', '');
+  const start = interval.start.toLocaleDateString(UI_LOCALE, { day: 'numeric', month: 'short' }).replace('.', '');
+  const end = lastNight.toLocaleDateString(UI_LOCALE, { day: 'numeric', month: 'short' }).replace('.', '');
   const dates = toLocalIso(interval.start) === toLocalIso(lastNight) ? start : `${start} — ${end}`;
   return `${dates} · ${interval.nights} ${pluralRu(interval.nights, 'ночь', 'ночи', 'ночей')}`;
 }
@@ -8327,7 +8394,7 @@ function renderStatsNow({ chartsAvailable = typeof Chart !== 'undefined' } = {})
       datasets: [
         { label: 'Airbnb', data: monthlyAirbnb, backgroundColor: themeCssColor('--airbnb', '#d9365c'), borderRadius: 9, maxBarThickness: 42 },
         { label: 'Booking.com', data: monthlyBooking, backgroundColor: themeCssColor('--booking', '#155bb3'), borderRadius: 9, maxBarThickness: 42 },
-        { label: 'Прямые', data: monthlyDirect, backgroundColor: themeCssColor('--direct', '#157a5b'), borderRadius: 9, maxBarThickness: 42 }
+        { label: uiText('Прямые'), data: monthlyDirect, backgroundColor: themeCssColor('--direct', '#157a5b'), borderRadius: 9, maxBarThickness: 42 }
       ]
     },
     options: {
@@ -8395,7 +8462,7 @@ function renderStatsNow({ chartsAvailable = typeof Chart !== 'undefined' } = {})
   const othersCount = sortedCountries.slice(8).reduce((s, [, c]) => s + c, 0);
   const countryLabels = top8.map(([c]) => `${countryToFlag(c)} ${COUNTRY_NAMES[c] || c.toUpperCase()}`);
   const countryData = top8.map(([, c]) => c);
-  if (othersCount > 0) { countryLabels.push('Другие'); countryData.push(othersCount); }
+  if (othersCount > 0) { countryLabels.push(uiText('Другие')); countryData.push(othersCount); }
   const countryColors = [
     themeCssColor('--chart-accent', '#6d2cfc'),
     themeCssColor('--airbnb', '#d9365c'),
@@ -8434,7 +8501,7 @@ function renderStatsNow({ chartsAvailable = typeof Chart !== 'undefined' } = {})
   }));
 
   // ===== 4. CHECK-IN DAY OF WEEK (bar) =====
-  const dayNamesRu = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+  const dayNamesRu = IS_ITALIAN ? ['Dom','Lun','Mar','Mer','Gio','Ven','Sab'] : ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
   const checkinByDay = new Array(7).fill(0);
   for (const b of seasonBookings) {
     const dow = parseLocalDate(b.start_date).getDay();
@@ -8517,7 +8584,7 @@ function renderStatsNow({ chartsAvailable = typeof Chart !== 'undefined' } = {})
     data: {
       labels: monthLabels,
       datasets: [{
-        label: 'Гости',
+        label: uiText('Гости'),
         data: monthlyGuests,
         borderColor: themeCssColor('--chart-accent', '#6d2cfc'),
         backgroundColor: themeCssColor('--chart-accent-fill', 'rgba(109,44,252,.12)'),
@@ -8642,7 +8709,7 @@ async function autoSyncCalendars() {
 
 function toast(msg) {
   const el = document.getElementById('toast');
-  el.textContent = msg;
+  el.textContent = uiText(msg);
   el.classList.add('show');
   clearTimeout(el._timeout);
   el._timeout = setTimeout(() => el.classList.remove('show'), 3000);
@@ -8736,7 +8803,7 @@ function italianReportingDateToIso(value) {
 
 function formatReportingDate(iso) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(iso || ''))) return 'дата пока не найдена';
-  return new Intl.DateTimeFormat('ru-RU', { day:'numeric', month:'long', year:'numeric', timeZone:'UTC' }).format(new Date(`${iso}T00:00:00Z`));
+  return new Intl.DateTimeFormat(UI_LOCALE, { day:'numeric', month:'long', year:'numeric', timeZone:'UTC' }).format(new Date(`${iso}T00:00:00Z`));
 }
 
 function istatMonthDates(month) {
@@ -8749,9 +8816,9 @@ function istatMonthDates(month) {
   return {
     monthEndIso: monthEnd.toISOString().slice(0, 10),
     deadlineIso: deadline.toISOString().slice(0, 10),
-    deadlineLabel: new Intl.DateTimeFormat('ru-RU', { day:'numeric', month:'long', year:'numeric', timeZone:'UTC' }).format(deadline),
-    deadlineShortLabel: new Intl.DateTimeFormat('ru-RU', { day:'numeric', month:'long', timeZone:'UTC' }).format(deadline),
-    monthLabel: new Intl.DateTimeFormat('ru-RU', { month:'long', year:'numeric', timeZone:'UTC' }).format(monthEnd).replace(/\s*г\.$/, '')
+    deadlineLabel: new Intl.DateTimeFormat(UI_LOCALE, { day:'numeric', month:'long', year:'numeric', timeZone:'UTC' }).format(deadline),
+    deadlineShortLabel: new Intl.DateTimeFormat(UI_LOCALE, { day:'numeric', month:'long', timeZone:'UTC' }).format(deadline),
+    monthLabel: new Intl.DateTimeFormat(UI_LOCALE, { month:'long', year:'numeric', timeZone:'UTC' }).format(monthEnd).replace(/\s*г\.$/, '')
   };
 }
 
@@ -8972,7 +9039,7 @@ function formatReportingDateTime(value) {
   if (!value) return '—';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return String(value).slice(0, 16).replace('T', ' ');
-  return new Intl.DateTimeFormat('ru-RU', {
+  return new Intl.DateTimeFormat(UI_LOCALE, {
     day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit', timeZone:'Europe/Rome'
   }).format(date);
 }
@@ -8982,7 +9049,7 @@ const REPORTING_HISTORY_PREVIEW_LIMIT = 5;
 function reportingHistoryDateParts(value) {
   const date = new Date(value);
   if (!value || Number.isNaN(date.getTime())) return { day:'—', month:'дата', year:'', time:'—' };
-  const parts = new Intl.DateTimeFormat('ru-RU', {
+  const parts = new Intl.DateTimeFormat(UI_LOCALE, {
     day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit', timeZone:'Europe/Rome'
   }).formatToParts(date).reduce((result, part) => ({ ...result, [part.type]:part.value }), {});
   return {
@@ -9383,7 +9450,10 @@ async function runAlloggiatiAction(action) {
 async function deleteReportingBatch(batchId) {
   const batch = reportingState.batch;
   if (!batch || reportingState.actionInFlight || Number(batch.id) !== Number(batchId)) return;
-  if (!window.confirm(`Удалить ${batch.filename}? Персональные данные этого файла будут удалены.`)) return;
+  const deletePrompt = IS_ITALIAN
+    ? `Eliminare ${batch.filename}? I dati personali di questo file verranno eliminati.`
+    : `Удалить ${batch.filename}? Персональные данные этого файла будут удалены.`;
+  if (!window.confirm(deletePrompt)) return;
   reportingState.actionInFlight = true;
   renderReportingBatchDetail();
   try {
@@ -9502,15 +9572,22 @@ async function sendIstatMonth() {
   const preview = reportingState.istatPreview;
   const unit = currentReportingUnit();
   const replace = Boolean(preview?.latest_date && preview.latest_date >= `${preview.month}-01`);
-  if (!preview || !window.confirm(
-    `Проверьте назначение перед отправкой\n\n` +
-    `Структура: ${unit?.name || '—'}\n` +
-    `Квартиры: ${reportingPropertySummary(unit)}\n` +
-    `Период ISTAT: ${preview.month}\n\n` +
-    (replace
-      ? `В ISTAT уже есть данные по ${formatReportingDate(preview.latest_date)}. Обновить период, сохранив подтверждённые дни?`
-      : `Отправить месячный отчёт?`)
-  )) return;
+  const confirmation = IS_ITALIAN
+    ? `Controlla l’assegnazione prima dell’invio\n\n` +
+      `Struttura: ${unit?.name || '—'}\n` +
+      `Appartamenti: ${reportingPropertySummary(unit)}\n` +
+      `Periodo ISTAT: ${preview?.month || '—'}\n\n` +
+      (replace
+        ? `ISTAT contiene già dati fino al ${formatReportingDate(preview?.latest_date)}. Aggiornare il periodo mantenendo i giorni confermati?`
+        : `Inviare il report mensile?`)
+    : `Проверьте назначение перед отправкой\n\n` +
+      `Структура: ${unit?.name || '—'}\n` +
+      `Квартиры: ${reportingPropertySummary(unit)}\n` +
+      `Период ISTAT: ${preview?.month || '—'}\n\n` +
+      (replace
+        ? `В ISTAT уже есть данные по ${formatReportingDate(preview?.latest_date)}. Обновить период, сохранив подтверждённые дни?`
+        : `Отправить месячный отчёт?`);
+  if (!preview || !window.confirm(confirmation)) return;
   try {
     const result = await reportingFetch(`${API}/reporting/istat`, {
       method:'POST', headers:{'Content-Type':'application/json'},
@@ -9560,10 +9637,10 @@ function renderTaxSummary(source = allTaxBookings) {
   const unknownDue = unpaid.filter(b => taxAmountValue(b) == null).length;
 
   el.innerHTML = `
-    <span class="tax-summary-pill warning"><strong>${unpaid.length}</strong> к оплате</span>
-    <span class="tax-summary-pill"><strong>${knownDue ? formatEuro(knownDue) : '—'}</strong>${unknownDue ? ` + ${unknownDue} без гостей` : ''}</span>
-    <span class="tax-summary-pill success"><strong>${paid}</strong> оплачено</span>
-    <span class="tax-summary-pill"><strong>${total}</strong> всего</span>
+    <span class="tax-summary-pill warning"><strong>${unpaid.length}</strong> ${IS_ITALIAN ? 'da pagare' : 'к оплате'}</span>
+    <span class="tax-summary-pill"><strong>${knownDue ? formatEuro(knownDue) : '—'}</strong>${unknownDue ? ` + ${unknownDue} ${IS_ITALIAN ? 'senza numero di ospiti' : 'без гостей'}` : ''}</span>
+    <span class="tax-summary-pill success"><strong>${paid}</strong> ${IS_ITALIAN ? 'pagate' : 'оплачено'}</span>
+    <span class="tax-summary-pill"><strong>${total}</strong> ${IS_ITALIAN ? 'totali' : 'всего'}</span>
   `;
 }
 
@@ -9601,16 +9678,16 @@ function renderTaxList({ preserveScroll = false, focusToday = false } = {}) {
     const paidCount = rows.length - unpaidCount;
     const isToday = date === today;
     const dateValue = new Date(date + 'T12:00:00');
-    const weekday = dateValue.toLocaleDateString('ru-RU', { weekday: 'long' });
-    const dayNumber = dateValue.toLocaleDateString('ru-RU', { day: 'numeric' });
-    const monthName = dateValue.toLocaleDateString('ru-RU', { month: 'long' });
+    const weekday = dateValue.toLocaleDateString(UI_LOCALE, { weekday: 'long' });
+    const dayNumber = dateValue.toLocaleDateString(UI_LOCALE, { day: 'numeric' });
+    const monthName = dateValue.toLocaleDateString(UI_LOCALE, { month: 'long' });
 
     html += `<div class="tax-date-group" id="tax-date-${date}">`;
     html += `<div class="tax-date-header ${isToday ? 'today' : ''}">`;
-    html += `<div class="tax-date-heading"><span class="tax-date-weekday">${escapeHtml(weekday)}</span><time class="tax-date-title" datetime="${date}"><strong>${escapeHtml(dayNumber)}</strong><span>${escapeHtml(monthName)}</span></time>${isToday ? '<span class="date-badge">сегодня</span>' : ''}</div>`;
-    html += `<div class="tax-date-progress"><span class="tax-date-progress-total"><strong>${paidCount}</strong> оплачено из ${rows.length}</span>`;
-    if (unpaidCount > 0) html += `<span class="unpaid-count">${unpaidCount} к оплате</span>`;
-    else html += `<span class="paid-count">✓ всё отмечено</span>`;
+    html += `<div class="tax-date-heading"><span class="tax-date-weekday">${escapeHtml(weekday)}</span><time class="tax-date-title" datetime="${date}"><strong>${escapeHtml(dayNumber)}</strong><span>${escapeHtml(monthName)}</span></time>${isToday ? `<span class="date-badge">${IS_ITALIAN ? 'oggi' : 'сегодня'}</span>` : ''}</div>`;
+    html += `<div class="tax-date-progress"><span class="tax-date-progress-total"><strong>${paidCount}</strong> ${IS_ITALIAN ? `pagate su ${rows.length}` : `оплачено из ${rows.length}`}</span>`;
+    if (unpaidCount > 0) html += `<span class="unpaid-count">${unpaidCount} ${IS_ITALIAN ? 'da pagare' : 'к оплате'}</span>`;
+    else html += `<span class="paid-count">${IS_ITALIAN ? '✓ tutto segnato' : '✓ всё отмечено'}</span>`;
     html += `</div>`;
     html += `</div>`;
     html += `<div class="tax-date-rows">`;
@@ -9621,7 +9698,7 @@ function renderTaxList({ preserveScroll = false, focusToday = false } = {}) {
       const paidClass = r.tax_paid ? 'tax-paid' : 'tax-unpaid';
       const statusClass = r.tax_paid ? 'is-paid' : 'is-unpaid';
       const statusIcon = r.tax_paid ? 'check' : 'circle';
-      const statusLabel = r.tax_paid ? 'Оплачено' : 'Отметить оплату';
+      const statusLabel = r.tax_paid ? (IS_ITALIAN ? 'Pagata' : 'Оплачено') : (IS_ITALIAN ? 'Segna pagamento' : 'Отметить оплату');
       const statusMeta = r.tax_paid && r.tax_paid_at ? `<span class="tax-status-meta">${formatTaxTime(r.tax_paid_at)}</span>` : '';
       const platformLogo = platformLogoHtml(r.platform, 'tax-platform-logo-img', { decorative: true });
       const bookingIdentity = platformLogo
@@ -9688,7 +9765,7 @@ function taxScrollToToday({ behavior = 'smooth', fallback = false } = {}) {
 function formatTaxTime(iso) {
   try {
     const d = new Date(iso);
-    return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }) + ' ' + d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleDateString(UI_LOCALE, { day: 'numeric', month: 'short' }) + ' ' + d.toLocaleTimeString(UI_LOCALE, { hour: '2-digit', minute: '2-digit' });
   } catch { return ''; }
 }
 

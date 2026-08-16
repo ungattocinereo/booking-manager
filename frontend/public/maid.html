@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="ru">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Calendario Pulizie — Atrani</title>
+  <title>Календарь уборки — Atrani</title>
+  <script src="/i18n.js"></script>
 
   <!-- Favicon & App Icons -->
   <link rel="icon" href="/favicon.ico" sizes="48x48">
@@ -125,16 +126,16 @@
   <!-- Apple Web App -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="Atrani Pulizie">
+  <meta name="apple-mobile-web-app-title" content="Atrani Уборка">
 
   <!-- SEO -->
-  <meta name="description" content="Calendario arrivi e partenze per le pulizie degli appartamenti ad Atrani">
+  <meta name="description" content="Календарь заездов и выездов для уборки апартаментов в Атрани">
   <meta name="robots" content="noindex, nofollow">
 
   <!-- Open Graph -->
   <meta property="og:type" content="website">
-  <meta property="og:title" content="Calendario Pulizie — Atrani">
-  <meta property="og:description" content="Calendario arrivi e partenze per le pulizie degli appartamenti">
+  <meta property="og:title" content="Календарь уборки — Atrani">
+  <meta property="og:description" content="Календарь заездов и выездов для уборки апартаментов в Атрани">
   <meta property="og:image" content="/icon-512.png">
 
   <script defer src="https://unpkg.com/lucide@1.17.0/dist/umd/lucide.min.js"></script>
@@ -324,14 +325,62 @@
     .theme-option-fallback { width: 14px; font-size: 16px; line-height: 1; text-align: center; }
     .theme-option svg + .theme-option-fallback { display: none; }
     .theme-option-label { display: none; }
+    .header-controls {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .language-switcher {
+      flex: 0 0 auto;
+      position: relative;
+      isolation: isolate;
+      display: inline-grid;
+      grid-template-columns: repeat(2, 34px);
+      align-items: center;
+      padding: 2px;
+      border-radius: 999px;
+      background: var(--theme-track);
+    }
+    .language-switcher::before {
+      content: '';
+      position: absolute;
+      z-index: 0;
+      inset: 2px auto 2px 2px;
+      width: 34px;
+      border-radius: 999px;
+      background: var(--theme-active);
+      transform: translateX(0);
+      transition: transform .16s cubic-bezier(.2,.8,.2,1);
+    }
+    html[data-language="it"] .language-switcher::before { transform: translateX(100%); }
+    .language-option {
+      position: relative;
+      z-index: 1;
+      width: 34px;
+      min-width: 34px;
+      min-height: 34px;
+      padding: 0;
+      border: 0;
+      border-radius: 999px;
+      background: transparent;
+      color: var(--theme-inactive-text);
+      font: 800 10px/1 'Manrope', sans-serif;
+      letter-spacing: .03em;
+      cursor: pointer;
+      transition: color .18s ease, opacity .18s ease;
+    }
+    .language-option:hover { color: var(--text); opacity: .86; }
+    .language-option.active { color: var(--theme-active-text); opacity: 1; }
     @media (prefers-reduced-motion: reduce) {
-      .theme-switcher::before, .theme-option { transition: none !important; }
+      .theme-switcher::before, .theme-option,
+      .language-switcher::before, .language-option { transition: none !important; }
     }
     @media (forced-colors: active) {
-      .theme-switcher { background: Canvas; }
-      .theme-switcher::before { background: Highlight; }
-      .theme-option { color: CanvasText; }
-      .theme-option.active { color: HighlightText; }
+      .theme-switcher, .language-switcher { background: Canvas; }
+      .theme-switcher::before, .language-switcher::before { background: Highlight; }
+      .theme-option, .language-option { color: CanvasText; }
+      .theme-option.active, .language-option.active { color: HighlightText; }
     }
     button:focus-visible, .month-pill:focus-visible, [tabindex]:focus-visible {
       outline: 3px solid var(--focus-ring);
@@ -658,6 +707,7 @@
       .header-icon { width: 36px; height: 36px; border-radius: 10px; }
       .header h1 { font-size: 16px; }
       .header .subtitle { font-size: 11px; }
+      .header-controls { gap: 5px; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -675,15 +725,59 @@
 <div id="app">
   <div class="loading" id="loadingState">
     <div class="loading-spinner"></div>
-    <span>Caricamento...</span>
+    <span>Загрузка...</span>
   </div>
 </div>
 
 <script>
-const MONTHS_IT = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
-const MONTHS_SHORT_IT = ['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];
-const DAYS_IT = ['Dom','Lun','Mar','Mer','Gio','Ven','Sab'];
-const DAYS_FULL_IT = ['Domenica','Lunedi','Martedi','Mercoledi','Giovedi','Venerdi','Sabato'];
+const UI_LANGUAGE = window.AtraniI18n?.getLanguage() || 'ru';
+const UI_LOCALE = window.AtraniI18n?.getLocale() || 'ru-RU';
+const IS_ITALIAN = UI_LANGUAGE === 'it';
+const MAID_COPY = {
+  ru: {
+    pageTitle: 'Календарь уборки — Atrani', loading: 'Загрузка...', calendarSubtitle: 'Календарь уборки',
+    scheduleSubtitle: 'Календарь заездов и выездов', notFound: 'Календарь не найден',
+    invalidLink: 'Эта ссылка недействительна или была отключена.', today: 'Сегодня', tomorrow: 'Завтра', month: 'Месяц',
+    noEvents: 'Нет событий', noMonthEvents: month => `В ${month.toLowerCase()} нет заездов и выездов.`,
+    noTomorrowEvents: 'Завтра нет заездов и выездов.', noTodayEvents: 'Сегодня нет заездов и выездов.',
+    arrival: 'Заезд', departure: 'Выезд', guests: count => `${count} чел.`,
+    cleaningAfterDeparture: 'Уборка после выезда', prepareArrival: 'Подготовить к заезду',
+    colorTheme: 'Цветовая тема', systemTheme: 'Системная тема', system: 'Система',
+    lightTheme: 'Светлая тема', day: 'День', darkTheme: 'Тёмная тема', night: 'Ночь'
+  },
+  it: {
+    pageTitle: 'Calendario Pulizie — Atrani', loading: 'Caricamento...', calendarSubtitle: 'Calendario pulizie',
+    scheduleSubtitle: 'Calendario arrivi e partenze', notFound: 'Calendario non trovato',
+    invalidLink: 'Questo link non è valido o è stato disattivato.', today: 'Oggi', tomorrow: 'Domani', month: 'Mese',
+    noEvents: 'Nessun evento', noMonthEvents: month => `Non ci sono arrivi o partenze a ${month}.`,
+    noTomorrowEvents: 'Non ci sono arrivi o partenze domani.', noTodayEvents: 'Non ci sono arrivi o partenze oggi.',
+    arrival: 'Arrivo', departure: 'Partenza', guests: count => `${count} ${Number(count) === 1 ? 'ospite' : 'ospiti'}`,
+    cleaningAfterDeparture: 'Pulizia dopo la partenza', prepareArrival: 'Preparare l’arrivo',
+    colorTheme: 'Tema colore', systemTheme: 'Tema di sistema', system: 'Sistema',
+    lightTheme: 'Tema chiaro', day: 'Giorno', darkTheme: 'Tema scuro', night: 'Notte'
+  }
+};
+const maidText = key => MAID_COPY[UI_LANGUAGE]?.[key] ?? MAID_COPY.ru[key] ?? key;
+const MONTHS = IS_ITALIAN
+  ? ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre']
+  : ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+const MONTHS_SHORT = IS_ITALIAN
+  ? ['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic']
+  : ['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'];
+const DAYS = IS_ITALIAN ? ['Dom','Lun','Mar','Mer','Gio','Ven','Sab'] : ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+const DAYS_FULL = IS_ITALIAN
+  ? ['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato']
+  : ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
+
+document.title = maidText('pageTitle');
+document.querySelector('#loadingState span').textContent = maidText('loading');
+const maidDescription = IS_ITALIAN
+  ? 'Calendario arrivi e partenze per le pulizie degli appartamenti ad Atrani'
+  : 'Календарь заездов и выездов для уборки апартаментов в Атрани';
+document.querySelectorAll('meta[name="description"], meta[property="og:description"]').forEach(meta => { meta.content = maidDescription; });
+document.querySelectorAll('meta[property="og:title"]').forEach(meta => { meta.content = maidText('pageTitle'); });
+const maidAppTitle = document.querySelector('meta[name="apple-mobile-web-app-title"]');
+if (maidAppTitle) maidAppTitle.content = IS_ITALIAN ? 'Atrani Pulizie' : 'Atrani Уборка';
 
 const propertyConfig = {
   'awesome':  { icon: 'sparkles', color: '#8b5cf6', bg: '#f5f3ff', name: 'Awesome Apartments' },
@@ -714,17 +808,21 @@ let currentMonth = null; // { year, month }
 let viewMode = 'today'; // today | tomorrow | month
 
 function themeSwitcherMarkup() {
-  return `<div class="theme-switcher" role="group" aria-label="Tema colore">
-    <button class="theme-option" type="button" data-theme-option="system" aria-label="Tema di sistema" title="Tema di sistema" aria-pressed="false">
-      <i data-lucide="monitor"></i><span class="theme-option-fallback" aria-hidden="true">◫</span><span class="theme-option-label">Sistema</span>
+  return `<div class="theme-switcher" role="group" aria-label="${maidText('colorTheme')}">
+    <button class="theme-option" type="button" data-theme-option="system" aria-label="${maidText('systemTheme')}" title="${maidText('systemTheme')}" aria-pressed="false">
+      <i data-lucide="monitor"></i><span class="theme-option-fallback" aria-hidden="true">◫</span><span class="theme-option-label">${maidText('system')}</span>
     </button>
-    <button class="theme-option" type="button" data-theme-option="light" aria-label="Tema chiaro" title="Tema chiaro" aria-pressed="false">
-      <i data-lucide="sun"></i><span class="theme-option-fallback" aria-hidden="true">☼</span><span class="theme-option-label">Giorno</span>
+    <button class="theme-option" type="button" data-theme-option="light" aria-label="${maidText('lightTheme')}" title="${maidText('lightTheme')}" aria-pressed="false">
+      <i data-lucide="sun"></i><span class="theme-option-fallback" aria-hidden="true">☼</span><span class="theme-option-label">${maidText('day')}</span>
     </button>
-    <button class="theme-option" type="button" data-theme-option="dark" aria-label="Tema scuro" title="Tema scuro" aria-pressed="false">
-      <i data-lucide="moon"></i><span class="theme-option-fallback" aria-hidden="true">☾</span><span class="theme-option-label">Notte</span>
+    <button class="theme-option" type="button" data-theme-option="dark" aria-label="${maidText('darkTheme')}" title="${maidText('darkTheme')}" aria-pressed="false">
+      <i data-lucide="moon"></i><span class="theme-option-fallback" aria-hidden="true">☾</span><span class="theme-option-label">${maidText('night')}</span>
     </button>
   </div>`;
+}
+
+function languageSwitcherMarkup() {
+  return window.AtraniI18n?.switcherMarkup?.() || '';
 }
 
 function todayInRome() {
@@ -763,14 +861,14 @@ function showError() {
     <div class="header">
       <div class="header-top">
         <div class="header-icon"><i data-lucide="calendar-x" style="width:22px;height:22px;"></i></div>
-        <div class="header-copy"><h1>Atrani</h1><div class="subtitle">Calendario pulizie</div></div>
-        ${themeSwitcherMarkup()}
+        <div class="header-copy"><h1>Atrani</h1><div class="subtitle">${maidText('calendarSubtitle')}</div></div>
+        <div class="header-controls">${languageSwitcherMarkup()}${themeSwitcherMarkup()}</div>
       </div>
     </div>
     <div class="error-state">
       <div style="font-size:48px;">🔒</div>
-      <h2>Calendario non trovato</h2>
-      <p>Questo link non e valido o e stato disattivato.</p>
+      <h2>${maidText('notFound')}</h2>
+      <p>${maidText('invalidLink')}</p>
     </div>
   `;
   window.AtraniTheme?.syncControls();
@@ -875,9 +973,9 @@ function formatDayLabel(dateStr) {
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
 
-  if (d.getTime() === today.getTime()) return 'Oggi';
-  if (d.getTime() === tomorrow.getTime()) return 'Domani';
-  return `${DAYS_FULL_IT[d.getDay()]}`;
+  if (d.getTime() === today.getTime()) return maidText('today');
+  if (d.getTime() === tomorrow.getTime()) return maidText('tomorrow');
+  return DAYS_FULL[d.getDay()];
 }
 
 function render() {
@@ -909,9 +1007,9 @@ function render() {
         </div>
         <div class="header-copy">
           <h1>${data.cleaner.name}</h1>
-          <div class="subtitle">Calendario arrivi e partenze</div>
+          <div class="subtitle">${maidText('scheduleSubtitle')}</div>
         </div>
-        ${themeSwitcherMarkup()}
+        <div class="header-controls">${languageSwitcherMarkup()}${themeSwitcherMarkup()}</div>
       </div>
     </div>
   `;
@@ -930,13 +1028,13 @@ function render() {
   // Quick view navigation
   html += `<div class="quick-nav">
     <button class="quick-pill ${viewMode === 'today' ? 'active' : ''}" onclick="switchViewMode('today')">
-      <i data-lucide="sun" style="width:15px;height:15px;"></i>Oggi
+      <i data-lucide="sun" style="width:15px;height:15px;"></i>${maidText('today')}
     </button>
     <button class="quick-pill ${viewMode === 'tomorrow' ? 'active' : ''}" onclick="switchViewMode('tomorrow')">
-      <i data-lucide="calendar-plus" style="width:15px;height:15px;"></i>Domani
+      <i data-lucide="calendar-plus" style="width:15px;height:15px;"></i>${maidText('tomorrow')}
     </button>
     <button class="quick-pill ${viewMode === 'month' ? 'active' : ''}" onclick="switchViewMode('month')">
-      <i data-lucide="calendar-days" style="width:15px;height:15px;"></i>Mese
+      <i data-lucide="calendar-days" style="width:15px;height:15px;"></i>${maidText('month')}
     </button>
   </div>`;
 
@@ -948,7 +1046,7 @@ function render() {
       const isCurrentMonth = m.year === today.getFullYear() && m.month === today.getMonth();
       html += `<button type="button" class="month-pill${isActive ? ' active' : ''}${isCurrentMonth ? ' has-today' : ''}"
         onclick="switchMonth(${m.year}, ${m.month})">
-        ${MONTHS_SHORT_IT[m.month]}${m.year !== today.getFullYear() ? ' ' + m.year : ''}
+        ${MONTHS_SHORT[m.month]}${m.year !== today.getFullYear() ? ' ' + m.year : ''}
       </button>`;
     }
     html += '</div>';
@@ -959,16 +1057,16 @@ function render() {
 
   if (sortedDates.length === 0) {
     const emptyText = viewMode === 'month'
-      ? `Non ci sono arrivi o partenze a ${MONTHS_IT[currentMonth.month]}.`
+      ? maidText('noMonthEvents')(MONTHS[currentMonth.month])
       : viewMode === 'tomorrow'
-        ? 'Non ci sono arrivi o partenze domani.'
-        : 'Non ci sono arrivi o partenze oggi.';
+        ? maidText('noTomorrowEvents')
+        : maidText('noTodayEvents');
     html += `
       <div class="empty-month">
         <div class="empty-month-icon">
           <i data-lucide="calendar-x" style="width:28px;height:28px;"></i>
         </div>
-        <h3>Nessun evento</h3>
+        <h3>${maidText('noEvents')}</h3>
         <p>${emptyText}</p>
       </div>
     `;
@@ -978,13 +1076,13 @@ function render() {
       const d = new Date(dateStr + 'T00:00:00');
       const isToday = dateStr === todayStr;
       const dayLabel = formatDayLabel(dateStr);
-      const dateFormatted = `${d.getDate()} ${MONTHS_IT[d.getMonth()]}`;
+      const dateFormatted = `${d.getDate()} ${MONTHS[d.getMonth()]}`;
 
       html += `<div class="day-group">`;
       html += `<div class="day-header">
         <div class="day-date-circle${isToday ? ' today' : ''}">
           <div class="day-date-num">${d.getDate()}</div>
-          <div class="day-date-dow">${DAYS_IT[d.getDay()]}</div>
+          <div class="day-date-dow">${DAYS[d.getDay()]}</div>
         </div>
         <div>
           <div class="day-label">${dayLabel}</div>
@@ -994,15 +1092,15 @@ function render() {
 
       for (const ev of dayEvents) {
         const typeIcon = ev.type === 'checkin' ? 'log-in' : 'log-out';
-        const typeLabel = ev.type === 'checkin' ? 'Arrivo' : 'Partenza';
+        const typeLabel = ev.type === 'checkin' ? maidText('arrival') : maidText('departure');
         const flag = ev.guestCountry ? countryToFlag(ev.guestCountry) : '';
         const guestInfo = [];
         if (ev.guestName) guestInfo.push(ev.guestName);
-        if (ev.guestCount) guestInfo.push(`${ev.guestCount} ospiti`);
+        if (ev.guestCount) guestInfo.push(maidText('guests')(ev.guestCount));
         if (flag) guestInfo.push(flag);
         const detailText = guestInfo.length > 0 ? guestInfo.join(' · ') : (ev.type === 'checkin' ? 'Check-in' : 'Check-out');
 
-        const actionText = ev.type === 'checkout' ? 'Pulizia dopo la partenza' : 'Preparare arrivo';
+        const actionText = ev.type === 'checkout' ? maidText('cleaningAfterDeparture') : maidText('prepareArrival');
         html += `<div class="event-card" style="--property-color:${ev.cfg.color}">
           <div class="event-type-badge ${ev.type}">
             <i data-lucide="${typeIcon}" style="width:20px;height:20px;"></i>

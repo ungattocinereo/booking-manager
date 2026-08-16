@@ -6,6 +6,7 @@ const { chromium } = require('playwright');
 
 const publicRoot = path.join(__dirname, '..', 'frontend', 'public');
 const themeStorageKey = 'atrani-theme-preference';
+const languageStorageKey = 'atrani-language';
 const adminThemeRoutes = [
   { path: '/', tab: 'calendar', sectionId: 'calendarTab', readySelector: '.booking-bar', surfaces: ['body', '.orbit-topbar', '.orbit-hero', '.calendar-toolbar', '.calendar-scroll-wrapper'] },
   { path: '/stats', tab: 'stats', sectionId: 'statsTab', readySelector: '#statsRadarGrid .stats-radar-metric', surfaces: ['body', '.orbit-topbar', '#statsDynamicsCard', '.stats-summary-card', '.stats-chart-card'] },
@@ -1453,7 +1454,7 @@ async function inspectDarkThemeRoutes(browser, baseUrl) {
   await page.goto(new URL('/maid/test-cleaner', baseUrl).href, { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('.header .theme-switcher');
   assert.equal(new URL(page.url()).pathname, '/maid/test-cleaner');
-  assert.equal(await page.locator('html').getAttribute('lang'), 'it');
+  assert.equal(await page.locator('html').getAttribute('lang'), 'ru');
   const maidState = await readThemeState(page);
   assertThemeState(maidState, {
     preference: 'system',
@@ -1482,6 +1483,68 @@ async function inspectDarkThemeRoutes(browser, baseUrl) {
       overflow: maidVisual.overflow
     }
   };
+}
+
+async function inspectLanguagePreferences(browser, baseUrl) {
+  const context = await browser.newContext({
+    viewport: { width: 1280, height: 900 },
+    locale: 'it-IT'
+  });
+  await installStatsBrowserMocks(context);
+  const page = await context.newPage();
+  const errors = collectPageErrors(page, { ignoreResourceErrors: false });
+  const italianRoutes = {};
+
+  for (const route of adminThemeRoutes) {
+    await page.goto(new URL(route.path, baseUrl).href, { waitUntil: 'domcontentloaded' });
+    await waitForAdminThemeRoute(page, route);
+    await page.waitForFunction(() => document.documentElement.lang === 'it');
+    if (route.tab === 'calendar') {
+      await page.locator('.booking-bar').first().click();
+      await page.waitForFunction(() => document.getElementById('bookingPanel')?.getAttribute('aria-hidden') === 'false');
+    }
+    if (route.tab === 'reporting') {
+      await page.locator('#reportingIstatFold > summary').click();
+      await page.waitForFunction(() => document.querySelectorAll('.reporting-istat-table tbody tr').length > 0);
+    }
+    const audit = await page.evaluate(() => {
+      const text = document.body.innerText;
+      return {
+        language: document.documentElement.lang,
+        stored: localStorage.getItem('atrani-language'),
+        active: document.querySelector('[data-language-option].active')?.dataset.languageOption || null,
+        cyrillicLines: text.split('\n').map(line => line.trim()).filter(line => /[А-Яа-яЁё]/.test(line))
+      };
+    });
+    assert.equal(audit.language, 'it', `${route.path}: Italian browser locale was not detected`);
+    assert.equal(audit.stored, null, `${route.path}: automatic locale should not be persisted`);
+    assert.equal(audit.active, 'it', `${route.path}: Italian switch option is not active`);
+    assert.deepEqual(audit.cyrillicLines, [], `${route.path}: untranslated Italian UI text: ${audit.cyrillicLines.join(' | ')}`);
+    italianRoutes[route.path] = true;
+  }
+
+  await page.goto(new URL('/maid/test-cleaner', baseUrl).href, { waitUntil: 'domcontentloaded' });
+  await page.waitForSelector('.header .language-switcher');
+  assert.equal(await page.locator('html').getAttribute('lang'), 'it');
+  assert.match(await page.locator('body').innerText(), /Calendario arrivi e partenze/);
+  assert.doesNotMatch(await page.locator('body').innerText(), /[А-Яа-яЁё]/);
+
+  await page.locator('[data-language-option="ru"]').click();
+  await page.waitForFunction(storageKey =>
+    document.documentElement.lang === 'ru' && localStorage.getItem(storageKey) === 'ru', languageStorageKey);
+  await page.waitForSelector('.header .language-switcher');
+  assert.match(await page.locator('body').innerText(), /Календарь заездов и выездов/);
+
+  await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
+  await waitForAdminThemeRoute(page, adminThemeRoutes[0]);
+  assert.equal(await page.locator('html').getAttribute('lang'), 'ru');
+  assert.match(await page.locator('body').innerText(), /Календарь/);
+  assert.equal(await page.locator('[data-language-option="ru"]').getAttribute('aria-pressed'), 'true');
+
+  assert.deepEqual(errors.pageErrors, []);
+  assert.deepEqual(errors.consoleErrors, []);
+  await context.close();
+  return { italianRoutes, manualOverrideShared: true };
 }
 
 async function inspectStatsPage(browser, baseUrl, viewport, isMobile) {
@@ -1752,6 +1815,7 @@ async function main() {
 
   try {
     const themePreferences = await inspectThemePreferences(browser, baseUrl);
+    const languagePreferences = await inspectLanguagePreferences(browser, baseUrl);
     const narrowThemeControls = await inspectNarrowThemeControls(browser, baseUrl);
     const darkThemeRoutes = await inspectDarkThemeRoutes(browser, baseUrl);
     const desktop = await inspectPage(browser, baseUrl, { width: 1440, height: 1000 }, false);
@@ -1775,7 +1839,7 @@ async function main() {
     );
     const confirmedEmptyDashboard = await inspectConfirmedEmptyDashboard(browser, baseUrl, serverState);
 
-    const maidContext = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true });
+    const maidContext = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, locale: 'it-IT' });
     await maidContext.route(/^https:/, route => route.abort());
     const maidPage = await maidContext.newPage();
     await maidPage.addInitScript(() => {
@@ -1798,6 +1862,7 @@ async function main() {
 
     console.log(JSON.stringify({
       themePreferences,
+      languagePreferences,
       narrowThemeControls,
       darkThemeRoutes,
       desktop,
