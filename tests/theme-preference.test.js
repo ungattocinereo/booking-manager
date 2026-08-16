@@ -39,9 +39,11 @@ function getThemeBootstrap(html, pageName) {
 
 function createControl(option) {
   const classes = new Set();
-  const attributes = new Map();
+  const label = `${option} theme`;
+  const attributes = new Map([['aria-label', label], ['aria-pressed', 'false']]);
   return {
     dataset: { themeOption: option },
+    title: label,
     classList: {
       toggle(name, active) {
         if (active) classes.add(name);
@@ -67,6 +69,34 @@ function createThemeRuntime(pageName, options = {}) {
   const html = pageHtml[pageName];
   const storage = options.storage || new Map();
   const controls = themeOptions.map(createControl);
+  const triggerIcons = themeOptions.map(option => ({ dataset: { themeTriggerIcon: option }, hidden: option !== 'system' }));
+  const triggerAttributes = new Map([['aria-expanded', 'false'], ['aria-label', 'system theme']]);
+  const menuClasses = new Set();
+  let menu;
+  const trigger = {
+    title: 'system theme',
+    setAttribute(name, value) { triggerAttributes.set(name, String(value)); },
+    getAttribute(name) { return triggerAttributes.get(name) ?? null; },
+    querySelectorAll(selector) { return selector === '[data-theme-trigger-icon]' ? triggerIcons : []; },
+    closest(selector) {
+      if (selector === '[data-theme-trigger]') return this;
+      if (selector === '[data-theme-menu]') return menu;
+      return null;
+    }
+  };
+  menu = {
+    classList: {
+      add(name) { menuClasses.add(name); },
+      remove(name) { menuClasses.delete(name); },
+      toggle(name, active) { if (active) menuClasses.add(name); else menuClasses.delete(name); },
+      contains(name) { return menuClasses.has(name); }
+    },
+    querySelector(selector) {
+      if (selector === '[data-theme-trigger]') return trigger;
+      const match = selector.match(/^\[data-theme-option="([^"]+)"\]$/);
+      return match ? controls.find(control => control.dataset.themeOption === match[1]) || null : null;
+    }
+  };
   const root = { dataset: {}, style: {} };
   const themeColor = { content: '' };
   const statusBar = { content: 'default' };
@@ -91,7 +121,10 @@ function createThemeRuntime(pageName, options = {}) {
       return null;
     },
     querySelectorAll(selector) {
-      return selector === '[data-theme-option]' ? controls : [];
+      if (selector === '[data-theme-option]') return controls;
+      if (selector === '[data-theme-trigger]') return [trigger];
+      if (selector === '[data-theme-menu].open') return menuClasses.has('open') ? [menu] : [];
+      return [];
     },
     addEventListener(type, listener) {
       documentListeners.set(type, listener);
@@ -137,10 +170,13 @@ function createThemeRuntime(pageName, options = {}) {
     api: window.AtraniTheme,
     controls,
     dispatchedEvents,
+    menu,
     root,
     storage,
     statusBar,
     themeColor,
+    trigger,
+    triggerIcons,
     fireDOMContentLoaded() {
       documentListeners.get('DOMContentLoaded')?.();
     },
@@ -148,6 +184,9 @@ function createThemeRuntime(pageName, options = {}) {
       const control = controls.find(candidate => candidate.dataset.themeOption === option);
       assert.ok(control, `missing ${option} theme control`);
       documentListeners.get('click')?.({ target: control });
+    },
+    clickTrigger() {
+      documentListeners.get('click')?.({ target: trigger });
     },
     setSystemDark(value) {
       media.matches = Boolean(value);
@@ -178,7 +217,7 @@ test('admin and maid pages expose one shared three-mode theme contract', () => {
     assert.match(html, /html\[data-color-scheme="dark"\]/);
     assert.match(html, /window\.AtraniTheme\s*=/);
     assert.match(html, /atrani-theme-change/);
-    const options = [...html.matchAll(/data-theme-option="([^"]+)"/g)].map(match => match[1]);
+    const options = [...html.matchAll(/<button[^>]*data-theme-option="([^"]+)"/g)].map(match => match[1]);
     assert.deepEqual([...new Set(options)].sort(), [...themeOptions].sort());
   }
 });
@@ -263,12 +302,23 @@ test('theme controls reflect the active preference accessibly', () => {
   assert.equal(system.classList.contains('active'), true);
   assert.equal(system.getAttribute('aria-pressed'), 'true');
   assert.equal(dark.getAttribute('aria-pressed'), 'false');
+  assert.equal(runtime.triggerIcons.find(icon => icon.dataset.themeTriggerIcon === 'system').hidden, false);
+  assert.equal(runtime.triggerIcons.find(icon => icon.dataset.themeTriggerIcon === 'dark').hidden, true);
+
+  runtime.clickTrigger();
+  assert.equal(runtime.menu.classList.contains('open'), true);
+  assert.equal(runtime.trigger.getAttribute('aria-expanded'), 'true');
 
   runtime.clickOption('dark');
   assert.equal(system.classList.contains('active'), false);
   assert.equal(system.getAttribute('aria-pressed'), 'false');
   assert.equal(dark.classList.contains('active'), true);
   assert.equal(dark.getAttribute('aria-pressed'), 'true');
+  assert.equal(runtime.triggerIcons.find(icon => icon.dataset.themeTriggerIcon === 'system').hidden, true);
+  assert.equal(runtime.triggerIcons.find(icon => icon.dataset.themeTriggerIcon === 'dark').hidden, false);
+  assert.equal(runtime.trigger.getAttribute('aria-label'), 'dark theme');
+  assert.equal(runtime.menu.classList.contains('open'), false);
+  assert.equal(runtime.trigger.getAttribute('aria-expanded'), 'false');
 });
 
 test('all admin routes and the public maid route resolve to themed pages', () => {
@@ -286,9 +336,18 @@ test('all admin routes and the public maid route resolve to themed pages', () =>
   }
 });
 
-test('maid page renders the theme switcher in both normal and error states', () => {
-  assert.match(pageHtml.maid, /function themeSwitcherMarkup\(\)/);
-  assert.match(pageHtml.maid, /function preferenceSwitchersMarkup\(\)[\s\S]*\$\{themeSwitcherMarkup\(\)\}/);
-  const placements = pageHtml.maid.match(/\$\{preferenceSwitchersMarkup\(\)\}/g) || [];
-  assert.ok(placements.length >= 2, 'maid success and error views should both render compact preference controls');
+test('language and theme controls are separate and the maid menu renders in both states', () => {
+  for (const html of Object.values(pageHtml)) {
+    assert.doesNotMatch(html, /preference-switchers|preference-divider/);
+    assert.match(html, /class="theme-menu" data-theme-menu/);
+    assert.match(html, /data-theme-trigger-icon="system"/);
+    assert.match(html, /data-theme-trigger-icon="light"/);
+    assert.match(html, /data-theme-trigger-icon="dark"/);
+  }
+  assert.match(pageHtml.admin, /class="language-switcher"/);
+  assert.match(pageHtml.maid, /function languageSwitcherMarkup\(\)/);
+  assert.match(pageHtml.maid, /function themeMenuMarkup\(\)/);
+  assert.match(pageHtml.maid, /function preferenceControlsMarkup\(\)[\s\S]*\$\{themeMenuMarkup\(\)\}/);
+  const placements = pageHtml.maid.match(/\$\{preferenceControlsMarkup\(\)\}/g) || [];
+  assert.ok(placements.length >= 2, 'maid success and error views should both render language and theme controls');
 });

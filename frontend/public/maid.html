@@ -46,6 +46,34 @@
           button.classList.toggle('active', active);
           button.setAttribute('aria-pressed', active ? 'true' : 'false');
         });
+        document.querySelectorAll('[data-theme-trigger]').forEach(trigger => {
+          const selected = trigger.closest('[data-theme-menu]')?.querySelector(`[data-theme-option="${preference}"]`);
+          const selectedLabel = selected?.getAttribute('aria-label') || selected?.title || '';
+          if (selectedLabel) {
+            trigger.setAttribute('aria-label', selectedLabel);
+            trigger.setAttribute('title', selectedLabel);
+          }
+          trigger.querySelectorAll('[data-theme-trigger-icon]').forEach(icon => {
+            icon.hidden = icon.dataset.themeTriggerIcon !== preference;
+          });
+        });
+      }
+
+      function closeThemeMenus(except = null) {
+        document.querySelectorAll('[data-theme-menu].open').forEach(menu => {
+          if (menu === except) return;
+          menu.classList.remove('open');
+          menu.querySelector('[data-theme-trigger]')?.setAttribute('aria-expanded', 'false');
+        });
+      }
+
+      function toggleThemeMenu(trigger) {
+        const menu = trigger.closest('[data-theme-menu]');
+        if (!menu) return;
+        const open = !menu.classList.contains('open');
+        closeThemeMenus(menu);
+        menu.classList.toggle('open', open);
+        trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
       }
 
       function applyPreference(preference) {
@@ -80,6 +108,7 @@
         }
         applyPreference(safePreference);
         syncControls();
+        closeThemeMenus();
         notify(previousPreference, previousResolved);
       }
 
@@ -95,7 +124,19 @@
 
       document.addEventListener('click', event => {
         const button = event.target.closest?.('[data-theme-option]');
-        if (button) setPreference(button.dataset.themeOption);
+        if (button) {
+          setPreference(button.dataset.themeOption);
+          return;
+        }
+        const trigger = event.target.closest?.('[data-theme-trigger]');
+        if (trigger) {
+          toggleThemeMenu(trigger);
+          return;
+        }
+        closeThemeMenus();
+      });
+      document.addEventListener('keydown', event => {
+        if (event.key === 'Escape') closeThemeMenus();
       });
       document.addEventListener('DOMContentLoaded', () => {
         updateSystemChrome(root.dataset.colorScheme);
@@ -262,81 +303,104 @@
       white-space: nowrap;
     }
 
-    .preference-switchers {
-      flex: 0 0 auto;
-      display: inline-flex;
-      align-items: center;
-      gap: 2px;
-      padding: 2px;
-      border-radius: 999px;
-      background: var(--theme-track);
-    }
-    .preference-divider {
-      width: 1px;
-      height: 18px;
-      flex: 0 0 1px;
-      background: color-mix(in srgb, var(--theme-inactive-text) 30%, transparent);
-    }
-    .theme-switcher {
+    .theme-menu {
       position: relative;
-      isolation: isolate;
-      display: inline-grid;
-      grid-template-columns: repeat(3, 36px);
-      align-items: center;
-      gap: 0;
-      padding: 0;
-      border: 0;
-      border-radius: 999px;
-      background: transparent;
+      flex: 0 0 auto;
+      z-index: 620;
     }
-    .theme-switcher::before {
+    .theme-menu::after {
       content: '';
       position: absolute;
-      z-index: 0;
-      top: 0;
-      bottom: 0;
-      left: 0;
-      width: 36px;
-      border-radius: 999px;
-      background: var(--theme-active);
-      box-shadow: none;
-      transform: translateX(0);
-      transition: transform .16s cubic-bezier(.2,.8,.2,1);
-      will-change: transform;
+      top: 100%;
+      right: 0;
+      width: 40px;
+      height: 8px;
     }
-    html[data-theme-preference="light"] .theme-switcher::before { transform: translateX(100%); }
-    html[data-theme-preference="dark"] .theme-switcher::before { transform: translateX(200%); }
-    .theme-option {
-      position: relative;
-      z-index: 1;
-      width: 36px;
-      min-width: 36px;
-      min-height: 36px;
+    .theme-menu-trigger {
+      width: 40px;
+      height: 40px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 0;
       padding: 0;
       border: 0;
+      border-radius: 50%;
+      background: var(--theme-track);
+      color: var(--theme-inactive-text);
+      cursor: pointer;
+      transition: color .16s ease, background-color .16s ease, transform .16s ease;
+    }
+    .theme-menu-trigger:hover,
+    .theme-menu.open .theme-menu-trigger {
+      color: var(--theme-active-text);
+      background: var(--theme-active);
+    }
+    .theme-menu-trigger:active { transform: scale(.94); }
+    .theme-trigger-icon {
+      width: 16px;
+      height: 16px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .theme-trigger-icon[hidden] { display: none; }
+    .theme-trigger-icon svg { width: 16px; height: 16px; }
+    .theme-trigger-icon svg + .theme-option-fallback { display: none; }
+    .theme-menu-popover {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      display: grid;
+      grid-template-columns: 36px;
+      gap: 4px;
+      padding: 4px;
+      border: 1px solid var(--border);
       border-radius: 999px;
+      background: var(--card);
+      box-shadow: var(--shadow-md);
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transform: translateY(-5px) scale(.96);
+      transform-origin: top right;
+      transition: opacity .16s ease, transform .16s ease, visibility .16s;
+    }
+    .theme-menu.open .theme-menu-popover {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+      transform: translateY(0) scale(1);
+    }
+    @media (hover: hover) and (pointer: fine) {
+      .theme-menu:hover .theme-menu-popover {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+        transform: translateY(0) scale(1);
+      }
+    }
+    .theme-option {
+      width: 36px;
+      height: 36px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      border: 0;
+      border-radius: 50%;
       background: transparent;
       color: var(--theme-inactive-text);
-      font: inherit;
-      font-size: 11px;
-      font-weight: 700;
       cursor: pointer;
-      transition: color .18s ease, opacity .18s ease;
+      transition: color .16s ease, background-color .16s ease, transform .16s ease;
     }
-    .theme-option:hover { color: var(--text); opacity: .86; }
+    .theme-option:hover { color: var(--text); background: var(--accent-light); }
     .theme-option.active {
-      background: transparent;
+      background: var(--theme-active);
       color: var(--theme-active-text);
-      font-weight: 800;
-      box-shadow: none;
-      opacity: 1;
     }
-    .theme-option svg { width: 14px; height: 14px; flex: 0 0 14px; }
-    .theme-option-fallback { width: 14px; font-size: 16px; line-height: 1; text-align: center; }
+    .theme-option:active { transform: scale(.92); }
+    .theme-option svg { width: 15px; height: 15px; flex: 0 0 15px; }
+    .theme-option-fallback { width: 15px; font-size: 16px; line-height: 1; text-align: center; }
     .theme-option svg + .theme-option-fallback { display: none; }
     .theme-option-label { display: none; }
     .header-controls {
@@ -352,17 +416,17 @@
       display: inline-grid;
       grid-template-columns: repeat(2, 32px);
       align-items: center;
-      padding: 0;
+      padding: 2px;
       border-radius: 999px;
-      background: transparent;
+      background: var(--theme-track);
     }
     .language-switcher::before {
       content: '';
       position: absolute;
       z-index: 0;
-      inset: 0 auto 0 0;
+      inset: 2px auto 2px 2px;
       width: 32px;
-      border-radius: 999px;
+      border-radius: 50%;
       background: var(--theme-active);
       transform: translateX(0);
       transition: transform .16s cubic-bezier(.2,.8,.2,1);
@@ -377,10 +441,11 @@
       justify-content: center;
       width: 32px;
       min-width: 32px;
-      min-height: 36px;
+      height: 32px;
+      min-height: 32px;
       padding: 0;
       border: 0;
-      border-radius: 999px;
+      border-radius: 50%;
       background: transparent;
       color: var(--theme-inactive-text);
       font: 800 10px/1 'Manrope', sans-serif;
@@ -397,15 +462,15 @@
       opacity: 1;
     }
     @media (prefers-reduced-motion: reduce) {
-      .theme-switcher::before, .theme-option,
+      .theme-menu-trigger, .theme-menu-popover, .theme-option,
       .language-switcher::before, .language-option { transition: none !important; }
     }
     @media (forced-colors: active) {
-      .preference-switchers { background: Canvas; border: 1px solid CanvasText; }
-      .theme-switcher, .language-switcher { background: transparent; }
-      .theme-switcher::before, .language-switcher::before { background: Highlight; }
+      .language-switcher, .theme-menu-trigger, .theme-menu-popover { background: Canvas; border: 1px solid CanvasText; }
+      .language-switcher::before { background: Highlight; }
       .theme-option, .language-option { color: CanvasText; }
       .theme-option.active, .language-option.active { color: HighlightText; }
+      .theme-option.active { background: Highlight; }
     }
     button:focus-visible, .month-pill:focus-visible, [tabindex]:focus-visible {
       outline: 3px solid var(--focus-ring);
@@ -832,17 +897,24 @@ let data = null;
 let currentMonth = null; // { year, month }
 let viewMode = 'today'; // today | tomorrow | month
 
-function themeSwitcherMarkup() {
-  return `<div class="theme-switcher" role="group" aria-label="${maidText('colorTheme')}">
-    <button class="theme-option" type="button" data-theme-option="system" aria-label="${maidText('systemTheme')}" title="${maidText('systemTheme')}" aria-pressed="false">
-      <i data-lucide="monitor"></i><span class="theme-option-fallback" aria-hidden="true">◫</span><span class="theme-option-label">${maidText('system')}</span>
+function themeMenuMarkup() {
+  return `<div class="theme-menu" data-theme-menu>
+    <button class="theme-menu-trigger" type="button" data-theme-trigger aria-haspopup="true" aria-expanded="false" aria-controls="maidThemeMenu" aria-label="${maidText('systemTheme')}" title="${maidText('systemTheme')}">
+      <span class="theme-trigger-icon" data-theme-trigger-icon="system"><i data-lucide="monitor"></i><span class="theme-option-fallback" aria-hidden="true">◫</span></span>
+      <span class="theme-trigger-icon" data-theme-trigger-icon="light" hidden><i data-lucide="sun"></i><span class="theme-option-fallback" aria-hidden="true">☼</span></span>
+      <span class="theme-trigger-icon" data-theme-trigger-icon="dark" hidden><i data-lucide="moon"></i><span class="theme-option-fallback" aria-hidden="true">☾</span></span>
     </button>
-    <button class="theme-option" type="button" data-theme-option="light" aria-label="${maidText('lightTheme')}" title="${maidText('lightTheme')}" aria-pressed="false">
-      <i data-lucide="sun"></i><span class="theme-option-fallback" aria-hidden="true">☼</span><span class="theme-option-label">${maidText('day')}</span>
-    </button>
-    <button class="theme-option" type="button" data-theme-option="dark" aria-label="${maidText('darkTheme')}" title="${maidText('darkTheme')}" aria-pressed="false">
-      <i data-lucide="moon"></i><span class="theme-option-fallback" aria-hidden="true">☾</span><span class="theme-option-label">${maidText('night')}</span>
-    </button>
+    <div class="theme-menu-popover" id="maidThemeMenu" role="group" aria-label="${maidText('colorTheme')}">
+      <button class="theme-option" type="button" data-theme-option="system" aria-label="${maidText('systemTheme')}" title="${maidText('systemTheme')}" aria-pressed="false">
+        <i data-lucide="monitor"></i><span class="theme-option-fallback" aria-hidden="true">◫</span><span class="theme-option-label">${maidText('system')}</span>
+      </button>
+      <button class="theme-option" type="button" data-theme-option="light" aria-label="${maidText('lightTheme')}" title="${maidText('lightTheme')}" aria-pressed="false">
+        <i data-lucide="sun"></i><span class="theme-option-fallback" aria-hidden="true">☼</span><span class="theme-option-label">${maidText('day')}</span>
+      </button>
+      <button class="theme-option" type="button" data-theme-option="dark" aria-label="${maidText('darkTheme')}" title="${maidText('darkTheme')}" aria-pressed="false">
+        <i data-lucide="moon"></i><span class="theme-option-fallback" aria-hidden="true">☾</span><span class="theme-option-label">${maidText('night')}</span>
+      </button>
+    </div>
   </div>`;
 }
 
@@ -850,12 +922,8 @@ function languageSwitcherMarkup() {
   return window.AtraniI18n?.switcherMarkup?.() || '';
 }
 
-function preferenceSwitchersMarkup() {
-  return `<div class="preference-switchers">
-    ${languageSwitcherMarkup()}
-    <span class="preference-divider" aria-hidden="true"></span>
-    ${themeSwitcherMarkup()}
-  </div>`;
+function preferenceControlsMarkup() {
+  return `${languageSwitcherMarkup()}${themeMenuMarkup()}`;
 }
 
 function todayInRome() {
@@ -895,7 +963,7 @@ function showError() {
       <div class="header-top">
         <div class="header-icon"><i data-lucide="calendar-x" style="width:22px;height:22px;"></i></div>
         <div class="header-copy"><h1>Atrani</h1><div class="subtitle">${maidText('calendarSubtitle')}</div></div>
-        <div class="header-controls">${preferenceSwitchersMarkup()}</div>
+        <div class="header-controls">${preferenceControlsMarkup()}</div>
       </div>
     </div>
     <div class="error-state">
@@ -1043,7 +1111,7 @@ function render() {
           <h1>${data.cleaner.name}</h1>
           <div class="subtitle">${maidText('scheduleSubtitle')}</div>
         </div>
-        <div class="header-controls">${preferenceSwitchersMarkup()}</div>
+        <div class="header-controls">${preferenceControlsMarkup()}</div>
       </div>
     </div>
   `;
