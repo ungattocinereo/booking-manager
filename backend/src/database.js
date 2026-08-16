@@ -463,7 +463,23 @@ class Database {
     return this.all(sql, params);
   }
 
-  async archiveStaleCleaningTasks(today) {
+  async archiveStaleCleaningTasks(today, expectedCheckoutKeys = null) {
+    if (Array.isArray(expectedCheckoutKeys)) {
+      const uniqueKeys = [...new Set(expectedCheckoutKeys)];
+      const exclusion = uniqueKeys.length
+        ? ` AND (property_id || '|' || scheduled_date) NOT IN (${uniqueKeys.map(() => '?').join(', ')})`
+        : '';
+      return this.run(
+        `UPDATE cleaning_tasks
+         SET active = 0,
+             missing_since = COALESCE(missing_since, CURRENT_TIMESTAMP)
+         WHERE scheduled_date >= ?
+           AND task_type = 'checkout_cleaning'
+           AND status NOT IN ('completed', 'cancelled')
+           AND COALESCE(active, 1) != 0${exclusion}`,
+        [today, ...uniqueKeys]
+      );
+    }
     return this.run(
       `UPDATE cleaning_tasks
        SET active = 0,

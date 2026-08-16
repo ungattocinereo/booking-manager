@@ -482,7 +482,20 @@ class Database {
     return this.query(sql, params);
   }
 
-  async archiveStaleCleaningTasks(today) {
+  async archiveStaleCleaningTasks(today, expectedCheckoutKeys = null) {
+    if (Array.isArray(expectedCheckoutKeys)) {
+      return this.execute(
+        `UPDATE cleaning_tasks ct
+         SET active = FALSE,
+             missing_since = COALESCE(ct.missing_since, NOW())
+         WHERE ct.scheduled_date >= $1::date
+           AND ct.task_type = 'checkout_cleaning'
+           AND ct.status NOT IN ('completed', 'cancelled')
+           AND ct.active IS NOT FALSE
+           AND NOT ((ct.property_id || '|' || to_char(ct.scheduled_date, 'YYYY-MM-DD')) = ANY($2::text[]))`,
+        [today, [...new Set(expectedCheckoutKeys)]]
+      );
+    }
     return this.execute(
       `UPDATE cleaning_tasks ct
        SET active = FALSE,

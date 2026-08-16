@@ -80,6 +80,44 @@ test('occupancy counts unique property nights instead of overlapping rows', () =
   assert.ok(snapshot.occupancy_percent <= 100);
 });
 
+test('statistics use shifted calendar dates when one Booking marker matches one guest', () => {
+  const snapshot = computeBookingStatsSnapshot({
+    bookings: [
+      {
+        id: 1,
+        active: true,
+        property_id: 'susy',
+        platform: 'booking',
+        start_date: '2026-08-12',
+        end_date: '2026-08-16',
+        booking_type: 'reservation',
+        raw_summary: 'Flavia Placidi',
+        guest_name: 'Flavia Placidi',
+        guest_count: 3
+      },
+      {
+        id: 2,
+        active: true,
+        property_id: 'susy',
+        platform: 'booking',
+        start_date: '2026-08-13',
+        end_date: '2026-08-17',
+        booking_type: 'blocked',
+        raw_summary: 'CLOSED - Not available',
+        guest_name: null,
+        guest_count: 0
+      }
+    ],
+    properties: [{ id: 'susy' }],
+    seasonYear: 2026
+  });
+
+  assert.equal(snapshot.booking_count, 1);
+  assert.equal(snapshot.occupied_nights, 4);
+  assert.equal(snapshot.payload.checkin_days.thu, 1);
+  assert.equal(snapshot.payload.checkin_days.wed, 0);
+});
+
 test('booking keys are stable, sorted and contain no guest PII', () => {
   const base = {
     property_id: 'orange',

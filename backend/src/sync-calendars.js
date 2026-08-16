@@ -3,6 +3,7 @@ const ICAL = require('ical.js');
 const fs = require('fs');
 const path = require('path');
 const { todayInRome } = require('../../api/_helpers');
+const { normalizeBookingsForDisplay } = require('../../lib/booking-normalization');
 const calendarInventory = require('../config/calendar-inventory.json');
 
 // Use Postgres on Vercel, SQLite locally
@@ -287,22 +288,24 @@ async function syncPropertyCalendars(property) {
   return { events: totalEvents, archived: totalArchived, deleted: 0, failures };
 }
 
-async function generateCleaningTasks() {
+async function generateCleaningTasks(options = {}) {
   console.log('\n🧹 Generating cleaning tasks...');
+  const database = options.database || db;
+  const today = options.today || todayInRome();
   
   // Ensure database is initialized
-  if (!db.pool && !db.db) {
-    await db.init();
+  if (!database.pool && !database.db) {
+    await database.init();
   }
   
   // Get all upcoming bookings
-  const today = todayInRome();
-  const bookings = await db.getBookings(null, today);
+  const bookings = normalizeBookingsForDisplay(await database.getBookings(null, today));
   
   console.log(`  Found ${bookings.length} bookings to process`);
   
   let tasksCreated = 0;
   let tasksSkipped = 0;
+  const expectedCheckoutKeys = new Set();
   
   for (const booking of bookings) {
     const summary = String(booking.raw_summary || '').toLowerCase();
@@ -312,15 +315,18 @@ async function generateCleaningTasks() {
       bookingType === 'blocked' ||
       bookingType === 'unavailable';
     const hasGuestDetails = Boolean((booking.guest_name || '').trim()) || Number(booking.guest_count) > 0;
+    const isOperationalFallback = booking.operational_fallback === true;
 
-    if (isUnavailable && !hasGuestDetails) {
+    if (isUnavailable && !hasGuestDetails && !isOperationalFallback) {
       tasksSkipped++;
       continue;
     }
 
+    expectedCheckoutKeys.add(`${booking.property_id}|${booking.end_date}`);
+
     // Create cleaning task for checkout day
     try {
-      const result = await db.createCleaningTask(booking.property_id, booking.end_date, 'checkout_cleaning');
+      const result = await database.createCleaningTask(booking.property_id, booking.end_date, 'checkout_cleaning');
       if (result && result.rowCount > 0) {
         tasksCreated++;
       } else {
@@ -334,8 +340,8 @@ async function generateCleaningTasks() {
   
   console.log(`  ✅ Created ${tasksCreated} new tasks, skipped ${tasksSkipped} existing`);
 
-  if (typeof db.archiveStaleCleaningTasks === 'function') {
-    const archived = await db.archiveStaleCleaningTasks(today);
+  if (typeof database.archiveStaleCleaningTasks === 'function') {
+    const archived = await database.archiveStaleCleaningTasks(today, [...expectedCheckoutKeys]);
     const archivedCount = archived.rowCount || archived.changes || 0;
     if (archivedCount > 0) {
       console.log(`  📦 Archived ${archivedCount} stale cleaning tasks`);
