@@ -1180,7 +1180,23 @@ function assertDarkVisualAudit(audit, label) {
 
 async function readNarrowThemeControlAudit(page, shellSelector) {
   return page.evaluate(selector => {
+    const parseRgb = value => (value.match(/[\d.]+/g) || []).slice(0, 3).map(Number);
+    const luminance = value => {
+      const channels = parseRgb(value).map(channel => {
+        const normalized = channel / 255;
+        return normalized <= .04045
+          ? normalized / 12.92
+          : ((normalized + .055) / 1.055) ** 2.4;
+      });
+      return .2126 * channels[0] + .7152 * channels[1] + .0722 * channels[2];
+    };
+    const contrast = (first, second) => {
+      const lighter = Math.max(luminance(first), luminance(second));
+      const darker = Math.min(luminance(first), luminance(second));
+      return (lighter + .05) / (darker + .05);
+    };
     const switcher = document.querySelector('.theme-switcher');
+    const preferences = document.querySelector('.preference-switchers');
     const controls = Array.from(document.querySelectorAll('[data-theme-option]')).map(control => {
       const rect = control.getBoundingClientRect();
       return {
@@ -1192,7 +1208,23 @@ async function readNarrowThemeControlAudit(page, shellSelector) {
       };
     });
     const activeControl = document.querySelector('[data-theme-option][aria-pressed="true"]');
+    const languageControls = Array.from(document.querySelectorAll('[data-language-option]')).map(control => {
+      const rect = control.getBoundingClientRect();
+      return {
+        option: control.dataset.languageOption,
+        pressed: control.getAttribute('aria-pressed'),
+        width: rect.width,
+        height: rect.height,
+        left: rect.left,
+        right: rect.right
+      };
+    });
+    const activeLanguage = document.querySelector('[data-language-option][aria-pressed="true"]');
+    const languageSwitcher = document.querySelector('.language-switcher');
+    const languageThumbStyle = languageSwitcher ? getComputedStyle(languageSwitcher, '::before') : null;
+    const activeLanguageStyle = activeLanguage ? getComputedStyle(activeLanguage) : null;
     const switcherRect = switcher?.getBoundingClientRect() || null;
+    const preferencesRect = preferences?.getBoundingClientRect() || null;
     const activeRect = activeControl?.getBoundingClientRect() || null;
     const switcherStyle = switcher ? getComputedStyle(switcher) : null;
     const thumbStyle = switcher ? getComputedStyle(switcher, '::before') : null;
@@ -1206,6 +1238,16 @@ async function readNarrowThemeControlAudit(page, shellSelector) {
     return {
       controls,
       activeOption: activeControl?.dataset.themeOption || null,
+      preferences: preferencesRect ? { width: preferencesRect.width, height: preferencesRect.height } : null,
+      language: {
+        controls: languageControls,
+        activeOption: activeLanguage?.dataset.languageOption || null,
+        activeTextColor: activeLanguageStyle?.color || null,
+        thumbColor: languageThumbStyle?.backgroundColor || null,
+        contrast: activeLanguageStyle && languageThumbStyle
+          ? contrast(activeLanguageStyle.color, languageThumbStyle.backgroundColor)
+          : null
+      },
       switcher: switcherRect && switcherStyle ? {
         width: switcherRect.width,
         height: switcherRect.height,
@@ -1231,15 +1273,28 @@ async function readNarrowThemeControlAudit(page, shellSelector) {
 function assertNarrowThemeControlAudit(audit, label) {
   assert.equal(audit.controls.length, 3, `${label}: expected three theme controls`);
   for (const control of audit.controls) {
-    assert.ok(control.width >= 44, `${label}: ${control.option} target is only ${control.width}px wide`);
-    assert.ok(control.height >= 44, `${label}: ${control.option} target is only ${control.height}px high`);
+    assert.ok(control.width >= 36, `${label}: ${control.option} target is only ${control.width}px wide`);
+    assert.ok(control.height >= 36, `${label}: ${control.option} target is only ${control.height}px high`);
     assert.ok(control.left >= -1 && control.right <= audit.viewportWidth + 1, `${label}: ${control.option} target is clipped`);
   }
+  assert.ok(audit.preferences, `${label}: shared preference rail is missing`);
+  assert.ok(audit.preferences.width <= 190, `${label}: preference rail is not compact (${audit.preferences.width}px)`);
+  assert.ok(audit.preferences.height <= 40, `${label}: preference rail is too tall (${audit.preferences.height}px)`);
+  assert.equal(audit.language.controls.length, 2, `${label}: expected two language controls`);
+  assert.ok(['ru', 'it'].includes(audit.language.activeOption), `${label}: active language is missing`);
+  for (const control of audit.language.controls) {
+    assert.ok(control.width >= 32, `${label}: ${control.option} language target is only ${control.width}px wide`);
+    assert.ok(control.height >= 36, `${label}: ${control.option} language target is only ${control.height}px high`);
+    assert.ok(control.left >= -1 && control.right <= audit.viewportWidth + 1, `${label}: ${control.option} language target is clipped`);
+  }
+  assert.ok(audit.language.contrast >= 4.5,
+    `${label}: active language contrast is too low (${audit.language.contrast}; ` +
+    `text ${audit.language.activeTextColor}, thumb ${audit.language.thumbColor})`);
   assert.ok(audit.switcher, `${label}: theme rail is missing`);
   assert.equal(audit.switcher.borderWidth, 0, `${label}: theme rail still has a decorative outline`);
   assert.ok(audit.thumb, `${label}: moving theme thumb is missing`);
   assert.equal(audit.thumb.aligned, true, `${label}: theme thumb is not aligned with ${audit.activeOption}`);
-  assert.ok(audit.thumb.width >= 44 && audit.thumb.height >= 44, `${label}: theme thumb is smaller than its target`);
+  assert.ok(audit.thumb.width >= 36 && audit.thumb.height >= 36, `${label}: theme thumb is smaller than its target`);
   assert.notEqual(audit.thumb.backgroundColor, 'rgba(0, 0, 0, 0)', `${label}: theme thumb is invisible`);
   assert.notEqual(audit.thumb.transitionDuration, '0s', `${label}: theme thumb has no motion`);
   assert.ok(audit.shell, `${label}: header shell is missing`);
@@ -1541,10 +1596,19 @@ async function inspectLanguagePreferences(browser, baseUrl) {
   assert.match(await page.locator('body').innerText(), /Календарь/);
   assert.equal(await page.locator('[data-language-option="ru"]').getAttribute('aria-pressed'), 'true');
 
+  await page.locator('[data-language-option="it"]').click();
+  await page.waitForFunction(storageKey =>
+    document.documentElement.lang === 'it' &&
+    localStorage.getItem(storageKey) === 'it' &&
+    document.body.innerText.includes('Calendario'), languageStorageKey);
+  assert.equal(await page.locator('[data-language-option="it"]').getAttribute('aria-pressed'), 'true');
+  assert.doesNotMatch(await page.locator('body').innerText(), /[А-Яа-яЁё]/,
+    'manual RU → IT switch left untranslated interface text');
+
   assert.deepEqual(errors.pageErrors, []);
   assert.deepEqual(errors.consoleErrors, []);
   await context.close();
-  return { italianRoutes, manualOverrideShared: true };
+  return { italianRoutes, manualOverrideShared: true, manualRussianToItalian: true };
 }
 
 async function inspectStatsPage(browser, baseUrl, viewport, isMobile) {

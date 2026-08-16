@@ -288,6 +288,7 @@ test('all admin routes and the public maid route resolve to themed pages', () =>
 
 test('maid page renders the theme switcher in both normal and error states', () => {
   assert.match(pageHtml.maid, /function themeSwitcherMarkup\(\)/);
-  const placements = pageHtml.maid.match(/\$\{themeSwitcherMarkup\(\)\}/g) || [];
-  assert.ok(placements.length >= 2, 'maid success and error views should both render theme controls');
+  assert.match(pageHtml.maid, /function preferenceSwitchersMarkup\(\)[\s\S]*\$\{themeSwitcherMarkup\(\)\}/);
+  const placements = pageHtml.maid.match(/\$\{preferenceSwitchersMarkup\(\)\}/g) || [];
+  assert.ok(placements.length >= 2, 'maid success and error views should both render compact preference controls');
 });

@@ -8,6 +8,7 @@ const projectRoot = path.join(__dirname, '..');
 const source = fs.readFileSync(path.join(projectRoot, 'frontend/public/i18n.js'), 'utf8');
 const adminHtml = fs.readFileSync(path.join(projectRoot, 'frontend/public/index.html'), 'utf8');
 const maidHtml = fs.readFileSync(path.join(projectRoot, 'frontend/public/maid.html'), 'utf8');
+const vercelConfig = JSON.parse(fs.readFileSync(path.join(projectRoot, 'vercel.json'), 'utf8'));
 
 function createRuntime({ languages = ['en-US'], savedLanguage = null } = {}) {
   const storage = new Map(savedLanguage == null ? [] : [['atrani-language', savedLanguage]]);
@@ -89,4 +90,10 @@ test('admin and public maid pages share the language contract', () => {
   assert.match(maidHtml, /languageSwitcherMarkup/);
   assert.match(adminHtml, /dashboard-i18n\.js/);
   assert.match(maidHtml, /const MAID_COPY =/);
+});
+
+test('Vercel exposes localization scripts at the root URLs used by both pages', () => {
+  const rewrites = new Map(vercelConfig.rewrites.map(rewrite => [rewrite.source, rewrite.destination]));
+  assert.equal(rewrites.get('/i18n.js'), '/frontend/public/i18n.js');
+  assert.equal(rewrites.get('/dashboard-i18n.js'), '/frontend/public/dashboard-i18n.js');
 });
