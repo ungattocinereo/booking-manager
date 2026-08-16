@@ -1,6 +1,10 @@
 const DAY_MS = 86400000;
 const crypto = require('crypto');
-const { isRealGuestBooking, isUnavailableMarker } = require('../../lib/booking-normalization');
+const {
+  isRealGuestBooking,
+  isUnavailableMarker,
+  normalizeBookingsForDisplay
+} = require('../../lib/booking-normalization');
 const { todayInRome } = require('../../api/_helpers');
 
 const STATS_MONTHS = [3, 4, 5, 6, 7, 8, 9, 10];
@@ -328,8 +332,9 @@ function computeBookingStatsSnapshot({
   const inventoryPropertyIds = new Set([...configuredPropertyIds, ...bookingPropertyIds]);
   const inventoryBookings = allBookings
     .filter(booking => inventoryPropertyIds.has(booking.property_id));
-  const realBookings = inventoryBookings
-    .filter(booking => isRealGuestBooking(booking, allBookings))
+  const operationalBookings = normalizeBookingsForDisplay(inventoryBookings);
+  const realBookings = operationalBookings
+    .filter(booking => isRealGuestBooking(booking, operationalBookings))
     .filter(booking => overlapsRange(booking, season.start, season.end));
   const unavailableBookings = inventoryBookings
     .filter(booking => isUnavailableMarker(booking))
