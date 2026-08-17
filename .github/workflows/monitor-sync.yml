@@ -104,7 +104,7 @@ jobs:
           PAGES_ARTIFACT_ID: ${{ needs.sync.outputs.artifact_id }}
           PAGES_BUILD_VERSION: ${{ needs.sync.outputs.head_sha }}
         with:
-          retries: 3
+          retries: 6
           script: |
             const artifactId = Number(process.env.PAGES_ARTIFACT_ID);
             const buildVersion = process.env.PAGES_BUILD_VERSION;
