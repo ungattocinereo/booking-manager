@@ -170,13 +170,13 @@
   <meta name="apple-mobile-web-app-title" content="Atrani Уборка">
 
   <!-- SEO -->
-  <meta name="description" content="Календарь заездов и выездов для уборки апартаментов в Атрани">
+  <meta name="description" content="Календарь заездов, выездов и задач для уборки апартаментов в Атрани">
   <meta name="robots" content="noindex, nofollow">
 
   <!-- Open Graph -->
   <meta property="og:type" content="website">
   <meta property="og:title" content="Календарь уборки — Atrani">
-  <meta property="og:description" content="Календарь заездов и выездов для уборки апартаментов в Атрани">
+  <meta property="og:description" content="Календарь заездов, выездов и задач для уборки апартаментов в Атрани">
   <meta property="og:image" content="/icon-512.png">
 
   <script defer src="https://unpkg.com/lucide@1.17.0/dist/umd/lucide.min.js"></script>
@@ -199,6 +199,9 @@
       --checkout: #ea580c;
       --checkout-light: #fff7ed;
       --checkout-border: #fed7aa;
+      --task: #2563eb;
+      --task-light: #eff6ff;
+      --task-border: #bfdbfe;
       --today-bg: #0f766e;
       --today-text: #ffffff;
       --surface-overlay: rgba(255,255,255,.92);
@@ -231,6 +234,9 @@
       --checkout: #f3bf70;
       --checkout-light: #3a2b17;
       --checkout-border: #745725;
+      --task: #8fbdff;
+      --task-light: #172f52;
+      --task-border: #315d92;
       --today-bg: #72d8cc;
       --today-text: #08211e;
       --surface-overlay: rgba(21,33,38,.94);
@@ -631,6 +637,11 @@
       color: var(--checkout);
       border: 1px solid var(--checkout-border);
     }
+    .event-type-badge.task {
+      background: var(--task-light);
+      color: var(--task);
+      border: 1px solid var(--task-border);
+    }
     .event-info {
       flex: 1;
       min-width: 0;
@@ -666,6 +677,7 @@
     }
     .event-type-label.checkin { color: var(--checkin); }
     .event-type-label.checkout { color: var(--checkout); }
+    .event-type-label.task { color: var(--task); }
     .event-action {
       margin-top: 8px;
       display: inline-flex;
@@ -686,6 +698,10 @@
     .event-action.checkin {
       background: var(--checkin-light);
       color: var(--checkin);
+    }
+    .event-action.task {
+      background: var(--task-light);
+      color: var(--task);
     }
 
     /* Empty state */
@@ -826,28 +842,33 @@ const IS_ITALIAN = UI_LANGUAGE === 'it';
 const MAID_COPY = {
   ru: {
     pageTitle: 'Календарь уборки — Atrani', loading: 'Загрузка...', calendarSubtitle: 'Календарь уборки',
-    scheduleSubtitle: 'Календарь заездов и выездов', notFound: 'Календарь не найден',
+    scheduleSubtitle: 'Заезды, выезды и задачи', notFound: 'Календарь не найден',
     invalidLink: 'Эта ссылка недействительна или была отключена.', today: 'Сегодня', tomorrow: 'Завтра', month: 'Месяц',
-    noEvents: 'Нет событий', noMonthEvents: month => `В ${month.toLowerCase()} нет заездов и выездов.`,
-    noTomorrowEvents: 'Завтра нет заездов и выездов.', noTodayEvents: 'Сегодня нет заездов и выездов.',
-    arrival: 'Заезд', departure: 'Выезд', guests: count => `${count} чел.`,
+    noEvents: 'Нет событий', noMonthEvents: month => `В ${month.toLowerCase()} нет событий.`,
+    noTomorrowEvents: 'Завтра нет событий.', noTodayEvents: 'Сегодня нет событий.',
+    arrival: 'Заезд', departure: 'Выезд', task: 'Задача', guests: count => `${count} чел.`,
     cleaningAfterDeparture: 'Уборка после выезда', prepareArrival: 'Подготовить к заезду',
+    additionalTask: 'Дополнительная задача', scheduledTask: 'Задача для уборки',
     colorTheme: 'Цветовая тема', systemTheme: 'Системная тема', system: 'Система',
     lightTheme: 'Светлая тема', day: 'День', darkTheme: 'Тёмная тема', night: 'Ночь'
   },
   it: {
     pageTitle: 'Calendario Pulizie — Atrani', loading: 'Caricamento...', calendarSubtitle: 'Calendario pulizie',
-    scheduleSubtitle: 'Calendario arrivi e partenze', notFound: 'Calendario non trovato',
+    scheduleSubtitle: 'Arrivi, partenze e attività', notFound: 'Calendario non trovato',
     invalidLink: 'Questo link non è valido o è stato disattivato.', today: 'Oggi', tomorrow: 'Domani', month: 'Mese',
-    noEvents: 'Nessun evento', noMonthEvents: month => `Non ci sono arrivi o partenze a ${month}.`,
-    noTomorrowEvents: 'Non ci sono arrivi o partenze domani.', noTodayEvents: 'Non ci sono arrivi o partenze oggi.',
-    arrival: 'Arrivo', departure: 'Partenza', guests: count => `${count} ${Number(count) === 1 ? 'ospite' : 'ospiti'}`,
+    noEvents: 'Nessun evento', noMonthEvents: month => `Non ci sono eventi a ${month}.`,
+    noTomorrowEvents: 'Non ci sono eventi domani.', noTodayEvents: 'Non ci sono eventi oggi.',
+    arrival: 'Arrivo', departure: 'Partenza', task: 'Attività', guests: count => `${count} ${Number(count) === 1 ? 'ospite' : 'ospiti'}`,
     cleaningAfterDeparture: 'Pulizia dopo la partenza', prepareArrival: 'Preparare l’arrivo',
+    additionalTask: 'Attività aggiuntiva', scheduledTask: 'Attività per le pulizie',
     colorTheme: 'Tema colore', systemTheme: 'Tema di sistema', system: 'Sistema',
     lightTheme: 'Tema chiaro', day: 'Giorno', darkTheme: 'Tema scuro', night: 'Notte'
   }
 };
 const maidText = key => MAID_COPY[UI_LANGUAGE]?.[key] ?? MAID_COPY.ru[key] ?? key;
+const escapeHtml = value => String(value ?? '').replace(/[&<>'"]/g, char => ({
+  '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+}[char]));
 const MONTHS = IS_ITALIAN
   ? ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre']
   : ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
@@ -862,8 +883,8 @@ const DAYS_FULL = IS_ITALIAN
 document.title = maidText('pageTitle');
 document.querySelector('#loadingState span').textContent = maidText('loading');
 const maidDescription = IS_ITALIAN
-  ? 'Calendario arrivi e partenze per le pulizie degli appartamenti ad Atrani'
-  : 'Календарь заездов и выездов для уборки апартаментов в Атрани';
+  ? 'Calendario di arrivi, partenze e attività per le pulizie degli appartamenti ad Atrani'
+  : 'Календарь заездов, выездов и задач для уборки апартаментов в Атрани';
 document.querySelectorAll('meta[name="description"], meta[property="og:description"]').forEach(meta => { meta.content = maidDescription; });
 document.querySelectorAll('meta[property="og:title"]').forEach(meta => { meta.content = maidText('pageTitle'); });
 const maidAppTitle = document.querySelector('meta[name="apple-mobile-web-app-title"]');
@@ -1022,13 +1043,29 @@ function getEvents() {
     }
   }
 
-  // Sort by date, then checkout before checkin (cleaning first)
+  for (const task of data.tasks || []) {
+    const taskDate = new Date(task.scheduled_date + 'T00:00:00');
+    if (taskDate < today || taskDate > endOfWindow) continue;
+    const prop = data.properties.find(p => p.id === task.property_id);
+    const cfg = propertyConfig[task.property_id] || { icon: 'home', color: '#6b7280', bg: '#f9fafb' };
+    events.push({
+      date: task.scheduled_date,
+      dateObj: taskDate,
+      type: 'task',
+      property: prop?.name || cfg.name || task.property_id,
+      propertyId: task.property_id,
+      note: task.notes?.trim() || maidText('scheduledTask'),
+      taskType: task.task_type,
+      cfg
+    });
+  }
+
+  // Sort by date, then explicit tasks, checkout, and checkin.
+  const eventOrder = { task: 0, checkout: 1, checkin: 2 };
   events.sort((a, b) => {
     const cmp = a.date.localeCompare(b.date);
     if (cmp !== 0) return cmp;
-    if (a.type === 'checkout' && b.type === 'checkin') return -1;
-    if (a.type === 'checkin' && b.type === 'checkout') return 1;
-    return 0;
+    return (eventOrder[a.type] ?? 99) - (eventOrder[b.type] ?? 99);
   });
 
   return events;
@@ -1193,16 +1230,21 @@ function render() {
       </div>`;
 
       for (const ev of dayEvents) {
-        const typeIcon = ev.type === 'checkin' ? 'log-in' : 'log-out';
-        const typeLabel = ev.type === 'checkin' ? maidText('arrival') : maidText('departure');
+        const isTask = ev.type === 'task';
+        const typeIcon = isTask ? 'clipboard-check' : ev.type === 'checkin' ? 'log-in' : 'log-out';
+        const typeLabel = isTask ? maidText('task') : ev.type === 'checkin' ? maidText('arrival') : maidText('departure');
         const flag = ev.guestCountry ? countryToFlag(ev.guestCountry) : '';
         const guestInfo = [];
         if (ev.guestName) guestInfo.push(ev.guestName);
         if (ev.guestCount) guestInfo.push(maidText('guests')(ev.guestCount));
         if (flag) guestInfo.push(flag);
-        const detailText = guestInfo.length > 0 ? guestInfo.join(' · ') : (ev.type === 'checkin' ? 'Check-in' : 'Check-out');
+        const detailText = isTask
+          ? ev.note
+          : guestInfo.length > 0 ? guestInfo.join(' · ') : (ev.type === 'checkin' ? 'Check-in' : 'Check-out');
 
-        const actionText = ev.type === 'checkout' ? maidText('cleaningAfterDeparture') : maidText('prepareArrival');
+        const actionText = isTask
+          ? maidText('additionalTask')
+          : ev.type === 'checkout' ? maidText('cleaningAfterDeparture') : maidText('prepareArrival');
         html += `<div class="event-card" style="--property-color:${ev.cfg.color}">
           <div class="event-type-badge ${ev.type}">
             <i data-lucide="${typeIcon}" style="width:20px;height:20px;"></i>
@@ -1212,14 +1254,14 @@ function render() {
               <div class="event-property-icon" style="background:${ev.cfg.bg};color:${ev.cfg.color};">
                 <i data-lucide="${ev.cfg.icon}" style="width:12px;height:12px;"></i>
               </div>
-              ${ev.property}
+              ${escapeHtml(ev.property)}
             </div>
             <div class="event-detail">
               <span class="event-type-label ${ev.type}">${typeLabel}</span>
-              <span>${detailText}</span>
+              <span>${escapeHtml(detailText)}</span>
             </div>
             <div class="event-action ${ev.type}">
-              <i data-lucide="${ev.type === 'checkout' ? 'sparkles' : 'door-open'}" style="width:13px;height:13px;"></i>${actionText}
+              <i data-lucide="${isTask ? 'list-checks' : ev.type === 'checkout' ? 'sparkles' : 'door-open'}" style="width:13px;height:13px;"></i>${actionText}
             </div>
           </div>
         </div>`;

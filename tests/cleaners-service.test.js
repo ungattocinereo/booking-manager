@@ -61,6 +61,12 @@ test('maid calendar keeps the public response contract and assigned-property sco
     getBookings: async () => [
       { id: 1, property_id: 'orange', platform: 'airbnb', start_date: '2026-08-01', end_date: '2026-08-03' },
       { id: 2, property_id: 'solo', platform: 'booking', start_date: '2026-08-01', end_date: '2026-08-04' }
+    ],
+    getCleaningTasks: async () => [
+      { id: 3, property_id: 'orange', scheduled_date: '2026-08-02', task_type: 'manual', status: 'pending', notes: 'Change linen', active: true },
+      { id: 4, property_id: 'orange', scheduled_date: '2026-08-03', task_type: 'checkout_cleaning', status: 'pending', active: true },
+      { id: 5, property_id: 'orange', scheduled_date: '2026-08-04', task_type: 'manual', status: 'completed', active: true },
+      { id: 6, property_id: 'solo', scheduled_date: '2026-08-05', task_type: 'manual', status: 'pending', active: true }
     ]
   };
 
@@ -69,4 +75,12 @@ test('maid calendar keeps the public response contract and assigned-property sco
   assert.deepEqual(result.properties, [{ id: 'orange', name: 'Orange' }]);
   assert.deepEqual(result.bookings.map(booking => booking.id), [1]);
   assert.equal(result.bookings[0].start_date, '2026-08-01');
+  assert.deepEqual(result.tasks, [{
+    id: 3,
+    property_id: 'orange',
+    scheduled_date: '2026-08-02',
+    task_type: 'manual',
+    status: 'pending',
+    notes: 'Change linen'
+  }]);
 });
