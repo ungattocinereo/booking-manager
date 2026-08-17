@@ -242,6 +242,14 @@ function createServer(state = {
           guest_count: 2,
           guest_country: 'it',
           booking_type: 'reservation'
+        }],
+        tasks: [{
+          id: 2,
+          property_id: 'orange',
+          scheduled_date: '2027-01-01',
+          task_type: 'manual',
+          status: 'pending',
+          notes: 'Cambiare la biancheria da letto'
         }]
       }));
       return;
@@ -1661,14 +1669,14 @@ async function inspectLanguagePreferences(browser, baseUrl) {
   await page.goto(new URL('/maid/test-cleaner', baseUrl).href, { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('.header .language-switcher');
   assert.equal(await page.locator('html').getAttribute('lang'), 'it');
-  assert.match(await page.locator('body').innerText(), /Calendario arrivi e partenze/);
+  assert.match(await page.locator('body').innerText(), /Arrivi, partenze e attività/);
   assert.doesNotMatch(await page.locator('body').innerText(), /[А-Яа-яЁё]/);
 
   await page.locator('[data-language-option="ru"]').click();
   await page.waitForFunction(storageKey =>
     document.documentElement.lang === 'ru' && localStorage.getItem(storageKey) === 'ru', languageStorageKey);
   await page.waitForSelector('.header .language-switcher');
-  assert.match(await page.locator('body').innerText(), /Календарь заездов и выездов/);
+  assert.match(await page.locator('body').innerText(), /Заезды, выезды и задачи/);
 
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
   await waitForAdminThemeRoute(page, adminThemeRoutes[0]);
@@ -2002,6 +2010,9 @@ async function main() {
     await maidPage.waitForFunction(() => document.body.innerText.includes('New Year Guest'));
     const maidText = await maidPage.locator('body').innerText();
     assert.match(maidText, /Partenza/i);
+    assert.match(maidText, /Attività/i);
+    assert.match(maidText, /Cambiare la biancheria da letto/i);
+    await captureUiScreenshot(maidPage, 'maid-manual-task');
     await maidContext.close();
 
     console.log(JSON.stringify({

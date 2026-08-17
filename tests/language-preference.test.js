@@ -90,6 +90,8 @@ test('admin and public maid pages share the language contract', () => {
   assert.match(maidHtml, /languageSwitcherMarkup/);
   assert.match(adminHtml, /dashboard-i18n\.js/);
   assert.match(maidHtml, /const MAID_COPY =/);
+  assert.match(maidHtml, /Arrivi, partenze e attività/);
+  assert.match(maidHtml, /for \(const task of data\.tasks \|\| \[\]\)/);
 });
 
 test('Vercel exposes localization scripts at the root URLs used by both pages', () => {
