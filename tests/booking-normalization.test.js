@@ -75,13 +75,15 @@ test('uses a unique shifted Booking calendar marker as the operational dates', a
     raw_summary: 'Flavia Placidi',
     guest_name: 'Flavia Placidi',
     guest_country: 'IT',
-    guest_count: 3
+    guest_count: 3,
+    created_at: '2026-08-01T12:00:00.000Z'
   });
   const liveMarker = row({
     id: 11,
     property_id: 'susy',
     start_date: '2026-08-13',
-    end_date: '2026-08-17'
+    end_date: '2026-08-17',
+    created_at: '2026-08-13T06:00:00.000Z'
   });
   const nextGuest = row({
     id: 12,
@@ -101,6 +103,7 @@ test('uses a unique shifted Booking calendar marker as the operational dates', a
   assert.equal(currentGuest.id, 11);
   assert.equal(currentGuest.start_date, '2026-08-13');
   assert.equal(currentGuest.end_date, '2026-08-17');
+  assert.equal(currentGuest.created_at, '2026-08-01T12:00:00.000Z');
   assert.equal(currentGuest.calendar_authoritative, true);
 
   const db = { async getBookings() { return rows; } };
@@ -110,6 +113,40 @@ test('uses a unique shifted Booking calendar marker as the operational dates', a
   assert.equal(today.occupied.some(item => item.property_id === 'susy'), true);
   assert.equal(tomorrow.check_outs.some(item => item.guest === 'Flavia Placidi'), true);
   assert.equal(tomorrow.check_ins.some(item => item.guest === 'Kelemen Krisztin'), true);
+});
+
+test('does not turn a daily-trimmed Booking marker into a new check-in', async () => {
+  const reservation = row({
+    id: 13,
+    property_id: 'central',
+    start_date: '2026-08-17',
+    end_date: '2026-08-19',
+    booking_type: 'reservation',
+    raw_summary: 'Central Guest',
+    guest_name: 'Central Guest',
+    guest_count: 2,
+    created_at: '2026-08-14T08:00:00.000Z'
+  });
+  const trimmedMarker = row({
+    id: 14,
+    property_id: 'central',
+    start_date: '2026-08-18',
+    end_date: '2026-08-19',
+    created_at: '2026-08-17T20:00:00.000Z'
+  });
+  const rows = [reservation, trimmedMarker];
+
+  const visible = normalizeBookingsForDisplay(rows);
+  assert.equal(visible.length, 1);
+  assert.equal(visible[0].id, 13);
+  assert.equal(visible[0].start_date, '2026-08-17');
+  assert.equal(visible[0].end_date, '2026-08-19');
+  assert.equal(visible[0].created_at, '2026-08-14T08:00:00.000Z');
+
+  const db = { async getBookings() { return rows; } };
+  const today = await buildTodayWidgetPayload(db, '2026-08-18');
+  assert.equal(today.check_ins.some(item => item.property_id === 'central'), false);
+  assert.equal(today.occupied.some(item => item.property_id === 'central'), true);
 });
 
 test('does not apply a combined Booking marker to multiple guest reservations', () => {
