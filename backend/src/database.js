@@ -163,12 +163,18 @@ class Database {
          AND end_date = ?
          AND start_date < ?
          AND (
-           COALESCE(booking_type, '') IN ('blocked', 'unavailable') OR
-           LOWER(COALESCE(raw_summary, '')) LIKE '%closed%' OR
-           LOWER(COALESCE(raw_summary, '')) LIKE '%not available%'
+           (
+             (
+               COALESCE(booking_type, '') IN ('blocked', 'unavailable') OR
+               LOWER(COALESCE(raw_summary, '')) LIKE '%closed%' OR
+               LOWER(COALESCE(raw_summary, '')) LIKE '%not available%'
+             )
+             AND COALESCE(NULLIF(TRIM(guest_name), ''), '') = ''
+             AND COALESCE(guest_count, 0) = 0
+           )
+           OR COALESCE(NULLIF(TRIM(guest_name), ''), '') <> ''
+           OR COALESCE(guest_count, 0) > 0
          )
-         AND COALESCE(NULLIF(TRIM(guest_name), ''), '') = ''
-         AND COALESCE(guest_count, 0) = 0
        ORDER BY start_date ASC
        LIMIT 1`,
       [propertyId, endDate, startDate]

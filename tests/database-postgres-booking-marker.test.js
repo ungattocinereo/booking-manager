@@ -33,3 +33,30 @@ test('Postgres upsert preserves the original start of a shrinking Booking marker
     db.execute = originalExecute;
   }
 });
+
+test('Postgres treats an earlier guest reservation as the canonical Booking start', async () => {
+  const originalQueryOne = db.queryOne;
+  let capturedQuery;
+
+  db.queryOne = async (sql, params) => {
+    capturedQuery = { sql, params };
+    return { start_date: '2026-08-17' };
+  };
+
+  try {
+    const startDate = await db.findOriginalBookingMarkerStart(
+      'central',
+      'booking',
+      '2026-08-18',
+      '2026-08-19',
+      'blocked'
+    );
+
+    assert.equal(startDate, '2026-08-17');
+    assert.deepEqual(capturedQuery.params, ['central', '2026-08-19', '2026-08-18']);
+    assert.match(capturedQuery.sql, /TRIM\(guest_name\).*<> ''/s);
+    assert.match(capturedQuery.sql, /COALESCE\(guest_count, 0\) > 0/);
+  } finally {
+    db.queryOne = originalQueryOne;
+  }
+});

@@ -94,6 +94,37 @@ async function main() {
   assert.ok(july20Widget.occupied.some(item => item.property_id === 'solo' && item.start === '2026-07-19'));
   assert.ok(!july20Widget.check_ins.some(item => item.property_id === 'solo'));
 
+  await db.upsertBooking('solo', 'booking', '2026-08-17', '2026-08-19', 'Central Guest', {
+    guestName: 'Central Guest',
+    guestCountry: 'IT',
+    bookingType: 'reservation',
+  });
+  await db.run(
+    `INSERT INTO bookings (
+       property_id, platform, start_date, end_date, raw_summary,
+       booking_type, active, missing_since, created_at
+     ) VALUES ('solo', 'booking', '2026-08-18', '2026-08-19', 'CLOSED - Not available', 'blocked', 1, NULL, CURRENT_TIMESTAMP)`
+  );
+
+  const reconciledGuestMarker = await db.upsertBooking(
+    'solo',
+    'booking',
+    '2026-08-18',
+    '2026-08-19',
+    'CLOSED - Not available',
+    { bookingType: 'blocked' }
+  );
+  const originalGuestReservation = await getBooking('solo', '2026-08-17', '2026-08-19');
+  const trimmedGuestMarker = await getBooking('solo', '2026-08-18', '2026-08-19');
+  const august18Widget = await buildTodayWidgetPayload(db, '2026-08-18');
+  assert.strictEqual(reconciledGuestMarker.canonicalStartDate, '2026-08-17');
+  assert.strictEqual(originalGuestReservation.booking_type, 'reservation');
+  assert.strictEqual(originalGuestReservation.guest_name, 'Central Guest');
+  assert.strictEqual(Number(originalGuestReservation.active), 1);
+  assert.strictEqual(Number(trimmedGuestMarker.active), 0);
+  assert.ok(august18Widget.occupied.some(item => item.property_id === 'solo' && item.start === '2026-08-17'));
+  assert.ok(!august18Widget.check_ins.some(item => item.property_id === 'solo'));
+
   await db.run(
     `INSERT INTO bookings (
        property_id, platform, start_date, end_date, raw_summary,
