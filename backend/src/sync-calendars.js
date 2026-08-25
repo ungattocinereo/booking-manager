@@ -465,7 +465,11 @@ module.exports = {
 // Run the same protected service path used by the API when called directly.
 if (require.main === module) {
   const { runSync } = require('./sync-service');
-  runSync({ source: 'cli' })
+  runSync({
+    source: 'cli',
+    lockWaitMs: process.env.SYNC_LOCK_WAIT_MS,
+    lockRetryMs: process.env.SYNC_LOCK_RETRY_MS
+  })
     .then(result => {
       console.log(result.partial ? 'Sync completed partially' : 'Sync completed successfully');
       if (result.partial) process.exitCode = 1;

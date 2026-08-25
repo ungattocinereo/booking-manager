@@ -59,6 +59,8 @@ jobs:
           NODE_ENV: production
           POSTGRES_URL: ${{ secrets.BOOKING_MANAGER_POSTGRES_URL }}
           ICAL_URLS: ${{ secrets.BOOKING_MANAGER_ICAL_URLS }}
+          SYNC_LOCK_WAIT_MS: "180000"
+          SYNC_LOCK_RETRY_MS: "5000"
         run: npm run sync
 
       - name: Run sync
