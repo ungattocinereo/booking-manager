@@ -5,6 +5,7 @@ const db = USE_POSTGRES
 const { syncCalendars, generateCleaningTasks } = require('./sync-calendars');
 const { enrichFromExports } = require('./enrich-from-exports');
 const { recordBookingStatsSnapshot } = require('./stats-snapshots');
+const { acquireSyncLockWithRetry } = require('../../lib/sync-lock-retry');
 
 class SyncInProgressError extends Error {
   constructor() {
@@ -16,10 +17,22 @@ class SyncInProgressError extends Error {
 
 let activeSyncPromise = null;
 
-async function executeSync(source) {
+async function executeSync(source, options = {}) {
   await db.init();
+  let announcedLockWait = false;
   const lock = typeof db.acquireSyncLock === 'function'
-    ? await db.acquireSyncLock()
+    ? await acquireSyncLockWithRetry(
+      () => db.acquireSyncLock(),
+      {
+        waitMs: options.lockWaitMs,
+        retryMs: options.lockRetryMs,
+        onRetry: ({ remainingMs }) => {
+          if (announcedLockWait) return;
+          announcedLockWait = true;
+          console.warn(`Another calendar sync is running; waiting up to ${Math.ceil(remainingMs / 1000)}s for it to finish`);
+        }
+      }
+    )
     : true;
   if (!lock) throw new SyncInProgressError();
 
@@ -76,9 +89,9 @@ async function executeSync(source) {
   }
 }
 
-async function runSync({ source = 'manual' } = {}) {
+async function runSync({ source = 'manual', lockWaitMs = 0, lockRetryMs = 1000 } = {}) {
   if (activeSyncPromise) throw new SyncInProgressError();
-  activeSyncPromise = executeSync(source);
+  activeSyncPromise = executeSync(source, { lockWaitMs, lockRetryMs });
   try {
     return await activeSyncPromise;
   } finally {
