@@ -212,7 +212,10 @@ class Database {
     return original?.start_date || startDate;
   }
 
-  async archiveSupersededBookingMarkers(propertyId, canonicalStartDate, endDate) {
+  async archiveSupersededBookingMarkers(propertyId, canonicalStartDate, endDate, observedStartDate = canonicalStartDate) {
+    const startPredicate = canonicalStartDate === observedStartDate
+      ? 'start_date <> $3::date'
+      : 'start_date > $3::date';
     return this.execute(
       `UPDATE bookings
        SET active = FALSE,
@@ -221,7 +224,7 @@ class Database {
        WHERE property_id = $1
          AND platform = 'booking'
          AND end_date = $2::date
-         AND start_date > $3::date
+         AND ${startPredicate}
          AND (
            COALESCE(booking_type, '') IN ('blocked', 'unavailable') OR
            LOWER(COALESCE(raw_summary, '')) LIKE '%closed%' OR
@@ -279,7 +282,7 @@ class Database {
       [propertyId, platform, canonicalStartDate, endDate, rawSummary, guestName || null, guestCountry || null, reservationUrl || null, phoneLast4 || null, bookingType || 'reservation']
     );
     if (platform === 'booking' && ['blocked', 'unavailable'].includes(String(bookingType || '').toLowerCase())) {
-      await this.archiveSupersededBookingMarkers(propertyId, canonicalStartDate, endDate);
+      await this.archiveSupersededBookingMarkers(propertyId, canonicalStartDate, endDate, startDate);
     }
     return { ...result, canonicalStartDate };
   }
