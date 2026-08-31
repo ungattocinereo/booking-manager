@@ -5,15 +5,13 @@
 const API_URL = 'https://booking-manager-cinereos-projects.vercel.app/api/bookings?widget=today&token=YOUR_WIDGET_TOKEN';
 const VERCEL_BYPASS = 'YOUR_VERCEL_PROTECTION_BYPASS_TOKEN';
 
-const MAX_ARRIVAL_ROWS = 3;
-const MAX_STAY_ROWS = 5;
-const MAX_CHECKOUT_ROWS = 5;
+const MAX_ARRIVAL_ROWS = 5;
+const MAX_CHECKOUT_ROOMS = 4;
 const CONTENT_WIDTH = 340;
-const CARD_GAP = 8;
-const METRIC_WIDTH = 108;
-const BOTTOM_CARD_WIDTH = 166;
-const ARRIVAL_SECTION_HEIGHT = 110;
-const BOTTOM_SECTION_HEIGHT = 120;
+const HEADER_HEIGHT = 44;
+const ARRIVAL_SECTION_HEIGHT = 226;
+const ARRIVAL_ROW_HEIGHT = 34;
+const CHECKOUT_SECTION_HEIGHT = 54;
 
 const colors = {
   bgTop: Color.dynamic(new Color('#F7F8F3'), new Color('#07100D')),
@@ -151,9 +149,26 @@ function platformSymbol(item) {
   return { name: 'circle', tint: colors.faint };
 }
 
+function platformName(item) {
+  const platform = String((item && item.platform) || '').toLowerCase();
+  if (platform.includes('airbnb')) return 'Airbnb';
+  if (platform.includes('booking')) return 'Booking';
+  if (platform.includes('direct')) return 'Прямое';
+  return 'Источник не указан';
+}
+
+function pluralNights(value) {
+  const number = Math.abs(Number(value)) % 100;
+  const last = number % 10;
+  if (number >= 11 && number <= 14) return 'ночей';
+  if (last === 1) return 'ночь';
+  if (last >= 2 && last <= 4) return 'ночи';
+  return 'ночей';
+}
+
 function stayLength(item) {
   const nights = item.nights || daysBetween(item.start, item.end);
-  return nights ? `${nights}д` : '?д';
+  return nights ? `${nights} ${pluralNights(nights)}` : 'ночей ?';
 }
 
 function compareByProperty(a, b) {
@@ -204,68 +219,29 @@ function addHeader(widget, data) {
   const row = widget.addStack();
   row.layoutHorizontally();
   row.centerAlignContent();
-  row.size = new Size(CONTENT_WIDTH, 39);
+  row.size = new Size(CONTENT_WIDTH, HEADER_HEIGHT);
 
   const left = row.addStack();
   left.layoutVertically();
-  left.size = new Size(214, 39);
-  addText(left, 'Что сегодня', 21, colors.ink, 'bold', 0.78);
+  left.size = new Size(214, HEADER_HEIGHT);
+  addText(left, 'Что сегодня', 24, colors.ink, 'bold', 0.84);
   left.addSpacer(1);
-  addText(left, todayLabel(data.date), 11, colors.muted, 'medium', 0.72);
+  addText(left, todayLabel(data.date), 13, colors.muted, 'medium', 0.82);
 
-  row.addSpacer(CARD_GAP);
+  row.addSpacer(8);
 
   const right = row.addStack();
   right.layoutVertically();
-  right.size = new Size(118, 39);
+  right.size = new Size(118, HEADER_HEIGHT);
   right.addSpacer(4);
   const labelRow = right.addStack();
   labelRow.layoutHorizontally();
   labelRow.addSpacer();
-  rightText(addText(labelRow, 'обновлено', 8, colors.faint, 'bold', 0.78));
+  rightText(addText(labelRow, 'обновлено', 9, colors.faint, 'bold', 0.82));
   const timeRow = right.addStack();
   timeRow.layoutHorizontally();
   timeRow.addSpacer();
-  rightText(addText(timeRow, shortTime(data.updated_at), 13, colors.muted, 'semibold', 0.78));
-}
-
-function addMetric(parent, label, value, tintColor) {
-  const box = parent.addStack();
-  box.layoutVertically();
-  box.backgroundColor = colors.surface;
-  box.cornerRadius = 12;
-  box.borderWidth = 1;
-  box.borderColor = colors.line;
-  box.size = new Size(METRIC_WIDTH, 50);
-  box.setPadding(6, 6, 6, 6);
-
-  const labelRow = box.addStack();
-  labelRow.layoutHorizontally();
-  labelRow.centerAlignContent();
-  labelRow.addSpacer();
-  centerText(addText(labelRow, label, 9, colors.muted, 'bold', 0.62));
-  labelRow.addSpacer();
-
-  box.addSpacer(2);
-
-  const valueRow = box.addStack();
-  valueRow.layoutHorizontally();
-  valueRow.centerAlignContent();
-  valueRow.addSpacer();
-  centerText(addText(valueRow, String(value), 25, tintColor, 'bold', 0.82));
-  valueRow.addSpacer();
-}
-
-function addMetrics(widget, checkIns, checkOuts, occupied) {
-  const row = widget.addStack();
-  row.layoutHorizontally();
-  row.centerAlignContent();
-  row.size = new Size(CONTENT_WIDTH, 50);
-  addMetric(row, 'Заезды', checkIns.length, colors.arrival);
-  row.addSpacer(CARD_GAP);
-  addMetric(row, 'Выезды', checkOuts.length, colors.checkout);
-  row.addSpacer(CARD_GAP);
-  addMetric(row, 'Остаются', occupied.length, colors.stay);
+  rightText(addText(timeRow, shortTime(data.updated_at), 14, colors.muted, 'semibold', 0.82));
 }
 
 function addSectionShell(parent, title, count) {
@@ -277,150 +253,100 @@ function addSectionShell(parent, title, count) {
   section.borderWidth = 1;
   section.borderColor = colors.line;
   section.size = new Size(CONTENT_WIDTH, ARRIVAL_SECTION_HEIGHT);
-  section.setPadding(7, 8, 7, 8);
+  section.setPadding(8, 8, 8, 8);
 
   const head = section.addStack();
   head.layoutHorizontally();
   head.centerAlignContent();
-  addText(head, title, 13, colors.ink, 'bold', 0.72);
+  addText(head, title, 15, colors.ink, 'bold', 0.82);
   head.addSpacer();
-  rightText(addText(head, String(count), 13, colors.muted, 'bold', 0.82));
+  rightText(addText(head, String(count), 15, colors.arrival, 'bold', 0.86));
 
   return section;
-}
-
-function addEmptyLine(parent, text, width) {
-  const row = parent.addStack();
-  row.layoutHorizontally();
-  row.centerAlignContent();
-  row.size = new Size(width, 17);
-  addText(row, text, 10, colors.faint, 'medium', 0.7);
-}
-
-function addMoreLine(parent, count, width) {
-  const row = parent.addStack();
-  row.layoutHorizontally();
-  row.centerAlignContent();
-  row.size = new Size(width, 14);
-  row.addSpacer();
-  addText(row, `+${count}`, 9, colors.faint, 'semibold', 0.8);
 }
 
 function addArrivalRow(parent, item) {
   const row = parent.addStack();
   row.layoutHorizontally();
   row.centerAlignContent();
-  row.size = new Size(CONTENT_WIDTH - 16, 22);
+  row.backgroundColor = colors.surfaceSoft;
+  row.cornerRadius = 9;
+  row.size = new Size(CONTENT_WIDTH - 16, ARRIVAL_ROW_HEIGHT);
+  row.setPadding(3, 7, 3, 7);
 
-  addPlatformMark(row, item, 22, 20, 14);
-  row.addSpacer(8);
+  addPlatformMark(row, item, 20, ARRIVAL_ROW_HEIGHT - 6, 14);
+  row.addSpacer(7);
 
-  const roomBox = row.addStack();
-  roomBox.layoutHorizontally();
-  roomBox.centerAlignContent();
-  roomBox.size = new Size(88, 22);
-  addText(roomBox, propertyName(item), 11, colors.ink, 'semibold', 0.5);
+  const details = row.addStack();
+  details.layoutVertically();
+  details.size = new Size(277, ARRIVAL_ROW_HEIGHT - 6);
 
-  row.addSpacer(CARD_GAP);
+  const guestRow = details.addStack();
+  guestRow.layoutHorizontally();
+  guestRow.centerAlignContent();
+  addText(guestRow, guestName(item), 15, colors.ink, 'semibold', 0.78);
 
-  const guestBox = row.addStack();
-  guestBox.layoutHorizontally();
-  guestBox.centerAlignContent();
-  guestBox.size = new Size(158, 22);
-  addText(guestBox, guestName(item), 11, colors.ink, 'medium', 0.38);
-
-  row.addSpacer(CARD_GAP);
-
-  const daysBox = row.addStack();
-  daysBox.layoutHorizontally();
-  daysBox.centerAlignContent();
-  daysBox.size = new Size(32, 22);
-  daysBox.addSpacer();
-  rightText(addText(daysBox, stayLength(item), 10, colors.muted, 'semibold', 0.78));
+  const metaRow = details.addStack();
+  metaRow.layoutHorizontally();
+  metaRow.centerAlignContent();
+  addText(metaRow, `${propertyName(item)} · ${platformName(item)}`, 10, colors.muted, 'medium', 0.72);
+  metaRow.addSpacer(6);
+  rightText(addText(metaRow, stayLength(item), 11, colors.arrival, 'bold', 0.82));
 }
 
 function addArrivalsSection(widget, items) {
-  const section = addSectionShell(widget, 'Заезды сегодня', items.length);
+  const visible = items.slice(0, MAX_ARRIVAL_ROWS);
+  const count = items.length > visible.length ? `${visible.length}/${items.length}` : items.length;
+  const section = addSectionShell(widget, 'Заезды сегодня', count);
   section.addSpacer(5);
 
   if (!items.length) {
-    addEmptyLine(section, 'Заездов нет', CONTENT_WIDTH - 16);
+    section.addSpacer();
+    const empty = section.addStack();
+    empty.layoutVertically();
+    empty.centerAlignContent();
+    centerText(addText(empty, 'Сегодня без заездов', 18, colors.muted, 'semibold', 0.84));
+    empty.addSpacer(4);
+    centerText(addText(empty, 'Выезды всё равно видны внизу', 11, colors.faint, 'medium', 0.82));
+    section.addSpacer();
     return;
   }
 
-  const visible = items.slice(0, MAX_ARRIVAL_ROWS);
   visible.forEach((item, index) => {
     addArrivalRow(section, item);
-    if (index !== visible.length - 1) section.addSpacer(1);
+    if (index !== visible.length - 1) section.addSpacer(3);
   });
-
-  if (items.length > visible.length) {
-    section.addSpacer(2);
-    addMoreLine(section, items.length - visible.length, CONTENT_WIDTH - 16);
-  }
 }
 
-function addCompactGuestRow(parent, item) {
-  const row = parent.addStack();
-  row.layoutHorizontally();
-  row.centerAlignContent();
-  row.size = new Size(BOTTOM_CARD_WIDTH - 14, 17);
-  addPlatformMark(row, item, 20, 17, 12);
-  row.addSpacer(8);
-  const nameBox = row.addStack();
-  nameBox.layoutHorizontally();
-  nameBox.centerAlignContent();
-  nameBox.size = new Size(BOTTOM_CARD_WIDTH - 42, 17);
-  addText(nameBox, propertyName(item), 10, colors.ink, 'medium', 0.52);
+function checkoutSummary(items) {
+  if (!items.length) return 'Выездов нет';
+  const visible = items.slice(0, MAX_CHECKOUT_ROOMS).map(propertyName);
+  const more = items.length - visible.length;
+  return `${visible.join(' · ')}${more > 0 ? ` · +${more}` : ''}`;
 }
 
-function addCompactSection(parent, title, items, maxRows) {
-  const section = parent.addStack();
+function addCheckoutSection(widget, items) {
+  const section = widget.addStack();
   section.layoutVertically();
-  topAlign(section);
   section.backgroundColor = colors.surface;
   section.cornerRadius = 13;
   section.borderWidth = 1;
   section.borderColor = colors.line;
-  section.size = new Size(BOTTOM_CARD_WIDTH, BOTTOM_SECTION_HEIGHT);
-  section.setPadding(6, 7, 6, 7);
+  section.size = new Size(CONTENT_WIDTH, CHECKOUT_SECTION_HEIGHT);
+  section.setPadding(7, 9, 7, 9);
 
   const head = section.addStack();
   head.layoutHorizontally();
   head.centerAlignContent();
-  addText(head, title, 11, colors.ink, 'bold', 0.62);
+  addText(head, 'Выезды', 11, colors.checkout, 'bold', 0.84);
   head.addSpacer();
-  rightText(addText(head, String(items.length), 11, colors.muted, 'bold', 0.82));
+  rightText(addText(head, String(items.length), 11, colors.muted, 'bold', 0.86));
 
-  section.addSpacer(4);
-
-  if (!items.length) {
-    addEmptyLine(section, 'нет', BOTTOM_CARD_WIDTH - 14);
-    return section;
-  }
-
-  const visible = items.slice(0, maxRows);
-  visible.forEach((item, index) => {
-    addCompactGuestRow(section, item);
-    if (index !== visible.length - 1) section.addSpacer(1);
-  });
-
-  if (items.length > visible.length) {
-    section.addSpacer(1);
-    addMoreLine(section, items.length - visible.length, BOTTOM_CARD_WIDTH - 14);
-  }
-
-  return section;
-}
-
-function addBottomSections(widget, occupied, checkOuts) {
-  const row = widget.addStack();
-  row.layoutHorizontally();
-  topAlign(row);
-  row.size = new Size(CONTENT_WIDTH, BOTTOM_SECTION_HEIGHT);
-  addCompactSection(row, 'Остаются', occupied, MAX_STAY_ROWS);
-  row.addSpacer(CARD_GAP);
-  addCompactSection(row, 'Выезжают', checkOuts, MAX_CHECKOUT_ROWS);
+  section.addSpacer(3);
+  const summary = section.addStack();
+  summary.layoutHorizontally();
+  summary.centerAlignContent();
+  addText(summary, checkoutSummary(items), 11, colors.ink, 'medium', 0.78);
 }
 
 function renderError(message) {
@@ -438,15 +364,11 @@ function renderWidget(data) {
 
   const checkIns = (data.check_ins || []).slice().sort(compareByProperty);
   const checkOuts = (data.check_outs || []).slice().sort(compareByProperty);
-  const occupied = (data.occupied || []).slice().sort(compareByProperty);
-
   addHeader(widget, data);
-  widget.addSpacer(4);
-  addMetrics(widget, checkIns, checkOuts, occupied);
   widget.addSpacer(6);
   addArrivalsSection(widget, checkIns);
-  widget.addSpacer(6);
-  addBottomSections(widget, occupied, checkOuts);
+  widget.addSpacer();
+  addCheckoutSection(widget, checkOuts);
 
   return widget;
 }
