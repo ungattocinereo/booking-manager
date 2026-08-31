@@ -54,8 +54,10 @@ test('Postgres treats an earlier guest reservation as the canonical Booking star
 
     assert.equal(startDate, '2026-08-17');
     assert.deepEqual(capturedQuery.params, ['central', '2026-08-19', '2026-08-18']);
-    assert.match(capturedQuery.sql, /TRIM\(guest_name\).*<> ''/s);
-    assert.match(capturedQuery.sql, /COALESCE\(guest_count, 0\) > 0/);
+    assert.match(capturedQuery.sql, /candidate\.active IS NOT FALSE/);
+    assert.match(capturedQuery.sql, /TRIM\(candidate\.guest_name\).*<> ''/s);
+    assert.match(capturedQuery.sql, /COALESCE\(candidate\.guest_count, 0\) > 0/);
+    assert.match(capturedQuery.sql, /NOT EXISTS[\s\S]*previous\.end_date <= \$3::date/);
   } finally {
     db.queryOne = originalQueryOne;
   }

@@ -44,6 +44,7 @@ async function main() {
   await db.init();
   await db.createProperty('solo', 'Solo Traveller room');
   await db.createProperty('carmela', 'Carmela');
+  await db.createProperty('youth', 'Youth Room');
 
   await db.upsertBooking('solo', 'booking', '2026-07-05', '2026-07-08', 'Bauerly, Addison', {
     guestName: 'Bauerly, Addison',
@@ -124,6 +125,45 @@ async function main() {
   assert.strictEqual(Number(trimmedGuestMarker.active), 0);
   assert.ok(august18Widget.occupied.some(item => item.property_id === 'solo' && item.start === '2026-08-17'));
   assert.ok(!august18Widget.check_ins.some(item => item.property_id === 'solo'));
+
+  // Booking.com can first combine consecutive reservations into one CLOSED
+  // marker, then trim it to today's remaining stay. Do not preserve the old
+  // combined start when a completed guest stay occupies that prefix.
+  await db.upsertBooking('youth', 'booking', '2026-08-28', '2026-08-30', 'Previous Youth Guest', {
+    guestName: 'Previous Youth Guest',
+    guestCountry: 'IT',
+    bookingType: 'reservation',
+  });
+  await db.upsertBooking('youth', 'booking', '2026-08-30', '2026-09-02', 'Stale Youth Guest', {
+    guestName: 'Stale Youth Guest',
+    guestCountry: 'GB',
+    bookingType: 'reservation',
+  });
+  await db.run(
+    `UPDATE bookings SET active = 0, missing_since = CURRENT_TIMESTAMP
+     WHERE property_id = 'youth' AND platform = 'booking'
+       AND start_date = '2026-08-30' AND end_date = '2026-09-02'`
+  );
+  await db.upsertBooking('youth', 'booking', '2026-08-28', '2026-09-02', 'CLOSED - Not available', {
+    bookingType: 'blocked',
+  });
+
+  const currentYouthMarker = await db.upsertBooking(
+    'youth',
+    'booking',
+    '2026-08-31',
+    '2026-09-02',
+    'CLOSED - Not available',
+    { bookingType: 'blocked' }
+  );
+  const liveYouthBooking = await getBooking('youth', '2026-08-31', '2026-09-02');
+  const august31Widget = await buildTodayWidgetPayload(db, '2026-08-31');
+  const youthCheckIn = august31Widget.check_ins.find(item => item.property_id === 'youth');
+  assert.strictEqual(currentYouthMarker.canonicalStartDate, '2026-08-31');
+  assert.strictEqual(Number(liveYouthBooking.active), 1);
+  assert.strictEqual(youthCheckIn?.start, '2026-08-31');
+  assert.strictEqual(youthCheckIn?.end, '2026-09-02');
+  assert.strictEqual(youthCheckIn?.operational_fallback, true);
 
   await db.run(
     `INSERT INTO bookings (

@@ -156,28 +156,46 @@ class Database {
     }
 
     const original = await this.get(
-      `SELECT start_date
-       FROM bookings
-       WHERE property_id = ?
-         AND platform = 'booking'
-         AND end_date = ?
-         AND start_date < ?
+      `SELECT candidate.start_date
+       FROM bookings candidate
+       WHERE candidate.property_id = ?
+         AND candidate.platform = 'booking'
+         AND candidate.end_date = ?
+         AND candidate.start_date < ?
          AND (
            (
              (
-               COALESCE(booking_type, '') IN ('blocked', 'unavailable') OR
-               LOWER(COALESCE(raw_summary, '')) LIKE '%closed%' OR
-               LOWER(COALESCE(raw_summary, '')) LIKE '%not available%'
+               COALESCE(candidate.booking_type, '') IN ('blocked', 'unavailable') OR
+               LOWER(COALESCE(candidate.raw_summary, '')) LIKE '%closed%' OR
+               LOWER(COALESCE(candidate.raw_summary, '')) LIKE '%not available%'
              )
-             AND COALESCE(NULLIF(TRIM(guest_name), ''), '') = ''
-             AND COALESCE(guest_count, 0) = 0
+             AND COALESCE(NULLIF(TRIM(candidate.guest_name), ''), '') = ''
+             AND COALESCE(candidate.guest_count, 0) = 0
            )
-           OR COALESCE(NULLIF(TRIM(guest_name), ''), '') <> ''
-           OR COALESCE(guest_count, 0) > 0
+           OR (
+             COALESCE(candidate.active, 1) != 0
+             AND (
+               COALESCE(NULLIF(TRIM(candidate.guest_name), ''), '') <> '' OR
+               COALESCE(candidate.guest_count, 0) > 0
+             )
+           )
          )
-       ORDER BY start_date ASC
+         AND NOT EXISTS (
+           SELECT 1
+           FROM bookings previous
+           WHERE previous.property_id = candidate.property_id
+             AND previous.platform = 'booking'
+             AND COALESCE(previous.active, 1) != 0
+             AND previous.end_date > candidate.start_date
+             AND previous.end_date <= ?
+             AND (
+               COALESCE(NULLIF(TRIM(previous.guest_name), ''), '') <> '' OR
+               COALESCE(previous.guest_count, 0) > 0
+             )
+         )
+       ORDER BY candidate.start_date ASC
        LIMIT 1`,
-      [propertyId, endDate, startDate]
+      [propertyId, endDate, startDate, startDate]
     );
     return original?.start_date || startDate;
   }
