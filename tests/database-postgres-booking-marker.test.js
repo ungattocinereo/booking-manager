@@ -62,3 +62,34 @@ test('Postgres treats an earlier guest reservation as the canonical Booking star
     db.queryOne = originalQueryOne;
   }
 });
+
+test('Postgres archives older marker snapshots when the live start is canonical', async () => {
+  const originalQueryOne = db.queryOne;
+  const originalExecute = db.execute;
+  const executions = [];
+
+  db.queryOne = async () => null;
+  db.execute = async (sql, params) => {
+    executions.push({ sql, params });
+    return { rowCount: 1, rows: [] };
+  };
+
+  try {
+    const result = await db.upsertBooking(
+      'youth',
+      'booking',
+      '2026-08-31',
+      '2026-09-02',
+      'CLOSED - Not available',
+      { bookingType: 'blocked' }
+    );
+
+    assert.equal(result.canonicalStartDate, '2026-08-31');
+    assert.equal(executions.length, 2);
+    assert.match(executions[1].sql, /start_date <> \$3::date/);
+    assert.deepEqual(executions[1].params, ['youth', '2026-09-02', '2026-08-31']);
+  } finally {
+    db.queryOne = originalQueryOne;
+    db.execute = originalExecute;
+  }
+});

@@ -157,10 +157,12 @@ async function main() {
     { bookingType: 'blocked' }
   );
   const liveYouthBooking = await getBooking('youth', '2026-08-31', '2026-09-02');
+  const supersededYouthMarker = await getBooking('youth', '2026-08-28', '2026-09-02');
   const august31Widget = await buildTodayWidgetPayload(db, '2026-08-31');
   const youthCheckIn = august31Widget.check_ins.find(item => item.property_id === 'youth');
   assert.strictEqual(currentYouthMarker.canonicalStartDate, '2026-08-31');
   assert.strictEqual(Number(liveYouthBooking.active), 1);
+  assert.strictEqual(Number(supersededYouthMarker.active), 0);
   assert.strictEqual(youthCheckIn?.start, '2026-08-31');
   assert.strictEqual(youthCheckIn?.end, '2026-09-02');
   assert.strictEqual(youthCheckIn?.operational_fallback, true);
