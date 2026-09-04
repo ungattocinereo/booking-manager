@@ -3890,6 +3890,24 @@
       "rawSummary": "Reserved",
       "bookingType": "reservation",
       "detectedAt": "2026-08-30T21:53:32.560Z"
+    },
+    {
+      "eventType": "created",
+      "bookingKey": "royal|airbnb|2026-09-27|2026-09-30",
+      "propertyId": "royal",
+      "platform": "airbnb",
+      "startDate": "2026-09-27",
+      "endDate": "2026-09-30",
+      "guestName": null,
+      "guestCount": null,
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HMPD93KTYR",
+      "confirmationCode": null,
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync",
+      "bookingCreatedAt": "2026-09-04T19:05:18.522Z",
+      "rawSummary": "Reserved",
+      "bookingType": "reservation",
+      "detectedAt": "2026-09-04T19:05:22.316Z"
     }
   ],
   "imports": [
