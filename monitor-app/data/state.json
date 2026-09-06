@@ -3973,5 +3973,13 @@
     }
   ],
   "bootstrappedAt": "2026-04-20T17:25:53.350Z",
-  "pendingCancellations": {}
+  "pendingCancellations": {
+    "harmony|airbnb|2026-10-02|2026-10-05": {
+      "bookingKey": "harmony|airbnb|2026-10-02|2026-10-05",
+      "propertyId": "harmony",
+      "firstMissingAt": "2026-09-06T14:05:53.597Z",
+      "lastMissingAt": "2026-09-06T14:05:53.597Z",
+      "consecutiveSuccessfulMisses": 1
+    }
+  }
 }
