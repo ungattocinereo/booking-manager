@@ -3991,5 +3991,20 @@
     }
   ],
   "bootstrappedAt": "2026-04-20T17:25:53.350Z",
-  "pendingCancellations": {}
+  "pendingCancellations": {
+    "royal|airbnb|2026-09-24|2026-09-27": {
+      "bookingKey": "royal|airbnb|2026-09-24|2026-09-27",
+      "propertyId": "royal",
+      "firstMissingAt": "2026-09-08T04:22:15.244Z",
+      "lastMissingAt": "2026-09-08T04:22:15.244Z",
+      "consecutiveSuccessfulMisses": 1
+    },
+    "royal|airbnb|2026-10-23|2026-10-26": {
+      "bookingKey": "royal|airbnb|2026-10-23|2026-10-26",
+      "propertyId": "royal",
+      "firstMissingAt": "2026-09-08T04:22:15.244Z",
+      "lastMissingAt": "2026-09-08T04:22:15.244Z",
+      "consecutiveSuccessfulMisses": 1
+    }
+  }
 }
