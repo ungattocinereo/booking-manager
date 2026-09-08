@@ -3926,6 +3926,39 @@
       "rawSummary": "Reserved",
       "bookingType": "reservation",
       "detectedAt": "2026-09-06T16:56:47.159Z"
+    },
+    {
+      "eventType": "cancelled",
+      "bookingKey": "royal|airbnb|2026-09-24|2026-09-27",
+      "propertyId": "royal",
+      "platform": "airbnb",
+      "startDate": "2026-09-24",
+      "endDate": "2026-09-27",
+      "guestName": "Shiran Katsnelson",
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HMKKP94BJ2",
+      "confirmationCode": "HMKKP94BJ2",
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync_confirmed",
+      "bookingCreatedAt": "2026-03-28T19:32:10.994Z",
+      "detectedAt": "2026-09-08T09:01:28.467Z"
+    },
+    {
+      "eventType": "cancelled",
+      "bookingKey": "royal|airbnb|2026-10-23|2026-10-26",
+      "propertyId": "royal",
+      "platform": "airbnb",
+      "startDate": "2026-10-23",
+      "endDate": "2026-10-26",
+      "guestName": null,
+      "guestCount": null,
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HMWYXAWJJ4",
+      "confirmationCode": null,
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync_confirmed",
+      "bookingCreatedAt": "2026-08-30T20:03:59.351Z",
+      "rawSummary": "Reserved",
+      "bookingType": "reservation",
+      "detectedAt": "2026-09-08T09:01:28.467Z"
     }
   ],
   "imports": [
@@ -3991,20 +4024,5 @@
     }
   ],
   "bootstrappedAt": "2026-04-20T17:25:53.350Z",
-  "pendingCancellations": {
-    "royal|airbnb|2026-09-24|2026-09-27": {
-      "bookingKey": "royal|airbnb|2026-09-24|2026-09-27",
-      "propertyId": "royal",
-      "firstMissingAt": "2026-09-08T04:22:15.244Z",
-      "lastMissingAt": "2026-09-08T04:22:15.244Z",
-      "consecutiveSuccessfulMisses": 1
-    },
-    "royal|airbnb|2026-10-23|2026-10-26": {
-      "bookingKey": "royal|airbnb|2026-10-23|2026-10-26",
-      "propertyId": "royal",
-      "firstMissingAt": "2026-09-08T04:22:15.244Z",
-      "lastMissingAt": "2026-09-08T04:22:15.244Z",
-      "consecutiveSuccessfulMisses": 1
-    }
-  }
+  "pendingCancellations": {}
 }

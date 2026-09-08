@@ -1,7 +1,8 @@
 {
   "since": "2026-04-17",
-  "generated_at": "2026-09-08T04:22:15.249Z",
+  "generated_at": "2026-09-08T09:01:28.471Z",
   "available_dates": [
+    "2026-09-08",
     "2026-09-06",
     "2026-09-04",
     "2026-08-30",
@@ -917,8 +918,8 @@
           "guestCount": null,
           "confirmationCode": null,
           "firstSeenAt": "2026-08-30T20:03:59.351Z",
-          "status": "active",
-          "cancelledAt": null,
+          "status": "cancelled",
+          "cancelledAt": "2026-09-08T09:01:28.467Z",
           "link": "https://www.airbnb.com/hosting/reservations/details/HMWYXAWJJ4",
           "rawSummary": "Reserved",
           "bookingType": "reservation",
@@ -1541,8 +1542,8 @@
           "guestName": "Shiran Katsnelson",
           "confirmationCode": "HMKKP94BJ2",
           "firstSeenAt": "2026-03-28T19:32:10.994Z",
-          "status": "active",
-          "cancelledAt": null,
+          "status": "cancelled",
+          "cancelledAt": "2026-09-08T09:01:28.467Z",
           "link": "https://www.airbnb.com/hosting/reservations/details/HMKKP94BJ2",
           "sources": [
             "upstream_api",
@@ -6129,6 +6130,39 @@
       "rawSummary": "Reserved",
       "bookingType": "reservation",
       "detectedAt": "2026-09-06T16:56:47.159Z"
+    },
+    {
+      "eventType": "cancelled",
+      "bookingKey": "royal|airbnb|2026-09-24|2026-09-27",
+      "propertyId": "royal",
+      "platform": "airbnb",
+      "startDate": "2026-09-24",
+      "endDate": "2026-09-27",
+      "guestName": "Shiran Katsnelson",
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HMKKP94BJ2",
+      "confirmationCode": "HMKKP94BJ2",
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync_confirmed",
+      "bookingCreatedAt": "2026-03-28T19:32:10.994Z",
+      "detectedAt": "2026-09-08T09:01:28.467Z"
+    },
+    {
+      "eventType": "cancelled",
+      "bookingKey": "royal|airbnb|2026-10-23|2026-10-26",
+      "propertyId": "royal",
+      "platform": "airbnb",
+      "startDate": "2026-10-23",
+      "endDate": "2026-10-26",
+      "guestName": null,
+      "guestCount": null,
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HMWYXAWJJ4",
+      "confirmationCode": null,
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync_confirmed",
+      "bookingCreatedAt": "2026-08-30T20:03:59.351Z",
+      "rawSummary": "Reserved",
+      "bookingType": "reservation",
+      "detectedAt": "2026-09-08T09:01:28.467Z"
     }
   ],
   "imports_log": [
