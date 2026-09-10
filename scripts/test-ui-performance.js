@@ -800,6 +800,7 @@ async function inspectReportingPage(browser, baseUrl) {
   assert.match(await page.locator('#reportingUnits').innerText(), /Dragone/);
   assert.equal(await page.locator('#reportingUnits .reporting-unit-icon').count(), 2);
   assert.equal(await page.locator('#reportingCurrentUnitName').innerText(), 'Dragone');
+  assert.equal(await page.locator('#reportingAlert').isVisible(), true);
   assert.match(await page.locator('#reportingAlert').innerText(), /отправки пока отключены/i);
   assert.match(await page.locator('#reportingDropzone').innerText(), /Выбрать или перетащить TXT для Dragone/i);
   assert.match(await page.locator('#reportingHistoryTitle').innerText(), /Dragone/);
@@ -928,9 +929,43 @@ async function inspectReportingPage(browser, baseUrl) {
   const [istatYear, istatMonthNumber] = istatMonth.split('-').map(Number);
   assert.equal(await page.locator('.reporting-istat-table tbody tr').count(), new Date(Date.UTC(istatYear, istatMonthNumber, 0)).getUTCDate());
   assert.match(await page.locator('#reportingIstatDeadline').innerText(), /ISTAT|месяц|Срок/i);
+
+  await page.route(`${baseUrl}api/reporting`, route => route.fulfill({
+    json: {
+      external_send_enabled: true,
+      units: [
+        { id: 'dragone', name: 'Dragone', property_ids: ['awesome'], configured: { mapping: true, alloggiati: true, istat: true } },
+        { id: 'carina', name: 'Carina', property_ids: [], configured: { mapping: false, alloggiati: false, istat: false } }
+      ]
+    }
+  }));
+  await page.evaluate(() => localStorage.setItem('reportingUnitId', 'dragone'));
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => document.getElementById('reportingCurrentUnitName')?.textContent === 'Dragone');
+  const reportingAlert = page.locator('#reportingAlert');
+  for (const theme of ['light', 'dark']) {
+    await page.evaluate(value => window.AtraniTheme.setPreference(value), theme);
+    for (const width of [1280, 390]) {
+      await page.setViewportSize({ width, height: 900 });
+      const scenario = `${theme} theme at ${width}px`;
+      assert.equal(await reportingAlert.isHidden(), true, `empty reporting alert is visible: ${scenario}`);
+      assert.equal(await reportingAlert.boundingBox(), null, `empty reporting alert occupies space: ${scenario}`);
+      await captureUiScreenshot(page, `reporting-no-warning-${theme}-${width}`);
+
+      await page.getByRole('button', { name: /Carina/ }).click();
+      assert.equal(await reportingAlert.isVisible(), true, `required reporting alert is hidden: ${scenario}`);
+      assert.match(await reportingAlert.innerText(), /не настроен доступ к Alloggiati Web/);
+      assert.match(await reportingAlert.innerText(), /не задана связь с календарными объектами/);
+      assert.doesNotMatch(await reportingAlert.innerText(), /отправки пока отключены/);
+      await captureUiScreenshot(page, `reporting-warning-${theme}-${width}`);
+
+      await page.getByRole('button', { name: /Dragone/ }).click();
+      assert.equal(await reportingAlert.isHidden(), true, `resolved reporting alert remains visible: ${scenario}`);
+    }
+  }
   assert.deepEqual(errors, []);
   await context.close();
-  return { units: 2, externalSendDisabled: true };
+  return { units: 2, externalSendDisabled: true, alertVisibility: 'verified in light/dark desktop/mobile' };
 }
 
 async function installStatsBrowserMocks(context, cachedHistory = null) {
