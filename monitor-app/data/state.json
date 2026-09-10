@@ -4042,5 +4042,13 @@
     }
   ],
   "bootstrappedAt": "2026-04-20T17:25:53.350Z",
-  "pendingCancellations": {}
+  "pendingCancellations": {
+    "carina|airbnb|2026-09-09|2026-09-12": {
+      "bookingKey": "carina|airbnb|2026-09-09|2026-09-12",
+      "propertyId": "carina",
+      "firstMissingAt": "2026-09-10T17:07:52.166Z",
+      "lastMissingAt": "2026-09-10T17:07:52.166Z",
+      "consecutiveSuccessfulMisses": 1
+    }
+  }
 }
