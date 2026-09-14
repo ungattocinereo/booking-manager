@@ -425,6 +425,7 @@ async function inspectPage(browser, baseUrl, viewport, isMobile) {
     }
     return {
       nodes: document.getElementsByTagName('*').length,
+      completedBookingBars: document.querySelectorAll('.booking-bar.completed').length,
       cells: document.querySelectorAll('.cal-cell').length,
       dayColumns: document.querySelectorAll('.cal-day-column').length,
       bookingBars: document.querySelectorAll('.booking-bar').length,
@@ -571,7 +572,9 @@ async function inspectPage(browser, baseUrl, viewport, isMobile) {
     assert.ok(metrics.heroSummary.height <= 150, `desktop calendar hero is too tall: ${metrics.heroSummary.height}px`);
     assert.ok(Math.max(...metrics.heroSummary.centers) - Math.min(...metrics.heroSummary.centers) <= 1, 'desktop calendar hero items are not horizontally aligned');
     assert.ok(metrics.dayColumns > 0 && metrics.dayColumns <= 250);
-    assert.ok(metrics.nodes < 1800, `desktop DOM budget exceeded: ${metrics.nodes}`);
+    // Completed bookings are now visible by default: each adds a bar and two labels.
+    const desktopNodeBudget = 1800 + metrics.completedBookingBars * 3;
+    assert.ok(metrics.nodes < desktopNodeBudget, `desktop DOM budget exceeded: ${metrics.nodes} (budget ${desktopNodeBudget})`);
     assert.ok(metrics.handoverMarkers > 0, 'desktop timeline did not render handover markers');
     assert.ok(metrics.handover, 'test checkout/check-in handover was not found');
     assert.ok(Math.abs(metrics.handover.gap) <= 0.01, `handover bars have a ${metrics.handover.gap}px gap`);

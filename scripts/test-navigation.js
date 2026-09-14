@@ -34,6 +34,14 @@ async function main() {
       assert.ok(geometry[2].right <= geometry[3].left, `${width}: theme overlaps sync`);
       assert.ok(await page.locator('#syncBtn #lastSync').isVisible());
     }
+    const hideCompleted = page.locator('#calendarHideCompleted');
+    assert.equal(await hideCompleted.isChecked(), false, 'completed bookings must be shown by default');
+    const completedCount = await page.locator('.booking-bar.completed').count();
+    assert.ok(completedCount > 0, 'completed bookings were not rendered');
+    await hideCompleted.check();
+    assert.equal(await page.locator('.booking-bar.completed').count(), 0);
+    await hideCompleted.uncheck();
+    assert.equal(await page.locator('.booking-bar.completed').count(), completedCount);
     for (const [tab, route] of [['cleaners', '/maid'], ['stats', '/stats'], ['tax', '/tax'], ['reporting', '/reporting'], ['calendar', '/']]) {
       await page.locator(`[data-tab="${tab}"].nav-item`).click();
       assert.equal(new URL(page.url()).pathname, route);
