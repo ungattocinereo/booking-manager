@@ -1,4 +1,7 @@
 node_modules/
+# Local agent tooling (preserved on the operator's Mac)
+.agents/
+skills-lock.json
 *.db
 *.db-journal
 *.log

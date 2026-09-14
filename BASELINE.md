@@ -16,6 +16,18 @@ The baseline includes the Orbit interface and all later calendar, cleaner, stati
 
 ## Source-of-truth rules
 
+### Working version consolidation — 2026-09-14
+
+The working production source before consolidation was `0424edf1b73c83916fda531626617e2afc27203f`, deployed as `dpl_9WNoGszgehGLbKGQASfig3zYNoHK`. The immutable `rollback/pre-consolidation-2026-09-14` tag preserves that code alongside the original Design 2.0 rollback tag.
+
+The September consolidation brings the current README and email-notifier implementation into `main`. The notifier stays in dry-run mode unless the repository Actions variable `BOOKING_EMAIL_ENABLED` is explicitly set to `true`; merging this code does not enable email delivery. The application frontend, API, database schema, sync implementation, dependency lockfile, and existing production cron configuration remain identical to the pre-consolidation source.
+
+The local calendar-authority branch is patch-equivalent to merged PR #12; the accumulated dark-theme branch is patch-equivalent to merged PR #7. They contain no outstanding product changes. `monitor/nuove-prenotazioni` remains the operational data/Pages branch and is not merged into the application. Local `.agents/` tooling and `skills-lock.json` are preserved on the operator's Mac and excluded from Git and Vercel uploads.
+
+The `rollback/working-2026-09-14` tag identifies the consolidated release after CI and production verification. Both September tags protect source code only; no database migration or data restore is part of this consolidation.
+
+### Ongoing workflow
+
 1. `main` is the sole product-development and production source of truth.
 2. Start each change from the latest `origin/main`.
 3. Use a short-lived topic branch such as `codex/fix-calendar-filter`.

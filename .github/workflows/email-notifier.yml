@@ -43,7 +43,7 @@ jobs:
 
       - name: Send daily booking digest
         env:
-          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || false }}
+          DRY_RUN: ${{ vars.BOOKING_EMAIL_ENABLED != 'true' || (github.event_name == 'workflow_dispatch' && inputs.dry_run) }}
           EMAIL_STATE_PATH: monitor-state/monitor-app/data/email-sent.json
           MONITOR_JSON_PATH: monitor-state/monitor-app/data/monitor.json
           MAILGUN_API_KEY: ${{ secrets.MAILGUN_API_KEY }}
@@ -56,7 +56,7 @@ jobs:
         run: node monitor-app/email-notifier/send.js
 
       - name: Commit notification audit state
-        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.dry_run) }}
+        if: ${{ vars.BOOKING_EMAIL_ENABLED == 'true' && !(github.event_name == 'workflow_dispatch' && inputs.dry_run) }}
         working-directory: monitor-state
         run: |
           git config user.name "email-notifier-bot"

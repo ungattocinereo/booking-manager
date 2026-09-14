@@ -11,11 +11,13 @@ The notifier sends one Italian daily digest for new and cancelled Harmony, Royal
 - Window: 48 hours, to tolerate a delayed or missed scheduled run.
 - Dedupe: event IDs are recorded in `monitor-app/data/email-sent.json` on the monitor branch. The same creation or cancellation timestamp is never sent twice.
 
-The only required repository secret is `MAILGUN_API_KEY`. Do not commit the key or print it in workflow logs.
+Delivery is disabled by default: scheduled and manual runs stay in dry-run mode until the repository Actions variable `BOOKING_EMAIL_ENABLED` is explicitly set to `true`. This preserves the existing production behavior when the notifier code is consolidated into `main`. Dry runs do not write notification state.
+
+Actual delivery also requires the repository secret `MAILGUN_API_KEY`. Do not commit the key or print it in workflow logs.
 
 ## Manual verification
 
-The workflow's manual trigger defaults to `dry_run: true`. It selects current events and renders the subject without sending or changing dedupe state. Set `dry_run: false` only when an actual delivery is intended.
+The workflow's manual trigger defaults to `dry_run: true`. It selects current events and renders the subject without sending or changing dedupe state. Set `dry_run: false` only when an actual delivery is intended and `BOOKING_EMAIL_ENABLED=true` has been authorized and configured.
 
 Local dry run against a checked-out monitor snapshot:
 

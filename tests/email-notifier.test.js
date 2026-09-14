@@ -162,3 +162,37 @@ test('a sent cancellation is persisted and not sent twice', async () => {
 test('empty state has no remembered event ids', () => {
   assert.deepEqual(emptyState().sentEvents, []);
 });
+
+test('dry run renders cancellations without sending or changing existing audit state', async () => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'atrani-email-dry-'));
+  const statePath = path.join(directory, 'email-sent.json');
+  const original = `${JSON.stringify(emptyState())}\n`;
+  fs.writeFileSync(statePath, original);
+  try {
+    const result = await run({
+      monitor: monitor(booking()), now: NOW, statePath, env: { DRY_RUN: 'true' },
+      send: async () => { assert.fail('Dry run must never deliver email'); }
+    });
+    assert.equal(result.reason, 'dry-run');
+    assert.equal(result.cancelled.length, 1);
+    assert.match(result.message.subject, /Prenotazione annullata/);
+    assert.equal(fs.readFileSync(statePath, 'utf8'), original);
+  } finally {
+    fs.rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test('empty dry run does not create audit state', async () => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'atrani-email-empty-'));
+  const statePath = path.join(directory, 'email-sent.json');
+  try {
+    const result = await run({
+      monitor: monitor(), now: NOW, statePath, env: { DRY_RUN: 'true' },
+      send: async () => { assert.fail('Empty dry run must never deliver email'); }
+    });
+    assert.equal(result.reason, 'no-events');
+    assert.equal(fs.existsSync(statePath), false);
+  } finally {
+    fs.rmSync(directory, { recursive: true, force: true });
+  }
+});

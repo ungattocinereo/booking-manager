@@ -1,4 +1,6 @@
 .env
+.agents/
+skills-lock.json
 .env*.local
 exports/*
 !exports/README.md
