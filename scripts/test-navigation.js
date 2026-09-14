@@ -33,6 +33,19 @@ async function main() {
       assert.ok(geometry[0].right <= geometry[1].left, `${width}: logo overlaps controls`);
       assert.ok(geometry[2].right <= geometry[3].left, `${width}: theme overlaps sync`);
       assert.ok(await page.locator('#syncBtn #lastSync').isVisible());
+      if (width <= 768) {
+        const mobileTabs = await page.locator('.nav-item').evaluateAll(items => items.map(item => {
+          const style = getComputedStyle(item);
+          const rect = item.getBoundingClientRect();
+          return { border: style.borderWidth, radius: style.borderRadius, shadow: style.boxShadow, width: rect.width, height: rect.height };
+        }));
+        for (const tab of mobileTabs) {
+          assert.equal(tab.border, '0px', `${width}: mobile item inherited desktop tab border`);
+          assert.equal(tab.radius, '18px', `${width}: mobile item inherited desktop tab shape`);
+          assert.equal(tab.shadow, 'none');
+          assert.ok(Math.abs(tab.width - mobileTabs[0].width) < 1 && tab.height === mobileTabs[0].height, `${width}: inconsistent mobile item size`);
+        }
+      }
       const tablet = width > 768 && width <= 1050;
       assert.equal(await page.locator('.nav-label').first().isVisible(), !tablet, `${width}: wrong navigation label visibility`);
       if (tablet) {
