@@ -14,7 +14,7 @@ async function main() {
     await page.addInitScript(() => localStorage.setItem('atrani-theme-preference', 'light'));
     await page.goto(baseUrl);
     await page.waitForFunction(() => document.querySelector('#syncBtn').dataset.state === 'ok');
-    for (const width of [320, 375, 390, 768, 820, 1024, 1180, 1440]) {
+    for (const width of [320, 375, 390, 768, 769, 820, 1024, 1050, 1051, 1180, 1440]) {
       await page.setViewportSize({ width, height: 900 });
       // Wait for existing responsive transitions before measuring the controls.
       await page.waitForTimeout(200);
@@ -33,6 +33,17 @@ async function main() {
       assert.ok(geometry[0].right <= geometry[1].left, `${width}: logo overlaps controls`);
       assert.ok(geometry[2].right <= geometry[3].left, `${width}: theme overlaps sync`);
       assert.ok(await page.locator('#syncBtn #lastSync').isVisible());
+      const tablet = width > 768 && width <= 1050;
+      assert.equal(await page.locator('.nav-label').first().isVisible(), !tablet, `${width}: wrong navigation label visibility`);
+      if (tablet) {
+        const logoCenter = (geometry[0].top + geometry[0].bottom) / 2;
+        for (const tab of geometry.slice(4)) {
+          assert.ok(Math.abs((tab.top + tab.bottom) / 2 - logoCenter) < 4, `${width}: navigation moved to another row`);
+        }
+        assert.ok(geometry[0].right < geometry[4].left, `${width}: navigation overlaps logo`);
+        assert.ok(geometry.at(-1).right < geometry[1].left, `${width}: navigation overlaps auxiliary controls`);
+        assert.equal(await page.getByRole('button', { name: 'Календарь', exact: true }).count(), 1);
+      }
     }
     const hideCompleted = page.locator('#calendarHideCompleted');
     assert.equal(await hideCompleted.isChecked(), false, 'completed bookings must be shown by default');
@@ -77,7 +88,7 @@ async function main() {
     await page.waitForFunction(() => document.querySelector('#syncBtn').dataset.state === 'ok' && !document.querySelector('#syncBtn').disabled);
     assert.match(await page.locator('#lastSync').innerText(), /Обновлено/);
     assert.deepEqual(errors, []);
-    console.log('Navigation: 8 widths, 5 routes, busy, success, error, partial response and retry passed.');
+    console.log('Navigation: 11 widths, 5 routes, busy, success, error, partial response and retry passed.');
   } finally {
     await browser.close();
     await new Promise(resolve => server.close(resolve));

@@ -4244,10 +4244,9 @@
     }
 
     @media (min-width: 769px) and (max-width: 1050px) {
-      .orbit-topbar { flex-wrap: wrap; row-gap: 12px; }
-      .orbit-topbar .nav { order: 4; width: 100%; }
-      .orbit-topbar .nav-item { flex: 1; justify-content: center; }
-      .orbit-topbar .nav-item svg { display: block; }
+      .orbit-topbar .nav-item { width: 44px; padding: 0; gap: 0; justify-content: center; }
+      .orbit-topbar .nav-label { display: none; }
+      .orbit-topbar .nav-item svg { width: 18px !important; height: 18px !important; }
     }
 
     @media (max-width: 768px) {
@@ -4716,20 +4715,20 @@
 
   <!-- NAV -->
   <nav class="nav" aria-label="Разделы приложения">
-    <button type="button" class="nav-item active" data-tab="calendar" onclick="switchTab('calendar')">
-      <i data-lucide="calendar-days" style="width:16px;height:16px;"></i>Календарь
+    <button type="button" class="nav-item active" data-tab="calendar" aria-label="Календарь" title="Календарь" onclick="switchTab('calendar')">
+      <i data-lucide="calendar-days" style="width:16px;height:16px;"></i><span class="nav-label">Календарь</span>
     </button>
-    <button type="button" class="nav-item" data-tab="cleaners" onclick="switchTab('cleaners')">
-      <i data-lucide="sparkles" style="width:16px;height:16px;"></i>Уборка
+    <button type="button" class="nav-item" data-tab="cleaners" aria-label="Уборка" title="Уборка" onclick="switchTab('cleaners')">
+      <i data-lucide="sparkles" style="width:16px;height:16px;"></i><span class="nav-label">Уборка</span>
     </button>
-    <button type="button" class="nav-item" data-tab="stats" onclick="switchTab('stats')">
-      <i data-lucide="bar-chart-3" style="width:16px;height:16px;"></i>Статистика
+    <button type="button" class="nav-item" data-tab="stats" aria-label="Статистика" title="Статистика" onclick="switchTab('stats')">
+      <i data-lucide="bar-chart-3" style="width:16px;height:16px;"></i><span class="nav-label">Статистика</span>
     </button>
-    <button type="button" class="nav-item" data-tab="tax" onclick="switchTab('tax')">
-      <i data-lucide="receipt" style="width:16px;height:16px;"></i>Налоги
+    <button type="button" class="nav-item" data-tab="tax" aria-label="Налоги" title="Налоги" onclick="switchTab('tax')">
+      <i data-lucide="receipt" style="width:16px;height:16px;"></i><span class="nav-label">Налоги</span>
     </button>
-    <button type="button" class="nav-item" data-tab="reporting" onclick="switchTab('reporting')">
-      <i data-lucide="shield-check" style="width:16px;height:16px;"></i>Гости
+    <button type="button" class="nav-item" data-tab="reporting" aria-label="Гости" title="Гости" onclick="switchTab('reporting')">
+      <i data-lucide="shield-check" style="width:16px;height:16px;"></i><span class="nav-label">Гости</span>
     </button>
   </nav>
   </div>
