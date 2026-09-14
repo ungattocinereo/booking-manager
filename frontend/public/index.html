@@ -3549,17 +3549,16 @@
       max-width: var(--orbit-shell-max);
       min-height: 64px;
       margin: 10px auto 0;
-      padding: 7px 8px 7px 14px;
+      padding: 7px 0;
       display: flex;
       align-items: center;
-      gap: 14px;
-      border: 1px solid rgba(187,187,224,.72);
-      border-radius: 999px;
-      background: rgba(255,255,255,.91);
-      backdrop-filter: blur(20px) saturate(140%);
+      gap: 28px;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
     }
     .header { display: contents; }
-    .header-left { order: 1; flex: 0 1 auto; }
+    .header-left { order: 1; flex: 0 0 auto; }
     .header-actions { order: 3; margin-left: auto; }
     .header-logo {
       width: 42px;
@@ -3585,29 +3584,45 @@
     .nav {
       order: 2;
       width: auto;
-      max-width: min(58vw, 680px);
-      padding: 3px;
-      gap: 2px;
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      background: #f2f2f8;
-      overflow: hidden;
+      max-width: none;
+      padding: 5px 2px 0;
+      gap: 4px;
+      align-self: stretch;
+      align-items: end;
+      border: 0;
+      border-bottom: 1px solid var(--border);
+      border-radius: 0;
+      background: transparent;
+      overflow: visible;
     }
     .nav-item {
-      min-height: 38px;
-      padding: 0 13px;
+      min-height: 46px;
+      padding: 0 15px;
       gap: 7px;
-      border: 0;
-      border-radius: 999px;
+      position: relative;
+      border: 1px solid transparent;
+      border-bottom: 0;
+      border-radius: 14px 14px 0 0;
       color: var(--text-secondary);
       font-size: 12px;
       font-weight: 600;
     }
-    .nav-item:hover { color: var(--text); background: #fff; }
+    .nav-item:hover { color: var(--text); background: var(--surface-muted); }
     .nav-item.active {
-      color: var(--strong-contrast);
-      background: var(--text);
-      border: 0;
+      color: var(--accent);
+      background: var(--card);
+      border-color: var(--border);
+      box-shadow: 0 1px 0 var(--card);
+    }
+    .nav-item.active::before {
+      content: "";
+      position: absolute;
+      top: -1px;
+      left: 14px;
+      right: 14px;
+      height: 3px;
+      border-radius: 3px;
+      background: var(--accent);
     }
     .btn {
       min-height: 40px;
@@ -3628,7 +3643,17 @@
     .btn-secondary:hover, .btn-ghost:hover { border-color: var(--lavender); background: var(--accent-light); }
     .btn-danger-ghost { border-radius: 999px; }
     .btn-sm { min-height: 34px; padding: 0 12px; border-radius: 999px; }
-    #syncBtn { min-height: 42px; color: var(--accent); border-color: #cec3f5; background: #f5f2ff; }
+    #syncBtn { min-height: 46px; min-width: 174px; gap: 10px; padding: 7px 14px; border-radius: 16px; color: var(--accent); border-color: #cec3f5; background: #f5f2ff; }
+    .sync-copy { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; min-width: 0; }
+    .sync-label { font-size: 12px; line-height: 1.2; }
+    #syncBtn .last-sync { display: block; max-width: 190px; font-size: 10px; line-height: 1.2; text-align: left; white-space: normal; }
+    #syncBtn .sync-icon { display: flex; flex: 0 0 16px; }
+    #syncBtn .sync-icon svg { width: 16px; height: 16px; }
+    #syncBtn[aria-busy="true"] .sync-icon { animation: spin 1s linear infinite; }
+    #syncBtn[data-state="error"], #syncBtn[data-state="warning"] { border-color: var(--warning); }
+    @media (prefers-reduced-motion: reduce) {
+      #syncBtn[aria-busy="true"] .sync-icon { animation: none; }
+    }
 
     .orbit-hero {
       width: var(--orbit-shell-width);
@@ -4217,12 +4242,19 @@
     .toast { border-radius: 999px; box-shadow: none; }
 
     @media (max-width: 1180px) {
-      .orbit-topbar { border-radius: 24px; }
+      .orbit-topbar { gap: 16px; }
       .nav-item { padding: 0 10px; }
       .nav-item svg { display: none; }
       .last-sync { display: none; }
       .orbit-hero { grid-template-columns: minmax(0, 1fr) 100px minmax(240px, .7fr); }
       .orbit-date { width: 94px; height: 94px; }
+    }
+
+    @media (min-width: 769px) and (max-width: 1050px) {
+      .orbit-topbar { flex-wrap: wrap; row-gap: 12px; }
+      .orbit-topbar .nav { order: 4; width: 100%; }
+      .orbit-topbar .nav-item { flex: 1; justify-content: center; }
+      .orbit-topbar .nav-item svg { display: block; }
     }
 
     @media (max-width: 768px) {
@@ -4236,7 +4268,7 @@
         padding: 9px 12px;
         border-width: 0 0 1px;
         border-radius: 0;
-        background: rgba(255,255,255,.94);
+        background: var(--bg);
         backdrop-filter: none;
       }
       .header {
@@ -4253,7 +4285,9 @@
       .header-logo { width: 40px; height: 40px; flex-basis: 40px; }
       .header h1 { font-size: 13px; }
       .header h1 span { font-size: 8px; }
-      #syncBtn { width: 42px; min-width: 42px; padding: 0; font-size: 0; }
+      #syncBtn { width: 154px; min-width: 154px; padding: 7px 10px; gap: 7px; }
+      #syncBtn .sync-label { font-size: 11px; }
+      #syncBtn .last-sync { font-size: 9px; }
       #syncBtn svg { width: 17px !important; height: 17px !important; }
       .nav {
         position: fixed;
@@ -4280,12 +4314,12 @@
         flex-direction: column;
         justify-content: center;
         gap: 3px;
-        border-radius: 18px;
+        border-radius: 13px 13px 4px 4px;
         font-size: 9px;
         line-height: 1;
       }
       .nav-item svg { display: block; width: 18px !important; height: 18px !important; }
-      .nav-item.active { background: var(--accent-light); color: var(--accent); }
+      .nav-item.active { background: var(--accent-light); color: var(--accent); box-shadow: none; }
       .orbit-hero {
         width: 100%;
         min-height: 0;
@@ -4388,12 +4422,11 @@
     }
 
     html[data-color-scheme="dark"] .orbit-topbar {
-      border-color: rgba(115,111,151,.72);
-      background: var(--surface-overlay);
+      background: transparent;
     }
-    html[data-color-scheme="dark"] .nav { background: #151622; }
+    html[data-color-scheme="dark"] .nav { background: transparent; }
     html[data-color-scheme="dark"] .nav-item:hover { background: var(--surface-muted); }
-    html[data-color-scheme="dark"] .nav-item.active { background: var(--text); color: var(--strong-contrast); }
+    html[data-color-scheme="dark"] .nav-item.active { background: var(--card); color: var(--accent); }
     html[data-color-scheme="dark"] .btn-secondary,
     html[data-color-scheme="dark"] .btn-ghost { border-color: var(--border); background: rgba(25,26,39,.84); }
     html[data-color-scheme="dark"] .btn-secondary:hover,
@@ -4625,16 +4658,22 @@
     @media (max-width: 768px) {
       html[data-color-scheme="dark"] .orbit-topbar { background: rgba(25,26,39,.96); }
       html[data-color-scheme="dark"] .nav { background: rgba(25,26,39,.96); box-shadow: 0 -14px 30px rgba(0,0,0,.28); }
-      html[data-color-scheme="dark"] .nav-item.active { background: var(--accent-light); color: var(--accent); }
+      html[data-color-scheme="dark"] .nav-item.active { background: var(--accent-light); color: var(--accent); box-shadow: none; }
+    }
+    @media (max-width: 480px) {
+      .header h1 { display: none; }
+      .header-actions { gap: 6px; }
     }
     @media (max-width: 360px) {
-      .header-left { display: none; }
+      .header-left { display: flex; }
       .header-logo { width: 34px; height: 34px; flex-basis: 34px; }
       .header h1 { max-width: 25vw; }
       .header h1 span { display: none; }
       .header-actions { gap: 6px; }
       .header h1 { display: none; }
-      #syncBtn { width: 44px; min-width: 44px; min-height: 44px; }
+      #syncBtn { width: 136px; min-width: 136px; min-height: 44px; padding-inline: 7px; gap: 5px; }
+      #syncBtn .sync-label { font-size: 10px; }
+      .header { gap: 6px; }
     }
   </style>
 </head>
@@ -4672,9 +4711,12 @@
           </button>
         </div>
       </div>
-      <span class="last-sync" id="lastSync"></span>
-      <button class="btn btn-ghost" id="syncBtn" onclick="syncCalendars()">
-        <i data-lucide="refresh-cw" style="width:14px;height:14px;"></i>Синхронизация
+      <button type="button" class="btn btn-ghost" id="syncBtn" onclick="syncCalendars()" aria-busy="false">
+        <span class="sync-icon" aria-hidden="true"><i data-lucide="refresh-cw"></i></span>
+        <span class="sync-copy">
+          <span class="sync-label" id="syncLabel">Синхронизация</span>
+          <span class="last-sync" id="lastSync" role="status" aria-live="polite">Загрузка…</span>
+        </span>
       </button>
     </div>
   </div>
@@ -5222,7 +5264,12 @@ function updateOrbitHero(tab) {
 
 function switchTab(tab, pushState = true) {
   updateOrbitHero(tab);
-  document.querySelectorAll('.nav-item').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  document.querySelectorAll('.nav-item').forEach(t => {
+    const active = t.dataset.tab === tab;
+    t.classList.toggle('active', active);
+    if (active) t.setAttribute('aria-current', 'page');
+    else t.removeAttribute('aria-current');
+  });
   document.getElementById('calendarTab').style.display = tab === 'calendar' ? 'block' : 'none';
   document.getElementById('cleanersTab').style.display = tab === 'cleaners' ? 'block' : 'none';
   document.getElementById('statsTab').style.display = tab === 'stats' ? 'block' : 'none';
@@ -5292,6 +5339,13 @@ function setFreshnessStatus({ state, icon, title, detail, retry = false }) {
   const retryEl = document.getElementById('freshnessRetry');
   if (!container || !iconEl || !titleEl || !detailEl || !retryEl) return;
 
+  const syncButton = document.getElementById('syncBtn');
+  syncButton.dataset.state = state;
+  syncButton.title = `${uiText(title)}. ${uiText(detail)}`;
+  if (state !== 'ok') {
+    const summary = { loading: 'Загрузка…', cached: 'Сохранённая копия', warning: 'Требует внимания', error: 'Ошибка · повторить' };
+    document.getElementById('lastSync').textContent = uiText(summary[state] || title);
+  }
   container.dataset.state = state;
   iconEl.innerHTML = `<i data-lucide="${icon}" style="width:17px;height:17px;"></i>`;
   titleEl.textContent = uiText(title);
@@ -8717,7 +8771,8 @@ async function syncCalendars() {
   }
   calendarSyncInFlight = true;
   btn.disabled = true;
-  btn.innerHTML = '<i data-lucide="loader-2" style="width:14px;height:14px;animation:spin 1s linear infinite;"></i>Синхронизация...';
+  btn.setAttribute('aria-busy', 'true');
+  document.getElementById('syncLabel').textContent = IS_ITALIAN ? 'Sincronizzo…' : 'Обновляем…';
   setFreshnessStatus({
     state: 'loading',
     icon: 'loader-2',
@@ -8735,10 +8790,10 @@ async function syncCalendars() {
     statsSnapshotsLoaded = false;
     statsSnapshotsPromise = null;
     await loadData();
-    btn.disabled = false;
-    btn.innerHTML = '<i data-lucide="refresh-cw" style="width:14px;height:14px;"></i>Синхронизация';
+
     if (typeof lucide !== 'undefined') lucide.createIcons();
     if (result?.partial) {
+      setFreshnessStatus({ state: 'warning', icon: 'triangle-alert', title: 'Обновлено частично', detail: 'Не все источники ответили. Повторите синхронизацию.', retry: true });
       toast(`⚠️ Обновлено частично: ошибок источников ${result.feed_errors?.length || 0}`);
     } else {
       toast('✅ Синхронизация завершена');
@@ -8752,9 +8807,11 @@ async function syncCalendars() {
       detail: err.message || 'Повторите попытку позже',
       retry: true
     });
-    btn.disabled = false;
-    btn.innerHTML = '<i data-lucide="refresh-cw" style="width:14px;height:14px;"></i>Синхронизация';
+
   } finally {
+    btn.disabled = false;
+    btn.setAttribute('aria-busy', 'false');
+    document.getElementById('syncLabel').textContent = uiText('Синхронизация');
     calendarSyncInFlight = false;
   }
 }
