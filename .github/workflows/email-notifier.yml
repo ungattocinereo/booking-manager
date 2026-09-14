@@ -1,0 +1,70 @@
+name: booking-email-notifier
+
+on:
+  schedule:
+    - cron: "17 7 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Render and select events without sending email
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: write
+
+concurrency:
+  group: monitor-sync
+  cancel-in-progress: false
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out notifier source
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
+
+      - name: Check out monitor data and notification state
+        uses: actions/checkout@v4
+        with:
+          ref: monitor/nuove-prenotazioni
+          path: monitor-state
+          fetch-depth: 0
+          persist-credentials: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Send daily booking digest
+        env:
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || false }}
+          EMAIL_STATE_PATH: monitor-state/monitor-app/data/email-sent.json
+          MONITOR_JSON_PATH: monitor-state/monitor-app/data/monitor.json
+          MAILGUN_API_KEY: ${{ secrets.MAILGUN_API_KEY }}
+          MAILGUN_API_BASE: https://api.eu.mailgun.net
+          MAILGUN_DOMAIN: amalfi.day
+          EMAIL_FROM: Monitor Atrani <monitor@amalfi.day>
+          EMAIL_REPLY_TO: greg@cinereo.it
+          EMAIL_TO: dipinorosario@gmail.com,greg@cinereo.it
+          EMAIL_WINDOW_HOURS: "48"
+        run: node monitor-app/email-notifier/send.js
+
+      - name: Commit notification audit state
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.dry_run) }}
+        working-directory: monitor-state
+        run: |
+          git config user.name "email-notifier-bot"
+          git config user.email "actions@github.com"
+          git add monitor-app/data/email-sent.json
+          if git diff --cached --quiet; then
+            echo "No notification state changes"
+          else
+            git commit -m "data: record email notifier run $(date -u +%Y-%m-%dT%H:%MZ)"
+            git push origin HEAD:monitor/nuove-prenotazioni
+          fi
