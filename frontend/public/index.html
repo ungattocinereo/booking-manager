@@ -4679,6 +4679,8 @@
       .header { gap: 6px; }
     }
   </style>
+  <link rel="stylesheet" href="/analytics.css">
+  <script src="/analytics.js"></script>
 </head>
 <body>
 
@@ -4864,6 +4866,7 @@
 
   <!-- STATS TAB -->
   <div class="stats-section" id="statsTab" style="display:none">
+    <div id="analyticsRoot" aria-live="polite"></div>
     <div class="stats-operations">
     <div class="stats-history-status" id="statsHistoryStatus" data-state="loading" role="status" aria-live="polite">
       <div class="stats-history-copy">
@@ -4899,135 +4902,6 @@
     </section>
     </div>
 
-    <div class="stats-dynamics-card" id="statsDynamicsCard">
-      <div class="stats-dynamics-top">
-        <div>
-          <div class="stats-kicker"><i data-lucide="activity" style="width:13px;height:13px;"></i>Динамика сезона</div>
-          <h2 class="stats-dynamics-title">Как менялись бронирования</h2>
-        </div>
-        <div class="stats-snapshot-pill" id="statsSnapshotBadge">
-          <i data-lucide="clock-3" style="width:14px;height:14px;"></i>
-          <span>—</span>
-        </div>
-      </div>
-
-      <div class="stats-dynamics-layout">
-        <div class="stats-dynamics-chart">
-          <canvas id="chartBookingDynamics"></canvas>
-        </div>
-        <div class="stats-dynamics-aside">
-          <div class="stats-primary-metric">
-            <div class="label">Бронирования на выбранную дату</div>
-            <div class="value" id="statsDynamicBookings">0</div>
-            <div class="stats-delta neutral" id="statsDynamicBookingDelta">
-              <i data-lucide="minus" style="width:13px;height:13px;"></i>
-              <span>без изменений</span>
-            </div>
-          </div>
-          <div class="stats-mini-metrics">
-            <div class="stats-mini-metric">
-              <div class="label">Ночи</div>
-              <div class="value" id="statsDynamicNights">0</div>
-              <div class="stats-metric-delta" id="statsDynamicNightsDelta">—</div>
-            </div>
-            <div class="stats-mini-metric">
-              <div class="label">Занятость</div>
-              <div class="value" id="statsDynamicOccupancy">0%</div>
-              <div class="stats-metric-delta" id="statsDynamicOccupancyDelta">—</div>
-            </div>
-            <div class="stats-mini-metric">
-              <div class="label">Гости</div>
-              <div class="value" id="statsDynamicGuests">0</div>
-              <div class="stats-metric-delta" id="statsDynamicGuestsDelta">—</div>
-            </div>
-          </div>
-          <div class="stats-change-note" id="statsDynamicChangeNote">Сравнение появится после второго ежедневного снимка.</div>
-        </div>
-      </div>
-
-      <div class="stats-timeline-control">
-        <button class="stats-step-btn" type="button" onclick="stepStatsSnapshot(-1)" aria-label="Предыдущий снимок" title="Предыдущий снимок">
-          <i data-lucide="chevron-left" style="width:17px;height:17px;"></i>
-        </button>
-        <div class="stats-range-wrap">
-          <input class="stats-range" id="statsSnapshotSlider" type="range" min="0" max="0" value="0" oninput="setStatsSnapshotIndex(Number(this.value))" aria-label="Дата снимка статистики">
-          <div class="stats-range-meta">
-            <span id="statsRangeStart">—</span>
-            <span id="statsRangeCurrent">—</span>
-            <span id="statsRangeEnd">—</span>
-          </div>
-        </div>
-        <button class="stats-step-btn" type="button" onclick="stepStatsSnapshot(1)" aria-label="Следующий снимок" title="Следующий снимок">
-          <i data-lucide="chevron-right" style="width:17px;height:17px;"></i>
-        </button>
-      </div>
-
-      <div class="stats-month-rail" id="statsMonthRail"></div>
-    </div>
-
-    <div class="stats-summary-row" id="statsSummary"></div>
-    <div class="stats-charts-status" id="statsChartsStatus" role="status" hidden>
-      <span>Числовые показатели доступны, но модуль графиков не загрузился.</span>
-      <button class="stats-history-action" type="button" onclick="renderStats()">
-        <i data-lucide="refresh-cw" style="width:14px;height:14px;"></i>Повторить графики
-      </button>
-    </div>
-    <div class="stats-grid" id="statsGrid">
-      <div class="stats-chart-card">
-        <div class="stats-chart-header">
-          <div>
-            <h3>Бронирования по месяцам</h3>
-            <div class="stats-chart-sub">Airbnb и Booking.com по датам заезда</div>
-          </div>
-        </div>
-        <canvas id="chartMonthly"></canvas>
-      </div>
-      <div class="stats-chart-card">
-        <div class="stats-chart-header">
-          <div>
-            <h3>Заполняемость апартаментов</h3>
-            <div class="stats-chart-sub" id="statsOccupancySub">Доля занятых ночей в сезоне</div>
-          </div>
-        </div>
-        <canvas id="chartOccupancy"></canvas>
-      </div>
-      <div class="stats-chart-card">
-        <div class="stats-chart-header">
-          <div>
-            <h3>Откуда гости</h3>
-            <div class="stats-chart-sub">Топ стран по бронированиям</div>
-          </div>
-        </div>
-        <canvas id="chartCountries"></canvas>
-      </div>
-      <div class="stats-chart-card">
-        <div class="stats-chart-header">
-          <div>
-            <h3>Дни заезда</h3>
-            <div class="stats-chart-sub">Распределение по дням недели</div>
-          </div>
-        </div>
-        <canvas id="chartCheckinDays"></canvas>
-      </div>
-      <div class="stats-chart-card">
-        <div class="stats-chart-header">
-          <div>
-            <h3>Средний срок проживания</h3>
-            <div class="stats-chart-sub">Ночи на одно бронирование</div>
-          </div>
-        </div>
-        <canvas id="chartDuration"></canvas>
-      </div>
-      <div class="stats-chart-card">
-        <div class="stats-chart-header">
-          <div>
-            <h3>Гости по месяцам</h3>
-            <div class="stats-chart-sub">Гости с заполненным количеством человек</div>
-          </div>
-        </div>
-        <canvas id="chartGuests"></canvas>
-      </div>
-    </div>
   </div>
 
   <!-- CLEANERS TAB -->
@@ -5213,7 +5087,7 @@ const ORBIT_HERO_CONTENT = {
   },
   stats: {
     eyebrow: 'Сезон в движении',
-    title: 'Цифры, которые помогают решать',
+    title: 'Статистика бронирований',
     subtitle: 'Загрузка, динамика и точки внимания — без визуального шума.'
   },
   tax: {
@@ -5281,6 +5155,7 @@ function switchTab(tab, pushState = true) {
   document.getElementById('statsBar').style.display = tab === 'calendar' ? 'flex' : 'none';
   document.getElementById('legend').style.display = tab === 'calendar' ? 'flex' : 'none';
   if (tab !== 'calendar') closeBookingPanel();
+  if (tab !== 'stats') window.BookingAnalytics?.dispose();
   if (tab === 'calendar') {
     renderMobileAgenda();
     if (shouldMountCalendarGrid()) {
@@ -7522,34 +7397,16 @@ function retryStatsHistory() {
 async function renderStats() {
   const sequence = ++statsRenderSequence;
   const section = document.getElementById('statsTab');
-  if (section) section.setAttribute('aria-busy', 'true');
-
+  section?.setAttribute('aria-busy', 'true');
+  const chartsPromise = ensureChartJs().then(() => true).catch(() => false);
   try {
-    const year = todayLocal().getFullYear();
-    const chartsPromise = ensureChartJs().then(() => true).catch(() => false);
-    await Promise.all([
-      ensureStatsSnapshots(),
-      ensureCurrentStatsBookingKeys(year)
-    ]);
+    await Promise.all([ensureStatsSnapshots(), window.BookingAnalytics.render()]);
     if (sequence !== statsRenderSequence) return;
-    const chartsAvailable = typeof Chart !== 'undefined';
-    renderStatsNow({ chartsAvailable });
-    if (!chartsAvailable) {
-      chartsPromise.then(loaded => {
-        const tabVisible = document.getElementById('statsTab')?.style.display !== 'none';
-        if (loaded && sequence === statsRenderSequence && tabVisible) renderStatsNow({ chartsAvailable: true });
-      });
-    }
-  } catch (error) {
-    if (sequence === statsRenderSequence) {
-      toast(error.message || 'Ошибка загрузки статистики');
-      if (statsHistoryMeta.state === 'loading') {
-        statsHistoryMeta = { ...statsHistoryMeta, state: 'error', error: { kind: 'network' } };
-        renderStatsHistoryStatus();
-      }
-    }
+    renderStatsOperationalRadar();
+    const loaded = await chartsPromise;
+    if (loaded && sequence === statsRenderSequence) await window.BookingAnalytics.render();
   } finally {
-    if (sequence === statsRenderSequence && section) section.removeAttribute('aria-busy');
+    if (sequence === statsRenderSequence) section?.removeAttribute('aria-busy');
   }
 }
 
@@ -7992,7 +7849,7 @@ function statsChartDefaults() {
       x: {
         grid: { display: false },
         border: { display: false },
-        ticks: { color: themeCssColor('--chart-text', '#686b7d'), font: { ...chartFont, size: 11, weight: 650 } }
+        ticks: { color: themeCssColor('--chart-text', '#686b7d'), autoSkip: true, maxTicksLimit: 12, maxRotation: 0, font: { ...chartFont, size: 11, weight: 650 } }
       },
       y: {
         beginAtZero: true,
@@ -8002,270 +7859,6 @@ function statsChartDefaults() {
       }
     }
   };
-}
-
-function setStatsSnapshotIndex(index, { userSelected = true } = {}) {
-  const max = Math.max(0, statsDynamicsState.snapshots.length - 1);
-  statsSnapshotIndex = Math.max(0, Math.min(Number(index) || 0, max));
-  if (userSelected) statsSnapshotUserSelected = true;
-  renderStatsDynamicSnapshot();
-}
-
-function stepStatsSnapshot(delta) {
-  setStatsSnapshotIndex((statsSnapshotIndex || 0) + delta);
-}
-
-function renderStatsDelta(current, previous) {
-  const el = document.getElementById('statsDynamicBookingDelta');
-  if (!el) return;
-
-  if (!previous) {
-    el.className = 'stats-delta neutral';
-    el.innerHTML = '<i data-lucide="minus" style="width:13px;height:13px;"></i><span>первый снимок</span>';
-    return;
-  }
-
-  const delta = current.booking_count - previous.booking_count;
-  const className = delta > 0 ? 'positive' : delta < 0 ? 'negative' : 'neutral';
-  const icon = delta > 0 ? 'trending-up' : delta < 0 ? 'trending-down' : 'minus';
-  const sign = delta > 0 ? '+' : '';
-  const label = delta === 0
-    ? 'без изменений'
-    : `${sign}${delta} ${pluralRu(delta, 'бронь', 'брони', 'броней')}`;
-
-  el.className = `stats-delta ${className}`;
-  el.innerHTML = `<i data-lucide="${icon}" style="width:13px;height:13px;"></i><span>${label}</span>`;
-}
-
-function renderStatsMetricDelta(elementId, currentValue, previousValue, { percentPoints = false } = {}) {
-  const el = document.getElementById(elementId);
-  if (!el) return;
-  if (previousValue == null) {
-    el.className = 'stats-metric-delta';
-    el.textContent = 'первый снимок';
-    return;
-  }
-  const delta = Number(currentValue || 0) - Number(previousValue || 0);
-  const rounded = percentPoints ? Math.round(delta * 10) / 10 : Math.round(delta);
-  el.className = `stats-metric-delta ${rounded > 0 ? 'positive' : rounded < 0 ? 'negative' : ''}`;
-  if (Math.abs(rounded) < (percentPoints ? 0.05 : 0.5)) {
-    el.textContent = 'без изменений';
-    return;
-  }
-  const sign = rounded > 0 ? '+' : '−';
-  const value = percentPoints ? Math.abs(rounded).toLocaleString(UI_LOCALE) : formatStatsNumber(Math.abs(rounded));
-  el.textContent = `${sign}${value}${percentPoints ? ' п.п.' : ''}`;
-}
-
-function statsOccupancyMethod(snapshot) {
-  const payload = statsJsonObject(snapshot?.payload);
-  if (payload.denominator === 'sellable_nights') return 'sellable_v2';
-  if (payload.denominator === 'gross_calendar_nights') return 'gross_v1';
-  if (Number(payload.calculation_version) >= 2) return 'sellable_v2';
-  return 'gross_v1';
-}
-
-function renderStatsOccupancyDelta(current, previous) {
-  const el = document.getElementById('statsDynamicOccupancyDelta');
-  if (!el) return;
-  if (previous && statsOccupancyMethod(current) !== statsOccupancyMethod(previous)) {
-    el.className = 'stats-metric-delta';
-    el.textContent = 'методика изменена';
-    return;
-  }
-  renderStatsMetricDelta(
-    'statsDynamicOccupancyDelta',
-    current?.occupancy_percent,
-    previous?.occupancy_percent,
-    { percentPoints: true }
-  );
-}
-
-function renderStatsBookingCompositionDelta(current, previous) {
-  const el = document.getElementById('statsDynamicChangeNote');
-  if (!el) return;
-  if (!previous) {
-    el.textContent = 'Это первый ежедневный снимок — сравнение появится после следующей синхронизации.';
-    return;
-  }
-
-  const currentKeys = statsSnapshotBookingKeys(current);
-  const previousKeys = statsSnapshotBookingKeys(previous);
-  const previousDate = formatStatsSnapshotDate(previous.captured_at, 'short');
-  if (!currentKeys.size || !previousKeys.size) {
-    el.textContent = `Сравнение с ${previousDate}. Детализация новых и снятых броней появится для снимков нового формата.`;
-    return;
-  }
-
-  let added = 0;
-  let removed = 0;
-  currentKeys.forEach(key => { if (!previousKeys.has(key)) added++; });
-  previousKeys.forEach(key => { if (!currentKeys.has(key)) removed++; });
-  if (!added && !removed) {
-    el.textContent = `Состав броней не изменился с ${previousDate}.`;
-    return;
-  }
-  el.textContent = `С ${previousDate}: +${added} новых, −${removed} снятых или изменённых броней.`;
-}
-
-function renderStatsMonthRail(snapshot) {
-  const rail = document.getElementById('statsMonthRail');
-  if (!rail) return;
-
-  const monthData = statsDynamicsState.monthKeys.map((key, index) => ({
-    key,
-    label: statsDynamicsState.monthLabels[index],
-    bookings: Number(snapshot.monthly_bookings?.[key]) || 0,
-    nights: Number(snapshot.monthly_nights?.[key]) || 0
-  }));
-  const maxBookings = Math.max(1, ...monthData.map(month => month.bookings));
-
-  rail.innerHTML = monthData.map(month => {
-    const fill = month.bookings > 0 ? Math.max(10, Math.round((month.bookings / maxBookings) * 100)) : 0;
-    return `
-      <div class="stats-month-tile" style="--month-fill:${fill}%">
-        <span class="month">${month.label}</span>
-        <strong>${formatStatsNumber(month.bookings)}</strong>
-        <small>${formatStatsNumber(month.nights)} ${pluralRu(month.nights, 'ночь', 'ночи', 'ночей')}</small>
-      </div>
-    `;
-  }).join('');
-}
-
-function renderStatsDynamicSnapshot() {
-  const { snapshots } = statsDynamicsState;
-  if (!snapshots.length) return;
-
-  const index = Math.max(0, Math.min(statsSnapshotIndex ?? snapshots.length - 1, snapshots.length - 1));
-  statsSnapshotIndex = index;
-  const snapshot = snapshots[index];
-  const previous = snapshots[index - 1];
-
-  const slider = document.getElementById('statsSnapshotSlider');
-  if (slider) {
-    slider.min = '0';
-    slider.max = String(Math.max(0, snapshots.length - 1));
-    slider.value = String(index);
-    slider.disabled = snapshots.length < 2;
-  }
-
-  const buttons = document.querySelectorAll('.stats-step-btn');
-  if (buttons[0]) buttons[0].disabled = index <= 0;
-  if (buttons[1]) buttons[1].disabled = index >= snapshots.length - 1;
-
-  const badgeText = document.querySelector('#statsSnapshotBadge span');
-  if (badgeText) {
-    const staleSnapshot = snapshot.source === 'cached_current' || snapshot.source === 'stale_current';
-    const staleLabel = staleSnapshot || (statsHistoryMeta.state === 'cached' && snapshot.source !== 'current')
-      ? ' · сохранённая копия'
-      : '';
-    badgeText.textContent = `${formatStatsSnapshotDate(snapshot.captured_at)} · ${statsSourceLabel(snapshot.source)}${staleLabel}`;
-  }
-
-  const startEl = document.getElementById('statsRangeStart');
-  const currentEl = document.getElementById('statsRangeCurrent');
-  const endEl = document.getElementById('statsRangeEnd');
-  if (startEl) startEl.textContent = formatStatsSnapshotDate(snapshots[0].captured_at, 'short');
-  if (currentEl) currentEl.textContent = `${index + 1} / ${snapshots.length}`;
-  if (endEl) endEl.textContent = formatStatsSnapshotDate(snapshots[snapshots.length - 1].captured_at, 'short');
-
-  document.getElementById('statsDynamicBookings').textContent = formatStatsNumber(snapshot.booking_count);
-  document.getElementById('statsDynamicNights').textContent = formatStatsNumber(snapshot.occupied_nights);
-  document.getElementById('statsDynamicOccupancy').textContent = formatStatsPercent(snapshot.occupancy_percent);
-  document.getElementById('statsDynamicGuests').textContent = formatStatsNumber(snapshot.guest_count);
-  renderStatsDelta(snapshot, previous);
-  renderStatsMetricDelta('statsDynamicNightsDelta', snapshot.occupied_nights, previous?.occupied_nights);
-  renderStatsOccupancyDelta(snapshot, previous);
-  renderStatsMetricDelta('statsDynamicGuestsDelta', snapshot.guest_count, previous?.guest_count);
-  renderStatsBookingCompositionDelta(snapshot, previous);
-  renderStatsMonthRail(snapshot);
-
-  const chart = statsCharts.bookingDynamics;
-  if (chart) {
-    chart.data.labels = snapshots.map(item => formatStatsSnapshotDate(item.captured_at, 'short'));
-    chart.data.datasets[0].data = snapshots.map(item => Number(item.booking_count) || 0);
-    chart.data.datasets[1].data = snapshots.map(item => Number(item.occupied_nights) || 0);
-    chart.data.datasets.forEach(dataset => {
-      dataset.pointRadius = snapshots.map((_, pointIndex) => pointIndex === index ? 5 : 2);
-      dataset.pointHoverRadius = snapshots.map((_, pointIndex) => pointIndex === index ? 7 : 5);
-      dataset.pointBorderWidth = snapshots.map((_, pointIndex) => pointIndex === index ? 3 : 1);
-    });
-    chart.update('none');
-  }
-
-  if (typeof lucide !== 'undefined') lucide.createIcons();
-}
-
-function createStatsDynamicsChart() {
-  const defaults = statsChartDefaults();
-  const canvas = document.getElementById('chartBookingDynamics');
-  if (!canvas) return;
-  const snapshots = statsDynamicsState.snapshots || [];
-  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce), (max-width: 768px)').matches;
-
-  statsCharts.bookingDynamics = new Chart(canvas, {
-    type: 'line',
-    data: {
-      labels: snapshots.map(snapshot => formatStatsSnapshotDate(snapshot.captured_at, 'short')),
-      datasets: [
-        {
-          label: uiText('Бронирования'),
-          data: snapshots.map(snapshot => Number(snapshot.booking_count) || 0),
-          borderColor: themeCssColor('--chart-accent', '#6d2cfc'),
-          backgroundColor: themeCssColor('--chart-accent-fill', 'rgba(109,44,252,.12)'),
-          borderWidth: 2,
-          pointBackgroundColor: themeCssColor('--chart-accent', '#6d2cfc'),
-          pointBorderColor: themeCssColor('--chart-point-border', '#fff'),
-          pointRadius: 2,
-          pointHoverRadius: 5,
-          fill: true,
-          tension: .22,
-          yAxisID: 'y'
-        },
-        {
-          label: uiText('Занятые ночи'),
-          data: snapshots.map(snapshot => Number(snapshot.occupied_nights) || 0),
-          borderColor: themeCssColor('--chart-warning', '#d97706'),
-          backgroundColor: 'transparent',
-          pointBackgroundColor: themeCssColor('--chart-warning', '#d97706'),
-          pointBorderColor: themeCssColor('--chart-point-border', '#fff'),
-          pointBorderWidth: 1,
-          pointRadius: 2,
-          pointHoverRadius: 5,
-          fill: false,
-          tension: .22,
-          yAxisID: 'y1'
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      animation: reduceMotion ? false : { duration: 180 },
-      interaction: { mode: 'index', intersect: false },
-      plugins: defaults.plugins,
-      onClick: (_event, elements) => {
-        if (elements?.[0]) setStatsSnapshotIndex(elements[0].index);
-      },
-      scales: {
-        x: {
-          ...defaults.scales.x,
-          ticks: { ...defaults.scales.x.ticks, autoSkip: true, maxTicksLimit: 8, maxRotation: 0 }
-        },
-        y: {
-          ...defaults.scales.y,
-          title: { display: false }
-        },
-        y1: {
-          beginAtZero: true,
-          position: 'right',
-          border: { display: false },
-          grid: { drawOnChartArea: false },
-          ticks: { color: themeCssColor('--chart-warning-ink', '#9a3412'), precision: 0, font: { ...defaults.font, size: 11, weight: 650 } }
-        }
-      }
-    }
-  });
 }
 
 function setStatsRadarDays(days) {
@@ -8402,369 +7995,6 @@ function renderStatsOperationalRadar() {
   }
 }
 
-function renderStatsNow({ chartsAvailable = typeof Chart !== 'undefined' } = {}) {
-  const year = todayLocal().getFullYear();
-  const monthLabels = STATS_MONTH_LABELS;
-  const monthIndices = STATS_MONTH_INDICES;
-  const monthKeys = monthIndices.map(monthIndex => statsMonthKey(year, monthIndex));
-  const seasonRange = statsSeasonRange(year);
-
-  // Filter real bookings in season
-  const seasonBookings = getSeasonBookings(year);
-  renderStatsOperationalRadar();
-
-  // Destroy old charts
-  statsChartObservers.forEach(observer => observer.disconnect());
-  statsChartObservers = [];
-  Object.values(statsCharts).forEach(c => c.destroy());
-  statsCharts = {};
-
-  // ===== SUMMARY CARDS =====
-  const totalNightsSeason = monthIndices.reduce((sum, monthIndex) => {
-    const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
-    return sum + daysInMonth;
-  }, 0); // per property
-
-  const occupiedNightSets = buildStatsOccupiedNightSets(seasonBookings, seasonRange.start, seasonRange.end);
-  const propNights = Object.fromEntries([...occupiedNightSets.entries()].map(([propertyId, dates]) => [propertyId, dates.size]));
-  const totalOccupiedNights = Object.values(propNights).reduce((sum, nights) => sum + nights, 0);
-  const grossAvgOccupancy = properties.length > 0
-    ? Number(((totalOccupiedNights / (totalNightsSeason * properties.length)) * 100).toFixed(1))
-    : 0;
-  const latestPersistedSnapshot = (statsSnapshots || [])[statsSnapshots.length - 1] || null;
-  const latestPersistedPayload = statsJsonObject(latestPersistedSnapshot?.payload);
-  const sellableNights = Number(latestPersistedPayload.sellable_nights) || 0;
-  const unavailableNights = Number(latestPersistedPayload.unavailable_nights) || 0;
-  const latestSnapshotIsCurrent = statsSnapshotDayKey(latestPersistedSnapshot) === toLocalIso(todayLocal());
-  const usesSellableDenominator = dashboardDataMeta.source === 'network' &&
-    statsHistoryMeta.state === 'network' && latestSnapshotIsCurrent && sellableNights > 0;
-  const avgOccupancy = usesSellableDenominator
-    ? Number(((totalOccupiedNights / sellableNights) * 100).toFixed(1))
-    : grossAvgOccupancy;
-
-  const fallbackSnapshot = buildCurrentStatsSnapshot(year, seasonBookings, totalOccupiedNights, avgOccupancy);
-  fallbackSnapshot.payload = {
-    ...latestPersistedPayload,
-    ...fallbackSnapshot.payload,
-    booking_keys: statsCurrentBookingKeys,
-    calculation_version: usesSellableDenominator ? (Number(latestPersistedPayload.calculation_version) || 2) : 1,
-    denominator: usesSellableDenominator ? 'sellable_nights' : 'gross_calendar_nights'
-  };
-  const timelineSnapshots = buildStatsTimeline(year, fallbackSnapshot);
-  const statsYearChanged = statsDynamicsState.year !== year;
-  if (statsYearChanged) statsSnapshotUserSelected = false;
-  if (
-    statsYearChanged ||
-    statsSnapshotIndex == null ||
-    statsSnapshotIndex >= timelineSnapshots.length ||
-    !statsSnapshotUserSelected
-  ) {
-    statsSnapshotIndex = timelineSnapshots.length - 1;
-  }
-  statsDynamicsState = { year, snapshots: timelineSnapshots, monthLabels, monthKeys };
-  const dynamicsCard = document.getElementById('statsDynamicsCard');
-  if (dynamicsCard) dynamicsCard.dataset.charts = chartsAvailable ? 'available' : 'unavailable';
-  if (chartsAvailable) createStatsDynamicsChart();
-  renderStatsDynamicSnapshot();
-
-  // Top country
-  const countryCounts = {};
-  for (const b of seasonBookings) {
-    if (b.guest_country) {
-      const c = b.guest_country.toLowerCase();
-      countryCounts[c] = (countryCounts[c] || 0) + 1;
-    }
-  }
-  const topCountry = Object.entries(countryCounts).sort((a,b) => b[1] - a[1])[0];
-  const topCountryText = topCountry
-    ? `${countryToFlag(topCountry[0])} ${COUNTRY_NAMES[topCountry[0]] || topCountry[0].toUpperCase()}`
-    : '—';
-
-  // Average guests
-  const withGuests = seasonBookings.filter(b => b.guest_count > 0);
-  const avgGuests = withGuests.length > 0
-    ? (withGuests.reduce((s, b) => s + b.guest_count, 0) / withGuests.length).toFixed(1)
-    : '—';
-
-  document.getElementById('statsSummary').innerHTML = `
-    <div class="stats-summary-card">
-      <div class="label">Бронирования (сезон)</div>
-      <div class="value">${formatStatsNumber(seasonBookings.length)}</div>
-      <div class="sub">Апрель — Ноябрь ${year}</div>
-    </div>
-    <div class="stats-summary-card">
-      <div class="label">Загрузка сезона (прогноз)</div>
-      <div class="value">${formatStatsPercent(avgOccupancy)}</div>
-      <div class="sub">${usesSellableDenominator
-        ? `${formatStatsNumber(sellableNights)} продаваемых ночей${unavailableNights ? ` · ${formatStatsNumber(unavailableNights)} закрыто` : ''}`
-        : `${properties.length} апартаментов · все календарные ночи`}</div>
-    </div>
-    <div class="stats-summary-card">
-      <div class="label">Топ страна</div>
-      <div class="value" style="font-size:20px;">${topCountryText}</div>
-      <div class="sub">${topCountry ? topCountry[1] + ' бронирований' : ''}</div>
-    </div>
-    <div class="stats-summary-card">
-      <div class="label">Среднее гостей</div>
-      <div class="value">${avgGuests}</div>
-      <div class="sub">человек на бронирование</div>
-    </div>
-  `;
-
-  const chartsStatus = document.getElementById('statsChartsStatus');
-  const statsGrid = document.getElementById('statsGrid');
-  if (chartsStatus) chartsStatus.hidden = chartsAvailable;
-  if (statsGrid) statsGrid.hidden = !chartsAvailable;
-  if (!chartsAvailable) {
-    if (typeof lucide !== 'undefined') lucide.createIcons();
-    return;
-  }
-
-  const chartDefaults = statsChartDefaults();
-  const chartFont = chartDefaults.font;
-  const reduceStatsMotion = window.matchMedia('(prefers-reduced-motion: reduce), (max-width: 768px)').matches;
-  const defaultOpts = {
-    responsive: true,
-    maintainAspectRatio: true,
-    animation: reduceStatsMotion ? false : { duration: 260 },
-    interaction: { mode: 'index', intersect: false },
-    plugins: chartDefaults.plugins,
-    scales: chartDefaults.scales
-  };
-
-  // ===== 1. MONTHLY BOOKINGS (stacked bar) =====
-  const monthlyAirbnb = new Array(8).fill(0);
-  const monthlyBooking = new Array(8).fill(0);
-  const monthlyDirect = new Array(8).fill(0);
-  for (const b of seasonBookings) {
-    const m = parseLocalDate(b.start_date).getMonth();
-    const idx = m - 3;
-    if (idx >= 0 && idx < 8) {
-      if (b.platform === 'airbnb') monthlyAirbnb[idx]++;
-      else if (b.platform === 'direct') monthlyDirect[idx]++;
-      else monthlyBooking[idx]++;
-    }
-  }
-  statsCharts.monthly = new Chart(document.getElementById('chartMonthly'), {
-    type: 'bar',
-    data: {
-      labels: monthLabels,
-      datasets: [
-        { label: 'Airbnb', data: monthlyAirbnb, backgroundColor: themeCssColor('--airbnb', '#d9365c'), borderRadius: 9, maxBarThickness: 42 },
-        { label: 'Booking.com', data: monthlyBooking, backgroundColor: themeCssColor('--booking', '#155bb3'), borderRadius: 9, maxBarThickness: 42 },
-        { label: uiText('Прямые'), data: monthlyDirect, backgroundColor: themeCssColor('--direct', '#157a5b'), borderRadius: 9, maxBarThickness: 42 }
-      ]
-    },
-    options: {
-      ...defaultOpts,
-      plugins: { ...defaultOpts.plugins, legend: { ...defaultOpts.plugins.legend, position: 'top' } },
-      scales: {
-        x: { ...chartDefaults.scales.x, stacked: true },
-        y: { ...chartDefaults.scales.y, stacked: true, ticks: { ...chartDefaults.scales.y.ticks, stepSize: 1 } }
-      }
-    }
-  });
-
-  // ===== 2. OCCUPANCY BY PROPERTY (horizontal bar) =====
-  const propertySellableNights = usesSellableDenominator
-    ? statsJsonObject(latestPersistedPayload.property_sellable_nights)
-    : {};
-  const occupancyRows = properties.map(p => {
-    const nights = propNights[p.id] || 0;
-    const rawPropertyDenominator = Number(propertySellableNights[p.id]);
-    const propertyDenominator = Number.isFinite(rawPropertyDenominator) && rawPropertyDenominator >= 0
-      ? rawPropertyDenominator
-      : totalNightsSeason;
-    return {
-      id: p.id,
-      label: p.name,
-      occupancy: propertyDenominator > 0 ? Math.round((nights / propertyDenominator) * 100) : 0,
-      color: themeCssColor(`--chart-property-${p.id}`, (propertyConfig[p.id] || {}).color || themeCssColor('--chart-muted', '#596074'))
-    };
-  }).sort((a, b) => b.occupancy - a.occupancy);
-  const occupancySub = document.getElementById('statsOccupancySub');
-  if (occupancySub) {
-    occupancySub.textContent = usesSellableDenominator
-      ? 'Занятые ночи / продаваемые ночи (закрытые даты исключены)'
-      : 'Занятые ночи / все календарные ночи (закрытые даты не исключены)';
-  }
-  const propLabels = occupancyRows.map(row => row.label);
-  const propOccupancy = occupancyRows.map(row => row.occupancy);
-  const propColors = occupancyRows.map(row => row.color);
-
-  statsCharts.occupancy = new Chart(document.getElementById('chartOccupancy'), {
-    type: 'bar',
-    data: {
-      labels: propLabels,
-      datasets: [{
-        data: propOccupancy,
-        backgroundColor: propColors,
-        borderRadius: 7,
-        maxBarThickness: 18
-      }]
-    },
-    options: {
-      ...defaultOpts,
-      indexAxis: 'y',
-      plugins: { ...defaultOpts.plugins, legend: { display: false } },
-      scales: {
-        x: { ...chartDefaults.scales.y, beginAtZero: true, max: 100, ticks: { ...chartDefaults.scales.y.ticks, callback: v => v + '%' } },
-        y: { ...chartDefaults.scales.x, ticks: { ...chartDefaults.scales.x.ticks, font: { ...chartFont, size: 11, weight: 700 } } }
-      }
-    }
-  });
-
-  // ===== 3. GUEST COUNTRIES (doughnut) =====
-  const sortedCountries = Object.entries(countryCounts).sort((a,b) => b[1] - a[1]);
-  const top8 = sortedCountries.slice(0, 8);
-  const othersCount = sortedCountries.slice(8).reduce((s, [, c]) => s + c, 0);
-  const countryLabels = top8.map(([c]) => `${countryToFlag(c)} ${COUNTRY_NAMES[c] || c.toUpperCase()}`);
-  const countryData = top8.map(([, c]) => c);
-  if (othersCount > 0) { countryLabels.push(uiText('Другие')); countryData.push(othersCount); }
-  const countryColors = [
-    themeCssColor('--chart-accent', '#6d2cfc'),
-    themeCssColor('--airbnb', '#d9365c'),
-    themeCssColor('--booking', '#155bb3'),
-    themeCssColor('--direct', '#157a5b'),
-    themeCssColor('--violet-soft', '#a076f6'),
-    themeCssColor('--chart-muted', '#596074'),
-    themeCssColor('--violet-deep', '#2809e3'),
-    themeCssColor('--lavender', '#bbbbe0'),
-    themeCssColor('--chart-soft', '#d2d6e8')
-  ];
-
-  createDeferredStatsChart('countries', 'chartCountries', canvas => new Chart(canvas, {
-    type: 'doughnut',
-    data: {
-      labels: countryLabels,
-      datasets: [{
-        data: countryData,
-        backgroundColor: countryColors.slice(0, countryData.length),
-        borderWidth: 4,
-        borderColor: themeCssColor('--chart-point-border', '#fff'),
-        hoverOffset: 5
-      }]
-    },
-    options: {
-      ...defaultOpts,
-      cutout: '64%',
-      plugins: {
-        ...defaultOpts.plugins,
-        legend: {
-          position: window.matchMedia('(max-width: 768px)').matches ? 'bottom' : 'right',
-          labels: { ...defaultOpts.plugins.legend.labels, padding: 10, boxWidth: 8 }
-        }
-      }
-    }
-  }));
-
-  // ===== 4. CHECK-IN DAY OF WEEK (bar) =====
-  const dayNamesRu = IS_ITALIAN ? ['Dom','Lun','Mar','Mer','Gio','Ven','Sab'] : ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
-  const checkinByDay = new Array(7).fill(0);
-  for (const b of seasonBookings) {
-    const dow = parseLocalDate(b.start_date).getDay();
-    checkinByDay[dow]++;
-  }
-  // Reorder: Mon-Sun
-  const reordered = [...checkinByDay.slice(1), checkinByDay[0]];
-  const reorderedLabels = [...dayNamesRu.slice(1), dayNamesRu[0]];
-  const dayColors = reordered.map((_, i) => i >= 5
-    ? themeCssColor('--airbnb', '#d9365c')
-    : themeCssColor('--chart-accent', '#6d2cfc'));
-
-  createDeferredStatsChart('checkinDays', 'chartCheckinDays', canvas => new Chart(canvas, {
-    type: 'bar',
-    data: {
-      labels: reorderedLabels,
-      datasets: [{ data: reordered, backgroundColor: dayColors, borderRadius: 7, maxBarThickness: 36 }]
-    },
-    options: {
-      ...defaultOpts,
-      plugins: { ...defaultOpts.plugins, legend: { display: false } },
-      scales: {
-        x: chartDefaults.scales.x,
-        y: { ...chartDefaults.scales.y, ticks: { ...chartDefaults.scales.y.ticks, stepSize: 1 } }
-      }
-    }
-  }));
-
-  // ===== 5. AVERAGE STAY DURATION (bar by property) =====
-  const propDuration = {};
-  const propBookingCount = {};
-  for (const b of seasonBookings) {
-    const nights = nightsBetween(b.start_date, b.end_date) || 0;
-    propDuration[b.property_id] = (propDuration[b.property_id] || 0) + nights;
-    propBookingCount[b.property_id] = (propBookingCount[b.property_id] || 0) + 1;
-  }
-  const durationRows = properties.map(p => {
-    const total = propDuration[p.id] || 0;
-    const count = propBookingCount[p.id] || 0;
-    return {
-      label: p.name,
-      value: count > 0 ? +(total / count).toFixed(1) : 0,
-      color: themeCssColor(`--chart-property-${p.id}`, (propertyConfig[p.id] || {}).color || themeCssColor('--chart-muted', '#596074'))
-    };
-  }).sort((a, b) => b.value - a.value);
-
-  createDeferredStatsChart('duration', 'chartDuration', canvas => new Chart(canvas, {
-    type: 'bar',
-    data: {
-      labels: durationRows.map(row => row.label),
-      datasets: [{
-        data: durationRows.map(row => row.value),
-        backgroundColor: durationRows.map(row => row.color),
-        borderRadius: 7,
-        maxBarThickness: 34
-      }]
-    },
-    options: {
-      ...defaultOpts,
-      plugins: { ...defaultOpts.plugins, legend: { display: false } },
-      scales: {
-        x: { ...chartDefaults.scales.x, ticks: { ...chartDefaults.scales.x.ticks, maxRotation: 35, minRotation: 0 } },
-        y: chartDefaults.scales.y
-      }
-    }
-  }));
-
-  // ===== 6. GUESTS BY MONTH (line) =====
-  const monthlyGuests = new Array(8).fill(0);
-  for (const b of seasonBookings) {
-    if (b.guest_count > 0) {
-      const m = parseLocalDate(b.start_date).getMonth();
-      const idx = m - 3;
-      if (idx >= 0 && idx < 8) monthlyGuests[idx] += b.guest_count;
-    }
-  }
-
-  createDeferredStatsChart('guests', 'chartGuests', canvas => new Chart(canvas, {
-    type: 'line',
-    data: {
-      labels: monthLabels,
-      datasets: [{
-        label: uiText('Гости'),
-        data: monthlyGuests,
-        borderColor: themeCssColor('--chart-accent', '#6d2cfc'),
-        backgroundColor: themeCssColor('--chart-accent-fill', 'rgba(109,44,252,.12)'),
-        fill: true,
-        tension: 0.35,
-        pointBackgroundColor: themeCssColor('--chart-accent', '#6d2cfc'),
-        pointBorderColor: themeCssColor('--chart-point-border', '#fff'),
-        pointBorderWidth: 2,
-        pointRadius: 4,
-        pointHoverRadius: 7
-      }]
-    },
-    options: {
-      ...defaultOpts,
-      plugins: { ...defaultOpts.plugins, legend: { display: false } },
-      scales: {
-        x: chartDefaults.scales.x,
-        y: { ...chartDefaults.scales.y, ticks: { ...chartDefaults.scales.y.ticks, stepSize: 5 } }
-      }
-    }
-  }));
-}
 
 async function syncCalendars() {
   const btn = document.getElementById('syncBtn');
@@ -8790,6 +8020,7 @@ async function syncCalendars() {
     if (!res.ok || result?.success === false) {
       throw new Error(result?.error || `HTTP ${res.status}`);
     }
+    window.BookingAnalytics?.refresh();
     statsSnapshotsLoaded = false;
     statsSnapshotsPromise = null;
     await loadData();
@@ -8856,6 +8087,7 @@ async function autoSyncCalendars() {
     if (!res.ok || result?.success === false || result?.partial) {
       throw new Error(result?.error || result?.message || `HTTP ${res.status}`);
     }
+    window.BookingAnalytics?.refresh();
     statsSnapshotsLoaded = false;
     statsSnapshotsPromise = null;
     return true;

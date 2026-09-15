@@ -47,6 +47,10 @@ app.get('/api/properties', async (req, res) => {
 
 app.get('/api/dashboard', async (req, res) => {
   try {
+    if (req.query.analytics === '1') {
+      return require('./booking-analytics').handleAnalytics(req, res, db);
+    }
+
     if (req.query.stats_only === '1') {
       const snapshots = await db.getStatsSnapshots({
         seasonYear: req.query.season_year,

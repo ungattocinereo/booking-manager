@@ -23,6 +23,7 @@
     'Календарь': 'Calendario',
     'Уборка': 'Pulizie',
     'Статистика': 'Statistiche',
+    'Статистика бронирований': 'Statistiche delle prenotazioni',
     'Налоги': 'Imposte',
     'Гости': 'Ospiti',
     'Atrani · операционный день': 'Atrani · giornata operativa',

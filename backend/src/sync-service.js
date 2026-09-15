@@ -43,6 +43,7 @@ async function executeSync(source, options = {}) {
     const enrichResult = await enrichFromExports(db, Boolean(USE_POSTGRES));
     const tasksCount = await generateCleaningTasks();
     const failures = syncResult.failures || [];
+    const analytics = await require('./booking-analytics').recordAnalytics(db, { feeds: syncResult.feeds || [], failures });
     const statsSnapshot = await recordBookingStatsSnapshot(db, {
       source,
       syncStatus: failures.length ? 'partial' : 'success',
@@ -59,6 +60,7 @@ async function executeSync(source, options = {}) {
       tasks_created: tasksCount,
       enriched: enrichResult,
       feed_errors: failures,
+      analytics,
       stats_snapshot: {
         season_year: statsSnapshot.season_year,
         booking_count: statsSnapshot.booking_count,

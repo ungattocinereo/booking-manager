@@ -63,7 +63,7 @@ class Database {
         }
 
         // Load schema
-        const schema = fs.readFileSync(SCHEMA_PATH, 'utf8');
+        const schema = fs.readFileSync(SCHEMA_PATH, 'utf8') + '\n' + require('./analytics-store').schema;
         this.db.exec(`PRAGMA foreign_keys = ON;\n${schema}`, (err) => {
           if (err) {
             reject(err);
