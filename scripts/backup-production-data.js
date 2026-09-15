@@ -21,6 +21,9 @@ const TABLES = [
   'cleaner_properties',
   'cleaning_tasks',
   'booking_stats_snapshots',
+  'booking_analytics_state',
+  'booking_analytics_events',
+  'booking_analytics_snapshots',
   'sync_runs',
   'reporting_units',
   'guest_import_batches',
@@ -97,7 +100,7 @@ async function main() {
         continue;
       }
 
-      const order = table === 'cleaner_properties' ? 'cleaner_id, property_id' : 'id';
+      const order = table === 'cleaner_properties' ? 'cleaner_id, property_id' : table === 'booking_analytics_snapshots' ? 'snapshot_date' : 'id';
       const rows = await client.query(`SELECT * FROM ${table} ORDER BY ${order}`);
       manifest.tables[table] = {
         file: `${table}.json`,

@@ -77,7 +77,7 @@ class Database {
 
   async applySchema(client) {
     if (!fs.existsSync(SCHEMA_PATH)) throw new Error(`Postgres schema not found: ${SCHEMA_PATH}`);
-    const schema = fs.readFileSync(SCHEMA_PATH, 'utf8');
+    const schema = fs.readFileSync(SCHEMA_PATH, 'utf8') + '\n' + require('./analytics-store').schema;
     await client.query(schema);
     console.log('✅ Schema migrated');
   }

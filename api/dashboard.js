@@ -20,6 +20,10 @@ module.exports = async (req, res) => {
       await db.init();
     }
 
+    if (req.query.analytics === '1') {
+      return require('../backend/src/booking-analytics').handleAnalytics(req, res, db);
+    }
+
     if (req.query.stats_only === '1') {
       if (req.method && req.method !== 'GET') {
         res.setHeader('Allow', 'GET');

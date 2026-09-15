@@ -254,6 +254,19 @@ function createServer(state = {
       }));
       return;
     }
+    if (url.pathname === '/api/dashboard' && url.searchParams.get('analytics') === '1') {
+      const { aggregate, movement, optionsFromQuery } = require('../backend/src/booking-analytics');
+      const options = optionsFromQuery(Object.fromEntries(url.searchParams));
+      const observedAt = new Date().toISOString();
+      const baselineAt = `${options.year}-06-01T10:00:00Z`;
+      const historyStates = properties.map(p => ({ property_id:p.id, platform:'airbnb', started_at:baselineAt, last_observed_at:observedAt }));
+      const observedEvents = ['created','created','cancelled','removed','restored'].map((kind,i)=>({kind,occurred_at:`${options.year}-09-${String(i+1).padStart(2,'0')}T10:00:00Z`,property_id:properties[0].id,platform:'airbnb',before:{start_date:`${options.year}-10-01`},after:{start_date:`${options.year}-10-01`}}));
+      const overview = aggregate(bookings, [], properties, options);
+      const payload = {version:1,generated_at:observedAt,options,properties,years:[options.year-1,options.year,options.year+1],overview,movement:movement(observedEvents,historyStates,options),movement_monthly:movement(observedEvents,historyStates,{...options,group:'month'}),snapshots:[],legacy_snapshots:statsSnapshots,coverage:{journal_started_at:baselineAt,historical_inventory:false}};
+      response.writeHead(200, { 'content-type':'application/json' });
+      response.end(JSON.stringify(payload));
+      return;
+    }
     if (url.pathname === '/api/dashboard' && url.searchParams.get('stats_only') === '1') {
       state.statsRequests++;
       state.statsPaths = state.statsPaths || [];
@@ -382,7 +395,7 @@ function createServer(state = {
       return;
     }
 
-    const contentTypes = { '.html': 'text/html; charset=utf-8', '.png': 'image/png', '.ico': 'image/x-icon', '.json': 'application/json' };
+    const contentTypes = { '.js':'application/javascript', '.css':'text/css', '.html': 'text/html; charset=utf-8', '.png': 'image/png', '.ico': 'image/x-icon', '.json': 'application/json' };
     response.writeHead(200, { 'content-type': contentTypes[path.extname(filePath)] || 'application/octet-stream' });
     fs.createReadStream(filePath).pipe(response);
   });
@@ -1792,8 +1805,8 @@ async function inspectStatsPage(browser, baseUrl, viewport, isMobile) {
       metric: readSurface('#statsRadarGrid .stats-radar-metric'),
       dynamics: readSurface('#statsDynamicsCard'),
       dynamicsStartsCards: Boolean(history && radar && dynamics &&
-        history.compareDocumentPosition(radar) & Node.DOCUMENT_POSITION_FOLLOWING &&
-        radar.compareDocumentPosition(dynamics) & Node.DOCUMENT_POSITION_FOLLOWING)
+        dynamics.compareDocumentPosition(history) & Node.DOCUMENT_POSITION_FOLLOWING &&
+        history.compareDocumentPosition(radar) & Node.DOCUMENT_POSITION_FOLLOWING)
     };
   });
   for (const [name, surface] of Object.entries({
@@ -1807,7 +1820,7 @@ async function inspectStatsPage(browser, baseUrl, viewport, isMobile) {
   }
   assert.notEqual(surfaceHierarchy.dynamics.backgroundImage, 'none', 'season dynamics lost its card surface');
   assert.notEqual(surfaceHierarchy.dynamics.borderRadius, '0px', 'season dynamics no longer starts the card hierarchy');
-  assert.equal(surfaceHierarchy.dynamicsStartsCards, true, 'operational strip no longer precedes season dynamics');
+  assert.equal(surfaceHierarchy.dynamicsStartsCards, true, 'movement no longer precedes the operational strip');
 
   const initialThemeResolution = await page.evaluate(() => document.documentElement.dataset.colorScheme);
   const firstThemeTarget = initialThemeResolution === 'dark' ? 'light' : 'dark';
@@ -1889,6 +1902,8 @@ async function inspectCachedStatsAuthFallback(browser, baseUrl, serverState) {
   await waitForStatsReady(page, 'ok');
   assert.match(await page.locator('#statsHistoryTitle').innerText(), /история статистики актуальна/i);
 
+  await page.locator('#analyticsHistory > summary').click();
+  await page.locator('#analytics-historyMode').selectOption('legacy');
   const cachedBookings = await page.locator('#statsDynamicBookings').innerText();
   assert.notEqual(cachedBookings, '0');
   const priorityOrder = await page.evaluate(() => {
@@ -1944,8 +1959,8 @@ async function inspectStatsWithoutChart(browser, baseUrl) {
   assert.equal(await page.locator('#statsSummary .stats-summary-card').count(), 4);
   assert.equal(await page.locator('#statsChartsStatus').isVisible(), true);
   assert.match(await page.locator('#statsChartsStatus').innerText(), /модуль графиков не загрузился/i);
-  assert.equal(await page.locator('#statsGrid').getAttribute('hidden'), '');
-  assert.equal(await page.locator('#statsGrid').isVisible(), false);
+  assert.equal(await page.locator('#statsGrid').isVisible(), true);
+  assert.ok(await page.locator('#statsGrid details[open] table').count() >= 2, 'tables remain usable without Chart.js');
   assert.deepEqual(errors.pageErrors, []);
   assert.deepEqual(errors.consoleErrors, []);
 

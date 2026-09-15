@@ -181,6 +181,12 @@ function parseICalData(icalData) {
   for (const vevent of vevents) {
     const event = new ICAL.Event(vevent);
     
+    const uid = event.uid || '';
+    const status = String(vevent.getFirstPropertyValue('status') || '').toUpperCase();
+    if (status === 'CANCELLED' && (!event.startDate || !event.endDate)) {
+      events.push({ uid, status });
+      continue;
+    }
     // Parse dates
     const startDate = event.startDate.toJSDate();
     const endDate = event.endDate.toJSDate();
@@ -205,6 +211,7 @@ function parseICalData(icalData) {
     if (phoneMatch) phoneLast4 = phoneMatch[1];
 
     events.push({
+      uid, status,
       summary: event.summary || 'Booking',
       startDate: formatDate(startDate),
       endDate: formatDate(endDate),
@@ -224,17 +231,21 @@ async function syncPropertyCalendars(property) {
   let totalEvents = 0;
   let totalArchived = 0;
   const failures = [];
+  const feeds = [];
 
   for (const calendar of property.calendars) {
     try {
       const icalData = await fetchCalendar(calendar.url);
       const events = parseICalData(icalData);
+      const observation = { property_id: property.id, platform: calendar.platform, events: [] };
+      feeds.push(observation);
 
       console.log(`  ${calendar.platform}: ${events.length} events`);
 
       const feedKeys = [];
 
       for (const event of events) {
+        if (event.status === 'CANCELLED') { observation.events.push(event); continue; }
         // Determine booking type
         let bookingType = 'reservation';
         const summary = (event.summary || '').toLowerCase();
@@ -260,6 +271,7 @@ async function syncPropertyCalendars(property) {
           console.log(`  ↩️ Preserved original ${calendar.platform} start date for checkout ${event.endDate}`);
         }
         feedKeys.push({ startDate: persistedStartDate, endDate: event.endDate });
+        observation.events.push({ ...event, startDate: persistedStartDate });
       }
 
       // Soft-archive future bookings that are no longer in the iCal feed.
@@ -285,7 +297,7 @@ async function syncPropertyCalendars(property) {
     }
   }
 
-  return { events: totalEvents, archived: totalArchived, deleted: 0, failures };
+  return { events: totalEvents, archived: totalArchived, deleted: 0, failures, feeds };
 }
 
 async function generateCleaningTasks(options = {}) {
@@ -377,11 +389,13 @@ async function syncAll() {
     let totalEvents = 0;
     let totalArchived = 0;
     const failures = [];
+  const feeds = [];
     for (const property of config.properties) {
       const result = await syncPropertyCalendars(property);
       totalEvents += result.events;
       totalArchived += result.archived || 0;
       failures.push(...(result.failures || []));
+    feeds.push(...(result.feeds || []));
     }
 
     console.log(`\n✅ Total events synced: ${totalEvents}, stale archived: ${totalArchived}`);
@@ -393,6 +407,8 @@ async function syncAll() {
 
     // Generate cleaning tasks after enrichment so guest metadata is current.
     await generateCleaningTasks();
+
+    await require('./booking-analytics').recordAnalytics(db, { feeds, failures });
 
     // Store an aggregate statistics snapshot after the final booking state is known.
     const { recordBookingStatsSnapshot } = require('./stats-snapshots');
@@ -440,16 +456,18 @@ async function syncCalendars() {
   let totalEvents = 0;
   let totalArchived = 0;
   const failures = [];
+  const feeds = [];
   for (const property of config.properties) {
     const result = await syncPropertyCalendars(property);
     totalEvents += result.events;
     totalArchived += result.archived || 0;
     failures.push(...(result.failures || []));
+    feeds.push(...(result.feeds || []));
   }
 
   console.log(`\n✅ Total events synced: ${totalEvents}, stale archived: ${totalArchived}`);
   if (failures.length) console.error(`⚠️ ${failures.length} calendar feed(s) failed`);
-  return { totalEvents, totalArchived, totalDeleted: 0, failures };
+  return { totalEvents, totalArchived, totalDeleted: 0, failures, feeds };
 }
 
 module.exports = {

@@ -9,6 +9,8 @@
     { "path": "/api/reporting/maintenance", "schedule": "30 6 * * *" }
   ],
   "rewrites": [
+    { "source": "/analytics.js", "destination": "/frontend/public/analytics.js" },
+    { "source": "/analytics.css", "destination": "/frontend/public/analytics.css" },
     { "source": "/api/reporting", "destination": "/api/dashboard?reporting_route=dashboard" },
     { "source": "/api/reporting/imports", "destination": "/api/dashboard?reporting_route=imports" },
     { "source": "/api/reporting/alloggiati", "destination": "/api/dashboard?reporting_route=alloggiati" },
