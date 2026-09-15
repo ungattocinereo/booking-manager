@@ -263,7 +263,7 @@ function createServer(state = {
       const historyStates = properties.map(p => ({ property_id:p.id, platform:'airbnb', started_at:baselineAt, last_observed_at:observedAt }));
       const observedEvents = ['created','created','cancelled','removed','restored'].map((kind,i)=>({kind,occurred_at:`${observedYear}-09-${String(i+1).padStart(2,'0')}T10:00:00Z`,property_id:properties[0].id,platform:'airbnb',before:{start_date:`${options.year}-10-01`},after:{start_date:`${options.year}-10-01`}}));
       const overview = aggregate(bookings, [], properties, options);
-      const payload = {version:1,generated_at:observedAt,options,properties,years:[options.year-1,options.year,options.year+1],overview,movement:movement(observedEvents,historyStates,options),movement_monthly:movement(observedEvents,historyStates,{...options,group:'month'}),snapshots:[],legacy_snapshots:statsSnapshots,coverage:{journal_started_at:baselineAt,historical_inventory:false}};
+      const payload = {version:1,generated_at:observedAt,options,properties,years:[options.year-1,options.year,options.year+1],overview,movement:movement(observedEvents,historyStates,options),movement_monthly:movement(observedEvents,historyStates,{...options,group:'month'}),snapshots:[],legacy_snapshots:!options.property&&!options.platform&&options.year===observedYear?statsSnapshots:[],coverage:{journal_started_at:baselineAt,historical_inventory:false}};
       response.writeHead(200, { 'content-type':'application/json' });
       response.end(JSON.stringify(payload));
       return;
@@ -1903,7 +1903,6 @@ async function inspectCachedStatsAuthFallback(browser, baseUrl, serverState) {
   await waitForStatsReady(page, 'ok');
   assert.match(await page.locator('#statsHistoryTitle').innerText(), /история статистики актуальна/i);
 
-  await page.locator('#analyticsHistory > summary').click();
   await page.locator('#analytics-historyMode').selectOption('legacy');
   const cachedBookings = await page.locator('#statsDynamicBookings').innerText();
   assert.notEqual(cachedBookings, '0');

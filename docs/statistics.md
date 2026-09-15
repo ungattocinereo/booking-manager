@@ -4,6 +4,14 @@ The statistics page separates **observation time** (new bookings, cancellations,
 calendar removals and restorations) from **stay time** (arrivals, nights and guests).
 The default period is January–December in Europe/Rome. April–November is a shortcut.
 
+The page opens with current stay totals and an expanded saved-history chart.
+Automatic history selection uses the series with more observations, keeping the
+existing seasonal history useful while the annual series accumulates. The scope
+is labelled explicitly; the two series are never combined. Initial/final values
+and their difference use the chosen comparison dates. Empty event journals hide
+zero KPI cards and show a compact explanation instead of a blank chart. A single
+saved observation is displayed as a value until a trend can be drawn.
+
 ## Data contract
 
 `GET /api/dashboard?analytics=1&year=2026&period=year&group=month`
