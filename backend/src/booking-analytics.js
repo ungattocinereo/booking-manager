@@ -50,7 +50,9 @@ function sourceObservation(rows, feed, previous = null, capturedAt = new Date().
     const matching = observed.filter(e => e.startDate === data.start_date && e.endDate === data.end_date);
     const event = matching.length === 1 ? matching[0] : null;
     const external = event && byIdentity(event);
-    const oldMatches = Object.entries(previousBookings).filter(([, old]) => old.row_id === String(b.id) || datesKey(old) === datesKey(data));
+    const possibleMatches = Object.entries(previousBookings).filter(([, old]) => old.row_id === String(b.id) || datesKey(old) === datesKey(data));
+    const activeMatches = possibleMatches.filter(([, old]) => old.status === 'active');
+    const oldMatches = activeMatches.length === 1 ? activeMatches : possibleMatches;
     let key = external;
     // Keep the original analytic identity when a legacy row first acquires a UID.
     if (!key || !previousBookings[key]) {
@@ -243,8 +245,11 @@ async function getAnalytics(db, query = {}, now = new Date().toISOString()) {
   const [rows, properties, history] = await Promise.all([db.getBookings(null, null, { includeInactive: true }), db.getProperties(), readAnalytics(db)]);
   if (options.property && !properties.some(p => p.id === options.property)) { const e = new Error('Unknown property'); e.statusCode = 400; throw e; }
   const superseded = new Set(history.states.flatMap(s => s.superseded_rows || []));
-  const current = reservationRows(rows).filter(b => !superseded.has(String(b.id))).map(clean);
-  const cancelled = new Set(history.states.flatMap(s => Object.values(s.bookings).filter(b => b.status === 'cancelled').map(datesKey)));
+  const activeStates = history.states.flatMap(s => Object.values(s.bookings).filter(b => b.status === 'active'));
+  const activeIds = new Set(activeStates.map(b => b.row_id));
+  const activeDates = new Set(activeStates.map(datesKey));
+  const current = reservationRows(rows).filter(b => !superseded.has(String(b.id)) || activeIds.has(String(b.id))).map(clean);
+  const cancelled = new Set(history.states.flatMap(s => Object.values(s.bookings).filter(b => b.status === 'cancelled' && !activeDates.has(datesKey(b))).map(datesKey)));
   const overview = aggregate(current.filter(b => !cancelled.has(datesKey(b))), availabilityRows(rows), properties, options);
   const snapshots = history.snapshots.map(s => ({ date: s.snapshot_date, captured_at: s.captured_at, version: s.version, ...aggregate(s.bookings, s.availability, s.properties, options) }));
   const years = [...new Set([Number(romeDateKey(now).slice(0, 4)), ...rows.map(b => Number(iso(b.start_date).slice(0, 4))), ...history.events.map(e => Number(romeDateKey(e.occurred_at).slice(0, 4)))])].filter(Number.isFinite).sort();

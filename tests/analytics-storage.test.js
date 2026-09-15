@@ -30,5 +30,12 @@ test('durable analytics baselines, events, failure coverage and daily snapshots'
   history=await readAnalytics(db);assert.equal(history.snapshots.at(-1).captured_at,'2026-09-02T10:00:00Z');assert.equal(history.events.length,1);
   assert.equal((await getAnalytics(db,{year:'2026'},'2026-09-02T12:00:00Z')).movement.buckets[8].coverage,'partial');
   await assert.rejects(getAnalytics(db,{property:'not-a-property'}),e=>e.statusCode===400);
+  const cancelled=[{...updated[0],events:[{...updated[0].events[0],status:'CANCELLED'},updated[0].events[1]]}];
+  await recordAnalytics(db,{feeds:cancelled,capturedAt:'2026-09-03T10:00:00Z'});
+  assert.equal((await getAnalytics(db,{year:'2026'})).overview.bookings,0);
+  const replacement=[{...updated[0],events:[{...updated[0].events[0],uid:'replacement'},updated[0].events[1]]}];
+  await recordAnalytics(db,{feeds:replacement,capturedAt:'2026-09-03T11:00:00Z'});
+  assert.equal((await getAnalytics(db,{year:'2026'})).overview.bookings,1,'a new reservation on previously cancelled dates must remain visible');
+
  }finally{await db.close();fs.rmSync(dir,{recursive:true,force:true});}
 });
