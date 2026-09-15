@@ -59,9 +59,19 @@ html[data-color-scheme="dark"] #statsTab { --a-green:#67d8b5; --a-red:#ff8b9b; -
 .a-rank-fill { display:block; height:100%; width:var(--fill); background:var(--a-purple); border-radius:6px; }
 .a-rank-value { font-family:'IBM Plex Mono',monospace; font-size:12px; text-align:right; }
 .a-rank-value small { color:var(--text-secondary, var(--muted)); font:11px 'Golos Text',sans-serif; }
+.a-history-controls select { width:100%; min-width:0; }
 .a-history-controls { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px; align-items:end; }
-.a-history-number { font:600 32px 'IBM Plex Mono',monospace; }
-.a-history-delta { margin-left:12px; font-size:13px; }
+.a-history-scope { display:flex; align-items:center; gap:8px; color:var(--a-purple); font-size:12px; margin:18px 0; }
+.a-history-scope svg { width:18px; height:18px; flex-shrink:0; }
+.a-history-summary { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; margin-bottom:20px; }
+.a-history-summary small { display:block; color:var(--text-secondary, var(--muted)); font-size:11px; line-height:1.5; }
+.a-history-summary strong { display:block; margin-top:6px; font:600 clamp(22px,3vw,34px)/1.2 'IBM Plex Mono',monospace; overflow-wrap:anywhere; }
+.a-history-delta { color:var(--a-purple); }
+.a-journal-empty { display:grid; justify-items:center; gap:8px; padding:18px 12px; }
+.a-journal-empty svg { width:24px; height:24px; color:var(--a-purple); }
+.a-journal-empty strong { color:var(--text); font-size:14px; }
+.a-journal-empty span { max-width:680px; }
+#analyticsMovementSummary { margin-bottom:18px; }
 .a-empty { padding:26px 12px; color:var(--text-secondary, var(--muted)); text-align:center; font-size:13px; line-height:1.7; }
 .a-pill { display:inline-block; padding:4px 8px; border:1px solid var(--border); border-radius:20px; font-size:11px; color:var(--text-secondary, var(--muted)); }
 .a-hist-title { display:flex; justify-content:space-between; align-items:center; gap:12px; cursor:pointer; list-style:none; }

@@ -1,6 +1,6 @@
 /* Analytics rendering is separate from the calendar and uses server-computed data. */
 (() => {
-  const state = { year: null, period: 'year', property: '', platform: '', group: 'month', annualMetric: 'arrivals', cancellationBasis: 'event', historyMetric: 'bookings', historyMode: 'annual', historyFrom: null, historyTo: null, data: null, key: '', fetched: 0, charts: [], sequence: 0 };
+  const state = { year: null, period: 'year', property: '', platform: '', group: 'month', annualMetric: 'arrivals', cancellationBasis: 'event', historyMetric: 'bookings', historyMode: 'auto', historyFrom: null, historyTo: null, data: null, key: '', fetched: 0, charts: [], sequence: 0 };
   const t = (ru, it) => typeof IS_ITALIAN !== 'undefined' && IS_ITALIAN ? it : ru;
   const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const num = n => n == null ? '—' : new Intl.NumberFormat(t('ru-RU', 'it-IT'), { maximumFractionDigits: 1 }).format(n);
@@ -28,8 +28,12 @@
     const max = Math.max(1,...entries.map(e=>e[1]||0));
     return `<div class="a-rank">${entries.length ? entries.map(([label,value])=>`<div class="a-rank-row"><span>${esc(label)}</span><span class="a-rank-track" aria-hidden="true"><span class="a-rank-fill" style="--fill:${(value||0)/max*100}%"></span></span><span class="a-rank-value">${num(value)}${unit}<small>${total ? ` · ${percent(value/total*100)}` : ''}</small></span></div>`).join('') : `<div class="a-empty">${t('Нет данных за выбранный период','Nessun dato per il periodo selezionato')}</div>`}</div>`;
   }
+  function historyMode(data) {
+    if (state.historyMode !== 'auto') return state.historyMode;
+    return data.legacy_snapshots.length > data.snapshots.length ? 'legacy' : 'annual';
+  }
   function historyData(data) {
-    if (state.historyMode === 'legacy') return data.legacy_snapshots.map(s=>({ date:s.snapshot_date||String(s.captured_at).slice(0,10), captured_at:s.captured_at, bookings:s.booking_count,nights:s.occupied_nights,occupancy:Number(s.occupancy_percent),guests:s.guest_count, version:s.payload?.calculation_version||1 }));
+    if (historyMode(data) === 'legacy') return data.legacy_snapshots.map(s=>({ date:s.snapshot_date||String(s.captured_at).slice(0,10), captured_at:s.captured_at, bookings:s.booking_count,nights:s.occupied_nights,occupancy:Number(s.occupancy_percent),guests:s.guest_count, version:s.payload?.calculation_version||1 }));
     return data.snapshots;
   }
   function comparisonHtml(comparison) {
@@ -43,16 +47,16 @@
     const data=state.data; if (!data) return;
     const root=document.getElementById('analyticsRoot'); if (!root) return;
     const focused=document.activeElement?.id;
-    const expanded = root.querySelector('#analyticsHistory')?.open || false;
     dispose();
     const o=data.overview, movement=data.movement, totals=movement.totals;
     const known=movement.buckets.some(b=>b.coverage!=='none');
+    const hasEvents = Object.keys(eventNames()).some(k => k !== 'net' && totals[k] > 0) || totals.cancellation_confirmed > 0;
     const complete = movement.buckets.every(b=>b.coverage==='observed');
     const labels=eventNames(), names=metricNames();
     const counts = k => known ? `${k==='net' && totals[k]>0?'+':''}${num(totals[k])}` : '—';
     const coverageText = known
       ? `${t('Учёт изменений с','Movimenti osservati dal')} ${date(movement.coverage_start)}. ${t('Пустые интервалы означают отсутствие истории. Неполные периоды отмечены в таблице.','Gli intervalli vuoti indicano assenza di storico. I periodi parziali sono indicati nella tabella.')}`
-      : t('Подробная история начнётся после первой успешной синхронизации. Существующие брони станут исходным состоянием.','Lo storico dettagliato inizierà dopo la prima sincronizzazione riuscita. Le prenotazioni esistenti saranno lo stato iniziale.');
+      : t('За выбранный период нет наблюдений за изменениями.','Nessuna osservazione dei movimenti nel periodo selezionato.');
     root.innerHTML = `
       <div class="a-toolbar" aria-label="${t('Фильтры статистики','Filtri statistiche')}">
         ${select('analytics-year',t('Год','Anno'),state.year,data.years.map(y=>[y,y]))}
@@ -61,20 +65,6 @@
         ${select('analytics-platform',t('Платформа','Piattaforma'),state.platform,[['',t('Все платформы','Tutte le piattaforme')],['airbnb','Airbnb'],['booking','Booking.com'],['direct',t('Напрямую','Dirette')]])}
         <button class="a-btn a-refresh" type="button" data-refresh>${icon('refresh-cw')}${t('Обновить','Aggiorna')}</button>
       </div>
-      <div class="a-kpis" id="analyticsMovementSummary">
-        ${kpi(t('Новые бронирования','Nuove prenotazioni'),counts('created'),t('Впервые обнаружены в периоде','Rilevate per la prima volta nel periodo'),'calendar-plus','a-positive')}
-        ${kpi(t('Подтверждённые отмены','Annullamenti confermati'),known?num(totals.cancelled+totals.cancellation_confirmed):'—',t('Явное подтверждение источником','Conferma esplicita della fonte'),'calendar-x','a-negative')}
-        ${kpi(t('Снято с календаря','Rimosse dal calendario'),counts('removed'),t('Причина источником не указана','Motivo non indicato dalla fonte'),'calendar-minus','a-warning')}
-        ${kpi(t('Изменение количества','Variazione del numero'),counts('net'),known?`${t('Восстановлены','Ripristinate')}: ${num(totals.restored)} · ${complete?t('полный период','periodo completo'):t('доступная часть периода','parte osservata del periodo')}`:t('По доступной истории','Secondo lo storico disponibile'),'chart-no-axes-combined',totals.net<0?'a-negative':'a-positive')}
-      </div>
-      <section class="a-card a-feature" id="statsDynamicsCard">
-        ${heading(t('Что изменилось за период','Movimenti del periodo'),t('По дате события · любые даты будущего заезда','Per data dell’evento · qualsiasi data di arrivo'),'activity',select('analytics-group',t('Группировка','Raggruppamento'),state.group,[['month',t('Месяцы','Mesi')],['week',t('Недели','Settimane')],['day',t('Дни','Giorni')]]))}
-        ${chartArea('analyticsMovementChart',t('Новые бронирования и потери по периодам','Nuove prenotazioni e perdite per periodo'))}
-        <div class="a-coverage">${icon('info')}<span>${esc(coverageText)}</span></div>
-        <div class="a-note">${t('Плюс — новые и восстановленные. Минус — отменённые и снятые. Переносы не увеличивают число броней.','Positivo: nuove e ripristinate. Negativo: annullate e rimosse. Le modifiche di date non aumentano il numero di prenotazioni.')}</div>
-        ${comparisonHtml(data.comparison)}
-        ${table([t('Период','Periodo'),...Object.values(labels),t('Покрытие','Copertura')],movement.buckets.map(b=>[b.period,...Object.keys(labels).map(k=>b.coverage==='none'?'—':num(b[k])),b.coverage==='none'?t('Нет истории','Nessuno storico'):b.coverage==='partial'?t('Неполный','Parziale'):t('Наблюдался','Osservato')]),'',typeof Chart==='undefined')}
-      </section>
       <div class="a-section-head"><h2>${t('Год проживания','Anno del soggiorno')} · ${state.year}</h2><span>${t('Заезды и ночи по датам проживания','Arrivi e notti per date del soggiorno')}</span></div>
       <div class="a-kpis" id="statsSummary">
         ${kpi(t('Заезды','Arrivi'),num(o.arrivals),`${num(o.bookings)} ${t('броней пересекают период','prenotazioni intersecano il periodo')}`,'calendar-days')}
@@ -82,6 +72,10 @@
         ${kpi(t('Загрузка','Occupazione'),percent(o.occupancy),t('Доля продаваемых ночей','Quota delle notti vendibili'),'chart-no-axes-combined')}
         ${kpi(t('Гости','Ospiti'),num(o.guests),`${t('Число гостей известно для','Ospiti noti per')} ${num(o.guests_known)} / ${num(o.arrivals)} ${t('заездов','arrivi')}`,'users')}
       </div>
+      <section class="a-card a-feature" id="statsDynamicsCard">
+        ${heading(t('Как менялось число бронирований','Come cambiava il numero di prenotazioni'),t('Сохранённые значения на даты наблюдения','Valori salvati alle date di osservazione'),'chart-no-axes-combined')}
+        <div id="analyticsHistoryContent"></div>
+      </section>
       <div id="statsChartsStatus" class="a-coverage" role="status" ${typeof Chart!=='undefined'?'hidden':''}>${t('Модуль графиков не загрузился. Показатели и таблицы доступны.','Il modulo grafici non è disponibile. Valori e tabelle restano accessibili.')} <button class="a-btn" data-refresh>${t('Повторить','Riprova')}</button></div>
       <div class="a-grid" id="statsGrid">
         <section class="a-card stats-chart-card">
@@ -91,11 +85,25 @@
         </section>
         <section class="a-card stats-chart-card">
           ${heading(t('Отмены и снятые брони','Annullamenti e rimozioni'),t('Раздельно по подтверждению источника','Distinti secondo la conferma della fonte'),'calendar-x',select('analytics-cancellationBasis',t('Группировать','Raggruppa'),state.cancellationBasis,[['event',t('Когда отменили','Data di annullamento')],['arrival',t('Когда планировался заезд','Arrivo previsto')]]))}
-          ${chartArea('analyticsCancellationChart',t('Отмены и снятые брони по месяцам','Annullamenti e rimozioni per mese'))}
+          <div id="analyticsCancellationVisual"></div>
           <div id="analyticsCancellationTable"></div>
           <div class="a-note">${t('Снятие с календаря не доказывает отмену. Дата события — момент обнаружения, если источник не сообщил дату оформления.','La rimozione dal calendario non prova un annullamento. La data dell’evento è quella del rilevamento, se la fonte non indica la data originale.')}</div>
         </section>
       </div>
+      <section class="a-card" id="analyticsMovement">
+        ${heading(t('Что изменилось за период','Movimenti del periodo'),t('По дате события · любые даты будущего заезда','Per data dell’evento · qualsiasi data di arrivo'),'activity',select('analytics-group',t('Группировка','Raggruppamento'),state.group,[['month',t('Месяцы','Mesi')],['week',t('Недели','Settimane')],['day',t('Дни','Giorni')]]))}
+        <div class="a-kpis" id="analyticsMovementSummary" ${hasEvents?'':'hidden'}>
+        ${kpi(t('Новые бронирования','Nuove prenotazioni'),counts('created'),t('Впервые обнаружены в периоде','Rilevate per la prima volta nel periodo'),'calendar-plus','a-positive')}
+        ${kpi(t('Подтверждённые отмены','Annullamenti confermati'),known?num(totals.cancelled+totals.cancellation_confirmed):'—',t('Явное подтверждение источником','Conferma esplicita della fonte'),'calendar-x','a-negative')}
+        ${kpi(t('Снято с календаря','Rimosse dal calendario'),counts('removed'),t('Причина источником не указана','Motivo non indicato dalla fonte'),'calendar-minus','a-warning')}
+        ${kpi(t('Изменение количества','Variazione del numero'),counts('net'),known?`${t('Восстановлены','Ripristinate')}: ${num(totals.restored)} · ${complete?t('полный период','periodo completo'):t('доступная часть периода','parte osservata del periodo')}`:t('По доступной истории','Secondo lo storico disponibile'),'chart-no-axes-combined',totals.net<0?'a-negative':'a-positive')}
+      </div>
+        ${hasEvents?chartArea('analyticsMovementChart',t('Новые бронирования и потери по периодам','Nuove prenotazioni e perdite per periodo')):`<div class="a-empty a-journal-empty">${icon('notebook-pen')}<strong>${t('Новых изменений пока не зарегистрировано','Nessun nuovo movimento registrato')}</strong><span>${t('Исходные бронирования уже учтены в показателях выше. Отмены, новые и снятые брони появятся здесь по мере обнаружения.','Le prenotazioni iniziali sono già incluse negli indicatori sopra. Annullamenti, nuove prenotazioni e rimozioni appariranno quando rilevati.')}</span></div>`}
+        <div class="a-coverage">${icon('info')}<span>${esc(coverageText)}</span></div>
+        ${hasEvents?`<div class="a-note">${t('Плюс — новые и восстановленные. Минус — отменённые и снятые. Переносы не увеличивают число броней.','Positivo: nuove e ripristinate. Negativo: annullate e rimosse. Le modifiche di date non aumentano il numero di prenotazioni.')}</div>`:''}
+        ${hasEvents?comparisonHtml(data.comparison):''}
+        ${table([t('Период','Periodo'),...Object.values(labels),t('Покрытие','Copertura')],movement.buckets.map(b=>[b.period,...Object.keys(labels).map(k=>b.coverage==='none'?'—':num(b[k])),b.coverage==='none'?t('Нет истории','Nessuno storico'):b.coverage==='partial'?t('Неполный','Parziale'):t('Наблюдался','Osservato')]),'',typeof Chart==='undefined')}
+      </section>
       <section class="a-card">
         ${heading(t('Загрузка апартаментов','Occupazione degli appartamenti'),t('Занятые / продаваемые ночи · расчёт по текущему составу апартаментов','Notti prenotate / vendibili · inventario attuale degli appartamenti'),'bed-double')}
         <div class="a-table-scroll" role="region" tabindex="0" aria-label="${t('Загрузка по апартаментам и месяцам','Occupazione per appartamento e mese')}"><table class="a-table a-matrix"><thead><tr><th scope="col">${t('Апартамент','Appartamento')}</th>${o.months.map(m=>`<th scope="col">${month(m.month)}</th>`).join('')}<th scope="col">${t('Итого','Totale')}</th></tr></thead><tbody>${o.matrix.map(p=>{const sellable=p.months.reduce((s,m)=>s+m.sellable,0);return `<tr><th scope="row">${esc(p.name)}</th>${p.months.map(m=>`<td style="--heat:${m.occupancy==null?0:Math.min(45,m.occupancy*.45)}%" title="${m.nights} / ${m.sellable}">${percent(m.occupancy)}</td>`).join('')}<td class="a-matrix-total">${percent(sellable?p.months.reduce((s,m)=>s+m.nights,0)/sellable*100:null)}</td></tr>`;}).join('')}</tbody></table></div>
@@ -108,7 +116,7 @@
         <section class="a-card stats-chart-card">${heading(t('Срок проживания','Durata del soggiorno'),t('Среднее число ночей по апартаментам','Numero medio di notti per appartamento'),'moon')}<div id="analyticsDuration"></div></section>
         <section class="a-card stats-chart-card">${heading(t('Гости по месяцам','Ospiti per mese'),`${t('Количество заполнено для','Numero compilato per')} ${num(o.guests_known)} / ${num(o.arrivals)} ${t('заездов','arrivi')}`,'users')}${chartArea('analyticsGuestsChart',t('Гости по месяцам','Ospiti per mese'))}${table([t('Месяц','Mese'),t('Гости','Ospiti'),t('Броней с числом гостей','Prenotazioni con numero ospiti')],o.months.map(m=>[month(m.month),num(m.guests),`${m.guests_known} / ${m.arrivals}`]),'',typeof Chart==='undefined')}</section>
       </div>
-      <details class="a-card" id="analyticsHistory" ${expanded?'open':''}><summary class="a-hist-title"><h2>${t('Как менялась картина бронирований','Come cambiava il quadro delle prenotazioni')}</h2><span class="a-pill">${t('История','Storico')} ↓</span></summary><div class="a-history-content" id="analyticsHistoryContent"></div></details>
+
     `;
     const c=colors();
     const periodLabels=movement.buckets.map(b=>state.group==='month'?month(b.period):new Intl.DateTimeFormat(t('ru-RU','it-IT'),{day:'numeric',month:'short',timeZone:'UTC'}).format(new Date(`${b.start}T12:00:00Z`)));
@@ -122,6 +130,8 @@
       const monthRows=data.movement_monthly?.buckets || movement.buckets;
       cancellationMonths.forEach(m=>{const row=monthRows.find(b=>b.period===m.month);if(row&&row.coverage!=='none'){m.cancelled=row.cancelled+row.cancellation_confirmed;m.removed=row.removed;}});
     }
+    const hasCancellations=cancellationMonths.some(m=>m.cancelled>0||m.removed>0);
+    document.getElementById('analyticsCancellationVisual').innerHTML=hasCancellations?chartArea('analyticsCancellationChart',t('Отмены и снятые брони по месяцам','Annullamenti e rimozioni per mese')):`<div class="a-empty a-journal-empty">${icon('calendar-check')}<strong>${t('Нет зарегистрированных отмен и снятий','Nessun annullamento o rimozione registrati')}</strong><span>${movement.coverage_start?`${t('Учёт изменений с','Movimenti osservati dal')} ${date(movement.coverage_start)}. `:''}${t('История до начала учёта недоступна.','Lo storico precedente non è disponibile.')}</span></div>`;
     chart('analyticsCancellationChart','bar',cancellationMonths.map(m=>month(m.month)),['cancelled','removed'].map(k=>({label:labels[k],data:cancellationMonths.map(m=>m[k]),backgroundColor:c[k],borderRadius:4})));
     document.getElementById('analyticsCancellationTable').innerHTML=table([t('Месяц','Mese'),labels.cancelled,labels.removed],cancellationMonths.map(m=>[month(m.month),num(m.cancelled),num(m.removed)]),t('Только зарегистрированные события; прошлое покрыто не полностью.','Solo eventi registrati; copertura storica incompleta.'),typeof Chart==='undefined');
     const countries=Object.entries(o.countries).sort((a,b)=>b[1]-a[1]).map(([code,n])=>[code==='unknown'?t('Не указано','Non indicata'):(new Intl.DisplayNames([t('ru','it')],{type:'region'}).of(/^[a-z]{2}$/i.test(code)?code.toUpperCase():'ZZ')||code),n]);
@@ -132,26 +142,34 @@
     document.getElementById('analyticsDuration').innerHTML=rankRows(o.matrix.map(p=>[p.name,p.avg_stay]).sort((a,b)=>(b[1]||0)-(a[1]||0)),0)+table([t('Ночей','Notti'),t('Бронирования','Prenotazioni')],Object.entries(o.stay_buckets));
     chart('analyticsGuestsChart','bar',o.months.map(m=>month(m.month)),[{label:names.guests,data:o.months.map(m=>m.guests),backgroundColor:c.net,borderRadius:5}]);
     paintHistory();
-    root.onchange=event=>{const setting=event.target.dataset.setting;if(!setting)return;state[setting]=event.target.value;if(['year','period','property','platform','group'].includes(setting)){state.historyFrom=null;state.historyTo=null;renderStats();}else paint();};
+    root.onchange=event=>{const setting=event.target.dataset.setting;if(!setting)return;state[setting]=event.target.value;if(['year','period','property','platform','group'].includes(setting)){state.historyFrom=null;state.historyTo=null;if(setting!=='group')state.historyMode='auto';renderStats();}else paint();};
     root.onclick=event=>{if(event.target.closest('[data-refresh]')){state.fetched=0;retryStatsHistory();}};
-    document.getElementById('analyticsHistory').ontoggle=event=>{if(event.target.open)paintHistory(true);};
     if (typeof lucide!=='undefined')lucide.createIcons();
     if(focused)document.getElementById(focused)?.focus({preventScroll:true});
   }
   function colorMix(hex) { return /^#[0-9a-f]{6}$/i.test(hex)?`${hex}88`:hex; }
-  function paintHistory(redraw=false) {
+  function paintHistory() {
     const target=document.getElementById('analyticsHistoryContent');if(!target||!state.data)return;
-    // The history chart is only mounted while expanded.
     const existing=state.historyChart;
     if(existing){existing.destroy();state.charts=state.charts.filter(c=>c!==existing);state.historyChart=null;}
-    const rows=historyData(state.data), names=metricNames();
-    const from=rows.find(r=>r.date===state.historyFrom)||rows[0];
+    const rows=historyData(state.data), names=metricNames(), mode=historyMode(state.data);
     const to=rows.find(r=>r.date===state.historyTo)||rows.at(-1);
+    const from=rows.find(r=>r.date===state.historyFrom)||rows.find(r=>r.version===to?.version)||rows[0];
     const compatible=from&&to&&from.version===to.version&&from.date<=to.date&&from[state.historyMetric]!=null&&to[state.historyMetric]!=null;
-    target.innerHTML=`<div class="a-history-controls">${select('analytics-historyMode',t('История','Storico'),state.historyMode,[['annual',t('Новый годовой учёт','Nuovo storico annuale')],['legacy',t('Архив сезона апрель–ноябрь','Archivio aprile–novembre')]])}${select('analytics-historyMetric',t('Показатель','Indicatore'),state.historyMetric,Object.entries(names))}${rows.length?select('analytics-historyFrom',t('Сравнить с','Confronta con'),from.date,rows.map(r=>[r.date,date(r.date)]))+select('analytics-historyTo',t('На дату','Alla data'),to.date,rows.map(r=>[r.date,date(r.date)])):''}</div>
-      ${rows.length?`<span class="a-history-number" id="statsDynamicBookings">${state.historyMetric==='occupancy'?percent(to[state.historyMetric]):num(to[state.historyMetric])}</span><span class="a-history-delta">${compatible?`${to[state.historyMetric]-from[state.historyMetric]>0?'+':''}${num(to[state.historyMetric]-from[state.historyMetric])}${state.historyMetric==='occupancy'?t(' п.п.',' p.p.'):''}`:t('Сравнение недоступно','Confronto non disponibile')}</span>${chartArea('analyticsHistoryChart',t('Состояние показателя на даты наблюдения','Valore alle date di osservazione'))}${table([t('Дата','Data'),...Object.values(names)],rows.map(r=>[date(r.date),r.bookings,r.nights,percent(r.occupancy),num(r.guests)]),'',typeof Chart==='undefined')}`:`<div class="a-empty">${state.historyMode==='legacy'?t('Нет сопоставимых сезонных снимков для выбранных фильтров.','Nessuna istantanea stagionale compatibile con i filtri.'):t('Ежедневная история появится после успешной синхронизации. Старые сезонные снимки доступны в архиве.','Lo storico giornaliero sarà disponibile dopo una sincronizzazione riuscita. Le vecchie istantanee sono nell’archivio stagionale.')}</div>`}
-      <div class="a-note">${state.historyMode==='legacy'?t('Архив охватывает только апрель–ноябрь. Его нельзя сравнивать с полным годом.','L’archivio copre solo aprile–novembre. Non è confrontabile con un anno intero.'):t('Состояние бронирований на дату наблюдения. Все показатели используют выбранный год проживания и фильтры.','Stato alle date di osservazione. Gli indicatori usano l’anno di soggiorno e i filtri selezionati.')}</div>`;
-    if(rows.length&&document.getElementById('analyticsHistory').open){chart('analyticsHistoryChart','line',rows.map(r=>date(r.date)),[{label:names[state.historyMetric],data:rows.map(r=>r[state.historyMetric]),borderColor:colors().net,backgroundColor:colors().net,pointRadius:rows.length>50?0:3,tension:0,spanGaps:false}],{plugins:{...statsChartDefaults().plugins,legend:{display:false}}});state.historyChart=state.charts.at(-1);}
+    target.innerHTML=`<div class="a-history-controls">${select('analytics-historyMode',t('История','Storico'),state.historyMode,[['auto',t('Доступная история','Storico disponibile')],['annual',t('Новый годовой учёт','Nuovo storico annuale')],['legacy',t('Архив сезона апрель–ноябрь','Archivio aprile–novembre')]])}${select('analytics-historyMetric',t('Показатель','Indicatore'),state.historyMetric,Object.entries(names))}${rows.length?select('analytics-historyFrom',t('Сравнить с','Confronta con'),from.date,rows.map(r=>[r.date,date(r.date)]))+select('analytics-historyTo',t('На дату','Alla data'),to.date,rows.map(r=>[r.date,date(r.date)])):''}</div>
+      ${rows.length?`<div class="a-history-scope">${icon('calendar-range')}<span>${mode==='legacy'?t('Сезон апрель–ноябрь','Stagione aprile–novembre'):state.period==='season'?t('Апрель–ноябрь','Aprile–novembre'):t('Весь год','Anno intero')} ${state.year} · ${esc(names[state.historyMetric])}</span></div>
+      <div class="a-history-summary">
+        <div><small>${date(from.date)}</small><strong>${state.historyMetric==='occupancy'?percent(from[state.historyMetric]):num(from[state.historyMetric])}</strong></div>
+        <div><small>${date(to.date)}</small><strong id="statsDynamicBookings">${state.historyMetric==='occupancy'?percent(to[state.historyMetric]):num(to[state.historyMetric])}</strong></div>
+        <div><small>${t('Изменение за интервал','Variazione nell’intervallo')}</small><strong class="a-history-delta">${compatible?`${to[state.historyMetric]-from[state.historyMetric]>0?'+':''}${num(to[state.historyMetric]-from[state.historyMetric])}${state.historyMetric==='occupancy'?t(' п.п.',' p.p.'):''}`:'—'}</strong></div>
+      </div>
+      ${!compatible?`<div class="a-note">${t('Сравнение недоступно: выберите даты по порядку и с одинаковой методикой подсчёта.','Confronto non disponibile: scegli date in ordine con lo stesso metodo di calcolo.')}</div>`:''}
+      ${new Set(rows.map(r=>r.version)).size>1?`<div class="a-note">${t('Методика подсчёта менялась. В месте изменения линия прерывается; для сравнения автоматически выбраны сопоставимые даты.','Il metodo di calcolo è cambiato. La linea si interrompe nel punto di cambio; il confronto iniziale usa date compatibili.')}</div>`:''}
+      ${rows.length>1?chartArea('analyticsHistoryChart',t('Состояние показателя на даты наблюдения','Valore alle date di osservazione')):`<div class="a-note">${t('Сохранена первая точка наблюдения. Следующие точки появятся после ежедневных синхронизаций.','È disponibile la prima osservazione. Le prossime verranno salvate con le sincronizzazioni giornaliere.')}</div>`}
+      ${table([t('Дата','Data'),...Object.values(names)],rows.map(r=>[date(r.date),r.bookings,r.nights,percent(r.occupancy),num(r.guests)]),'',typeof Chart==='undefined')}`:`<div class="a-empty">${t('Для выбранных фильтров ещё нет сохранённой истории. Текущие значения доступны выше, распределение по месяцам — ниже.','Non è ancora disponibile uno storico per questi filtri. I valori attuali sono sopra, la distribuzione mensile sotto.')}</div>`}
+      <div class="a-note">${mode==='legacy'?t('История сезона охватывает апрель–ноябрь, а не весь год. Изменение общего количества не позволяет отдельно определить новые брони и отмены.','Lo storico stagionale copre aprile–novembre, non l’intero anno. La variazione del totale non permette di distinguere nuove prenotazioni e annullamenti.'):t('Состояние бронирований на дату наблюдения. Все показатели используют выбранный год проживания и фильтры.','Stato alle date di osservazione. Gli indicatori usano l’anno di soggiorno e i filtri selezionati.')}</div>`;
+    if(rows.length>1){chart('analyticsHistoryChart','line',rows.map(r=>date(r.date)),[{label:names[state.historyMetric],data:rows.map(r=>r[state.historyMetric]),borderColor:colors().net,backgroundColor:colors().net,pointRadius:rows.length>50?0:3,tension:0,spanGaps:false,segment:{borderColor:ctx=>rows[ctx.p0DataIndex].version!==rows[ctx.p1DataIndex].version?'transparent':undefined}}],{scales:{...statsChartDefaults().scales,y:{...statsChartDefaults().scales.y,beginAtZero:false,grace:'10%'}},plugins:{...statsChartDefaults().plugins,legend:{display:false}}});state.historyChart=state.charts.at(-1);}
+
   }
   async function render() {
     const seq=++state.sequence;
