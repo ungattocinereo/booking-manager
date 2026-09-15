@@ -95,3 +95,10 @@ test('the parser preserves source UID and explicit cancelled status, including u
  const events=parseICalData('BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\nUID:cancel-1\r\nSTATUS:CANCELLED\r\nEND:VEVENT\r\nEND:VCALENDAR');
  assert.deepEqual(events,[{uid:'cancel-1',status:'CANCELLED'}]);
 });
+test('a replaced reservation retains its active identity after the calendar stops publishing its UID',()=>{
+ const base=observe([booking()],[event()],null,first);
+ const replacement=observe([booking()],[event({uid:'replacement'})],base.state);
+ const later=observe([booking()],[],replacement.state,'2026-11-01T10:00:00Z');
+ assert.equal(later.events.length,0);
+ assert.equal(Object.values(later.state.bookings).filter(b=>b.status==='active').length,1);
+});

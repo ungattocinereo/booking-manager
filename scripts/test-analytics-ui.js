@@ -15,6 +15,12 @@ async function main(){
    const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
    await page.goto(`${base}/stats`);
    await page.waitForFunction(()=>document.querySelectorAll('#analyticsRoot .a-kpi').length===8&&!document.querySelector('#statsTab').hasAttribute('aria-busy'));
+   const originalYear=await page.locator('#analytics-year').inputValue();
+   await page.locator('#analytics-year').selectOption(String(Number(originalYear)+1));
+   await page.waitForFunction(()=>!document.querySelector('#statsTab').hasAttribute('aria-busy'));
+   assert.deepEqual(await page.locator('#analyticsMovementSummary strong').allTextContents(),['—','—','—','—'],'future event periods have no observations');
+   await page.locator('#analytics-year').selectOption(originalYear);
+   await page.waitForFunction(()=>!document.querySelector('#statsTab').hasAttribute('aria-busy'));
    await page.locator('#analytics-group').selectOption('week');
    await page.waitForFunction(()=>document.querySelector('#analytics-group').value==='week'&&!document.querySelector('#statsTab').hasAttribute('aria-busy'));
    assert.equal(await page.locator('#analyticsCancellationTable tbody tr').count(),12);

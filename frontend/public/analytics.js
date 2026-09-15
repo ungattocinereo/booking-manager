@@ -46,7 +46,7 @@
     const expanded = root.querySelector('#analyticsHistory')?.open || false;
     dispose();
     const o=data.overview, movement=data.movement, totals=movement.totals;
-    const known=movement.coverage_start != null;
+    const known=movement.buckets.some(b=>b.coverage!=='none');
     const complete = movement.buckets.every(b=>b.coverage==='observed');
     const labels=eventNames(), names=metricNames();
     const counts = k => known ? `${k==='net' && totals[k]>0?'+':''}${num(totals[k])}` : '—';
@@ -116,7 +116,7 @@
     chart('analyticsAnnualChart','bar',o.months.map(m=>month(m.month)),state.annualMetric==='nights'?[{label:names.nights,data:o.months.map(m=>m.nights),backgroundColor:c.net,borderRadius:5}]:['airbnb','booking','direct'].map((p,i)=>({label:p==='booking'?'Booking.com':p==='airbnb'?'Airbnb':t('Напрямую','Dirette'),data:o.months.map(m=>m.platforms[p]),backgroundColor:[c.cancelled,c.net,c.created][i],borderRadius:4,stack:'arrivals'})),{scales:{x:{...statsChartDefaults().scales.x,stacked:true},y:{...statsChartDefaults().scales.y,stacked:true}}});
     const cancellationMonths = o.months.map(m=>({month:m.month,cancelled:null,removed:null}));
     if(state.cancellationBasis==='arrival') {
-      cancellationMonths.forEach(m=>{const row=movement.cancellations_by_arrival.find(r=>r.month===m.month);if(known){m.cancelled=row?.cancelled||0;m.removed=row?.removed||0;}});
+      cancellationMonths.forEach(m=>{const row=movement.cancellations_by_arrival.find(r=>r.month===m.month);if(movement.coverage_start){m.cancelled=row?.cancelled||0;m.removed=row?.removed||0;}});
     } else {
       // Event grouping remains monthly regardless of the main chart's grouping.
       const monthRows=data.movement_monthly?.buckets || movement.buckets;
