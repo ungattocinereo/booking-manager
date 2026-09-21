@@ -6503,7 +6503,7 @@ function renderCalendar({ preserveScroll = false, focusDate = null, behavior = '
         const isCompleted = end <= today;
         const platformClass = CALENDAR_PLATFORM_CLASS[booking.platform] || 'other';
         const hasPlatformLogo = Boolean(platformBrand(booking.platform)) && !isBlocked;
-        const barText = booking.guest_name || uiText(isFallback ? 'Booking · без имени' : isBlocked ? unavailableBookingLabel(booking) : platformLabel(booking.platform));
+        const barText = booking.guest_name || uiText(isBlocked && !isFallback ? unavailableBookingLabel(booking) : 'Booking');
         const fullLabelThreshold = hasPlatformLogo ? 124 : 104;
         const shortLabelThreshold = hasPlatformLogo ? 58 : 52;
         const shortLabel = visibleWidth > fullLabelThreshold ? barText : (visibleWidth > shortLabelThreshold ? String(barText).split(' ')[0] : '');
@@ -6730,7 +6730,7 @@ function renderMobileAgenda() {
         const booking = event.booking;
         const meta = propertyMeta(booking.property_id);
         const isCheckout = event.type === 'checkout';
-        const guest = booking.guest_name || (isOperationalBookingFallback(booking) ? 'Booking · данные гостя не получены' : platformLabel(booking.platform));
+        const guest = booking.guest_name || 'Booking';
         const flag = booking.guest_country ? ` ${countryToFlag(booking.guest_country)}` : '';
         const taxNote = isCheckout && isTaxableBooking(booking, bookings) && !booking.tax_paid ? ' · налог не отмечен' : '';
         const platformLogo = platformLogoHtml(booking.platform, 'agenda-platform-logo');
@@ -6780,7 +6780,7 @@ function openBookingPanel(bookingId) {
   const nightWord = nights === 1 ? 'ночь' : (nights > 1 && nights < 5 ? 'ночи' : 'ночей');
 
   kickerEl.textContent = completed ? 'Завершено' : fallback ? 'Booking без данных гостя' : unavailable ? 'Недоступность' : 'Бронирование';
-  titleEl.textContent = booking.guest_name || uiText(fallback ? 'Booking · нужны детали' : platformLabel(booking.platform));
+  titleEl.textContent = booking.guest_name || 'Booking';
   bodyEl.innerHTML = `
     <div class="booking-detail-hero" style="--property-color:${meta.color};--property-bg:${meta.bg}">
       <div class="booking-night-badge" aria-label="${nights || 0} ${nightWord}">
