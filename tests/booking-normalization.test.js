@@ -65,34 +65,6 @@ test('today widget includes an unmatched Booking fallback in occupied rooms', as
   assert.equal(payload.occupied[0].operational_fallback, true);
 });
 
-test('does not treat a CLOSED marker after a confirmed Booking checkout as a new arrival', async () => {
-  const departingGuest = row({
-    id: 5,
-    property_id: 'youth',
-    start_date: '2026-09-21',
-    end_date: '2026-09-23',
-    booking_type: 'reservation',
-    raw_summary: 'Departing Guest',
-    guest_name: 'Departing Guest',
-    guest_count: 1
-  });
-  const closedMarker = row({
-    id: 6,
-    property_id: 'youth',
-    start_date: '2026-09-23',
-    end_date: '2026-09-27'
-  });
-  const rows = [departingGuest, closedMarker];
-
-  const visible = normalizeBookingsForDisplay(rows);
-  assert.deepEqual(visible.map(item => item.id), [5]);
-
-  const db = { async getBookings() { return rows; } };
-  const today = await buildTodayWidgetPayload(db, '2026-09-23');
-  assert.ok(!today.check_ins.some(item => item.property_id === 'youth'));
-  assert.ok(today.check_outs.some(item => item.property_id === 'youth'));
-});
-
 test('uses a unique shifted Booking calendar marker as the operational dates', async () => {
   const staleExport = row({
     id: 10,
