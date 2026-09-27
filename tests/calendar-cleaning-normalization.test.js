@@ -2,6 +2,31 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { generateCleaningTasks } = require('../backend/src/sync-calendars');
 
+test('creates the checkout cleaning for a leading stay inside a combined Booking closure', async () => {
+  const rows = [
+    { id: 1, start_date: '2026-09-27', end_date: '2026-10-06', booking_type: 'blocked', raw_summary: 'CLOSED - Not available' },
+    { id: 2, start_date: '2026-09-29', end_date: '2026-10-02', booking_type: 'reservation', guest_name: 'First guest' },
+    { id: 3, start_date: '2026-10-02', end_date: '2026-10-06', booking_type: 'reservation', guest_name: 'Second guest' }
+  ].map(booking => ({ active: true, property_id: 'vingtage', platform: 'booking', ...booking }));
+  const created = [];
+  let retained;
+  const database = {
+    pool: {},
+    async getBookings() { return rows; },
+    async createCleaningTask(propertyId, date) {
+      created.push(`${propertyId}|${date}`);
+      return { rowCount: 1 };
+    },
+    async archiveStaleCleaningTasks(today, expectedKeys) {
+      retained = expectedKeys;
+      return { rowCount: 0 };
+    }
+  };
+  await generateCleaningTasks({ database, today: '2026-09-27' });
+  assert.deepEqual(created, ['vingtage|2026-09-29', 'vingtage|2026-10-02', 'vingtage|2026-10-06']);
+  assert.deepEqual(retained, created);
+});
+
 test('generates and reconciles cleaning tasks from calendar-authoritative dates', async () => {
   const rows = [
     {
