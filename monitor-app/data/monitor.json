@@ -1,6 +1,6 @@
 {
   "since": "2026-04-17",
-  "generated_at": "2026-09-27T23:54:28.058Z",
+  "generated_at": "2026-09-28T05:10:45.873Z",
   "available_dates": [
     "2026-09-18",
     "2026-09-17",
@@ -1552,26 +1552,6 @@
           "status": "active",
           "cancelledAt": null,
           "link": "https://www.airbnb.com/hosting/reservations/details/HM3JTYQ9HW",
-          "sources": [
-            "upstream_api",
-            "export_airbnb_csv"
-          ]
-        },
-        {
-          "bookingKey": "royal|airbnb|2026-09-24|2026-09-27",
-          "propertyId": "royal",
-          "platform": "airbnb",
-          "startDate": "2026-09-24",
-          "endDate": "2026-09-27",
-          "guestName": "Shiran Katsnelson",
-          "guestCount": 3,
-          "confirmationCode": "HMKKP94BJ2",
-          "firstSeenAt": "2026-03-28T19:32:10.994Z",
-          "status": "active",
-          "cancelledAt": null,
-          "link": "https://www.airbnb.com/hosting/reservations/details/HMP3JT3D2Q",
-          "rawSummary": "Reserved",
-          "bookingType": "reservation",
           "sources": [
             "upstream_api",
             "export_airbnb_csv"
