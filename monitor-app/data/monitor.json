@@ -1,7 +1,8 @@
 {
   "since": "2026-04-17",
-  "generated_at": "2026-09-28T19:35:31.929Z",
+  "generated_at": "2026-09-28T23:54:05.115Z",
   "available_dates": [
+    "2026-09-28",
     "2026-09-18",
     "2026-09-17",
     "2026-09-15",
@@ -90,8 +91,7 @@
     "2026-04-06",
     "2026-04-05",
     "2026-04-04",
-    "2026-04-01",
-    "2026-03-30"
+    "2026-04-01"
   ],
   "properties": [
     {
@@ -100,6 +100,25 @@
       "accent": "#c9512e",
       "icon": "home",
       "events": [
+        {
+          "bookingKey": "harmony|airbnb|2026-10-13|2026-10-16",
+          "propertyId": "harmony",
+          "platform": "airbnb",
+          "startDate": "2026-10-13",
+          "endDate": "2026-10-16",
+          "guestName": null,
+          "guestCount": null,
+          "confirmationCode": null,
+          "firstSeenAt": "2026-09-28T23:54:00.653Z",
+          "status": "active",
+          "cancelledAt": null,
+          "link": "https://www.airbnb.com/hosting/reservations/details/HMSNKNNEDC",
+          "rawSummary": "Reserved",
+          "bookingType": "reservation",
+          "sources": [
+            "upstream_api"
+          ]
+        },
         {
           "bookingKey": "harmony|airbnb|2026-10-05|2026-10-08",
           "propertyId": "harmony",
@@ -6316,6 +6335,24 @@
       "rawSummary": "Reserved",
       "bookingType": "reservation",
       "detectedAt": "2026-09-18T01:12:43.237Z"
+    },
+    {
+      "eventType": "created",
+      "bookingKey": "harmony|airbnb|2026-10-13|2026-10-16",
+      "propertyId": "harmony",
+      "platform": "airbnb",
+      "startDate": "2026-10-13",
+      "endDate": "2026-10-16",
+      "guestName": null,
+      "guestCount": null,
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HMSNKNNEDC",
+      "confirmationCode": null,
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync",
+      "bookingCreatedAt": "2026-09-28T23:54:00.653Z",
+      "rawSummary": "Reserved",
+      "bookingType": "reservation",
+      "detectedAt": "2026-09-28T23:54:05.110Z"
     }
   ],
   "imports_log": [
