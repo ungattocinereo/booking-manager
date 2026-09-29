@@ -149,6 +149,32 @@ test('does not turn a daily-trimmed Booking marker into a new check-in', async (
   assert.equal(today.occupied.some(item => item.property_id === 'central'), true);
 });
 
+test('keeps the confirmed check-in when a Booking marker starts earlier but has the same checkout', async () => {
+  const reservation = row({
+    id: 15,
+    property_id: 'central',
+    start_date: '2026-09-29',
+    end_date: '2026-10-02',
+    booking_type: 'reservation',
+    raw_summary: 'Nino Kadic',
+    guest_name: 'Nino Kadic',
+    guest_count: 1
+  });
+  const earlierMarker = row({
+    id: 16,
+    property_id: 'central',
+    start_date: '2026-09-27',
+    end_date: '2026-10-02'
+  });
+  const db = { async getBookings() { return [reservation, earlierMarker]; } };
+
+  const payload = await buildTodayWidgetPayload(db, '2026-09-29');
+
+  assert.equal(payload.check_ins.length, 1);
+  assert.equal(payload.check_ins[0].guest, 'Nino Kadic');
+  assert.equal(payload.check_ins[0].start, '2026-09-29');
+});
+
 test('does not apply a combined Booking marker to multiple guest reservations', () => {
   const combinedMarker = row({ id: 20, start_date: '2026-08-03', end_date: '2026-08-19' });
   const firstGuest = row({
