@@ -1,7 +1,8 @@
 {
   "since": "2026-04-17",
-  "generated_at": "2026-10-01T07:41:10.125Z",
+  "generated_at": "2026-10-01T15:22:18.851Z",
   "available_dates": [
+    "2026-10-01",
     "2026-09-28",
     "2026-09-18",
     "2026-09-17",
@@ -90,8 +91,7 @@
     "2026-04-07",
     "2026-04-06",
     "2026-04-05",
-    "2026-04-04",
-    "2026-04-01"
+    "2026-04-04"
   ],
   "properties": [
     {
@@ -1618,6 +1618,25 @@
       "accent": "#0b7a7a",
       "icon": "heart",
       "events": [
+        {
+          "bookingKey": "carina|airbnb|2026-10-22|2026-10-26",
+          "propertyId": "carina",
+          "platform": "airbnb",
+          "startDate": "2026-10-22",
+          "endDate": "2026-10-26",
+          "guestName": null,
+          "guestCount": null,
+          "confirmationCode": null,
+          "firstSeenAt": "2026-10-01T15:22:13.481Z",
+          "status": "active",
+          "cancelledAt": null,
+          "link": "https://www.airbnb.com/hosting/reservations/details/HMAB4B4PF2",
+          "rawSummary": "Reserved",
+          "bookingType": "reservation",
+          "sources": [
+            "upstream_api"
+          ]
+        },
         {
           "bookingKey": "carina|airbnb|2026-09-16|2026-09-18",
           "propertyId": "carina",
@@ -6353,6 +6372,24 @@
       "rawSummary": "Reserved",
       "bookingType": "reservation",
       "detectedAt": "2026-09-28T23:54:05.110Z"
+    },
+    {
+      "eventType": "created",
+      "bookingKey": "carina|airbnb|2026-10-22|2026-10-26",
+      "propertyId": "carina",
+      "platform": "airbnb",
+      "startDate": "2026-10-22",
+      "endDate": "2026-10-26",
+      "guestName": null,
+      "guestCount": null,
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HMAB4B4PF2",
+      "confirmationCode": null,
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync",
+      "bookingCreatedAt": "2026-10-01T15:22:13.481Z",
+      "rawSummary": "Reserved",
+      "bookingType": "reservation",
+      "detectedAt": "2026-10-01T15:22:18.846Z"
     }
   ],
   "imports_log": [
