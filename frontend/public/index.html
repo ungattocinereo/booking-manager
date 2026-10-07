@@ -5104,9 +5104,9 @@ const ORBIT_HERO_CONTENT = {
 
 function calendarMovementTitle() {
   const today = toLocalIso(todayLocal());
-  const realBookings = bookings.filter(booking => isRealGuestBooking(booking, bookings));
-  const checkins = realBookings.filter(booking => booking.start_date === today).length;
-  const checkouts = realBookings.filter(booking => booking.end_date === today).length;
+  const movementBookings = bookings.filter(booking => isCalendarMovementBooking(booking, bookings));
+  const checkins = movementBookings.filter(booking => booking.start_date === today).length;
+  const checkouts = movementBookings.filter(booking => booking.end_date === today).length;
   if (!checkins && !checkouts) return 'Нет заездов и нет выездов';
   if (IS_ITALIAN) {
     return `${checkins} ${checkins === 1 ? 'arrivo' : 'arrivi'} e ${checkouts} ${checkouts === 1 ? 'partenza' : 'partenze'}`;
@@ -5632,7 +5632,7 @@ function updateStats() {
 
   const today = toLocalIso(todayLocal());
   const tomorrow = toLocalIso(addCalendarDays(todayLocal(), 1));
-  const upcoming = realBookings.filter(b => b.start_date >= today);
+  const upcoming = bookings.filter(b => isCalendarMovementBooking(b, bookings) && b.start_date >= today);
   const dayNames = IS_ITALIAN ? ['Dom','Lun','Mar','Mer','Gio','Ven','Sab'] : ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
 
   // Arrival cards remain check-in only; the hero summarizes both movement types.
@@ -5964,6 +5964,10 @@ function isRealGuestBooking(b, allBookings = bookings) {
 function isTaxableBooking(b, allBookings = bookings) {
   if (!isRealGuestBooking(b, allBookings)) return false;
   return true;
+}
+
+function isCalendarMovementBooking(b, allBookings = bookings) {
+  return isOperationalBookingFallback(b) || isRealGuestBooking(b, allBookings);
 }
 
 function nightsBetween(startDate, endDate) {
