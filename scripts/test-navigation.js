@@ -14,6 +14,45 @@ async function main() {
     await page.addInitScript(() => localStorage.setItem('atrani-theme-preference', 'light'));
     await page.goto(baseUrl);
     await page.waitForFunction(() => document.querySelector('#syncBtn').dataset.state === 'ok');
+    // Calendar movements include anonymous Booking stays visible on the timeline,
+    // while booking totals and tax eligibility still require a real reservation.
+    const movements = await page.evaluate(() => {
+      const original = bookings;
+      const date = toLocalIso(todayLocal());
+      const tomorrow = toLocalIso(addCalendarDays(todayLocal(), 1));
+      const afterTomorrow = toLocalIso(addCalendarDays(todayLocal(), 2));
+      const stay = { platform: 'booking', start_date: date, end_date: tomorrow };
+      bookings = [
+        { ...stay, id: -1, property_id: 'carina', platform: 'airbnb', guest_name: 'Confirmed guest', booking_type: 'reservation' },
+        { ...stay, id: -2, property_id: 'youth', raw_summary: 'CLOSED - Not available', booking_type: 'blocked', operational_fallback: true },
+        { ...stay, id: -3, property_id: 'central', raw_summary: 'CLOSED - Not available', booking_type: 'blocked' },
+        { ...stay, id: -4, property_id: 'solo', start_date: tomorrow, end_date: afterTomorrow, operational_fallback: true, booking_type: 'blocked' },
+        { ...stay, id: -5, property_id: 'orange', start_date: afterTomorrow, end_date: toLocalIso(addCalendarDays(todayLocal(), 3)), operational_fallback: true, booking_type: 'blocked' }
+      ];
+      updateStats();
+      const result = {
+        title: calendarMovementTitle(),
+        today: document.getElementById('statTodayCount').textContent,
+        badge: document.getElementById('orbitDateArrivals').textContent,
+        rooms: document.getElementById('statTodayList').textContent,
+        tomorrow: document.getElementById('statNextDate').textContent,
+        next: document.getElementById('statNext2List').textContent,
+        total: document.getElementById('statBookings').textContent,
+        taxable: isTaxableBooking(bookings[1], bookings)
+      };
+      bookings = original;
+      updateStats();
+      return result;
+    });
+    assert.equal(movements.title, '2 заезда и ещё 0 выездов');
+    assert.equal(movements.today, '2 заезда');
+    assert.equal(movements.badge, '2');
+    assert.match(movements.rooms, /Youth/);
+    assert.doesNotMatch(movements.rooms, /Central/);
+    assert.equal(movements.tomorrow, '1 заезд');
+    assert.match(movements.next, /Orange/);
+    assert.equal(movements.total, '1');
+    assert.equal(movements.taxable, false);
     for (const width of [320, 375, 390, 768, 769, 820, 1024, 1050, 1051, 1180, 1440]) {
       await page.setViewportSize({ width, height: 900 });
       // Wait for existing responsive transitions before measuring the controls.
