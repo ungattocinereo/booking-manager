@@ -1,6 +1,6 @@
 {
   "since": "2026-04-17",
-  "generated_at": "2026-10-12T19:45:37.448Z",
+  "generated_at": "2026-10-13T01:57:45.130Z",
   "available_dates": [
     "2026-10-11",
     "2026-10-10",
@@ -1611,23 +1611,6 @@
           "status": "cancelled",
           "cancelledAt": "2026-04-26T08:01:51.939Z",
           "link": "https://www.airbnb.com/hosting/reservations/details/HM58F3DNTN",
-          "sources": [
-            "upstream_api",
-            "export_airbnb_csv"
-          ]
-        },
-        {
-          "bookingKey": "royal|airbnb|2026-10-08|2026-10-12",
-          "propertyId": "royal",
-          "platform": "airbnb",
-          "startDate": "2026-10-08",
-          "endDate": "2026-10-12",
-          "guestName": "Jean Pierre Le Guen",
-          "confirmationCode": "HM3JTYQ9HW",
-          "firstSeenAt": "2026-03-28T19:32:10.999Z",
-          "status": "active",
-          "cancelledAt": null,
-          "link": "https://www.airbnb.com/hosting/reservations/details/HM3JTYQ9HW",
           "sources": [
             "upstream_api",
             "export_airbnb_csv"
