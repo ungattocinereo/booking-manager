@@ -4247,6 +4247,24 @@
       "rawSummary": "Reserved",
       "bookingType": "reservation",
       "detectedAt": "2026-10-18T06:30:30.765Z"
+    },
+    {
+      "eventType": "cancelled",
+      "bookingKey": "royal|airbnb|2027-05-25|2027-05-30",
+      "propertyId": "royal",
+      "platform": "airbnb",
+      "startDate": "2027-05-25",
+      "endDate": "2027-05-30",
+      "guestName": null,
+      "guestCount": null,
+      "reservationUrl": "https://www.airbnb.com/hosting/reservations/details/HM2TDDZP89",
+      "confirmationCode": null,
+      "source": "upstream_api",
+      "sourceRef": "hourly_sync_confirmed",
+      "bookingCreatedAt": "2026-10-17T18:45:37.130Z",
+      "rawSummary": "Reserved",
+      "bookingType": "reservation",
+      "detectedAt": "2026-10-21T18:13:04.053Z"
     }
   ],
   "imports": [
@@ -4312,13 +4330,5 @@
     }
   ],
   "bootstrappedAt": "2026-04-20T17:25:53.350Z",
-  "pendingCancellations": {
-    "royal|airbnb|2027-05-25|2027-05-30": {
-      "bookingKey": "royal|airbnb|2027-05-25|2027-05-30",
-      "propertyId": "royal",
-      "firstMissingAt": "2026-10-21T13:08:21.167Z",
-      "lastMissingAt": "2026-10-21T13:08:21.167Z",
-      "consecutiveSuccessfulMisses": 1
-    }
-  }
+  "pendingCancellations": {}
 }
