@@ -4312,5 +4312,13 @@
     }
   ],
   "bootstrappedAt": "2026-04-20T17:25:53.350Z",
-  "pendingCancellations": {}
+  "pendingCancellations": {
+    "royal|airbnb|2027-05-25|2027-05-30": {
+      "bookingKey": "royal|airbnb|2027-05-25|2027-05-30",
+      "propertyId": "royal",
+      "firstMissingAt": "2026-10-21T13:08:21.167Z",
+      "lastMissingAt": "2026-10-21T13:08:21.167Z",
+      "consecutiveSuccessfulMisses": 1
+    }
+  }
 }
