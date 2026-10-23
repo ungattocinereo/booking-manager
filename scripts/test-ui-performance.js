@@ -608,7 +608,10 @@ async function inspectPage(browser, baseUrl, viewport, isMobile) {
     assert.equal(metrics.todayTreatment.centerDividerDisplay, 'none', 'today column still has a central divider');
     assert.equal(metrics.todayTreatment.headerBoxShadow, 'none', 'today header still has a strong underline or shadow');
     assert.ok(metrics.monthRail.bands.length >= 2, 'calendar month rail did not render visible months');
-    assert.ok(metrics.monthRail.bands.some(band => band.text === 'Август 2026'), 'new month is missing from the month rail');
+    const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+    const nextMonthName = new Intl.DateTimeFormat('ru-RU', { month: 'long' }).format(nextMonth);
+    const nextMonthLabel = `${nextMonthName[0].toUpperCase()}${nextMonthName.slice(1)} ${nextMonth.getFullYear()}`;
+    assert.ok(metrics.monthRail.bands.some(band => band.text === nextMonthLabel), 'new month is missing from the month rail');
     for (const band of metrics.monthRail.bands) {
       assert.equal(band.whiteSpace, 'nowrap', 'month label can wrap onto two lines');
       assert.ok(band.height <= 27, `month rail is too tall: ${band.height}px`);

@@ -10,6 +10,9 @@ const { buildTodayWidgetPayload } = require('../lib/widget-today');
 const { normalizeBookingsForDisplay } = require('../lib/booking-normalization');
 
 module.exports = async (req, res) => {
+  if (req.query.widget === 'upcoming') {
+    return require('../lib/mobile-dashboard').handleMobileDashboard(req, res, db);
+  }
   try {
     // Initialize database connection
     if (!db.pool && !db.db) {
