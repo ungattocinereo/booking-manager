@@ -1,0 +1,47 @@
+name: ios
+
+on:
+  pull_request:
+    paths:
+      - 'ios/**'
+      - '.github/workflows/ios.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'ios/**'
+      - '.github/workflows/ios.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-26
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test booking and Rome calendar logic
+        working-directory: ios
+        run: swift test
+      - name: Install project generator
+        run: brew install xcodegen
+      - name: Generate Xcode project
+        working-directory: ios
+        run: xcodegen generate
+      - name: Build application and large widget for iPhone Simulator
+        working-directory: ios
+        run: >-
+          xcodebuild -project Atrani.xcodeproj -scheme Atrani
+          -configuration Debug -sdk iphonesimulator
+          -destination 'generic/platform=iOS Simulator'
+          -derivedDataPath DerivedData CODE_SIGNING_ALLOWED=NO build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Atrani-iPhone-Simulator
+          path: ios/DerivedData/Build/Products/Debug-iphonesimulator/Atrani.app
+          retention-days: 7

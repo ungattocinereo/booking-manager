@@ -46,3 +46,13 @@ scraper/*.sql
 
 # Debug
 debug-screenshot.png
+
+# iOS build outputs and local Apple signing / connection settings
+ios/.build/
+ios/DerivedData/
+ios/build/
+ios/*.xcodeproj/
+ios/Config/Signing.local.xcconfig
+ios/*.connection.json
+*.xcuserstate
+**/xcuserdata/

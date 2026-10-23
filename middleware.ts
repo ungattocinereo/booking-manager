@@ -33,7 +33,8 @@ function isPublicHealthPath(pathname: string) {
 function isPublicWidgetApiRequest(pathname: string, request: Request) {
   if (pathname !== '/api/bookings') return false;
   const url = new URL(request.url);
-  return url.searchParams.get('widget') === 'today';
+  return url.searchParams.get('widget') === 'today' ||
+    (request.method === 'GET' && url.searchParams.get('widget') === 'upcoming');
 }
 
 function hasBearerSecret(request: Request, secret: string) {

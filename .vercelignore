@@ -11,3 +11,4 @@ scriptable-widgets/*.local.js
 scriptable-widgets/*.private.js
 *.local.js
 *.private.js
+ios/

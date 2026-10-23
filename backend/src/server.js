@@ -136,6 +136,9 @@ app.get('/api/dashboard', async (req, res) => {
 // ===== BOOKINGS =====
 
 app.get('/api/bookings', async (req, res) => {
+  if (req.query.widget === 'upcoming') {
+    return require('../../lib/mobile-dashboard').handleMobileDashboard(req, res, db);
+  }
   try {
     if (req.query.stats_snapshots === '1') {
       const snapshots = await db.getStatsSnapshots({
@@ -158,6 +161,9 @@ app.get('/api/bookings', async (req, res) => {
 });
 
 app.post('/api/bookings', async (req, res) => {
+  if (req.query.widget === 'upcoming') {
+    return require('../../lib/mobile-dashboard').handleMobileDashboard(req, res, db);
+  }
   try {
     if (req.query.stats_snapshots !== '1') {
       return res.status(405).json({ error: 'Method not allowed' });
