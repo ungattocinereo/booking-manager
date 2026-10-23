@@ -23,11 +23,13 @@ struct ConnectionView: View {
                 }
             }
             if store.demo { Section { StatusBanner() } }
-            Section("Подключение") {
+            Section {
                 TextField("Адрес сервера", text: $server).textContentType(.URL).keyboardType(.URL).textInputAutocapitalization(.never).autocorrectionDisabled()
                 SecureField("Ключ доступа", text: $accessKey).textInputAutocapitalization(.never).autocorrectionDisabled()
                 SecureField("Ключ защиты сервера", text: $protectionKey).textInputAutocapitalization(.never).autocorrectionDisabled()
                 Button { importing = true } label: { Label("Импортировать настройки из файла", systemImage: "square.and.arrow.down") }
+            } header: {
+                Text("Подключение")
             } footer: {
                 Text("Ключи сохраняются в защищённом хранилище iPhone. Ключ защиты нужен, если сервер использует Vercel Deployment Protection.")
             }
@@ -45,11 +47,13 @@ struct ConnectionView: View {
                 Text("Нажмите и удерживайте домашний экран → Изменить → Добавить виджет → Atrani → большой размер. В настройках виджета можно выбрать отдельный объект.")
                     .font(.subheadline).foregroundStyle(.secondary)
             }
-            Section("Веб-кабинет") {
+            Section {
                 Link("Управление уборками", destination: URL(string: "https://b.amalfi.day/maid")!)
                 Link("Статистика", destination: URL(string: "https://b.amalfi.day/stats")!)
                 Link("Туристический налог", destination: URL(string: "https://b.amalfi.day/tax")!)
                 Link("Отчётность", destination: URL(string: "https://b.amalfi.day/reporting")!)
+            } header: {
+                Text("Веб-кабинет")
             } footer: { Text("Веб-кабинет открывается с вашей обычной авторизацией.") }
             Section {
                 Button("Посмотреть демонстрацию") { store.showDemo() }
