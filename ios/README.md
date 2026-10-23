@@ -106,3 +106,8 @@ xcodebuild -project Atrani.xcodeproj -scheme Atrani -sdk iphonesimulator \
 
 GitHub Actions builds both app and widget without production credentials. The
 simulator artifact is for Simulator only; it cannot be installed on a real iPhone.
+
+For local UI smoke checks only, Debug Simulator builds accept `--demo` or
+`--connection-file /absolute/path/to/Atrani.connection.json` as launch arguments.
+This file is read locally and credentials remain in headers/keychain. These
+arguments are excluded from device and Release builds.
