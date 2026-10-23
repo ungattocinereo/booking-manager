@@ -1743,7 +1743,7 @@ async function inspectLanguagePreferences(browser, baseUrl) {
   await page.waitForFunction(storageKey =>
     document.documentElement.lang === 'it' &&
     localStorage.getItem(storageKey) === 'it' &&
-    document.body.innerText.includes('Calendario'), languageStorageKey);
+    (document.body?.innerText || '').includes('Calendario'), languageStorageKey);
   assert.equal(await page.locator('[data-language-option="it"]').getAttribute('aria-pressed'), 'true');
   assert.doesNotMatch(await page.locator('body').innerText(), /[А-Яа-яЁё]/,
     'manual RU → IT switch left untranslated interface text');
