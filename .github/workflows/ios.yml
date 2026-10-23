@@ -40,6 +40,21 @@ jobs:
           -configuration Debug -sdk iphonesimulator
           -destination 'generic/platform=iOS Simulator'
           -derivedDataPath DerivedData CODE_SIGNING_ALLOWED=NO build
+      - name: Verify iPhone bundle metadata
+        working-directory: ios
+        run: |
+          python3 - <<'PY'
+          import plistlib
+          from pathlib import Path
+          app = Path('DerivedData/Build/Products/Debug-iphonesimulator/Atrani.app')
+          versions = []
+          for bundle in [app, app / 'PlugIns/AtraniWidget.appex']:
+              info = plistlib.loads((bundle / 'Info.plist').read_bytes())
+              assert info['UIDeviceFamily'] == [1], f'{bundle.name} must target iPhone only'
+              versions.append((info['CFBundleShortVersionString'], info['CFBundleVersion']))
+          assert versions[0] == versions[1], 'App and widget versions must match'
+          print('App and widget metadata match the iPhone distribution contract')
+          PY
       - uses: actions/upload-artifact@v4
         with:
           name: Atrani-iPhone-Simulator

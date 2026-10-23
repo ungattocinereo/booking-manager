@@ -11,6 +11,13 @@ struct ConnectionView: View {
     @State private var importError: String?
     @State private var confirmingDisconnect = false
 
+    private var versionLabel: String {
+        let info = Bundle.main.infoDictionary ?? [:]
+        let version = info["CFBundleShortVersionString"] as? String ?? "—"
+        let build = info["CFBundleVersion"] as? String ?? "—"
+        return "Atrani · версия \(version) (\(build))"
+    }
+
     var body: some View {
         Form {
             if onboarding {
@@ -62,7 +69,7 @@ struct ConnectionView: View {
                 if store.connection != nil || store.demo {
                     Button("Отключить и удалить данные с iPhone", role: .destructive) { confirmingDisconnect = true }
                 }
-                Text("Atrani · версия 1.0 (1)").font(.caption).foregroundStyle(.secondary)
+                Text(versionLabel).font(.caption).foregroundStyle(.secondary)
             }
         }
         .navigationTitle(onboarding ? "Добро пожаловать" : "Настройки")
