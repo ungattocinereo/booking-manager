@@ -7,7 +7,7 @@ struct AtraniApp: App {
     var body: some Scene {
         WindowGroup {
             RootView().environmentObject(store).tint(Orbit.violet)
-                .task { await store.refresh() }
+                .task { await store.start() }
                 .onOpenURL { store.open($0) }
         }
     }
@@ -24,6 +24,22 @@ final class BookingStore: ObservableObject {
     @Published var tab = 0
     private var revision = UUID()
     private var pendingBookingId: String?
+
+    func start() async {
+        #if DEBUG && targetEnvironment(simulator)
+        let arguments = ProcessInfo.processInfo.arguments
+        if arguments.contains("--demo") { showDemo(); return }
+        if let index = arguments.firstIndex(of: "--connection-file"), index + 1 < arguments.count {
+            do {
+                let data = try Data(contentsOf: URL(fileURLWithPath: arguments[index + 1]))
+                let value = try JSONDecoder().decode(Connection.self, from: data)
+                await refresh(using: value)
+            } catch { self.error = error.localizedDescription }
+            return
+        }
+        #endif
+        await refresh()
+    }
 
     func refresh(using candidate: Connection? = nil) async {
         guard !isLoading, let settings = candidate ?? connection else { return }

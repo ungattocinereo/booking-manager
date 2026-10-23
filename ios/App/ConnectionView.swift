@@ -18,7 +18,9 @@ struct ConnectionView: View {
                     VStack(alignment: .leading, spacing: 16) {
                         Image(systemName: "house.and.flag.fill").font(.system(size: 46)).foregroundStyle(Orbit.violet)
                         Text("Все заезды.\nПод рукой.").font(.system(size: 34, weight: .bold, design: .rounded))
-                        Text("Бронирования, календарь уборок и большой виджет для ваших апартаментов в Atrani.").foregroundStyle(.secondary)
+                            .lineLimit(nil).fixedSize(horizontal: false, vertical: true)
+                        Text("Бронирования, календарь уборок и большой виджет для ваших апартаментов в Atrani.")
+                            .foregroundStyle(.secondary).lineLimit(nil).fixedSize(horizontal: false, vertical: true)
                     }.padding(.vertical, 20)
                 }
             }

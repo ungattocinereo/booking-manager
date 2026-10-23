@@ -41,6 +41,7 @@ enum SharedStore {
     }
 
     static func cached() -> Dashboard? {
+        guard connection() != nil else { return nil }
         guard let url = cacheURL, let data = try? Data(contentsOf: url) else { return nil }
         return try? Dashboard.decode(data)
     }
