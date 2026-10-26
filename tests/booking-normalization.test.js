@@ -65,6 +65,25 @@ test('today widget includes an unmatched Booking fallback in occupied rooms', as
   assert.equal(payload.occupied[0].operational_fallback, true);
 });
 
+test('confirmed Vintage and Orange closures do not occupy the calendar', async () => {
+  const closures = ['vingtage', 'orange'].map((property_id, index) => row({
+    id: 30 + index,
+    property_id,
+    start_date: '2026-10-20',
+    end_date: '2026-10-30'
+  }));
+  assert.deepEqual(normalizeBookingsForDisplay(closures), []);
+  assert.deepEqual(normalizeBookingsForDisplay(closures.map(booking => ({
+    ...booking,
+    start_date: '2026-10-26'
+  }))), []);
+
+  const db = { async getBookings() { return closures; } };
+  const payload = await buildTodayWidgetPayload(db, '2026-10-26');
+  assert.equal(payload.occupied.length, 0);
+  assert.equal(payload.check_outs.length, 0);
+});
+
 test('uses a unique shifted Booking calendar marker as the operational dates', async () => {
   const staleExport = row({
     id: 10,
