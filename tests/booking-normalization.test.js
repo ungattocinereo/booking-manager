@@ -99,6 +99,40 @@ test('confirmed Vintage and Orange closures do not occupy the calendar', async (
   assert.equal(normalizeBookingsForDisplay([historicalFallback])[0].operational_fallback, true);
 });
 
+test('Hostex room closures do not become stays or cleaning checkouts', async () => {
+  const closures = ['solo', 'youth', 'central'].map((propertyId, index) => row({
+    id: 40 + index,
+    property_id: propertyId,
+    start_date: '2026-11-18',
+    end_date: '2026-12-15'
+  }));
+  assert.deepEqual(normalizeBookingsForDisplay(closures), []);
+
+  const db = { async getBookings() { return closures; } };
+  assert.equal((await buildTodayWidgetPayload(db, '2026-11-20')).occupied.length, 0);
+  assert.equal((await buildTodayWidgetPayload(db, '2026-12-15')).check_outs.length, 0);
+
+  const namedReservation = row({
+    id: 45,
+    property_id: 'youth',
+    start_date: '2026-12-20',
+    end_date: '2026-12-23',
+    booking_type: 'reservation',
+    raw_summary: 'CLOSED - Not available',
+    guest_name: 'Hostex Guest',
+    guest_count: 2
+  });
+  assert.equal(normalizeBookingsForDisplay([namedReservation]).length, 1);
+
+  const historicalFallback = row({
+    id: 46,
+    property_id: 'solo',
+    start_date: '2026-11-10',
+    end_date: '2026-11-14'
+  });
+  assert.equal(normalizeBookingsForDisplay([historicalFallback])[0].operational_fallback, true);
+});
+
 test('uses a unique shifted Booking calendar marker as the operational dates', async () => {
   const staleExport = row({
     id: 10,
