@@ -3428,21 +3428,13 @@
       pointer-events: none;
       transform: translateY(-5px) scale(.96);
       transform-origin: top right;
-      transition: opacity .16s ease, transform .16s ease, visibility .16s;
+      transition: opacity .16s ease, transform .16s ease;
     }
     .theme-menu.open .theme-menu-popover {
       opacity: 1;
       visibility: visible;
       pointer-events: auto;
       transform: translateY(0) scale(1);
-    }
-    @media (hover: hover) and (pointer: fine) {
-      .theme-menu:hover .theme-menu-popover {
-        opacity: 1;
-        visibility: visible;
-        pointer-events: auto;
-        transform: translateY(0) scale(1);
-      }
     }
     .theme-option {
       width: 36px;

@@ -1403,7 +1403,7 @@ function assertNarrowThemeControlAudit(audit, label, { menuOpen = false } = {}) 
 async function chooseTheme(page, preference) {
   const trigger = page.locator('[data-theme-trigger]').first();
   const option = page.locator(`[data-theme-option="${preference}"]`).first();
-  if (!await option.isVisible()) {
+  if (await trigger.getAttribute('aria-expanded') !== 'true') {
     await trigger.click();
     await page.waitForFunction(() =>
       document.querySelector('[data-theme-trigger]')?.getAttribute('aria-expanded') === 'true');
@@ -1516,15 +1516,14 @@ async function inspectThemePreferences(browser, baseUrl) {
   await waitForAdminThemeRoute(page, adminThemeRoutes[0]);
 
   await page.locator('[data-theme-trigger]').hover();
-  await page.waitForFunction(() => {
-    const popover = document.querySelector('.theme-menu-popover');
-    if (!popover) return false;
-    const style = getComputedStyle(popover);
-    return style.visibility === 'visible' && Number(style.opacity) >= .95;
-  });
+  assert.equal(await page.locator('[data-theme-trigger]').getAttribute('aria-expanded'), 'false');
+  assert.equal(await page.locator('.theme-menu-popover').isVisible(), false, 'hover must not reopen a closed theme menu');
+  await page.locator('[data-theme-trigger]').click();
+  await page.waitForFunction(() => document.querySelector('[data-theme-trigger]').getAttribute('aria-expanded') === 'true');
   await page.mouse.move(0, 0);
-  await page.waitForFunction(() =>
-    getComputedStyle(document.querySelector('.theme-menu-popover')).visibility === 'hidden');
+  assert.equal(await page.locator('.theme-menu-popover').isVisible(), true, 'open menu must remain stable when the pointer moves');
+  await page.keyboard.press('Escape');
+  await page.waitForFunction(() => getComputedStyle(document.querySelector('.theme-menu-popover')).visibility === 'hidden');
 
   await page.emulateMedia({ colorScheme: 'dark' });
   await page.waitForFunction(() => document.documentElement.dataset.colorScheme === 'dark');

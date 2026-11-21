@@ -9,6 +9,7 @@
     { "path": "/api/reporting/maintenance", "schedule": "30 6 * * *" }
   ],
   "rewrites": [
+    { "source": "/arrival-board.css", "destination": "/frontend/public/arrival-board.css" },
     { "source": "/analytics.js", "destination": "/frontend/public/analytics.js" },
     { "source": "/analytics.css", "destination": "/frontend/public/analytics.css" },
     { "source": "/api/reporting", "destination": "/api/dashboard?reporting_route=dashboard" },
