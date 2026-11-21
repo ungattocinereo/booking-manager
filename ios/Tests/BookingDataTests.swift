@@ -35,3 +35,26 @@ private let fixture = Data("""
         #expect(throws: ConnectionError.self) { try Connection(server: server, accessKey: "secret").request() }
     }
 }
+
+@Test func arrivalBoardGroupsOneDayWithoutDroppingBusyDays() throws {
+    var dashboard = try Dashboard.decode(fixture)
+    let today = ArrivalBoard(dashboard: dashboard, day: "2026-10-23")
+    #expect(today.bookings.map(\.id) == ["today"])
+    #expect(!today.isNext)
+    let tomorrow = ArrivalBoard(dashboard: dashboard, day: "2026-10-24")
+    #expect(tomorrow.bookings.map(\.id) == ["next"])
+    #expect(tomorrow.daysUntil == 2)
+    #expect(tomorrow.isNext)
+    dashboard.bookings = (0..<25).map { index in
+        var booking = dashboard.bookings[2]
+        booking.id = "arrival-\(index)"
+        return booking
+    }
+    let busy = ArrivalBoard(dashboard: dashboard, day: "2026-10-23")
+    #expect(busy.columns == 2)
+    #expect(busy.bookings.count == 25)
+    #expect(busy.pageCount == 3)
+    #expect((busy.page(0) + busy.page(1) + busy.page(2)).count == 25)
+    #expect(busy.page(99).count == 1)
+    #expect(ArrivalBoard(dashboard: dashboard, day: "2026-10-23", propertyId: "royal").bookings.isEmpty)
+}

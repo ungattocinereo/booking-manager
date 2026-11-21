@@ -2,87 +2,95 @@ import SwiftUI
 
 struct TodayView: View {
     @EnvironmentObject private var store: BookingStore
+    @State private var dayOffset = 0
     private var today: String { RomeDate.key() }
+    private var day: String { RomeDate.key(RomeDate.calendar.date(byAdding: .day, value: dayOffset, to: Date())!) }
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                HStack {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("ATRANI / BOOKING MANAGER").font(.caption2.weight(.bold)).tracking(2).foregroundStyle(Orbit.violet)
-                        Text(RomeDate.label(today, template: "d MMMM EEEE").capitalized).font(.subheadline).foregroundStyle(.secondary)
-                    }
-                    Spacer()
-                    if store.isLoading { ProgressView() }
-                    else { Image(systemName: "sun.max.fill").font(.title).foregroundStyle(.orange) }
-                }
+            VStack(alignment: .leading, spacing: 24) {
                 StatusBanner()
                 if let data = store.dashboard {
-                    HStack(spacing: 10) {
-                        metric("Заезды", value: data.arrivals(on: today).count, icon: "arrow.down.left", color: Orbit.mint)
-                        metric("Выезды", value: data.departures(on: today).count, icon: "arrow.up.right", color: .orange)
-                        metric("Занято", value: Set(data.occupied(on: today).map(\.propertyId)).count, icon: "bed.double", color: Orbit.violet)
-                    }
-                    if let next = data.upcoming().first { nextCard(next, data: data) }
-                    Text("Ближайшие заезды").font(.title3.bold())
-                    if data.upcoming().isEmpty { EmptyBookingsView() }
-                    else {
-                        VStack(spacing: 18) {
-                            ForEach(data.upcoming().prefix(12)) { booking in
+                    Picker("День заезда", selection: $dayOffset) {
+                        Text("Сегодня · \(data.arrivals(on: today).count)").tag(0)
+                        Text("Завтра · \(data.arrivals(on: RomeDate.key(RomeDate.calendar.date(byAdding: .day, value: 1, to: Date())!)).count)").tag(1)
+                    }.pickerStyle(.segmented)
+                    HStack {
+                        Label(RomeDate.label(day, template: "d MMMM EEEE"), systemImage: "calendar")
+                        Spacer()
+                        if store.isLoading { ProgressView() }
+                    }.font(.subheadline).foregroundStyle(.secondary)
+                    let board = ArrivalBoard(dashboard: data, day: day)
+                    VStack(alignment: .leading, spacing: 16) {
+                        HStack {
+                            Label(board.isNext ? "Ближайшие заезды" : "Заезды", systemImage: "key.horizontal")
+                                .font(.headline)
+                            Spacer()
+                            Text("\(board.bookings.count)").font(.headline.monospacedDigit()).foregroundStyle(Orbit.violet)
+                        }
+                        if board.isNext {
+                            Text("\(dayOffset == 0 ? "Сегодня" : "Завтра") заездов нет · ближайший через \(RomeDate.days(today, board.displayDay)) дн.")
+                                .font(.subheadline).foregroundStyle(.secondary)
+                        }
+                        if board.bookings.isEmpty { EmptyBookingsView(title: "Ближайших заездов нет") }
+                        else if board.bookings.count == 1, let next = board.bookings.first { nextCard(next, data: data) }
+                        else {
+                            ForEach(board.bookings) { booking in
                                 BookingRow(booking: booking)
-                                if booking.id != data.upcoming().prefix(12).last?.id { Divider() }
+                                if booking.id != board.bookings.last?.id { Divider() }
                             }
-                        }.orbitCard()
+                        }
+                    }.orbitCard()
+                    HStack(spacing: 16) {
+                        metric("Выезды", value: data.departures(on: day).count, icon: "arrow.up.right")
+                        metric("Занято", value: Set(data.occupied(on: day).map(\.propertyId)).count, icon: "bed.double")
+                        metric("Объекты", value: data.properties.count, icon: "building.2")
                     }
-                    if !data.departures(on: today).isEmpty {
-                        Text("Сегодня выезжают").font(.title3.bold())
-                        VStack(spacing: 18) { ForEach(data.departures(on: today)) { BookingRow(booking: $0) } }.orbitCard()
+                    if !data.departures(on: day).isEmpty {
+                        Label("\(dayOffset == 0 ? "Сегодня" : "Завтра") выезжают", systemImage: "arrow.up.right").font(.title3.weight(.semibold))
+                        VStack(spacing: 16) { ForEach(data.departures(on: day)) { BookingRow(booking: $0) } }.orbitCard()
                     }
-                    Text("Данные получены: \(updatedLabel(data.generatedAt))").font(.caption2).foregroundStyle(.secondary)
-                } else if store.isLoading { ProgressView("Загружаем бронирования…").frame(maxWidth: .infinity).padding(50) }
+                    let later = data.upcoming(on: day).filter { $0.startDate > board.displayDay }
+                    if !later.isEmpty {
+                        Text("Далее в календаре").font(.title3.weight(.semibold))
+                        VStack(spacing: 16) { ForEach(later.prefix(8)) { BookingRow(booking: $0) } }.orbitCard()
+                    }
+                    Button { store.calendarDay = day; store.tab = 1 } label: {
+                        Label("Календарь всех апартаментов", systemImage: "calendar").frame(maxWidth: .infinity, minHeight: 44)
+                    }.buttonStyle(.bordered)
+                    Text("Получено \(updatedLabel(data.generatedAt))").font(.caption).foregroundStyle(.secondary)
+                } else if store.isLoading { ProgressView("Загружаем бронирования…").frame(maxWidth: .infinity).padding(48) }
                 else { EmptyBookingsView() }
             }.padding(20)
-        }
-        .background(Orbit.background).navigationTitle("Сегодня")
-        .refreshable { await store.refresh() }
+        }.background(Orbit.background).navigationTitle("Заезды")
+            .refreshable { await store.refresh() }
     }
-
-    private func metric(_ title: String, value: Int, icon: String, color: Color) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Image(systemName: icon).foregroundStyle(color)
-            Text("\(value)").font(.system(size: 30, weight: .bold, design: .rounded))
-            Text(title).font(.caption).foregroundStyle(.secondary)
-        }.frame(maxWidth: .infinity, alignment: .leading).padding(16)
-            .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 22))
+    private func metric(_ title: String, value: Int, icon: String) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("\(value)").font(.title.weight(.medium).monospacedDigit())
+            Label(title, systemImage: icon).font(.caption).foregroundStyle(.secondary)
+        }.frame(maxWidth: .infinity, alignment: .leading)
     }
-
     private func nextCard(_ booking: Booking, data: Dashboard) -> some View {
         Button { store.selectedBooking = booking } label: {
-            VStack(alignment: .leading, spacing: 14) {
-                HStack {
-                    Label("СЛЕДУЮЩИЙ ЗАЕЗД", systemImage: "arrow.down.left").font(.caption.weight(.bold)).tracking(1)
+            VStack(alignment: .leading, spacing: 12) {
+                Text(data.propertyName(booking.propertyId)).font(.largeTitle.weight(.semibold)).foregroundStyle(Orbit.violet)
+                Label(booking.guestLabel, systemImage: "person").font(.title3)
+                Label("\(RomeDate.label(booking.startDate)) – \(RomeDate.label(booking.endDate))", systemImage: "calendar").font(.subheadline)
+                HStack(spacing: 16) {
+                    Label("\(booking.nights) ноч.", systemImage: "moon")
+                    if let count = booking.guestCount { Label("\(count) гостей", systemImage: "person.2") }
                     Spacer()
-                    Image(systemName: "arrow.up.right")
-                }.foregroundStyle(.white.opacity(0.8))
-                Text(data.propertyName(booking.propertyId)).font(.system(size: 32, weight: .bold, design: .rounded))
-                Text(booking.guestLabel).font(.title3)
-                HStack {
-                    Text("\(RomeDate.label(booking.startDate)) – \(RomeDate.label(booking.endDate))").font(.headline)
-                    Spacer()
-                    Text("\(booking.nights) ноч.").font(.subheadline.weight(.semibold))
-                }.padding(.top, 8)
-            }.foregroundStyle(.white).padding(24).frame(maxWidth: .infinity, alignment: .leading)
-                .background(LinearGradient(colors: [Orbit.violet, Color(red: 0.3, green: 0.15, blue: 0.72)], startPoint: .topLeading, endPoint: .bottomTrailing), in: RoundedRectangle(cornerRadius: 28))
+                    Image(systemName: "chevron.right")
+                }.font(.subheadline).foregroundStyle(.secondary)
+            }.frame(maxWidth: .infinity, alignment: .leading).padding(.vertical, 12).contentShape(Rectangle())
         }.buttonStyle(.plain)
     }
-
     private func updatedLabel(_ value: String) -> String {
-        guard let date = ISO8601DateFormatter().date(from: value) ?? fractionalDate(value) else { return "—" }
-        return date.formatted(date: .abbreviated, time: .shortened)
-    }
-    private func fractionalDate(_ value: String) -> Date? {
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        return formatter.date(from: value)
+        let formatter = ISO8601DateFormatter(); formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        guard let date = formatter.date(from: value) ?? ISO8601DateFormatter().date(from: value) else { return "—" }
+        let display = DateFormatter(); display.locale = Locale(identifier: "ru_RU"); display.timeZone = RomeDate.calendar.timeZone
+        display.dateStyle = .short; display.timeStyle = .short
+        return display.string(from: date)
     }
 }
 

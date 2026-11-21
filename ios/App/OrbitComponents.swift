@@ -1,14 +1,16 @@
 import SwiftUI
 
 enum Orbit {
-    static let violet = Color(red: 0.43, green: 0.17, blue: 0.99)
+    static let violet = Color(uiColor: UIColor { traits in
+        traits.userInterfaceStyle == .dark ? UIColor(red: 0.75, green: 0.62, blue: 1, alpha: 1) : UIColor(red: 0.38, green: 0.18, blue: 0.75, alpha: 1)
+    })
     static let mint = Color(red: 0.08, green: 0.65, blue: 0.51)
     static let background = Color(uiColor: .systemGroupedBackground)
 }
 
 extension View {
     func orbitCard() -> some View {
-        padding(18).background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 24))
+        padding(20).background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
     }
 }
 
@@ -36,7 +38,7 @@ struct BookingRow: View {
                 .background(Orbit.violet.opacity(0.08), in: RoundedRectangle(cornerRadius: 15))
                 VStack(alignment: .leading, spacing: 5) {
                     Text(store.dashboard?.propertyName(booking.propertyId) ?? booking.propertyId).font(.headline)
-                    Text(booking.guestLabel).font(.subheadline).foregroundStyle(.secondary).lineLimit(1)
+                    Text(booking.guestLabel).font(.subheadline).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                     Text("\(RomeDate.label(booking.startDate)) – \(RomeDate.label(booking.endDate)) · \(booking.nights) ноч.")
                         .font(.caption).foregroundStyle(.secondary)
                 }

@@ -5,7 +5,6 @@
 const API_URL = 'https://booking-manager-cinereos-projects.vercel.app/api/bookings?widget=today&token=YOUR_WIDGET_TOKEN';
 const VERCEL_BYPASS = 'YOUR_VERCEL_PROTECTION_BYPASS_TOKEN';
 
-const MAX_ARRIVAL_ROWS = 5;
 const MAX_CHECKOUT_ROOMS = 4;
 const CONTENT_WIDTH = 340;
 const HEADER_HEIGHT = 44;
@@ -265,13 +264,13 @@ function addSectionShell(parent, title, count) {
   return section;
 }
 
-function addArrivalRow(parent, item) {
+function addArrivalRow(parent, item, prominent = false) {
   const row = parent.addStack();
   row.layoutHorizontally();
   row.centerAlignContent();
   row.backgroundColor = colors.surfaceSoft;
   row.cornerRadius = 9;
-  row.size = new Size(CONTENT_WIDTH - 16, ARRIVAL_ROW_HEIGHT);
+  row.size = new Size(CONTENT_WIDTH - 16, prominent ? 150 : ARRIVAL_ROW_HEIGHT);
   row.setPadding(3, 7, 3, 7);
 
   addPlatformMark(row, item, 20, ARRIVAL_ROW_HEIGHT - 6, 14);
@@ -279,25 +278,25 @@ function addArrivalRow(parent, item) {
 
   const details = row.addStack();
   details.layoutVertically();
-  details.size = new Size(277, ARRIVAL_ROW_HEIGHT - 6);
+  details.size = new Size(277, prominent ? 140 : ARRIVAL_ROW_HEIGHT - 6);
 
   const guestRow = details.addStack();
   guestRow.layoutHorizontally();
   guestRow.centerAlignContent();
-  addText(guestRow, guestName(item), 15, colors.ink, 'semibold', 0.78);
+  addText(guestRow, guestName(item), prominent ? 24 : 15, colors.ink, 'semibold', 0.78);
 
   const metaRow = details.addStack();
   metaRow.layoutHorizontally();
   metaRow.centerAlignContent();
-  addText(metaRow, `${propertyName(item)} · ${platformName(item)}`, 10, colors.muted, 'medium', 0.72);
+  addText(metaRow, `${propertyName(item)} · ${platformName(item)}`, prominent ? 15 : 10, colors.muted, 'medium', 0.72);
   metaRow.addSpacer(6);
   rightText(addText(metaRow, stayLength(item), 11, colors.arrival, 'bold', 0.82));
 }
 
-function addArrivalsSection(widget, items) {
-  const visible = items.slice(0, MAX_ARRIVAL_ROWS);
-  const count = items.length > visible.length ? `${visible.length}/${items.length}` : items.length;
-  const section = addSectionShell(widget, 'Заезды сегодня', count);
+function addArrivalsSection(widget, items, future = false) {
+  const visible = items;
+  const count = items.length;
+  const section = addSectionShell(widget, future ? 'Ближайшие заезды' : 'Заезды сегодня', count);
   section.addSpacer(5);
 
   if (!items.length) {
@@ -312,10 +311,27 @@ function addArrivalsSection(widget, items) {
     return;
   }
 
-  visible.forEach((item, index) => {
-    addArrivalRow(section, item);
-    if (index !== visible.length - 1) section.addSpacer(3);
-  });
+  if (items.length <= 5) {
+    visible.forEach((item, index) => {
+      addArrivalRow(section, item, items.length === 1);
+      if (index !== visible.length - 1) section.addSpacer(3);
+    });
+  } else {
+    const rows = Math.ceil(items.length / 2);
+    const rowHeight = Math.max(22, Math.floor((ARRIVAL_SECTION_HEIGHT - 45) / rows));
+    for (let index = 0; index < items.length; index += 2) {
+      const pair = section.addStack(); pair.layoutHorizontally();
+      for (const item of items.slice(index, index + 2)) {
+        const cell = pair.addStack(); cell.layoutVertically();
+        cell.size = new Size((CONTENT_WIDTH - 24) / 2, rowHeight);
+        addText(cell, propertyName(item), 12, colors.ink, 'semibold', 0.92);
+        addText(cell, guestName(item), 11, colors.muted, 'regular', 1);
+        pair.addSpacer(4);
+      }
+      section.addSpacer(2);
+    }
+  }
+
 }
 
 function checkoutSummary(items) {
@@ -366,7 +382,10 @@ function renderWidget(data) {
   const checkOuts = (data.check_outs || []).slice().sort(compareByProperty);
   addHeader(widget, data);
   widget.addSpacer(6);
-  addArrivalsSection(widget, checkIns);
+  if (!checkIns.length && data.next_check_ins?.length) {
+    addText(widget, `Ближайший заезд через ${daysBetween(data.date, data.next_arrival_date)} дн.`, 12, colors.muted, 'medium');
+    addArrivalsSection(widget, data.next_check_ins, true);
+  } else { addArrivalsSection(widget, checkIns); }
   widget.addSpacer();
   addCheckoutSection(widget, checkOuts);
 

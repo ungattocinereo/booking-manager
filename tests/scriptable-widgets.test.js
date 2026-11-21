@@ -142,7 +142,7 @@ test('tracked Scriptable widgets keep secrets as placeholders', () => {
   }
 });
 
-test('arrival-first widget keeps five detailed arrivals and pins compact check-outs last', async () => {
+test('arrival-first widget keeps every arrival on busy days and pins compact check-outs last', async () => {
   const widget = await renderWidget('scriptable-widgets/iphone-bookings-widget-today.js', {
     status: 'ok',
     date: '2026-08-31',
@@ -166,14 +166,11 @@ test('arrival-first widget keeps five detailed arrivals and pins compact check-o
   });
 
   assert.ok(widget);
-  assert.ok(widget.texts.includes('5/6'));
+  assert.ok(widget.texts.includes('6'));
   assert.ok(widget.texts.includes('Guest 1'));
   assert.ok(widget.texts.includes('Guest 5'));
-  assert.ok(!widget.texts.includes('Guest 6'));
+  assert.ok(widget.texts.includes('Guest 6'));
   assert.ok(!widget.texts.includes('Occupied guest'));
-  assert.ok(widget.texts.includes('1 ночь'));
-  assert.ok(widget.texts.includes('2 ночи'));
-  assert.ok(widget.texts.includes('5 ночей'));
   assert.ok(widget.texts.includes('Awesome · Central · Orange · Vingtage · +1'));
 
   const lastChild = widget.children.at(-1);
