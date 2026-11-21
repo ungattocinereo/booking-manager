@@ -10,8 +10,10 @@ assignment/completion, statistics, tax and guest-reporting operations. These
 operations are not yet native screens. Demo mode is visibly labelled and never
 writes sample records to the server or the real widget's cache.
 
-The large widget shows the next arrival even when today and tomorrow have no
-arrivals, followed by two more bookings. Each widget can select all properties or
+The large widget switches Today/Tomorrow in place and shows every arrival on the
+selected day. Empty days fall back to the nearest future arrival day. One arrival
+is large, 2–6 use rows, and 7–12 use two columns; unusually busy days use explicit
+pages. Each widget can select all properties or
 one property. Booking links open the native detail screen. Dates and midnight
 timeline changes use Europe/Rome. Refresh requests are made about every 30
 minutes; iOS controls actual delivery. Saved data remains available offline with

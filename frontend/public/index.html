@@ -4681,6 +4681,7 @@
   </style>
   <link rel="stylesheet" href="/analytics.css">
   <script src="/analytics.js"></script>
+  <link rel="stylesheet" href="/arrival-board.css">
 </head>
 <body>
 
@@ -4772,7 +4773,15 @@
   </section>
 
   <!-- STATS -->
-  <div class="stats-bar" id="statsBar">
+  <div class="stats-bar" id="statsBar" data-arrival-day="today">
+    <div class="arrival-controls" role="group" aria-label="День заезда">
+      <span class="arrival-heading"><i data-lucide="key-round" aria-hidden="true"></i><span>Заезды в Atrani</span></span>
+      <div class="arrival-segments">
+        <button type="button" data-arrival-select="today" aria-pressed="true" onclick="selectArrivalDay('today')">Сегодня <span id="arrivalTodayTotal">0</span></button>
+        <button type="button" data-arrival-select="tomorrow" aria-pressed="false" onclick="selectArrivalDay('tomorrow')">Завтра <span id="arrivalTomorrowTotal">0</span></button>
+        <button type="button" data-arrival-select="next" aria-pressed="false" onclick="selectArrivalDay('next')">Далее</button>
+      </div>
+    </div>
     <div class="stat-card">
       <div class="stat-label">Всего бронирований</div>
       <div class="stat-value" id="statBookings">—</div>
@@ -4781,17 +4790,17 @@
         <span class="airbnb-count" id="statAirbnbCount">—</span>
       </div>
     </div>
-    <div class="stat-card stat-day-card" id="statTodayCard">
+    <div class="stat-card stat-day-card" data-arrival-panel="today" id="statTodayCard">
       <div class="stat-label">Сегодня</div>
       <div class="stat-value" id="statTodayCount">—</div>
       <div class="stat-checkin-list" id="statTodayList"></div>
     </div>
-    <div class="stat-card stat-day-card">
+    <div class="stat-card stat-day-card" data-arrival-panel="tomorrow">
       <div class="stat-label" id="statNextLabel">Завтра</div>
       <div class="stat-value" id="statNextDate">—</div>
       <div class="stat-checkin-list" id="statNextList"></div>
     </div>
-    <div class="stat-card stat-day-card">
+    <div class="stat-card stat-day-card" data-arrival-panel="next">
       <div class="stat-label" id="statNext2Label">Ближайшие заезды</div>
       <div class="stat-value" id="statNext2Date">—</div>
       <div class="stat-checkin-list" id="statNext2List"></div>
@@ -5621,6 +5630,19 @@ async function loadData({ silent = false, attempt = 1, preserveCalendarScroll = 
   }
 }
 
+function selectArrivalDay(day) {
+  const bar = document.getElementById('statsBar');
+  bar.dataset.arrivalDay = day;
+  document.querySelectorAll('[data-arrival-select]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.arrivalSelect === day)));
+  const selected = bar.querySelector(`[data-arrival-panel="${day}"]`);
+  bar.dataset.arrivalEmpty = selected?.dataset.empty || 'true';
+  const tomorrowHasArrivals = bar.querySelector('[data-arrival-panel="tomorrow"]')?.dataset.empty === 'false';
+  const nextHasArrivals = bar.querySelector('[data-arrival-panel="next"]')?.dataset.empty === 'false';
+  bar.dataset.arrivalFallback = bar.dataset.arrivalEmpty !== 'true' ? 'none'
+    : day === 'today' && tomorrowHasArrivals ? 'tomorrow'
+    : day !== 'next' && nextHasArrivals ? 'next' : 'none';
+}
+
 function updateStats() {
   const realBookings = bookings.filter(b => isRealGuestBooking(b, bookings));
   const bookingComCount = realBookings.filter(b => b.platform === 'booking').length;
@@ -5651,19 +5673,18 @@ function updateStats() {
 
   function renderCheckinItem(b) {
     const p = properties.find(pp => pp.id === b.property_id);
-    const cfg = propertyConfig[b.property_id] || { icon: 'home', color: '#6b7280', bg: '#f9fafb' };
-    const flag = b.guest_country ? countryToFlag(b.guest_country) : '';
-    const guests = b.guest_count ? (IS_ITALIAN ? `${b.guest_count} ospiti` : `${b.guest_count} чел.`) : '';
-    return `<div class="stat-checkin-item">
-      <div class="prop-icon" style="background:${cfg.bg};color:${cfg.color};"><i data-lucide="${cfg.icon}" style="width:12px;height:12px;"></i></div>
-      <span class="prop-name">${p?.name || b.property_id}</span>
-      <span class="guest-info">${guests}${flag ? ' ' + flag : ''}</span>
-    </div>`;
+    const guests = Number(b.guest_count) > 0 ? `${Number(b.guest_count)} ${IS_ITALIAN ? 'ospiti' : 'гостей'}` : '';
+    const nights = nightsBetween(b.start_date, b.end_date);
+    return `<button type="button" class="stat-checkin-item" data-arrival-id="${escapeHtml(b.id)}">
+      <span class="arrival-key"><i data-lucide="door-open" aria-hidden="true"></i></span>
+      <span class="arrival-person"><span class="prop-name">${escapeHtml(p?.name || b.property_id)}</span>
+      <span class="arrival-guest">${escapeHtml(b.guest_name || (IS_ITALIAN ? 'Nome da confermare' : 'Имя уточняется'))}</span></span>
+      <span class="guest-info"><span><i data-lucide="moon" aria-hidden="true"></i>${nights} ${IS_ITALIAN ? 'notti' : 'ноч.'}</span>${guests ? `<span><i data-lucide="users" aria-hidden="true"></i>${guests}</span>` : ''}</span>
+      <i data-lucide="chevron-right" class="arrival-chevron" aria-hidden="true"></i>
+    </button>`;
   }
 
-  function renderCheckinList(items) {
-    return items.map(renderCheckinItem).join('');
-  }
+  function renderCheckinList(items) { return items.map(renderCheckinItem).join(''); }
 
   function checkinCountLabel(count, emptyLabel) {
     return count
@@ -5711,6 +5732,19 @@ function updateStats() {
     document.getElementById('statNext2Date').textContent = 'Ближайших заездов нет';
     nextList.innerHTML = '';
   }
+
+  document.getElementById('arrivalTodayTotal').textContent = todayCheckins.length;
+  document.getElementById('arrivalTomorrowTotal').textContent = tomorrowCheckins.length;
+  document.querySelectorAll('[data-arrival-panel]').forEach(panel => {
+    const count = panel.querySelectorAll('.stat-checkin-item').length;
+    panel.dataset.density = count === 1 ? 'single' : count > 6 ? 'dense' : 'regular';
+    panel.querySelectorAll('[data-arrival-id]').forEach(button => button.addEventListener('click', () => openBookingPanel(button.dataset.arrivalId)));
+  });
+  if (nextCheckinDate) {
+    const days = Math.round((new Date(nextCheckinDate + 'T12:00:00Z') - new Date(today + 'T12:00:00Z')) / 86400000);
+    document.getElementById('statNext2Label').textContent = IS_ITALIAN ? `Tra ${days} giorni` : `Через ${days} дн.`;
+  }
+  selectArrivalDay(document.getElementById('statsBar').dataset.arrivalDay || 'today');
 
   // Detect conflicts: overlapping bookings for the same property
   const conflicts = [];

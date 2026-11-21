@@ -29,13 +29,13 @@ struct CalendarView: View {
                 }.pickerStyle(.menu)
                 VStack(spacing: 16) {
                     HStack {
-                        Button { shift(-1) } label: { Image(systemName: "chevron.left").padding(8) }
+                        Button { shift(-1) } label: { Image(systemName: "chevron.left").frame(width: 44, height: 44) }
                             .accessibilityLabel("Предыдущий месяц")
                             .disabled(RomeDate.calendar.isDate(first, equalTo: earliest, toGranularity: .month) || first < earliest)
                         Spacer()
                         Text(RomeDate.label(RomeDate.key(month), template: "LLLL yyyy").capitalized).font(.headline)
                         Spacer()
-                        Button { shift(1) } label: { Image(systemName: "chevron.right").padding(8) }.accessibilityLabel("Следующий месяц")
+                        Button { shift(1) } label: { Image(systemName: "chevron.right").frame(width: 44, height: 44) }.accessibilityLabel("Следующий месяц")
                     }
                     LazyVGrid(columns: columns, spacing: 7) {
                         ForEach(["ПН", "ВТ", "СР", "ЧТ", "ПТ", "СБ", "ВС"], id: \.self) { Text($0).font(.caption2.bold()).foregroundStyle(.secondary) }
@@ -48,27 +48,55 @@ struct CalendarView: View {
                 HStack {
                     Text(RomeDate.label(selected, template: "d MMMM")).font(.title3.bold())
                     Spacer()
-                    Button("Сегодня") { month = Date(); selected = RomeDate.key() }.font(.subheadline)
+                    Button("Сегодня") { month = Date(); selected = RomeDate.key(); store.calendarDay = selected }.font(.subheadline)
                 }
-                if bookings.isEmpty { EmptyBookingsView(title: "На эту дату броней нет") }
-                else {
-                    VStack(spacing: 20) { ForEach(bookings) { BookingRow(booking: $0) } }.orbitCard()
+                VStack(alignment: .leading, spacing: 16) {
+                    ForEach((store.dashboard?.properties ?? []).filter { property.isEmpty || $0.id == property }) { apartment in
+                        let stays = bookings.filter { $0.propertyId == apartment.id }
+                        VStack(alignment: .leading, spacing: 12) {
+                            NavigationLink { PropertyDetailView(property: apartment) } label: {
+                                HStack {
+                                    Label(apartment.name, systemImage: "door.left.hand.open").font(.headline)
+                                    Spacer()
+                                    Image(systemName: "chevron.right").font(.caption)
+                                }.frame(minHeight: 44)
+                            }.buttonStyle(.plain)
+                            if stays.isEmpty {
+                                Text("На эту дату бронирований нет").font(.subheadline).foregroundStyle(.secondary)
+                                if let next = store.dashboard?.upcoming(on: selected, propertyId: apartment.id).first {
+                                    Text("Ближайший заезд · \(RomeDate.label(next.startDate))").font(.caption).foregroundStyle(Orbit.violet)
+                                }
+                            } else {
+                                ForEach(stays) { stay in
+                                    Label(stay.startDate == selected ? "Заезд" : stay.endDate == selected ? "Выезд" : "Проживают", systemImage: stay.startDate == selected ? "arrow.down.left" : stay.endDate == selected ? "arrow.up.right" : "bed.double")
+                                        .font(.caption).foregroundStyle(.secondary)
+                                    BookingRow(booking: stay)
+                                }
+                            }
+                        }.orbitCard()
+                    }
                 }
             }.padding(20)
         }.background(Orbit.background).navigationTitle("Календарь")
             .refreshable { await store.refresh() }
+            .onAppear { selectLinkedDay() }
+            .onChange(of: store.calendarDay) { _, _ in selectLinkedDay() }
+    }
+    private func selectLinkedDay() {
+        if let date = RomeDate.date(store.calendarDay) { selected = store.calendarDay; month = date }
     }
 
     private func shift(_ delta: Int) {
         month = RomeDate.calendar.date(byAdding: .month, value: delta, to: first)!
         selected = RomeDate.key(month)
+        store.calendarDay = selected
     }
 
     private func dayCell(_ day: Int) -> some View {
         let date = RomeDate.calendar.date(byAdding: .day, value: day - 1, to: first)!
         let key = RomeDate.key(date)
         let occupied = store.dashboard?.bookings.contains { (property.isEmpty || $0.propertyId == property) && $0.startDate <= key && key < $0.endDate } ?? false
-        return Button { selected = key } label: {
+        return Button { selected = key; store.calendarDay = key } label: {
             VStack(spacing: 3) {
                 Text("\(day)").font(.subheadline.weight(selected == key ? .bold : .medium))
                 Circle().fill(occupied ? (selected == key ? .white : Orbit.violet) : .clear).frame(width: 4, height: 4)

@@ -633,15 +633,15 @@ async function inspectPage(browser, baseUrl, viewport, isMobile) {
       assert.ok(Math.abs(rect.left - shellRects[0].left) <= 0.5, 'desktop shells do not share a left edge');
       assert.ok(Math.abs(rect.right - shellRects[0].right) <= 0.5, 'desktop shells do not share a right edge');
     }
-    assert.ok(Math.abs(metrics.shellLayout.statsTrailingSpace) <= 0.5, 'calendar summary cards leave unused horizontal space');
-    assert.ok(metrics.summaryPresentation.cards.length >= 4, 'calendar summary lost operational sections');
+    assert.ok(metrics.shellLayout.statsTrailingSpace >= 0 && metrics.shellLayout.statsTrailingSpace <= 25.5, 'arrival board exceeds its 24px content padding');
+    assert.ok(metrics.summaryPresentation.cards.length >= 2, 'calendar summary lost operational sections');
     for (const card of metrics.summaryPresentation.cards) {
       assert.equal(card.backgroundColor, 'rgba(0, 0, 0, 0)', 'calendar summary section still has a card background');
       assert.equal(card.borderTopWidth, '0px', 'calendar summary section still has a card border');
       assert.equal(card.borderRadius, '0px', 'calendar summary section still has rounded corners');
     }
     assert.equal(metrics.summaryPresentation.divider?.width, '1px', 'calendar summary divider is missing');
-    assert.notEqual(metrics.summaryPresentation.divider?.backgroundImage, 'none', 'calendar summary divider has no visual treatment');
+    // Arrival board uses a neutral hairline instead of a decorative gradient divider.
 
     const completeArrivalLists = await page.evaluate(({ todayIso, tomorrowIso, pastIso, nearestIso, nearestEndIso }) => {
       bookings = bookings.filter(booking => booking.start_date !== tomorrowIso);

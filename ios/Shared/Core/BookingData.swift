@@ -119,6 +119,27 @@ public struct Dashboard: Codable, Sendable {
     public func departures(on day: String) -> [Booking] { bookings.filter { $0.endDate == day } }
 }
 
+/// Shared arrival selection for the app and widget. Never mixes days or truncates silently.
+public struct ArrivalBoard: Sendable {
+    public let selectedDay: String
+    public let displayDay: String
+    public let bookings: [Booking]
+    public var isNext: Bool { displayDay != selectedDay }
+    public var daysUntil: Int { RomeDate.days(selectedDay, displayDay) }
+    public var columns: Int { bookings.count > 6 ? 2 : 1 }
+    public var pageCount: Int { max(1, (bookings.count + 11) / 12) }
+    public func page(_ index: Int) -> [Booking] {
+        Array(bookings.dropFirst(min(max(0, index), pageCount - 1) * 12).prefix(12))
+    }
+    public init(dashboard: Dashboard, day: String, propertyId: String? = nil) {
+        selectedDay = day
+        let upcoming = dashboard.upcoming(on: day, propertyId: propertyId)
+        let nextDay = upcoming.first?.startDate ?? day
+        displayDay = nextDay
+        bookings = upcoming.filter { $0.startDate == nextDay }
+    }
+}
+
 public enum ConnectionError: Error, LocalizedError, Sendable {
     case invalidServer, unauthorized, server(Int), invalidResponse, unsupportedVersion
     public var errorDescription: String? {

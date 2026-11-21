@@ -3,8 +3,8 @@
 Arrival-first Scriptable widgets for Booking Manager daily guest status. Use the
 **Large** family, which is the largest widget size available on iPhone.
 
-- `iphone-bookings-widget-today.js` shows up to five of today's arrivals with the
-  guest, apartment, booking source, and number of nights.
+- `iphone-bookings-widget-today.js` shows today's arrivals with adaptive density: larger text for a
+  single arrival and two columns on busy days. Empty days show the nearest arrival.
 - `iphone-bookings-widget-tomorrow.js` shows the same arrival-first layout for
   tomorrow.
 - Check-outs stay visible in a compact strip pinned to the bottom of both widgets.

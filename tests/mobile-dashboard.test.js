@@ -42,3 +42,11 @@ test('unauthenticated and non-GET mobile requests cannot initialize or read the 
     assert.match(headers['Cache-Control'], /no-store/);
   }
 });
+
+test('native inventory includes every apartment even without bookings or Hostex coverage', async () => {
+  const properties = ['awesome', 'central', 'orange', 'vingtage', 'youth', 'solo', 'carina', 'royal', 'harmony', 'susy', 'carmela'].map(id => ({ id, name: id }));
+  const dashboard = await buildMobileDashboard({ getProperties: async () => properties, getBookings: async () => [], getCleaningTasks: async () => [] }, undefined, '2026-11-21');
+  assert.equal(dashboard.properties.length, 11);
+  assert.deepEqual(dashboard.properties.map(p => p.id), properties.map(p => p.id));
+  assert.deepEqual(dashboard.bookings, []);
+});

@@ -6,11 +6,20 @@ struct AtraniApp: App {
     @StateObject private var store = BookingStore()
     var body: some Scene {
         WindowGroup {
-            RootView().environmentObject(store).tint(Orbit.violet)
+            launchView.environmentObject(store).tint(Orbit.violet)
                 .task { await store.start() }
                 .onOpenURL { store.open($0) }
         }
     }
+    @ViewBuilder private var launchView: some View {
+        #if DEBUG && targetEnvironment(simulator)
+        if ProcessInfo.processInfo.arguments.contains("--widget-preview") { ArrivalWidgetPreview() }
+        else { RootView() }
+        #else
+        RootView()
+        #endif
+    }
+
 }
 
 @MainActor
@@ -22,12 +31,14 @@ final class BookingStore: ObservableObject {
     @Published var demo = false
     @Published var selectedBooking: Booking?
     @Published var tab = 0
+    @Published var calendarDay = RomeDate.key()
     private var revision = UUID()
     private var pendingBookingId: String?
 
     func start() async {
         #if DEBUG && targetEnvironment(simulator)
         let arguments = ProcessInfo.processInfo.arguments
+        if arguments.contains("--widget-preview") { return }
         if arguments.contains("--demo") { showDemo(); return }
         if let index = arguments.firstIndex(of: "--connection-file"), index + 1 < arguments.count {
             do {
@@ -90,6 +101,10 @@ final class BookingStore: ObservableObject {
     func open(_ url: URL) {
         guard url.scheme == "atrani" else { return }
         tab = 0
+        if url.host == "calendar" {
+            calendarDay = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first(where: { $0.name == "date" })?.value ?? RomeDate.key()
+            tab = 1
+        }
         if url.host == "booking" {
             pendingBookingId = url.lastPathComponent
             resolvePendingLink()

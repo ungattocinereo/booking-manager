@@ -1,0 +1,66 @@
+/* Atrani arrival board. Quiet shell, booking dates and guest names carry the hierarchy. */
+html:not([data-color-scheme="dark"]) { --bg: #f6f6f8; --text: #202027; --text-secondary: #62626e;  }
+html[data-color-scheme="dark"] { --bg: #121216; --text-secondary: #b7b5c0;  }
+body { background: var(--bg); }
+.orbit-topbar { background: var(--bg); box-shadow: none; }
+.orbit-eyebrow, .stat-label, .orbit-brand small { text-transform: none; letter-spacing: 0; font-weight: 500; }
+.orbit-hero { padding: 24px; gap: 24px; }
+.orbit-hero h2, .orbit-hero[data-tab="calendar"] h2 { font-family: 'Golos Text', sans-serif; font-size: clamp(28px, 3vw, 40px); font-weight: 500; letter-spacing: -.025em; line-height: 1.15; }
+.orbit-eyebrow { color: var(--text-secondary); font-size: 13px; }
+.orbit-date { border-radius: 16px; width: 88px; height: 88px; background: var(--surface, #fff); color: var(--accent); border-color: var(--border); }
+.orbit-date-arrivals { width: 32px; height: 32px; font-size: 13px; border-width: 2px; }
+#statsBar { flex-wrap: wrap; gap: 0; padding: 20px 24px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface, #fff); margin-bottom: 24px; }
+.arrival-controls { display: flex; align-items: center; justify-content: space-between; gap: 16px; width: 100%; margin-bottom: 20px; }
+.arrival-heading { display: flex; align-items: center; gap: 8px; font-size: 17px; font-weight: 500; }
+.arrival-controls svg, .stat-checkin-item svg { width: 18px; height: 18px; stroke-width: 1.5; flex-shrink: 0; }
+.arrival-segments { display: flex; padding: 4px; gap: 4px; border-radius: 12px; background: var(--bg); }
+.arrival-segments button { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; border: 0; border-radius: 8px; padding: 8px 16px; font-size: 14px; font-weight: 500; color: var(--text-secondary); background: transparent; cursor: pointer; }
+.arrival-segments button[aria-pressed="true"] { color: var(--accent); background: var(--surface, #fff); box-shadow: 0 1px 3px #00000012; }
+.arrival-segments span { font-variant-numeric: tabular-nums; }
+#statsBar > .stat-card:not(.stat-day-card) { flex: 0 0 180px; border: 0; padding: 0 24px 0 0; }
+#statsBar .stat-day-card { display: none; flex: 1 1 60%; padding: 0 0 0 24px; border: 0; border-left: 1px solid var(--border); }
+#statsBar[data-arrival-day="today"] [data-arrival-panel="today"],
+#statsBar[data-arrival-day="tomorrow"] [data-arrival-panel="tomorrow"],
+#statsBar[data-arrival-day="next"] [data-arrival-panel="next"] { display: block; }
+#statsBar[data-arrival-fallback="next"] [data-arrival-panel="next"], #statsBar[data-arrival-fallback="tomorrow"] [data-arrival-panel="tomorrow"] { display: block; flex-basis: 40%; margin-top: 16px; margin-left: 180px; }
+#statsBar .stat-label { color: var(--text-secondary); font-size: 13px; }
+#statsBar .stat-value { font-family: 'Golos Text', sans-serif; font-size: 24px; font-weight: 500; letter-spacing: 0; }
+#statsBar .stat-checkin-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 24px; max-height: none; overflow: visible; margin-top: 16px; }
+#statsBar .stat-checkin-item { display: flex; width: 100%; align-items: center; gap: 12px; padding: 12px 0; border: 0; border-bottom: 1px solid var(--border); background: transparent; color: var(--text); text-align: left; cursor: pointer; min-width: 0; min-height: 64px; }
+#statsBar .stat-checkin-item:hover { background: var(--bg); }
+.arrival-key { display: grid; place-items: center; color: var(--accent); width: 32px; height: 32px; border-radius: 8px; background: var(--bg); flex-shrink: 0; }
+.arrival-person { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1; }
+#statsBar .prop-name { font-size: 15px; font-weight: 500; overflow-wrap: anywhere; white-space: normal; }
+.arrival-guest { color: var(--text-secondary); font-size: 13px; overflow-wrap: anywhere; }
+#statsBar .guest-info { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; font-size: 12px; color: var(--text-secondary); flex-shrink: 0; }
+#statsBar .guest-info > span { display: flex; align-items: center; gap: 4px; }
+#statsBar .guest-info svg { width: 14px; height: 14px; }
+.arrival-chevron { color: var(--text-secondary); }
+#statsBar [data-density="single"] .stat-checkin-list { grid-template-columns: 1fr; }
+#statsBar [data-density="single"] .prop-name { font-size: 28px; color: var(--accent); }
+#statsBar [data-density="single"] .arrival-guest { font-size: 18px; }
+#statsBar [data-density="dense"] .stat-checkin-item { padding: 8px 0; min-height: 56px; }
+html[data-color-scheme="dark"] #statsBar, html[data-color-scheme="dark"] .orbit-date,
+html[data-color-scheme="dark"] .arrival-segments button[aria-pressed="true"] { background: #1b1b21; }
+@media (max-width: 768px) {
+  .orbit-hero { padding: 16px 4px; }
+  .orbit-hero h2, .orbit-hero[data-tab="calendar"] h2 { font-size: 28px; }
+  #statsBar { padding: 16px; }
+  .arrival-controls { flex-direction: column; align-items: stretch; }
+  .arrival-segments button { flex: 1; padding-inline: 8px; }
+  #statsBar > .stat-card:not(.stat-day-card) { display: none; }
+  #statsBar > #statConflictCard, #statsBar > #statRecentCard { flex: 1 1 100%; }
+  #statsBar .stat-day-card { padding: 0; border: 0; flex-basis: 100%; }
+  #statsBar .stat-checkin-list { grid-template-columns: 1fr; }
+  #statsBar[data-arrival-fallback="next"] [data-arrival-panel="next"], #statsBar[data-arrival-fallback="tomorrow"] [data-arrival-panel="tomorrow"] { margin-left: 0; flex-basis: 100%; }
+  #statsBar .stat-value { font-size: 22px; }
+  #statsBar .arrival-chevron { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .stat-checkin-item, .arrival-segments button { transition: none; } }
+#statsBar .stat-label { text-transform: none; letter-spacing: 0; font-weight: 500; }
+@media (max-width: 768px) {
+  body:has(.nav-item[data-tab="calendar"].active) #statsBar { display: flex !important; }
+  .orbit-date { width: 64px; height: 72px; }
+  .orbit-date-arrivals { right: -2px; top: -4px; }
+  .orbit-hero { grid-template-columns: minmax(0, 1fr) 72px; }
+}
