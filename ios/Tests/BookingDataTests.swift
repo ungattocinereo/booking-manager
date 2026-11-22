@@ -238,3 +238,18 @@ private let fixture = Data("""
     #expect(request.value(forHTTPHeaderField: "x-widget-token") == "test")
     #expect(request.httpMethod == "PUT")
 }
+
+@Test func todayMovementsSeparateTurnoversFromOngoingAndFutureStays() throws {
+    var dashboard = try Dashboard.decode(fixture)
+    #expect(dashboard.movementSummary(on: "2026-10-23") == "1 выезд · 1 заезд")
+    #expect(dashboard.movementSummary(on: "2026-10-24") == "Выездов и заездов нет")
+    #expect(dashboard.movementSummary(on: "2026-10-25") == "1 выезд · 0 заездов")
+    #expect(dashboard.movementSummary(on: "2026-10-26") == "0 выездов · 1 заезд")
+    let booking = dashboard.bookings[2]
+    for (count, word) in [(2, "заезда"), (5, "заездов"), (11, "заездов"), (21, "заезд")] {
+        dashboard.bookings = (0..<count).map { index in
+            var copy = booking; copy.id = "today-\(index)"; return copy
+        }
+        #expect(dashboard.movementSummary(on: "2026-10-23") == "0 выездов · \(count) \(word)")
+    }
+}

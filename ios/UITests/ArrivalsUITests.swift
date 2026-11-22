@@ -7,6 +7,7 @@ final class ArrivalsUITests: XCTestCase {
         app.launch()
         let history = app.buttons["arrival-history"]
         XCTAssertTrue(history.waitForExistence(timeout: 30))
+        XCTAssertEqual(app.staticTexts["today-movements"].label, "1 выезд · 0 заездов")
         let headerShot = XCTAttachment(screenshot: app.screenshot())
         headerShot.name = "arrivals-header"; headerShot.lifetime = .keepAlways; add(headerShot)
         // A short pull changes the list, without invoking a refresh.
