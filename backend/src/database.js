@@ -378,8 +378,8 @@ class Database {
   }
 
   // Cleaner operations
-  async createCleaner(id, name) {
-    return this.run('INSERT OR IGNORE INTO cleaners (id, name) VALUES (?, ?)', [id, name]);
+  async createCleaner(id, name, slug = null) {
+    return this.run('INSERT OR IGNORE INTO cleaners (id, name, slug) VALUES (?, ?, ?)', [id, name, slug]);
   }
 
   async assignCleanerToProperty(cleanerId, propertyId) {
@@ -414,6 +414,22 @@ class Database {
        WHERE cp.cleaner_id = ?`,
       [cleanerId]
     );
+  }
+
+  async saveMobileCleaner(id, name, slug, propertyIds) {
+    await this.run('BEGIN IMMEDIATE');
+    try {
+      const updated = await this.run('UPDATE cleaners SET name = ?, slug = ? WHERE id = ?', [name, slug, id]);
+      if (updated.changes !== 1) { await this.run('ROLLBACK'); return false; }
+      await this.run('DELETE FROM cleaner_properties WHERE cleaner_id = ?', [id]);
+      for (const propertyId of propertyIds) await this.run(
+        'INSERT INTO cleaner_properties (cleaner_id, property_id) VALUES (?, ?)', [id, propertyId]);
+      await this.run('COMMIT');
+      return true;
+    } catch (error) {
+      await this.run('ROLLBACK');
+      throw error;
+    }
   }
 
   async replaceCleanerProperties(cleanerId, propertyIds = []) {

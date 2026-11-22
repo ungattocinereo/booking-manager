@@ -11,7 +11,7 @@ extension Dashboard {
                          Property(id: "harmony", name: "Harmony"), Property(id: "susy", name: "Villa Susy"), Property(id: "carmela", name: "Carmela")],
             bookings: [
                 Booking(id: "demo-1", propertyId: "orange", startDate: day(1), endDate: day(4), guestName: "Sofia Moretti", guestCount: 2, platform: "booking", reservationUrl: nil, operationalFallback: false, taxPaid: false, taxApplicable: true),
-                Booking(id: "demo-2", propertyId: "harmony", startDate: day(2), endDate: day(7), guestName: "Alexander Williams", guestCount: 3, platform: "airbnb", reservationUrl: nil, operationalFallback: false, taxPaid: false, taxApplicable: true),
+                Booking(id: "demo-2", propertyId: "harmony", startDate: day(2), endDate: day(7), guestName: "Alexander Williams", guestCount: nil, platform: "airbnb", reservationUrl: nil, operationalFallback: false, taxPaid: false, taxApplicable: true),
                 Booking(id: "demo-3", propertyId: "royal", startDate: day(-2), endDate: day(0), guestName: "Emma Laurent", guestCount: 2, platform: "airbnb", reservationUrl: nil, operationalFallback: false, taxPaid: false, taxApplicable: true)
             ] + (1...8).map { index in
                 Booking(id: "demo-past-\(index)", propertyId: ["central", "carina", "vingtage", "solo"][index % 4],
