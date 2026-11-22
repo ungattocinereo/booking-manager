@@ -3,12 +3,15 @@
 Native SwiftUI app and WidgetKit large Home Screen widget, using the existing
 Booking Manager database and calendar normalization. iOS 17 or later.
 
-The app includes today's arrivals/departures, upcoming bookings and guest details,
-a monthly calendar with property filtering, individual property schedules, and a
-read-only cleaning schedule. The existing web workspace opens for cleaner
-assignment/completion, statistics, tax and guest-reporting operations. These
-operations are not yet native screens. Demo mode is visibly labelled and never
-writes sample records to the server or the real widget's cache.
+The app includes a chronological arrival list with large dates and a horizontally
+scrolling occupancy calendar for all apartments. Names remain fixed while days
+scroll through the next year; the month menu and Today button jump to a date.
+Property icons match the web calendar and platform badges identify Airbnb and
+Booking.com. Tap a booking for guest details. Individual property schedules and
+a read-only cleaning schedule remain available. The existing web workspace opens
+for cleaner assignment/completion, statistics, tax and guest-reporting operations.
+Demo mode is visibly labelled and never writes sample records to the server or
+the real widget's cache. See `docs/iphone-calendar.md` for the approved design.
 
 The large widget switches Today/Tomorrow in place and shows every arrival on the
 selected day. Empty days fall back to the nearest future arrival day. One arrival

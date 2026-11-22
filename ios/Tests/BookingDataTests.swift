@@ -58,3 +58,61 @@ private let fixture = Data("""
     #expect(busy.page(99).count == 1)
     #expect(ArrivalBoard(dashboard: dashboard, day: "2026-10-23", propertyId: "royal").bookings.isEmpty)
 }
+
+@Test func arrivalListGroupsEveryFutureDayWithoutTruncation() throws {
+    var dashboard = try Dashboard.decode(fixture)
+    var other = dashboard.bookings[1]
+    other.id = "same-day-other-property"
+    other.propertyId = "royal"
+    dashboard.bookings.append(other)
+    let days = dashboard.arrivalDays(on: "2026-10-24")
+    #expect(days.map(\.id) == ["2026-10-26"])
+    #expect(days[0].bookings.count == 2)
+    #expect(dashboard.arrivalDays(on: "2026-10-30").isEmpty)
+}
+
+@Test func timelineCoversLeapYearAndRomeDSTWithWholeDayColumns() {
+    let leap = BookingTimeline(today: "2027-11-22")
+    #expect(leap.firstDay == "2027-08-24")
+    #expect(leap.lastDay == "2028-11-21")
+    #expect(leap.days.count == 456)
+    #expect(leap.days.contains("2028-02-29"))
+    let timeline = BookingTimeline(today: "2026-11-22")
+    #expect(timeline.days.count == 455)
+    #expect(timeline.lastDay == "2027-11-21")
+    #expect(timeline.months.contains("2027-03-01"))
+    let spring = timeline.days.firstIndex(of: "2027-03-28")!
+    #expect(timeline.days[spring + 1] == "2027-03-29")
+    #expect(timeline.clamped("2099-01-01") == timeline.lastDay)
+    #expect(timeline.clamped("2000-01-01") == timeline.firstDay)
+}
+
+@Test func timelineSeparatesOverlapsAndPreservesSameDayTurnoversAndClippedStays() throws {
+    let data = try Dashboard.decode(fixture)
+    let timeline = BookingTimeline(today: "2026-10-23")
+    func stay(_ id: String, _ start: String, _ end: String) -> Booking {
+        var value = data.bookings[0]
+        value.id = id; value.startDate = start; value.endDate = end
+        return value
+    }
+    let input = [stay("a", "2026-10-24", "2026-10-27"),
+                 stay("b", "2026-10-26", "2026-10-29"),
+                 stay("turnover", "2026-10-27", "2026-10-30"),
+                 stay("early", "2026-01-01", timeline.firstDay),
+                 stay("late", timeline.lastDay, "2028-01-01"),
+                 stay("invalid", "2026-10-25", "2026-10-25")]
+    let bars = timeline.segments(for: "orange", bookings: input)
+    #expect(bars.count == 5)
+    let a = try #require(bars.first { $0.id == "a" })
+    let b = try #require(bars.first { $0.id == "b" })
+    let turnover = try #require(bars.first { $0.id == "turnover" })
+    #expect(a.end - a.start == 3)
+    #expect(a.lane != b.lane)
+    #expect(a.lane == turnover.lane)
+    #expect(a.end == turnover.start)
+    #expect(bars.first?.clippedStart == true)
+    #expect(bars.first?.start == 0)
+    #expect(bars.last?.clippedEnd == true)
+    #expect(bars.last?.end == Double(timeline.days.count))
+    #expect(timeline.segments(for: "royal", bookings: input).isEmpty)
+}
