@@ -128,7 +128,7 @@ struct RootView: View {
                 NavigationStack { ConnectionView(onboarding: true) }
             } else {
                 TabView(selection: $store.tab) {
-                    NavigationStack { TodayView() }.tabItem { Label("Сегодня", systemImage: "sun.max") }.tag(0)
+                    NavigationStack { TodayView() }.tabItem { Label("Заезды", systemImage: "key.horizontal") }.tag(0)
                     NavigationStack { CalendarView() }.tabItem { Label("Календарь", systemImage: "calendar") }.tag(1)
                     NavigationStack { PropertiesView() }.tabItem { Label("Объекты", systemImage: "building.2") }.tag(2)
                     NavigationStack { CleaningsView() }.tabItem { Label("Уборки", systemImage: "sparkles") }.tag(3)
