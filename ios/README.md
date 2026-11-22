@@ -15,8 +15,11 @@ the real widget's cache. See `docs/iphone-calendar.md` for the approved design.
 
 The large widget switches Today/Tomorrow in place and shows every arrival on the
 selected day. Empty days fall back to the nearest future arrival day. One arrival
-is large, 2–6 use rows, and 7–12 use two columns; unusually busy days use explicit
-pages. Each widget can select all properties or
+uses a detailed feature card, 2–3 use spacious rows, 4–6 use compact rows with
+checkout dates, and 7–12 use two columns; unusually busy days use explicit
+pages. Today/Tomorrow share one segmented control. Property icons and their
+colors use the same Lucide assets as the web calendar and native app, bundled
+in both app and extension from `Shared/PropertyAssets.xcassets`. Each widget can select all properties or
 one property. Booking links open the native detail screen. Dates and midnight
 timeline changes use Europe/Rome. Refresh requests are made about every 30
 minutes; iOS controls actual delivery. Saved data remains available offline with
@@ -120,3 +123,10 @@ Add `--calendar-stress` to `--demo` to open the calendar with 1,001 synthetic
 bookings across all 11 apartments. Verify horizontal swipes in both directions,
 vertical scrolling, month jumps, Today, and booking details. Data refreshes on
 launch/return from background or pull-to-refresh, never while scrolling.
+
+For widget layout checks, launch a Debug Simulator build with `--widget-preview
+--widget-count 5` (also check 0, 1, 2, 3, 6, 12 and 13). The preview renders the
+same view at 338 × 354 points with invented guests and real property identifiers.
+`--widget-offset 1` selects tomorrow; `--widget-arrival-offset 3` exercises the
+future-day fallback; `--widget-page 1` checks the last page of a busy day. These
+fixtures never write the real widget cache. Check both light and dark appearance.
