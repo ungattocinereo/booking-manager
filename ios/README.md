@@ -3,9 +3,9 @@
 Native SwiftUI app and WidgetKit large Home Screen widget, using the existing
 Booking Manager database and calendar normalization. iOS 17 or later.
 
-The app includes a chronological arrival list with large dates and a horizontally
-scrolling occupancy calendar for all apartments. Names remain fixed while days
-scroll through the next year; the month menu and Today button jump to a date.
+The app includes a chronological arrival list with compact guest cards and a horizontally
+scrolling occupancy calendar for all apartments. Property icons stay fixed while names smoothly hide on forward swipes and return
+on backward swipes. Prepared day columns scroll through the next year; the month menu and Today button jump to a date.
 Property icons match the web calendar and platform badges identify Airbnb and
 Booking.com. Tap a booking for guest details. Individual property schedules and
 a read-only cleaning schedule remain available. The existing web workspace opens
@@ -116,3 +116,7 @@ For local UI smoke checks only, Debug Simulator builds accept `--demo` or
 `--connection-file /absolute/path/to/Atrani.connection.json` as launch arguments.
 This file is read locally and credentials remain in headers/keychain. These
 arguments are excluded from device and Release builds.
+Add `--calendar-stress` to `--demo` to open the calendar with 1,001 synthetic
+bookings across all 11 apartments. Verify horizontal swipes in both directions,
+vertical scrolling, month jumps, Today, and booking details. Data refreshes on
+launch/return from background or pull-to-refresh, never while scrolling.

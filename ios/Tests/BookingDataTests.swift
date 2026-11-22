@@ -116,3 +116,51 @@ private let fixture = Data("""
     #expect(bars.last?.end == Double(timeline.days.count))
     #expect(timeline.segments(for: "royal", bookings: input).isEmpty)
 }
+
+@Test func preparedColumnsKeepTurnoversOverlapsAndClippedBookings() throws {
+    var data = try Dashboard.decode(fixture)
+    let timeline = BookingTimeline(today: "2026-10-23")
+    func stay(_ id: String, _ start: String, _ end: String) -> Booking {
+        var value = data.bookings[0]
+        value.id = id; value.startDate = start; value.endDate = end
+        return value
+    }
+    data.bookings = [stay("first", "2026-10-24", "2026-10-27"),
+                     stay("next", "2026-10-27", "2026-10-28"),
+                     stay("overlap", "2026-10-26", "2026-10-29"),
+                     stay("early", "2020-01-01", timeline.firstDay),
+                     stay("late", timeline.lastDay, "2029-01-01")]
+    let grid = TimelineGrid(timeline: timeline, properties: data.properties, bookings: data.bookings)
+    let row = try #require(grid.rows.first)
+    #expect(row.cells.count == timeline.days.count)
+    #expect(row.lanes == 2)
+    let index = try #require(timeline.days.firstIndex(of: "2026-10-27"))
+    let checkout = try #require(row.cells[index].first { $0.id == "first" })
+    let checkin = try #require(row.cells[index].first { $0.id == "next" })
+    let overlap = try #require(row.cells[index].first { $0.id == "overlap" })
+    #expect(checkout.start == 0 && checkout.end == 0.5 && checkout.endsHere)
+    #expect(checkin.start == 0.5 && checkin.end == 1 && checkin.startsHere)
+    #expect(checkin.lane == checkout.lane && overlap.lane != checkout.lane)
+    #expect(row.cells[0].first?.startsHere == false)
+    #expect(row.cells.last?.first?.endsHere == false)
+    for booking in data.bookings {
+        #expect(row.cells.flatMap { $0 }.filter { $0.id == booking.id && $0.showsSource }.count == 1)
+    }
+    // Reassembling visible slices must preserve each original segment's duration.
+    for segment in timeline.segments(for: "orange", bookings: data.bookings) {
+        let duration = row.cells.flatMap { $0 }.filter { $0.id == segment.id }.reduce(0) { $0 + $1.end - $1.start }
+        #expect(duration == segment.end - segment.start)
+    }
+}
+
+@Test func railFollowsHorizontalDirectionAndIgnoresJitterAndVerticalDrags() {
+    var gesture = CalendarRailGesture()
+    #expect(gesture.update(x: -8, y: 0) == nil)
+    #expect(gesture.update(x: -24, y: 80) == nil)
+    #expect(gesture.update(x: -24, y: 2) == true)
+    #expect(gesture.update(x: -29, y: 3) == nil)
+    #expect(gesture.update(x: -48, y: 4) == true)
+    #expect(gesture.update(x: -25, y: 4) == false)
+    gesture.end()
+    #expect(gesture.update(x: 24, y: 0) == false)
+}
