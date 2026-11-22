@@ -2,42 +2,69 @@ import SwiftUI
 
 struct TodayView: View {
     @EnvironmentObject private var store: BookingStore
+    @ScaledMetric(relativeTo: .largeTitle) private var headingSize = 40.0
 
     var body: some View {
         ScrollView {
-            LazyVStack(alignment: .leading, spacing: 0) {
-                StatusBanner().padding(.bottom, 12)
-                Text("Заезды").font(.system(.largeTitle, design: .rounded, weight: .heavy))
-                    .padding(.bottom, 28).accessibilityAddTraits(.isHeader)
+            LazyVStack(alignment: .leading, spacing: 18) {
+                Text("Заезды")
+                    .font(.system(size: headingSize, weight: .heavy, design: .rounded))
+                    .foregroundStyle(.white).accessibilityAddTraits(.isHeader)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 24).padding(.vertical, 28)
+                    .background(Color(red: 0.38, green: 0.18, blue: 0.75), in: RoundedRectangle(cornerRadius: 26))
+                StatusBanner()
                 if let data = store.dashboard {
                     let days = data.arrivalDays()
-                    if days.isEmpty { Text("Предстоящих заездов пока нет").foregroundStyle(.secondary) }
+                    if days.isEmpty { Text("Предстоящих заездов пока нет").foregroundStyle(.secondary).padding(6) }
                     ForEach(Array(days.enumerated()), id: \.element.id) { index, day in
-                        VStack(alignment: .leading, spacing: 12) {
+                        VStack(alignment: .leading, spacing: 10) {
                             if index == 0 { Text("Следующий заезд").font(.subheadline).foregroundStyle(.secondary) }
-                            Text(RomeDate.label(day.id, template: "d MMMM") + (day.id.prefix(4) != RomeDate.key().prefix(4) ? " \(day.id.prefix(4))" : ""))
-                                .font(.system(index == 0 ? .largeTitle : .title, design: .rounded, weight: .heavy))
+                            Text(RomeDate.label(day.id, template: day.id.prefix(4) == RomeDate.key().prefix(4) ? "d MMMM" : "d MMMM yyyy"))
+                                .font(.system(.title3, design: .rounded, weight: .bold))
                                 .accessibilityAddTraits(.isHeader)
                             ForEach(day.bookings) { booking in
                                 Button { store.selectedBooking = booking } label: {
-                                    HStack(spacing: 10) {
-                                        Text(data.propertyName(booking.propertyId)).font(.title2.weight(.regular))
-                                            .foregroundStyle(Orbit.subtitle)
-                                            .multilineTextAlignment(.leading)
-                                        PlatformIcon(booking: booking, size: 22)
-                                        Spacer(minLength: 0)
-                                    }.frame(minHeight: 44).contentShape(Rectangle())
+                                    ArrivalCard(booking: booking, property: data.propertyName(booking.propertyId))
                                 }.buttonStyle(.plain)
                             }
-                        }.padding(.vertical, index == 0 ? 0 : 22)
-                        if index < days.count - 1 { Divider().padding(.top, index == 0 ? 22 : 0) }
+                        }.padding(.bottom, 6)
                     }
                 } else if store.isLoading { ProgressView("Загружаем заезды…") }
-            }.padding(24)
+            }.padding(18)
         }.background(Orbit.background)
             .navigationTitle("Заезды").navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .principal) { Text("Atrani").font(.headline) } }
             .refreshable { await store.refresh() }
+    }
+}
+
+private struct ArrivalCard: View {
+    let booking: Booking
+    let property: String
+    var body: some View {
+        VStack(alignment: .leading, spacing: 9) {
+            HStack(spacing: 8) {
+                PropertyIcon(propertyId: booking.propertyId, size: 18)
+                Text(property).font(.headline.weight(.regular)).foregroundStyle(Orbit.subtitle)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            HStack(spacing: 6) {
+                PlatformIcon(booking: booking, size: 17).accessibilityHidden(true)
+                Text(booking.platformLabel).font(.caption).foregroundStyle(.secondary)
+            }
+            Text(booking.guestLabel).font(.subheadline).foregroundStyle(.primary)
+                .fixedSize(horizontal: false, vertical: true)
+            HStack(spacing: 16) {
+                Label("\(booking.nights) ноч.", systemImage: "moon")
+                Label(booking.guestCount.map { "\($0) чел." } ?? "Гостей: уточняется", systemImage: "person.2")
+            }.font(.caption).foregroundStyle(.secondary)
+            Divider()
+            Text("\(RomeDate.label(booking.startDate, template: "d MMM")) — \(RomeDate.label(booking.endDate, template: "d MMM yyyy"))")
+                .font(.caption).foregroundStyle(.secondary)
+        }.padding(14).frame(maxWidth: .infinity, alignment: .leading)
+            .background(Orbit.calendarSurface, in: RoundedRectangle(cornerRadius: 18))
+            .contentShape(Rectangle())
     }
 }
 

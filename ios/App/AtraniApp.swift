@@ -32,14 +32,21 @@ final class BookingStore: ObservableObject {
     @Published var selectedBooking: Booking?
     @Published var tab = 0
     @Published var calendarDay = RomeDate.key()
+    private var started = false
     private var revision = UUID()
     private var pendingBookingId: String?
 
     func start() async {
+        guard !started else { return }
+        started = true
         #if DEBUG && targetEnvironment(simulator)
         let arguments = ProcessInfo.processInfo.arguments
         if arguments.contains("--widget-preview") { return }
-        if arguments.contains("--demo") { showDemo(); return }
+        if arguments.contains("--demo") {
+            showDemo()
+            if arguments.contains("--calendar-stress") { dashboard = .calendarStressDemo(); tab = 1 }
+            return
+        }
         if let index = arguments.firstIndex(of: "--connection-file"), index + 1 < arguments.count {
             do {
                 let data = try Data(contentsOf: URL(fileURLWithPath: arguments[index + 1]))
@@ -122,6 +129,7 @@ final class BookingStore: ObservableObject {
 struct RootView: View {
     @EnvironmentObject private var store: BookingStore
     @Environment(\.scenePhase) private var phase
+    @State private var wasBackgrounded = false
     var body: some View {
         Group {
             if store.dashboard == nil && store.connection == nil {
@@ -140,7 +148,11 @@ struct RootView: View {
             NavigationStack { BookingDetailView(booking: booking) }.presentationDragIndicator(.visible)
         }
         .onChange(of: phase) { _, value in
-            if value == .active && !store.demo { Task { await store.refresh() } }
+            if value == .background { wasBackgrounded = true }
+            if value == .active && wasBackgrounded {
+                wasBackgrounded = false
+                if !store.demo { Task { await store.refresh() } }
+            }
         }
     }
 }

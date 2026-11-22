@@ -16,3 +16,24 @@ extension Dashboard {
             ], cleaningTasks: [CleaningTask(id: "demo-task", propertyId: "royal", scheduledDate: day(0), cleanerName: "Уборщица", status: "pending", taskType: "checkout_cleaning")])
     }
 }
+
+#if DEBUG && targetEnvironment(simulator)
+extension Dashboard {
+    /// Synthetic full-year occupancy for repeatable scrolling checks, never cached or uploaded.
+    static func calendarStressDemo() -> Dashboard {
+        var data = demo()
+        let calendar = RomeDate.calendar
+        let today = Date()
+        let dates = (-90...365).map { RomeDate.key(calendar.date(byAdding: .day, value: $0, to: today)!) }
+        data.bookings = data.properties.flatMap { property in
+            stride(from: 0, to: dates.count - 4, by: 5).map { offset in
+                Booking(id: "stress-\(property.id)-\(offset)", propertyId: property.id,
+                    startDate: dates[offset], endDate: dates[offset + 3], guestName: "Тестовый гость",
+                    guestCount: 2, platform: offset.isMultiple(of: 10) ? "airbnb" : "booking",
+                    reservationUrl: nil, operationalFallback: false)
+            }
+        }
+        return data
+    }
+}
+#endif
