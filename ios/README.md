@@ -3,13 +3,19 @@
 Native SwiftUI app and WidgetKit large Home Screen widget, using the existing
 Booking Manager database and calendar normalization. iOS 17 or later.
 
-The app includes a chronological arrival list with compact guest cards and a horizontally
+The app includes a chronological arrival list with a full-width violet header, a glass logo and guest cards and a horizontally
 scrolling occupancy calendar for all apartments. Property icons stay fixed while names smoothly hide on forward swipes and return
 on backward swipes. Prepared day columns scroll through the next year; the month menu and Today button jump to a date.
 Property icons match the web calendar and platform badges identify Airbnb and
 Booking.com. Tap a booking for guest details. Individual property schedules and
 a read-only cleaning schedule remain available. The existing web workspace opens
-for cleaner assignment/completion, statistics, tax and guest-reporting operations.
+for cleaner assignment/completion, statistics, tax reports and guest-reporting operations.
+Arrival cards show the shared city-tax mark and an estimate of €2.50 per guest per night.
+Tap the tax control to confirm payment or clear the mark; only a successful server response changes it.
+Unknown guest counts do not produce a made-up total. A short top-edge pull opens
+the seven most recent previous arrivals (including stays still in progress); a deeper pull refreshes.
+Both actions also have visible buttons. Haptics and a system click acknowledge switching;
+Reduce Motion disables the moving glint.
 Demo mode is visibly labelled and never writes sample records to the server or
 the real widget's cache. See `docs/iphone-calendar.md` for the approved design.
 
@@ -58,7 +64,12 @@ Deploy the accompanying backend change through the normal PR/CI workflow before
 connecting. The read-only endpoint is `GET /api/bookings?widget=upcoming`.
 It accepts the existing `WIDGET_TOKEN` only in the `x-widget-token` header.
 The handler authenticates before initializing the database; non-GET requests
-are rejected. Responses use `private, no-store`. No database migration is needed.
+are rejected. `PATCH /api/bookings?widget=tax` uses the same header token and accepts
+`booking_id`, boolean `tax_paid`, and boolean `expected_paid`. The token therefore
+also authorizes this narrowly scoped payment-status action. It rejects inactive,
+hidden and technical calendar records and returns 409 for conflicting edits.
+It updates the existing `tax_paid` / `tax_paid_at` fields used by the website.
+Responses use `private, no-store`. No database migration is needed.
 
 Use the existing production Vercel origin and, when Vercel Deployment Protection
 is enabled, its existing automation bypass token. No Cloudflare policy change is
@@ -130,3 +141,19 @@ same view at 338 × 354 points with invented guests and real property identifier
 `--widget-offset 1` selects tomorrow; `--widget-arrival-offset 3` exercises the
 future-day fallback; `--widget-page 1` checks the last page of a busy day. These
 fixtures never write the real widget cache. Check both light and dark appearance.
+
+Run the native interaction check on a booted iPhone Simulator:
+
+```sh
+xcodebuild -project Atrani.xcodeproj -scheme Atrani -destination 'platform=iOS Simulator,id=YOUR_SIMULATOR_ID' CODE_SIGNING_ALLOWED=NO test
+```
+
+It exercises short/deep pulls, the explicit history button, and both tax marks in
+isolated demo mode. The backend test verifies actual SQLite persistence separately.
+The dashboard keeps its calendar window plus seven earlier arrivals when needed.
+
+`App/Assets.xcassets/ArrivalGlassMark.imageset/mark.png` is a generated transparent
+asset based on the existing AppIcon's calligraphic A. Generation brief: preserve
+the logo silhouette, render it as polished pearly lavender glass with luminous
+edges and a restrained specular highlight, isolated without a background or tile.
+The moving reflection is rendered in SwiftUI, not baked into repeated images.

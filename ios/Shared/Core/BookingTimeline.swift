@@ -6,6 +6,15 @@ public struct ArrivalDay: Identifiable, Sendable {
 }
 
 extension Dashboard {
+    public func previousArrivals(on day: String = RomeDate.key()) -> [Booking] {
+        Array(bookings.filter { $0.startDate < day }
+            .sorted { ($0.startDate, $0.id) > ($1.startDate, $1.id) }.prefix(7))
+    }
+    public func previousArrivalDays(on day: String = RomeDate.key()) -> [ArrivalDay] {
+        let grouped = Dictionary(grouping: previousArrivals(on: day), by: \.startDate)
+        return grouped.keys.sorted(by: >).map { ArrivalDay(id: $0, bookings: grouped[$0]!) }
+    }
+
     public func arrivalDays(on day: String = RomeDate.key()) -> [ArrivalDay] {
         let ordered = upcoming(on: day)
         let grouped = Dictionary(grouping: ordered, by: \.startDate)
@@ -70,5 +79,13 @@ public struct BookingTimeline: Sendable {
             return TimelineSegment(booking: booking, start: max(0, start), end: min(Double(days.count), end),
                                    lane: lane, clippedStart: start < 0, clippedEnd: end > Double(days.count))
         }
+    }
+}
+
+/// The pull distance is measured from the top edge, so normal scrolling cannot switch views.
+public enum ArrivalPullAction: Equatable {
+    case none, history, refresh
+    public static func forDistance(_ distance: Double) -> Self {
+        distance >= 120 ? .refresh : distance >= 48 ? .history : .none
     }
 }

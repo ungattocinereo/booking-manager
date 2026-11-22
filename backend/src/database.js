@@ -578,6 +578,14 @@ class Database {
     );
   }
 
+  async updateMobileTaxPaid(bookingId, paid, expected, paidAt) {
+    const result = await this.run(
+      'UPDATE bookings SET tax_paid = ?, tax_paid_at = ? WHERE id = ? AND COALESCE(active, 1) != 0 AND COALESCE(tax_paid, 0) = ?',
+      [paid ? 1 : 0, paidAt, bookingId, expected ? 1 : 0]
+    );
+    return result.changes === 1;
+  }
+
   async updateTaxPaid(bookingId, paid) {
     const paidAt = paid ? new Date().toISOString() : null;
     return this.run(

@@ -32,6 +32,8 @@ final class BookingStore: ObservableObject {
     @Published var selectedBooking: Booking?
     @Published var tab = 0
     @Published var calendarDay = RomeDate.key()
+    @Published var taxUpdatingIDs: Set<String> = []
+    private var dataRevision = 0
     private var started = false
     private var revision = UUID()
     private var pendingBookingId: String?
@@ -60,13 +62,14 @@ final class BookingStore: ObservableObject {
     }
 
     func refresh(using candidate: Connection? = nil) async {
-        guard !isLoading, let settings = candidate ?? connection else { return }
+        guard !isLoading, taxUpdatingIDs.isEmpty, !demo || candidate != nil, let settings = candidate ?? connection else { return }
         let requestRevision = revision
+        let requestDataRevision = dataRevision
         isLoading = true
         defer { if requestRevision == revision { isLoading = false } }
         do {
             let (result, raw) = try await APITransport.shared.load(settings)
-            guard requestRevision == revision else { return }
+            guard requestRevision == revision, requestDataRevision == dataRevision else { return }
             if candidate != nil {
                 try SharedStore.save(settings)
                 connection = settings
@@ -78,13 +81,53 @@ final class BookingStore: ObservableObject {
             resolvePendingLink()
             WidgetCenter.shared.reloadTimelines(ofKind: SharedStore.widgetKind)
         } catch {
+            guard requestRevision == revision, requestDataRevision == dataRevision else { return }
+            self.error = error.localizedDescription
+        }
+    }
+
+    func setTaxPaid(_ booking: Booking, paid: Bool) async {
+        guard booking.taxApplicable == true, booking.taxPaid != nil,
+              !taxUpdatingIDs.contains(booking.id) else { return }
+        let requestRevision = revision
+        dataRevision += 1
+        taxUpdatingIDs.insert(booking.id)
+        defer {
+            if requestRevision == revision { taxUpdatingIDs.remove(booking.id); dataRevision += 1 }
+        }
+        do {
+            let receipt: MobileTaxReceipt
+            if demo {
+                receipt = MobileTaxReceipt(bookingId: booking.id, taxPaid: paid, taxPaidAt: paid ? ISO8601DateFormatter().string(from: Date()) : nil)
+            } else {
+                guard let connection else { throw ConnectionError.unauthorized }
+                receipt = try await APITransport.shared.setTaxPaid(connection, booking: booking, paid: paid)
+            }
+            guard requestRevision == revision,
+                  let index = dashboard?.bookings.firstIndex(where: { $0.id == booking.id }) else { return }
+            dashboard?.bookings[index].taxPaid = receipt.taxPaid
+            dashboard?.bookings[index].taxPaidAt = receipt.taxPaidAt
+            if selectedBooking?.id == booking.id { selectedBooking = dashboard?.bookings[index] }
+            error = nil
+            if !demo, let dashboard {
+                let encoder = JSONEncoder()
+                encoder.keyEncodingStrategy = .convertToSnakeCase
+                try SharedStore.cache(encoder.encode(dashboard))
+                WidgetCenter.shared.reloadTimelines(ofKind: SharedStore.widgetKind)
+            }
+        } catch {
             guard requestRevision == revision else { return }
+            if case ConnectionError.taxConflict = error {
+                taxUpdatingIDs.remove(booking.id)
+                await refresh()
+            }
             self.error = error.localizedDescription
         }
     }
 
     func showDemo() {
         revision = UUID()
+        taxUpdatingIDs.removeAll()
         isLoading = false
         dashboard = .demo()
         demo = true
@@ -94,6 +137,7 @@ final class BookingStore: ObservableObject {
 
     func disconnect() {
         revision = UUID()
+        taxUpdatingIDs.removeAll()
         SharedStore.clear()
         dashboard = nil
         connection = nil
