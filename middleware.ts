@@ -34,7 +34,8 @@ function isPublicWidgetApiRequest(pathname: string, request: Request) {
   if (pathname !== '/api/bookings') return false;
   const url = new URL(request.url);
   return url.searchParams.get('widget') === 'today' ||
-    (request.method === 'GET' && url.searchParams.get('widget') === 'upcoming');
+    (request.method === 'GET' && url.searchParams.get('widget') === 'upcoming') ||
+    (request.method === 'PATCH' && url.searchParams.get('widget') === 'tax');
 }
 
 function hasBearerSecret(request: Request, secret: string) {
