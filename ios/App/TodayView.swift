@@ -81,6 +81,19 @@ struct TodayView: View {
                     Text("Предыдущие 7 заездов")
                         .font(.system(.subheadline, design: .rounded))
                         .foregroundStyle(.white.opacity(0.75))
+                } else {
+                    TimelineView(.periodic(from: .now, by: 60)) { context in
+                        let today = RomeDate.key(context.date)
+                        VStack(alignment: .leading, spacing: 5) {
+                            Text("На сегодня · \(RomeDate.label(today, template: "d MMMM"))")
+                                .foregroundStyle(.white.opacity(0.75))
+                            Text(store.dashboard?.movementSummary(on: today) ?? "Загружаем данные…")
+                                .foregroundStyle(.white.opacity(0.9))
+                                .accessibilityIdentifier("today-movements")
+                        }
+                        .font(.system(.caption, design: .rounded, weight: .medium))
+                        .fixedSize(horizontal: false, vertical: true)
+                    }
                 }
             }
             .frame(maxWidth: dynamicTypeSize.isAccessibilitySize ? .infinity : 180, alignment: .leading)
@@ -103,7 +116,7 @@ struct TodayView: View {
         }.foregroundStyle(.white).padding(.horizontal, 24).padding(.top, 8).padding(.bottom, 24)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(alignment: .topTrailing) {
-                GlassArrivalMark(animates: store.tab == 0)
+                GlassArrivalMark()
                     .frame(width: dynamicTypeSize.isAccessibilitySize ? 190 : 280, height: 270)
                     .offset(x: 38, y: 0)
                     .opacity(dynamicTypeSize.isAccessibilitySize ? 0.25 : 1)
@@ -117,55 +130,35 @@ struct TodayView: View {
 }
 
 private struct GlassArrivalMark: View {
-    let animates: Bool
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Environment(\.scenePhase) private var phase
-    @State private var visible = false
-
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1 / 30, paused: reduceMotion || phase != .active || !animates || !visible)) { context in
-            let time = reduceMotion ? 0 : context.date.timeIntervalSinceReferenceDate
-            let breath = sin(time * .pi / 5)
-            let orbit = sin(time * .pi / 8)
-            let glint = reduceMotion ? 0.5 : time.truncatingRemainder(dividingBy: 7) / 7
-            ZStack {
-                // Violet light and small drifting particles echo the background without flashing.
-                Ellipse()
-                    .fill(RadialGradient(colors: [Color(red: 0.72, green: 0.32, blue: 1).opacity(0.8), Color.purple.opacity(0.3), .clear], center: .center, startRadius: 4, endRadius: 130))
-                    .frame(width: 310, height: 230).blur(radius: 15)
-                    .scaleEffect(1 + breath * 0.07).offset(x: -8 + orbit * 12, y: 18)
-                Ellipse().fill(Color(red: 0.67, green: 0.25, blue: 0.95).opacity(0.55))
-                    .frame(width: 130, height: 90).blur(radius: 32)
-                    .offset(x: 50, y: -20 + breath * 12)
-                Ellipse()
-                    .stroke(AngularGradient(colors: [.clear, .white.opacity(0.35), .purple.opacity(0.5), .clear, .clear], center: .center, angle: .degrees(time.truncatingRemainder(dividingBy: 40) * 9)), lineWidth: 1)
-                    .frame(width: 255, height: 140).rotationEffect(.degrees(-28 + orbit * 5))
-                    .blur(radius: 0.7).offset(x: -6, y: 12)
-                ForEach(0..<11) { index in
-                    let angle = Double(index) * 0.61
-                    Circle().fill(.white.opacity(index.isMultiple(of: 3) ? 0.55 : 0.25))
-                        .frame(width: index.isMultiple(of: 3) ? 3 : 1.5, height: index.isMultiple(of: 3) ? 3 : 1.5)
-                        .shadow(color: .purple.opacity(0.7), radius: 4)
-                        .offset(x: cos(angle) * 125 - 12, y: sin(angle) * 105 + orbit * 3)
-                }
-                Image("ArrivalGlassMark").resizable().scaledToFit()
-                    .frame(width: 252, height: 236)
-                    .shadow(color: .purple.opacity(0.5), radius: 18)
-                    .overlay {
-                        GeometryReader { geometry in
-                            LinearGradient(colors: [.clear, .white.opacity(0.65), .clear], startPoint: .leading, endPoint: .trailing)
-                                .frame(width: 32).rotationEffect(.degrees(25))
-                                .offset(x: geometry.size.width * (glint * 2 - 0.5))
-                        }.mask(Image("ArrivalGlassMark").resizable().scaledToFit())
-                    }
-                    .rotationEffect(.degrees(-9))
-                    .rotation3DEffect(.degrees(orbit * 5), axis: (x: 0, y: 1, z: 0))
-                    .offset(x: 12, y: 14 + breath * 3)
+        ZStack {
+            // Static violet light keeps the glass effect stable while scrolling.
+            Ellipse()
+                .fill(RadialGradient(colors: [Color(red: 0.72, green: 0.32, blue: 1).opacity(0.8), Color.purple.opacity(0.3), .clear], center: .center, startRadius: 4, endRadius: 130))
+                .frame(width: 310, height: 230).blur(radius: 15)
+                .offset(x: -8, y: 18)
+            Ellipse().fill(Color(red: 0.67, green: 0.25, blue: 0.95).opacity(0.55))
+                .frame(width: 130, height: 90).blur(radius: 32)
+                .offset(x: 50, y: -20)
+            Ellipse()
+                .stroke(AngularGradient(colors: [.clear, .white.opacity(0.35), .purple.opacity(0.5), .clear, .clear], center: .center, angle: .degrees(35)), lineWidth: 1)
+                .frame(width: 255, height: 140).rotationEffect(.degrees(-28))
+                .blur(radius: 0.7).offset(x: -6, y: 12)
+            ForEach(0..<25) { index in
+                let angle = Double(index) * 2.39996
+                let radius = 0.65 + Double(index % 5) * 0.09
+                Circle().fill(.white.opacity(index.isMultiple(of: 6) ? 0.5 : 0.23))
+                    .frame(width: index.isMultiple(of: 6) ? 2.5 : 1.2, height: index.isMultiple(of: 6) ? 2.5 : 1.2)
+                    .shadow(color: .purple.opacity(0.7), radius: 4)
+                    .offset(x: cos(angle) * 138 * radius - 12, y: sin(angle) * 117 * radius)
             }
+            Image("ArrivalGlassMark").resizable().scaledToFit()
+                .frame(width: 252, height: 236)
+                .shadow(color: .purple.opacity(0.5), radius: 18)
+                .rotationEffect(.degrees(-9))
+                .offset(x: 12, y: 14)
         }
         .allowsHitTesting(false)
-        .onAppear { visible = true }
-        .onDisappear { visible = false }
     }
 }
 
@@ -225,23 +218,24 @@ struct ArrivalTaxButton: View {
     private var available: Bool { booking.taxApplicable == true && booking.taxPaid != nil }
     var body: some View {
         Button { confirm = true } label: {
-            HStack(spacing: 9) {
+            HStack(spacing: 6) {
                 if busy { ProgressView().controlSize(.small) }
                 else {
                     Image(systemName: paid ? "checkmark.circle.fill" : "building.columns")
-                        .font(.system(.body, weight: .medium))
+                        .font(.system(.subheadline, weight: .medium))
                 }
                 if let amount = booking.cityTax {
                     VStack(alignment: .leading, spacing: 1) {
                         Text(amount.formatted(.currency(code: "EUR").precision(.fractionLength(0...2)).locale(Locale(identifier: "ru_RU"))))
-                            .font(.system(.title3, design: .rounded, weight: .semibold)).monospacedDigit()
+                            .font(.system(.subheadline, design: .rounded, weight: .bold)).monospacedDigit()
                         Text("City tax").font(.system(.caption2, design: .rounded, weight: .medium))
                             .opacity(0.7)
                     }
                 }
-            }.padding(.horizontal, 12).padding(.vertical, 6).frame(minWidth: 44, minHeight: 44)
+            }.padding(.horizontal, 9).padding(.vertical, 4).frame(minWidth: 44, minHeight: 44)
                 .foregroundStyle(paid ? Orbit.mint : Orbit.violet)
-                .background((paid ? Orbit.mint : Orbit.violet).opacity(0.055), in: RoundedRectangle(cornerRadius: 14))
+                .background((paid ? Orbit.mint : Orbit.violet).opacity(0.055), in: RoundedRectangle(cornerRadius: 12))
+                .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder((paid ? Orbit.mint : Orbit.violet).opacity(0.22), lineWidth: 0.75))
         }.buttonStyle(.plain).disabled(busy || !available)
             .accessibilityLabel("Городской налог, \(paid ? "оплачен" : booking.taxAmountLabel)")
             .accessibilityHint(available ? "Изменить отметку об оплате" : "Обновите данные или уточните бронирование")

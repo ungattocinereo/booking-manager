@@ -18,7 +18,9 @@ Tap the tax control to confirm payment or clear the mark; only a successful serv
 Unknown guest counts do not produce a made-up total. A short top-edge pull opens
 the seven most recent previous arrivals (including stays still in progress); a deeper pull refreshes.
 Both actions also have visible buttons. Haptics and a system click acknowledge switching;
-Reduce Motion disables the moving glint.
+The header shows today’s Rome date and separate departure/arrival counts. Its glass mark,
+violet orbit and small particles are static. The compact rounded city-tax amount retains an outline
+and a minimum 44-point tap target.
 Demo mode is visibly labelled and never writes sample records to the server or
 the real widget's cache. See `docs/iphone-calendar.md` for the approved design.
 
@@ -142,7 +144,7 @@ arguments are excluded from device and Release builds.
 Add `--calendar-stress` to `--demo` to open the calendar with 1,001 synthetic
 bookings across all 11 apartments. Verify horizontal swipes in both directions,
 vertical scrolling, month jumps, Today, and booking details. Data refreshes on
-launch/return from background or pull-to-refresh, never while scrolling.
+launch/return from background, entering the arrival/calendar/property tabs, or pull-to-refresh, never while scrolling.
 
 For widget layout checks, launch a Debug Simulator build with `--widget-preview
 --widget-count 5` (also check 0, 1, 2, 3, 6, 12 and 13). The preview renders the

@@ -206,6 +206,9 @@ struct RootView: View {
         .sheet(item: $store.selectedBooking) { booking in
             NavigationStack { BookingDetailView(booking: booking) }.presentationDragIndicator(.visible)
         }
+        .onChange(of: store.tab) { _, tab in
+            if (0...2).contains(tab) { Task { await store.refresh() } }
+        }
         .onChange(of: phase) { _, value in
             if value == .background { wasBackgrounded = true }
             if value == .active && wasBackgrounded {

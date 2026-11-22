@@ -68,7 +68,7 @@ public struct Booking: Codable, Identifiable, Hashable, Sendable {
         guard let count = guestCount, count > 0 else { return "Гости уточняются" }
         return Self.quantity(count, forms: ["человек", "человека", "человек"])
     }
-    private static func quantity(_ value: Int, forms: [String]) -> String {
+    fileprivate static func quantity(_ value: Int, forms: [String]) -> String {
         let tail = value % 100
         let index = (11...14).contains(tail) ? 2 : value % 10 == 1 ? 0 : (2...4).contains(value % 10) ? 1 : 2
         return "\(value) \(forms[index])"
@@ -136,6 +136,13 @@ public struct Dashboard: Codable, Sendable {
 
     public func occupied(on day: String) -> [Booking] {
         bookings.filter { $0.startDate <= day && day < $0.endDate }
+    }
+
+    public func movementSummary(on day: String) -> String {
+        let checkouts = departures(on: day).count
+        let checkins = arrivals(on: day).count
+        guard checkouts + checkins > 0 else { return "Выездов и заездов нет" }
+        return "\(Booking.quantity(checkouts, forms: ["выезд", "выезда", "выездов"])) · \(Booking.quantity(checkins, forms: ["заезд", "заезда", "заездов"]))"
     }
 
     public func arrivals(on day: String) -> [Booking] { bookings.filter { $0.startDate == day } }
