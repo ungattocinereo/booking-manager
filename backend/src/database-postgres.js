@@ -372,10 +372,10 @@ class Database {
   }
 
   // Cleaner operations
-  async createCleaner(id, name) {
+  async createCleaner(id, name, slug = null) {
     return this.execute(
-      'INSERT INTO cleaners (id, name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING',
-      [id, name]
+      'INSERT INTO cleaners (id, name, slug) VALUES ($1, $2, $3) ON CONFLICT (id) DO NOTHING',
+      [id, name, slug]
     );
   }
 
@@ -412,6 +412,23 @@ class Database {
        WHERE cp.cleaner_id = $1`,
       [cleanerId]
     );
+  }
+
+  async saveMobileCleaner(id, name, slug, propertyIds) {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const updated = await client.query('UPDATE cleaners SET name = $1, slug = $2 WHERE id = $3', [name, slug, id]);
+      if (updated.rowCount !== 1) { await client.query('ROLLBACK'); return false; }
+      await client.query('DELETE FROM cleaner_properties WHERE cleaner_id = $1', [id]);
+      if (propertyIds.length) await client.query(
+        'INSERT INTO cleaner_properties (cleaner_id, property_id) SELECT $1, unnest($2::varchar[])', [id, propertyIds]);
+      await client.query('COMMIT');
+      return true;
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally { client.release(); }
   }
 
   async replaceCleanerProperties(cleanerId, propertyIds = []) {

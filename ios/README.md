@@ -8,8 +8,11 @@ scrolling occupancy calendar for all apartments. Property icons stay fixed while
 on backward swipes. Prepared day columns scroll through the next year; the month menu and Today button jump to a date.
 Property icons match the web calendar and platform badges identify Airbnb and
 Booking.com. Tap a booking for guest details. Individual property schedules and
-a read-only cleaning schedule remain available. The existing web workspace opens
-for cleaner assignment/completion, statistics, tax reports and guest-reporting operations.
+native cleaner management remain available. The existing web workspace opens
+for cleaning completion, statistics, tax reports and guest-reporting operations.
+The Cleanings tab creates cleaners, assigns rooms, edits names/link addresses, and copies
+their public calendar link. It uses the same records and assignments as the website.
+New cleaners receive a generated link immediately; editing name, slug and rooms is atomic.
 Arrival cards show the shared city-tax mark and an estimate of €2.50 per guest per night.
 Tap the tax control to confirm payment or clear the mark; only a successful server response changes it.
 Unknown guest counts do not produce a made-up total. A short top-edge pull opens
@@ -66,9 +69,15 @@ It accepts the existing `WIDGET_TOKEN` only in the `x-widget-token` header.
 The handler authenticates before initializing the database; non-GET requests
 are rejected. `PATCH /api/bookings?widget=tax` uses the same header token and accepts
 `booking_id`, boolean `tax_paid`, and boolean `expected_paid`. The token therefore
-also authorizes this narrowly scoped payment-status action. It rejects inactive,
+also authorizes this narrowly scoped payment-status action and native cleaner management. It rejects inactive,
 hidden and technical calendar records and returns 409 for conflicting edits.
 It updates the existing `tax_paid` / `tax_paid_at` fields used by the website.
+`GET/POST/PUT /api/bookings?widget=cleaners` respectively lists, creates and updates
+cleaners with the same header authentication. POST accepts `name`; PUT requires
+`id`, `name`, `slug` and `property_ids`. Responses expose only names, slugs and
+minimal property fields. Copied links use the canonical public `https://b.amalfi.day`
+origin, without mobile keys or Vercel bypass credentials. Demo edits stay in memory
+and copy `example.com` links. No deletion route is exposed by the mobile API.
 Responses use `private, no-store`. No database migration is needed.
 
 Use the existing production Vercel origin and, when Vercel Deployment Protection
@@ -156,4 +165,6 @@ The dashboard keeps its calendar window plus seven earlier arrivals when needed.
 asset based on the existing AppIcon's calligraphic A. Generation brief: preserve
 the logo silhouette, render it as polished pearly lavender glass with luminous
 edges and a restrained specular highlight, isolated without a background or tile.
-The moving reflection is rendered in SwiftUI, not baked into repeated images.
+The enlarged mark extends toward the bottom-right corner over a moving saturated violet glow, a light ring and small particles. The history button sits below it; dates and properties appear only in the list. Reduce Motion freezes the effects, which also pause offscreen and in other tabs. All effects are rendered in SwiftUI, not baked into repeated images.
+
+City tax uses an icon and a large amount with a small `City tax` caption. Unknown amounts use only the icon, retaining a descriptive VoiceOver label. Paid amounts remain visible beside a checkmark.

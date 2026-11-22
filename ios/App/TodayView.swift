@@ -71,78 +71,101 @@ struct TodayView: View {
         withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.25)) { history.toggle() }
     }
 
-    private var headerLayout: AnyLayout {
-        dynamicTypeSize.isAccessibilitySize ? AnyLayout(VStackLayout(alignment: .leading, spacing: 10)) : AnyLayout(HStackLayout(alignment: .center, spacing: 0))
-    }
-
     private var hero: some View {
-        VStack(alignment: .leading, spacing: 22) {
-            headerLayout {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(history ? "Гости" : "Заезды")
-                        .font(.system(.largeTitle, design: .rounded, weight: .heavy))
-                        .accessibilityAddTraits(.isHeader)
-                    Text(history ? "Предыдущие 7 заездов" : "Ближайшие бронирования")
-                        .font(.system(.subheadline, design: .rounded)).foregroundStyle(.white.opacity(0.75))
-                }.frame(maxWidth: .infinity, alignment: .leading)
-                GlassArrivalMark().frame(width: dynamicTypeSize.isAccessibilitySize ? 72 : 106, height: dynamicTypeSize.isAccessibilitySize ? 76 : 112).accessibilityHidden(true)
-            }
-            if !history, let data = store.dashboard, let next = data.upcoming().first {
-                VStack(alignment: .leading, spacing: 9) {
-                    Label("Ближайший заезд", systemImage: "arrow.down.right")
-                        .font(.caption.weight(.medium)).foregroundStyle(.white.opacity(0.7))
-                    Text(RomeDate.label(next.startDate, template: next.startDate.prefix(4) == RomeDate.key().prefix(4) ? "d MMMM, EEEE" : "d MMMM yyyy"))
-                        .font(.system(.title3, design: .rounded, weight: .semibold))
-                    HStack(spacing: 8) {
-                        PropertyIcon(propertyId: next.propertyId, size: 18)
-                        Text(data.propertyName(next.propertyId)).font(.system(.subheadline, design: .rounded, weight: .medium))
-                        let others = data.arrivals(on: next.startDate).count - 1
-                        if others > 0 { Text("+\(others)").font(.caption.bold()).padding(5).background(.white.opacity(0.15), in: Capsule()) }
-                    }
+        VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 8) {
+                Text(history ? "Гости" : "Заезды")
+                    .font(.system(.largeTitle, design: .rounded, weight: .heavy))
+                    .accessibilityAddTraits(.isHeader)
+                if history {
+                    Text("Предыдущие 7 заездов")
+                        .font(.system(.subheadline, design: .rounded))
+                        .foregroundStyle(.white.opacity(0.75))
                 }
             }
-            HStack(spacing: 12) {
-                Button {
-                    UIImpactFeedbackGenerator(style: .soft).impactOccurred()
-                    AudioServicesPlaySystemSound(1104)
-                    withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.25)) { history.toggle() }
-                } label: {
-                    Label(history ? "К предстоящим" : "Предыдущие гости", systemImage: history ? "arrow.up.right" : "clock.arrow.circlepath")
-                        .font(.system(.subheadline, design: .rounded, weight: .medium))
-                        .padding(.horizontal, 14).frame(minHeight: 44)
-                        .background(.white.opacity(0.14), in: Capsule())
-                }.buttonStyle(.plain).accessibilityIdentifier("arrival-history")
-                Spacer(minLength: 0)
+            .frame(maxWidth: dynamicTypeSize.isAccessibilitySize ? .infinity : 180, alignment: .leading)
+            .frame(maxWidth: .infinity, minHeight: dynamicTypeSize.isAccessibilitySize ? 220 : 190, alignment: .leading)
+            .padding(.trailing, dynamicTypeSize.isAccessibilitySize ? 0 : 128)
+            HStack(alignment: .center, spacing: 12) {
                 Button { Task { await store.refresh() } } label: {
                     if store.isLoading { ProgressView().tint(.white).frame(width: 44, height: 44) }
                     else { Image(systemName: "arrow.clockwise").frame(width: 44, height: 44) }
                 }.buttonStyle(.plain).accessibilityLabel("Обновить заезды").disabled(store.isLoading)
+                Spacer(minLength: 0)
+                Button { toggleHistory() } label: {
+                    Label(history ? "К предстоящим" : "Предыдущие гости", systemImage: history ? "arrow.up.right" : "clock.arrow.circlepath")
+                        .font(.system(.subheadline, design: .rounded, weight: .medium))
+                        .padding(.horizontal, 16).padding(.vertical, 10).frame(minHeight: 44)
+                        .background(purple.opacity(0.92), in: Capsule())
+                        .overlay(Capsule().strokeBorder(.white.opacity(0.18), lineWidth: 0.75))
+                }.buttonStyle(.plain).accessibilityIdentifier("arrival-history")
             }
         }.foregroundStyle(.white).padding(.horizontal, 24).padding(.top, 8).padding(.bottom, 24)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background {
-                LinearGradient(colors: [purple, Color(red: 0.43, green: 0.22, blue: 0.82)], startPoint: .top, endPoint: .bottom)
-                    .clipShape(UnevenRoundedRectangle(bottomLeadingRadius: 30, bottomTrailingRadius: 30))
+            .background(alignment: .topTrailing) {
+                GlassArrivalMark(animates: store.tab == 0)
+                    .frame(width: dynamicTypeSize.isAccessibilitySize ? 190 : 280, height: 270)
+                    .offset(x: 38, y: 0)
+                    .opacity(dynamicTypeSize.isAccessibilitySize ? 0.25 : 1)
+                    .accessibilityHidden(true)
             }
+            .background {
+                LinearGradient(colors: [purple, Color(red: 0.43, green: 0.19, blue: 0.77)], startPoint: .top, endPoint: .bottom)
+            }
+            .clipShape(UnevenRoundedRectangle(bottomLeadingRadius: 30, bottomTrailingRadius: 30))
     }
 }
 
 private struct GlassArrivalMark: View {
+    let animates: Bool
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.scenePhase) private var phase
+    @State private var visible = false
+
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1 / 30, paused: reduceMotion || phase != .active)) { context in
-            let progress = reduceMotion ? 0.5 : context.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 7) / 7
-            Image("ArrivalGlassMark").resizable().scaledToFit()
-                .shadow(color: .purple.opacity(0.65), radius: 18)
-                .overlay {
-                    GeometryReader { geometry in
-                        LinearGradient(colors: [.clear, .white.opacity(0.65), .clear], startPoint: .leading, endPoint: .trailing)
-                            .frame(width: 28).rotationEffect(.degrees(25))
-                            .offset(x: geometry.size.width * (progress * 2 - 0.5))
-                    }.mask(Image("ArrivalGlassMark").resizable().scaledToFit())
+        TimelineView(.animation(minimumInterval: 1 / 30, paused: reduceMotion || phase != .active || !animates || !visible)) { context in
+            let time = reduceMotion ? 0 : context.date.timeIntervalSinceReferenceDate
+            let breath = sin(time * .pi / 5)
+            let orbit = sin(time * .pi / 8)
+            let glint = reduceMotion ? 0.5 : time.truncatingRemainder(dividingBy: 7) / 7
+            ZStack {
+                // Violet light and small drifting particles echo the background without flashing.
+                Ellipse()
+                    .fill(RadialGradient(colors: [Color(red: 0.72, green: 0.32, blue: 1).opacity(0.8), Color.purple.opacity(0.3), .clear], center: .center, startRadius: 4, endRadius: 130))
+                    .frame(width: 310, height: 230).blur(radius: 15)
+                    .scaleEffect(1 + breath * 0.07).offset(x: -8 + orbit * 12, y: 18)
+                Ellipse().fill(Color(red: 0.67, green: 0.25, blue: 0.95).opacity(0.55))
+                    .frame(width: 130, height: 90).blur(radius: 32)
+                    .offset(x: 50, y: -20 + breath * 12)
+                Ellipse()
+                    .stroke(AngularGradient(colors: [.clear, .white.opacity(0.35), .purple.opacity(0.5), .clear, .clear], center: .center, angle: .degrees(time.truncatingRemainder(dividingBy: 40) * 9)), lineWidth: 1)
+                    .frame(width: 255, height: 140).rotationEffect(.degrees(-28 + orbit * 5))
+                    .blur(radius: 0.7).offset(x: -6, y: 12)
+                ForEach(0..<11) { index in
+                    let angle = Double(index) * 0.61
+                    Circle().fill(.white.opacity(index.isMultiple(of: 3) ? 0.55 : 0.25))
+                        .frame(width: index.isMultiple(of: 3) ? 3 : 1.5, height: index.isMultiple(of: 3) ? 3 : 1.5)
+                        .shadow(color: .purple.opacity(0.7), radius: 4)
+                        .offset(x: cos(angle) * 125 - 12, y: sin(angle) * 105 + orbit * 3)
                 }
+                Image("ArrivalGlassMark").resizable().scaledToFit()
+                    .frame(width: 252, height: 236)
+                    .shadow(color: .purple.opacity(0.5), radius: 18)
+                    .overlay {
+                        GeometryReader { geometry in
+                            LinearGradient(colors: [.clear, .white.opacity(0.65), .clear], startPoint: .leading, endPoint: .trailing)
+                                .frame(width: 32).rotationEffect(.degrees(25))
+                                .offset(x: geometry.size.width * (glint * 2 - 0.5))
+                        }.mask(Image("ArrivalGlassMark").resizable().scaledToFit())
+                    }
+                    .rotationEffect(.degrees(-9))
+                    .rotation3DEffect(.degrees(orbit * 5), axis: (x: 0, y: 1, z: 0))
+                    .offset(x: 12, y: 14 + breath * 3)
+            }
         }
+        .allowsHitTesting(false)
+        .onAppear { visible = true }
+        .onDisappear { visible = false }
     }
 }
 
@@ -202,17 +225,23 @@ struct ArrivalTaxButton: View {
     private var available: Bool { booking.taxApplicable == true && booking.taxPaid != nil }
     var body: some View {
         Button { confirm = true } label: {
-            HStack(spacing: 7) {
+            HStack(spacing: 9) {
                 if busy { ProgressView().controlSize(.small) }
-                else { Image(systemName: paid ? "checkmark.circle.fill" : "building.columns").font(.body) }
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("Городской налог").font(.system(.caption2, design: .rounded, weight: .medium))
-                    Text(available ? (paid ? "Оплачен" : booking.taxAmountLabel) : "Уточняется")
-                        .font(.system(.caption, design: .rounded, weight: .semibold))
+                else {
+                    Image(systemName: paid ? "checkmark.circle.fill" : "building.columns")
+                        .font(.system(.body, weight: .medium))
                 }
-            }.padding(.horizontal, 10).frame(minHeight: 44)
+                if let amount = booking.cityTax {
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(amount.formatted(.currency(code: "EUR").precision(.fractionLength(0...2)).locale(Locale(identifier: "ru_RU"))))
+                            .font(.system(.title3, design: .rounded, weight: .semibold)).monospacedDigit()
+                        Text("City tax").font(.system(.caption2, design: .rounded, weight: .medium))
+                            .opacity(0.7)
+                    }
+                }
+            }.padding(.horizontal, 12).padding(.vertical, 6).frame(minWidth: 44, minHeight: 44)
                 .foregroundStyle(paid ? Orbit.mint : Orbit.violet)
-                .background((paid ? Orbit.mint : Orbit.violet).opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
+                .background((paid ? Orbit.mint : Orbit.violet).opacity(0.055), in: RoundedRectangle(cornerRadius: 14))
         }.buttonStyle(.plain).disabled(busy || !available)
             .accessibilityLabel("Городской налог, \(paid ? "оплачен" : booking.taxAmountLabel)")
             .accessibilityHint(available ? "Изменить отметку об оплате" : "Обновите данные или уточните бронирование")

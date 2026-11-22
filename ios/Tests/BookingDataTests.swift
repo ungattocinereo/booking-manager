@@ -218,3 +218,23 @@ private let fixture = Data("""
     #expect(body["tax_paid"] as? Bool == true)
     #expect(body["expected_paid"] as? Bool == false)
 }
+
+@Test func cleanerLinksUseThePublicOriginWithoutCredentials() throws {
+    let raw = Data("""
+    {"public_base_url":"https://b.amalfi.day","properties":[],"cleaners":[{"id":"anna","name":"Anna","slug":"anna-42","properties":[]}]}
+    """.utf8)
+    let decoder = JSONDecoder()
+    decoder.keyDecodingStrategy = .convertFromSnakeCase
+    var directory = try decoder.decode(CleanerDirectory.self, from: raw)
+    var cleaner = directory.cleaners[0]
+    #expect(directory.link(for: cleaner)?.absoluteString == "https://b.amalfi.day/maid/anna-42")
+    cleaner.slug = "../admin"
+    #expect(directory.link(for: cleaner) == nil)
+    cleaner.slug = "anna"
+    directory.publicBaseUrl = "https://key@example.com?token=secret"
+    #expect(directory.link(for: cleaner) == nil)
+    let request = try Connection(server: "https://example.com", accessKey: "test").cleanersRequest(method: "PUT", payload: Data("{}".utf8))
+    #expect(request.url?.absoluteString == "https://example.com/api/bookings?widget=cleaners")
+    #expect(request.value(forHTTPHeaderField: "x-widget-token") == "test")
+    #expect(request.httpMethod == "PUT")
+}

@@ -140,33 +140,3 @@ struct PropertyDetailView: View {
         }.navigationTitle(property.name)
     }
 }
-
-struct CleaningsView: View {
-    @EnvironmentObject private var store: BookingStore
-    @State private var onlyPending = true
-    private var tasks: [CleaningTask] {
-        (store.dashboard?.cleaningTasks ?? []).filter { $0.status != "cancelled" && (!onlyPending || !$0.isComplete) }.sorted { $0.scheduledDate < $1.scheduledDate }
-    }
-    var body: some View {
-        List {
-            Section { Toggle("Только предстоящие", isOn: $onlyPending) }
-            if tasks.isEmpty { ContentUnavailableView("Уборок пока нет", systemImage: "sparkles") }
-            ForEach(Array(Set(tasks.map(\.scheduledDate))).sorted(), id: \.self) { date in
-                Section(RomeDate.label(date, template: "d MMMM EEEE")) {
-                    ForEach(tasks.filter { $0.scheduledDate == date }) { task in
-                        HStack(spacing: 14) {
-                            Image(systemName: task.isComplete ? "checkmark.circle.fill" : "sparkles").foregroundStyle(task.isComplete ? Orbit.mint : Orbit.violet)
-                            VStack(alignment: .leading, spacing: 5) {
-                                Text(store.dashboard?.propertyName(task.propertyId) ?? task.propertyId).font(.headline)
-                                Text(task.cleanerName ?? "Исполнитель не назначен").font(.subheadline).foregroundStyle(.secondary)
-                            }
-                            Spacer()
-                            Text(task.isComplete ? "Готово" : "Ожидает").font(.caption).foregroundStyle(.secondary)
-                        }.padding(.vertical, 5)
-                    }
-                }
-            }
-            Section { Text("Назначения и отметки об уборке изменяются в веб-кабинете.").font(.caption).foregroundStyle(.secondary) }
-        }.navigationTitle("Уборки").refreshable { await store.refresh() }
-    }
-}

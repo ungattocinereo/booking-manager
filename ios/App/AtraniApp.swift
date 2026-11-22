@@ -33,9 +33,13 @@ final class BookingStore: ObservableObject {
     @Published var tab = 0
     @Published var calendarDay = RomeDate.key()
     @Published var taxUpdatingIDs: Set<String> = []
+    @Published var cleanerDirectory: CleanerDirectory?
+    @Published var cleanersLoading = false
+    @Published var cleanersSaving = false
+    @Published var cleanersError: String?
     private var dataRevision = 0
     private var started = false
-    private var revision = UUID()
+    private(set) var revision = UUID()
     private var pendingBookingId: String?
 
     func start() async {
@@ -73,6 +77,9 @@ final class BookingStore: ObservableObject {
             if candidate != nil {
                 try SharedStore.save(settings)
                 connection = settings
+                cleanerDirectory = nil
+                cleanersLoading = false
+                cleanersSaving = false
             }
             try SharedStore.cache(raw)
             dashboard = result
@@ -127,6 +134,10 @@ final class BookingStore: ObservableObject {
 
     func showDemo() {
         revision = UUID()
+        cleanerDirectory = nil
+        cleanersLoading = false
+        cleanersSaving = false
+        cleanersError = nil
         taxUpdatingIDs.removeAll()
         isLoading = false
         dashboard = .demo()
@@ -137,6 +148,10 @@ final class BookingStore: ObservableObject {
 
     func disconnect() {
         revision = UUID()
+        cleanerDirectory = nil
+        cleanersLoading = false
+        cleanersSaving = false
+        cleanersError = nil
         taxUpdatingIDs.removeAll()
         SharedStore.clear()
         dashboard = nil
@@ -195,7 +210,10 @@ struct RootView: View {
             if value == .background { wasBackgrounded = true }
             if value == .active && wasBackgrounded {
                 wasBackgrounded = false
-                if !store.demo { Task { await store.refresh() } }
+                if !store.demo { Task {
+                    await store.refresh()
+                    if store.tab == 3 { await store.loadCleaners() }
+                } }
             }
         }
     }

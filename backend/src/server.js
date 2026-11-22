@@ -135,6 +135,7 @@ app.get('/api/dashboard', async (req, res) => {
 
 // ===== BOOKINGS =====
 app.all('/api/bookings', (req, res, next) => {
+  if (req.query.widget === 'cleaners') return require('../../lib/mobile-cleaners').handleMobileCleaners(req, res, db);
   if (req.query.widget === 'tax') return require('../../lib/mobile-dashboard').handleMobileTax(req, res, db);
   next();
 });

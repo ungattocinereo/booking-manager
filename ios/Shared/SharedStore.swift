@@ -100,6 +100,22 @@ final class APITransport: NSObject, URLSessionTaskDelegate, @unchecked Sendable 
         return receipt
     }
 
+    func cleaners(_ connection: Connection, method: String = "GET", payload: Data? = nil) async throws -> CleanerDirectory {
+        let (data, response) = try await session.data(for: connection.cleanersRequest(method: method, payload: payload))
+        guard let http = response as? HTTPURLResponse else { throw ConnectionError.invalidResponse }
+        if [401, 403, 302, 307].contains(http.statusCode) { throw ConnectionError.unauthorized }
+        guard (200..<300).contains(http.statusCode) else {
+            if [400, 404, 409].contains(http.statusCode),
+               let message = (try? JSONSerialization.jsonObject(with: data)) as? [String: String],
+               let text = message["error"], text != "Not found" { throw CleanerTransportError(message: text) }
+            if http.statusCode == 404 { throw ConnectionError.unauthorized }
+            throw ConnectionError.server(http.statusCode)
+        }
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        return try decoder.decode(CleanerDirectory.self, from: data)
+    }
+
     func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse,
                     newRequest request: URLRequest, completionHandler: @escaping @Sendable (URLRequest?) -> Void) {
         completionHandler(nil)
@@ -110,4 +126,9 @@ struct MobileTaxReceipt: Decodable {
     let bookingId: String
     let taxPaid: Bool
     let taxPaidAt: String?
+}
+
+struct CleanerTransportError: LocalizedError {
+    let message: String
+    var errorDescription: String? { message }
 }
