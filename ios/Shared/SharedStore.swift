@@ -86,8 +86,28 @@ final class APITransport: NSObject, URLSessionTaskDelegate, @unchecked Sendable 
         return (try Dashboard.decode(data), data)
     }
 
+    func setTaxPaid(_ connection: Connection, booking: Booking, paid: Bool) async throws -> MobileTaxReceipt {
+        guard let expected = booking.taxPaid else { throw ConnectionError.invalidResponse }
+        let (data, response) = try await session.data(for: connection.taxRequest(bookingId: booking.id, paid: paid, expected: expected))
+        guard let http = response as? HTTPURLResponse else { throw ConnectionError.invalidResponse }
+        if http.statusCode == 409 { throw ConnectionError.taxConflict }
+        if [401, 403, 404, 302, 307].contains(http.statusCode) { throw ConnectionError.unauthorized }
+        guard (200..<300).contains(http.statusCode) else { throw ConnectionError.server(http.statusCode) }
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        let receipt = try decoder.decode(MobileTaxReceipt.self, from: data)
+        guard receipt.bookingId == booking.id, receipt.taxPaid == paid else { throw ConnectionError.invalidResponse }
+        return receipt
+    }
+
     func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse,
                     newRequest request: URLRequest, completionHandler: @escaping @Sendable (URLRequest?) -> Void) {
         completionHandler(nil)
     }
+}
+
+struct MobileTaxReceipt: Decodable {
+    let bookingId: String
+    let taxPaid: Bool
+    let taxPaidAt: String?
 }

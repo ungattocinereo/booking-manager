@@ -134,6 +134,10 @@ app.get('/api/dashboard', async (req, res) => {
 });
 
 // ===== BOOKINGS =====
+app.all('/api/bookings', (req, res, next) => {
+  if (req.query.widget === 'tax') return require('../../lib/mobile-dashboard').handleMobileTax(req, res, db);
+  next();
+});
 
 app.get('/api/bookings', async (req, res) => {
   if (req.query.widget === 'upcoming') {

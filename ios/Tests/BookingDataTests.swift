@@ -164,3 +164,57 @@ private let fixture = Data("""
     gesture.end()
     #expect(gesture.update(x: 24, y: 0) == false)
 }
+
+@Test func cityTaxUsesNightsAndPeopleWithoutInventingMissingCounts() throws {
+    var booking = try Dashboard.decode(fixture).bookings[1]
+    #expect(booking.taxPaid == nil) // old caches remain decodable, not falsely marked unpaid
+    #expect(booking.cityTax == nil)
+    booking.guestCount = 2
+    #expect(booking.cityTax == 15)
+    booking.startDate = "2026-03-28"; booking.endDate = "2026-03-30"
+    #expect(booking.cityTax == 10)
+    booking.guestCount = 0
+    #expect(booking.cityTax == nil)
+    booking.guestCount = 2; booking.operationalFallback = true
+    #expect(booking.cityTax == nil)
+    booking.operationalFallback = false; booking.taxApplicable = false
+    #expect(booking.cityTax == nil)
+    #expect(booking.nightsLabel == "2 ночи")
+    #expect(booking.guestsLabel == "2 человека")
+}
+
+@Test func previousGuestsKeepSevenLatestArrivalsIncludingOngoingStays() throws {
+    var data = try Dashboard.decode(fixture)
+    let template = data.bookings[0]
+    data.bookings += (1...10).map { index in
+        var booking = template
+        booking.id = "past-\(index)"
+        booking.startDate = String(format: "2026-10-%02d", index)
+        return booking
+    }
+    let guests = data.previousArrivals(on: "2026-10-23")
+    #expect(guests.count == 7)
+    #expect(guests.map(\.id) == ["old", "past-10", "past-9", "past-8", "past-7", "past-6", "past-5"])
+    #expect(data.previousArrivalDays(on: "2026-10-23").map(\.id) == guests.map(\.startDate))
+    #expect(data.previousArrivals(on: "2026-01-01").isEmpty)
+}
+
+@Test func shortPullSelectsHistoryAndDeepPullRefreshes() {
+    #expect(ArrivalPullAction.forDistance(-50) == .none)
+    #expect(ArrivalPullAction.forDistance(47) == .none)
+    #expect(ArrivalPullAction.forDistance(48) == .history)
+    #expect(ArrivalPullAction.forDistance(119) == .history)
+    #expect(ArrivalPullAction.forDistance(120) == .refresh)
+}
+
+@Test func taxMutationIsScopedAndRetainsHeaderAuthentication() throws {
+    let request = try Connection(server: "https://example.com", accessKey: "test", protectionKey: "bypass").taxRequest(bookingId: "42", paid: true, expected: false)
+    #expect(request.httpMethod == "PATCH")
+    #expect(request.url?.absoluteString == "https://example.com/api/bookings?widget=tax")
+    #expect(request.value(forHTTPHeaderField: "x-widget-token") == "test")
+    let raw = try #require(request.httpBody)
+    let body = try #require(JSONSerialization.jsonObject(with: raw) as? [String: Any])
+    #expect(body["booking_id"] as? String == "42")
+    #expect(body["tax_paid"] as? Bool == true)
+    #expect(body["expected_paid"] as? Bool == false)
+}

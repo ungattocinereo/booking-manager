@@ -14,8 +14,8 @@ configFiles:
 settings:
   base:
     SWIFT_VERSION: "5.0"
-    MARKETING_VERSION: "1.4"
-    CURRENT_PROJECT_VERSION: "7"
+    MARKETING_VERSION: "1.5"
+    CURRENT_PROJECT_VERSION: "8"
     CODE_SIGN_STYLE: Automatic
     DEVELOPMENT_TEAM: $(ATRANI_DEVELOPMENT_TEAM)
     ENABLE_USER_SCRIPT_SANDBOXING: YES
@@ -75,6 +75,16 @@ targets:
         TARGETED_DEVICE_FAMILY: "1"
         SKIP_INSTALL: YES
         APPLICATION_EXTENSION_API_ONLY: YES
+  AtraniUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources: [UITests]
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: it.cinereo.atrani.uitests
+    dependencies:
+      - target: Atrani
 schemes:
   Atrani:
     build:
@@ -82,5 +92,7 @@ schemes:
         Atrani: all
     run:
       config: Debug
+    test:
+      targets: [AtraniUITests]
     archive:
       config: Release

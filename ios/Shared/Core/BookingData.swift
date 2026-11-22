@@ -50,6 +50,29 @@ public struct Booking: Codable, Identifiable, Hashable, Sendable {
     public var platform: String
     public var reservationUrl: String?
     public var operationalFallback: Bool
+    public var taxPaid: Bool? = nil
+    public var taxPaidAt: String? = nil
+    public var taxApplicable: Bool? = nil
+
+    public var cityTax: Decimal? {
+        guard !operationalFallback, taxApplicable != false, nights > 0,
+              let count = guestCount, count > 0 else { return nil }
+        return Decimal(nights) * Decimal(count) * Decimal(string: "2.5")!
+    }
+    public var taxAmountLabel: String {
+        guard let amount = cityTax else { return "Сумма уточняется" }
+        return amount.formatted(.currency(code: "EUR").locale(Locale(identifier: "ru_RU")))
+    }
+    public var nightsLabel: String { Self.quantity(nights, forms: ["ночь", "ночи", "ночей"]) }
+    public var guestsLabel: String {
+        guard let count = guestCount, count > 0 else { return "Гости уточняются" }
+        return Self.quantity(count, forms: ["человек", "человека", "человек"])
+    }
+    private static func quantity(_ value: Int, forms: [String]) -> String {
+        let tail = value % 100
+        let index = (11...14).contains(tail) ? 2 : value % 10 == 1 ? 0 : (2...4).contains(value % 10) ? 1 : 2
+        return "\(value) \(forms[index])"
+    }
 
     public var guestLabel: String {
         guard let name = guestName?.trimmingCharacters(in: .whitespacesAndNewlines), !name.isEmpty else {
@@ -141,9 +164,10 @@ public struct ArrivalBoard: Sendable {
 }
 
 public enum ConnectionError: Error, LocalizedError, Sendable {
-    case invalidServer, unauthorized, server(Int), invalidResponse, unsupportedVersion
+    case invalidServer, unauthorized, server(Int), invalidResponse, unsupportedVersion, taxConflict
     public var errorDescription: String? {
         switch self {
+        case .taxConflict: "Отметка налога изменилась. Обновите список и проверьте статус."
         case .invalidServer: "Укажите адрес сервера с HTTPS без пути и параметров."
         case .unauthorized: "Проверьте ключ доступа и ключ защиты сервера."
         case .server(let code): "Сервер временно недоступен (\(code)). Попробуйте позже."
@@ -162,6 +186,17 @@ public struct Connection: Codable, Equatable, Sendable {
         self.server = server.trimmingCharacters(in: .whitespacesAndNewlines)
         self.accessKey = accessKey.trimmingCharacters(in: .whitespacesAndNewlines)
         self.protectionKey = protectionKey.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    public func taxRequest(bookingId: String, paid: Bool, expected: Bool) throws -> URLRequest {
+        var request = try request()
+        var components = URLComponents(url: request.url!, resolvingAgainstBaseURL: false)!
+        components.queryItems = [URLQueryItem(name: "widget", value: "tax")]
+        request.url = components.url
+        request.httpMethod = "PATCH"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONSerialization.data(withJSONObject: ["booking_id": bookingId, "tax_paid": paid, "expected_paid": expected])
+        return request
     }
 
     public func request() throws -> URLRequest {

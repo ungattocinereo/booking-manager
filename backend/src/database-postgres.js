@@ -600,6 +600,14 @@ class Database {
     );
   }
 
+  async updateMobileTaxPaid(bookingId, paid, expected, paidAt) {
+    const result = await this.execute(
+      'UPDATE bookings SET tax_paid = $1, tax_paid_at = $2 WHERE id = $3 AND active IS NOT FALSE AND COALESCE(tax_paid, false) = $4',
+      [paid, paidAt, bookingId, expected]
+    );
+    return result.rowCount === 1;
+  }
+
   async updateTaxPaid(bookingId, paid) {
     return this.execute(
       'UPDATE bookings SET tax_paid = $1, tax_paid_at = CASE WHEN $1 THEN NOW() ELSE NULL END WHERE id = $2',

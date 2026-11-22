@@ -14,7 +14,7 @@ test('mobile payload preserves unnamed arrivals, removes closures and exports on
   const result = await buildMobileDashboard({
     getProperties: async () => [{ id: 'orange', name: 'Orange', ical_url: 'private-feed' }],
     getBookings: async (_, from) => {
-      requestedFrom = from;
+      if (from) requestedFrom = from;
       return [
         { id: 1, property_id: 'orange', start_date: '2026-10-25', end_date: '2026-10-28', platform: 'airbnb', guest_name: '', raw_description: 'private', reservation_url: 'javascript:alert(1)' },
         { id: 2, property_id: 'orange', start_date: '2026-11-01', end_date: '2026-11-03', platform: 'airbnb', booking_type: 'blocked' },
