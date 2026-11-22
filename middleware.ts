@@ -4,7 +4,7 @@ declare const process: {
 
 import requestAccess from './lib/request-access.js';
 
-const { shouldAllowProtectedRoute } = requestAccess;
+const { shouldAllowProtectedRoute, isPublicWidgetApiRequest } = requestAccess;
 
 const PUBLIC_ASSET_PATHS = new Set([
   '/favicon.ico',
@@ -28,14 +28,6 @@ function isPublicMaidApiPath(pathname: string) {
 
 function isPublicHealthPath(pathname: string) {
   return pathname === '/health' || pathname === '/api/health';
-}
-
-function isPublicWidgetApiRequest(pathname: string, request: Request) {
-  if (pathname !== '/api/bookings') return false;
-  const url = new URL(request.url);
-  return url.searchParams.get('widget') === 'today' ||
-    (request.method === 'GET' && url.searchParams.get('widget') === 'upcoming') ||
-    (request.method === 'PATCH' && url.searchParams.get('widget') === 'tax');
 }
 
 function hasBearerSecret(request: Request, secret: string) {
@@ -89,7 +81,7 @@ export default function middleware(request: Request) {
   if (isPublicMaidPath(url.pathname)) return;
   if (isPublicMaidApiPath(url.pathname)) return;
   if (isPublicHealthPath(url.pathname)) return;
-  if (isPublicWidgetApiRequest(url.pathname, request)) return;
+  if (isPublicWidgetApiRequest({ pathname: url.pathname, method: request.method, widget: url.searchParams.get('widget'), widgetCount: url.searchParams.getAll('widget').length })) return;
   if (isAllowedMachinePath(url.pathname, request)) return;
 
   const requireCloudflareIdentity =
